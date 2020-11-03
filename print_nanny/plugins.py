@@ -1,59 +1,22 @@
-# coding=utf-8
-from __future__ import absolute_import
-from octoprint.events import eventManager, Events
-
 import logging
 import threading
 
 import octoprint.plugin
 
-from PIL import Image as PImage
-from tflite_runtime import interpreter  as tflite_interpreter
+from octoprint.events import eventManager, Events
+
+
+from .predictor import ThreadLocalPredictor
 
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
-class ThreadLocalPredictor(threading.local):
-    model_path = 'data/tflite-print3d_20201101015829-2020-11-03T06:39:54.239Z/model.tflite'
-    label_path = 'data/tflite-print3d_20201101015829-2020-11-03T06:39:54.239Z/dict.txt'
-    image_shape = (320, 320)
-
-    def __init__(self, _, **kwargs):
-        self.tflite_interpreter = tflite_interpreter.Interpreter(
-            model_path=self.model_path
-        )
-        self.tflite_interpreter.allocate_tensors()
-        self.input_details = self.tflite_interpreter.get_input_details()
-        self.output_details = self.tflite_interpreter.get_output_details()
-        self.__dict__.update(**kwargs)
-
-    def predict(self, image):
-        image = np.asarray(image)
-        self.tflite_interpreter.set_tensor(self.input_details[0]["index"], image)
-        self.tflite_interpreter.invoke()
-
-        box_data = tf.convert_to_tensor(
-            self.tflite_interpreter.get_tensor(self.output_details[0]["index"])
-        )
-        class_data = tf.convert_to_tensor(
-            self.tflite_interpreter.get_tensor(self.output_details[1]["index"])
-        )
-        score_data = tf.convert_to_tensor(
-            self.tflite_interpreter.get_tensor(self.output_details[2]["index"])
-        )
-        num_detections = tf.convert_to_tensor(
-            self.tflite_interpreter.get_tensor(self.output_details[3]["index"])
-        )
- 
-        return {
-            "detection_boxes": box_data,
-            "detection_classes": class_data,
-            "detection_scores": score_data,
-            "num_detections": len(num_detections),
-        }
-class OctoPrintNannyPlugin(octoprint.plugin.SettingsPlugin,
+class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
                   octoprint.plugin.AssetPlugin,
                   octoprint.plugin.TemplatePlugin,
                   octoprint.plugin.WizardPlugin):
+    
+    PREDICT_EVENT = 'predict'
+    UPLOAD_EVENT = 'upload'
 
     def __init__(self, *args, **kwargs):
 
@@ -73,18 +36,20 @@ class OctoPrintNannyPlugin(octoprint.plugin.SettingsPlugin,
         self._active = False
         self._queue = queue.Queue()
 
+        # @todo single-threaded perf against multiprocessing.Pool, Queue, Manager
         self._predictor = ThreadLocalPredictor()
+        self._predict_thread = threading.Thread(target=self._predict_worker)
+        self._predict_thread.daemon = True
 
-		self._predict_thread = threading.Thread(target=self._predict_worker)
-		self._predict_thread.daemon = True
+        self.queue_event_handlers = {
+            self.PREDICT_EVENT: self._handle_predict,
+            UPLOAD_EVENT: self._handle_upload
+        }
 
-        # self._upload_thread = threading.Thread(target=self._upload_worker)
-        # self._upload_thread.daemon = True
 
     def _start(self):
         self._reset()
         self._predict_thread.start()
-        # self._upload_thread.start()
         self._active = True
     
     def _resume(self):
@@ -96,22 +61,43 @@ class OctoPrintNannyPlugin(octoprint.plugin.SettingsPlugin,
     def _reset(self):
         pass
 
-    def _predict_worker(self):
-        while self._queue_active:
-            image = self._predict_queue.get(block=True)
-            prediction = self._predictor.predict(image)
+    def _handle_predict(self, filename=None, **kwargs):
+        if not None:
+            return
+        
+        image = self.load_image(filename)
+        prediction = self._predictor.predict(image)
+        display_image = self.predictor.draw_boxes(iamge, prediction)
+        self._queue.put(dict(
+            type=self.UPLOAD_EVENT,
+            image=image,
+            prediction=pediction
+        ))
     
-    def load_image(self, filename):
-        # @todo path prefix?
-        return PImage.open(filename)
+    def _handle_upload(self, image=None, prediction=None, **kwargs):
+        pass
+
+
+    def _predict_worker(self):
+        while self._queue_active or not self._predict_queue.empty():
+            msg = self._predict_queue.get(block=True)
+            if not msg.get('type'):
+                logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
+
+            handler_fn = self._queue_event_handlers[msg['type']]
+            handler_fn(**msg)
+    
 
     def on_capture_done(self, payload):
         '''
         payload:
             file: the name of the image file that was saved
         '''
-        image = self.load_image(payload['file'])
-        self._predict_queue.put(image)
+        filename = self.load_image(payload['file'])
+        self._predict_queue.put(dict(
+            type=self.PREDICT_EVENT,
+            filename=filename
+        ))
 
 
     def on_print_started(self, payload):
@@ -156,7 +142,8 @@ class OctoPrintNannyPlugin(octoprint.plugin.SettingsPlugin,
 
     def get_settings_defaults(self):
         return dict(
-            remote_uri='https://api.print-nanny.com'
+            api_uri='https://api.print-nanny.com',
+            prometheus_gateway='https://prom.print-nanny.com'
         )
 
     ##~~ AssetPlugin mixin
@@ -191,40 +178,3 @@ class OctoPrintNannyPlugin(octoprint.plugin.SettingsPlugin,
                 pip="https://github.com/bitsy-ai/octoprint-nanny/archive/{target_version}.zip"
             )
         )
-
-        
-
-        
-        
-        
-def _register_custom_events(*args, **kwargs):
-    return [
-        "predict_done", 
-        "predict_failed", 
-        "upload_done", 
-        "upload_failed"
-    ]
-
-
-# If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
-# ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
-# can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-__plugin_name__ = "Nanny Plugin"
-
-# Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
-# Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
-# compatibility flags according to what Python versions your plugin supports!
-#__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
-#__plugin_pythoncompat__ = ">=3,<4" # only python 3
-#__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
-
-def __plugin_load__():
-    global __plugin_implementation__
-    __plugin_implementation__ = OctoprintNannyPlugin()
-
-    global __plugin_hooks__
-    __plugin_hooks__ = {
-        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-        "octoprint.timelapse.capture.post": __plugin_implementation__.on_timelapse_capture
-    }
-
