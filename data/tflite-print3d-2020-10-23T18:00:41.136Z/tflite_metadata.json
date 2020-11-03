@@ -1,0 +1,24 @@
+{
+    "inferenceType": "QUANTIZED_UINT8",
+    "inputShape": [
+        1,
+        320,
+        320,
+        3
+    ],
+    "inputTensor": "normalized_input_image_tensor",
+    "maxDetections": 40,
+    "outputTensorRepresentation": [
+        "bounding_boxes",
+        "class_labels",
+        "class_confidences",
+        "num_of_boxes"
+    ],
+    "outputTensors": [
+        "TFLite_Detection_PostProcess",
+        "TFLite_Detection_PostProcess:1",
+        "TFLite_Detection_PostProcess:2",
+        "TFLite_Detection_PostProcess:3"
+    ],
+    "version": "tflite-print3d-2020-10-23T18:00:41.136Z"
+}
