@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_nanny/templates *
+recursive-include octoprint_nanny/translations *
+recursive-include octoprint_nanny/static *
