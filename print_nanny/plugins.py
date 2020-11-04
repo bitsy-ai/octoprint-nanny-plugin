@@ -1,4 +1,5 @@
 import logging
+import queue
 import threading
 
 import octoprint.plugin
@@ -15,23 +16,35 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
                   octoprint.plugin.TemplatePlugin,
                   octoprint.plugin.WizardPlugin):
     
+    CALIBRATE_EVENT = 'calibrate'
+    CALIBRATE_DONE = 'calibrate_done'
+    CALIBRATE_FAILED = 'calibrate_failed'
+    
     PREDICT_EVENT = 'predict'
+    PREDICT_EVENT_DONE = 'predict_done'
+    PREDICT_EVENT_FAILED = 'predict_failed'
+
     UPLOAD_EVENT = 'upload'
+    UPLOAD_EVENT_FAILED = 'upload_failed'
+    UPLOAD_EVENT_DONE = 'uplaod_done'
 
     def __init__(self, *args, **kwargs):
+        
+        # @todo add any required calibration routines
+        # eventManager().subscribe(self.CALIBRATE_EVENT, self.on_calibrate)
 
         eventManager().subscribe(Events.PRINT_STARTED, self.on_print_started)
-        eventManager().subscribe(Events.PRINT_RESUME, self.on_print_resume)
+        eventManager().subscribe(Events.PRINT_RESUMED, self.on_print_resume)
 
         eventManager().subscribe(Events.PRINT_PAUSED, self.on_print_paused)
         eventManager().subscribe(Events.PRINT_FAILED, self.on_print_failed)
         eventManager().subscribe(Events.PRINT_DONE, self.on_print_done)
 
         eventManager().subscribe(Events.CAPTURE_DONE, self.on_capture_done)
-        eventManager().subscribe(Events.MOVIE_DONE, self.on_movie_done)
+        #eventManager().subscribe(Events.MOVIE_DONE, self.on_movie_done)
 
-        for (event, callback) in self.event_subscriptions():
-            eventManager().subscribe(event, callback)
+        # for (event, callback) in self.event_subscriptions():
+        #     eventManager().subscribe(event, callback)
 
         self._active = False
         self._queue = queue.Queue()
@@ -43,9 +56,8 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
 
         self.queue_event_handlers = {
             self.PREDICT_EVENT: self._handle_predict,
-            UPLOAD_EVENT: self._handle_upload
+            self.UPLOAD_EVENT: self._handle_upload
         }
-
 
     def _start(self):
         self._reset()
@@ -53,6 +65,9 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         self._active = True
     
     def _resume(self):
+        pass
+    
+    def _pause(self):
         pass
 
     def _stop(self):
@@ -67,14 +82,19 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         
         image = self.load_image(filename)
         prediction = self._predictor.predict(image)
-        display_image = self.predictor.draw_boxes(iamge, prediction)
-        self._queue.put(dict(
-            type=self.UPLOAD_EVENT,
-            image=image,
-            prediction=pediction
-        ))
+        prediction = self.postprocess(image, prediction)
+
+        eventManager().fire(self.PREDICT_DONE, prediction['viz'])
+        msg = {
+            'original_image': image,
+            'prediction': prediction,
+            'type': self.UPLOAD_EVENT
+        }
+        self._queue.put(msg)
     
-    def _handle_upload(self, image=None, prediction=None, **kwargs):
+    def _handle_upload(self, original_image=None, prediction=None, **kwargs):
+        print(f'uploading {original_image}')
+        # @ todo install grpc stub
         pass
 
 
@@ -114,7 +134,12 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_print_resume(self):
         self._resume()
+    
+    def on_print_paused(self):
+        self._pause()
 
+    def on_print_done(self):
+        pass
 
     def on_print_failed(self, payload):
         '''
@@ -128,23 +153,27 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         '''
         self._stop()
         self._reset()
-    ## Wizard plugin mixin
 
+    ## TemplatePlugin mixin
+    def get_template_configs(self):
+        return [
+            dict(type="wizard", name="Hello!", template="print_nanny_wizard.jinja2"),
+        ]
 
-
-
-    def get_wizard_version(self):
-        return 2
-    def is_wizard_required(self):
-        return not self._settings.get(["auth_token"])
-
-    ##~~ SettingsPlugin mixin
-
+    ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return dict(
             api_uri='https://api.print-nanny.com',
             prometheus_gateway='https://prom.print-nanny.com'
         )
+        
+    ## Wizard plugin mixin
+
+    def get_wizard_version(self):
+        return 0
+
+    def is_wizard_required(self):
+        return not self._settings.get(["auth_token"])
 
     ##~~ AssetPlugin mixin
 
@@ -154,7 +183,8 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         return dict(
             js=["js/nanny.js"],
             css=["css/nanny.css"],
-            less=["less/nanny.less"]
+            less=["less/nanny.less"],
+            img=["img/wizard_example.jpg"]
         )
 
     ##~~ Softwareupdate hook

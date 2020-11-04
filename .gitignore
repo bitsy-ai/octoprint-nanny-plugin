@@ -7,3 +7,8 @@ dist
 *.egg*
 .DS_Store
 *.zip
+.workspace
+
+print_nanny/data/tflite-print3d-2020-10-23T18:00:41.136Z/*
+
+*.workspace

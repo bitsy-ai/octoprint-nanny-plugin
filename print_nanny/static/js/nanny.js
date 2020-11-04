@@ -5,14 +5,19 @@
  * License: MIT
  */
 $(function() {
-    function NannyViewModel(parameters) {
+    function PrintNannyViewModel(parameters) {
         var self = this;
 
         // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
+        self.loginStateViewModel = parameters[0];
+        self.settingsViewModel = parameters[1];
 
         // TODO: Implement your plugin's view model here.
+
+        onStartupComplete() = function () {}
+        onEventPredictDone() = function () {}
+        onEventCalibrateDone() = function () {}
+        onEventCalibrateFailed() = function () {}
     }
 
     /* view model class, parameters for constructor, container to bind to
@@ -20,10 +25,11 @@ $(function() {
      * and a full list of the available options.
      */
     OCTOPRINT_VIEWMODELS.push({
-        construct: NannyViewModel,
+        construct: PrintNannyViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: [ /* "loginStateViewModel", "settingsViewModel" */ ],
+        dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ /* ... */ ]
+        elements: [ '#wizard_plugin_print_nanny', '#settings_plugin_print_nanny' ]
+
     });
 });

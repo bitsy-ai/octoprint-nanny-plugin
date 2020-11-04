@@ -2,8 +2,9 @@
 import threading
 import json
 import numpy as np
+import os
 from PIL import Image as PImage
-from typing import TypedDict
+from typing import TypedDict, Optional
 from print_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
 
 import tensorflow as tf
@@ -13,14 +14,33 @@ class Prediction(TypedDict):
     detection_scores: np.ndarray
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
+    viz: Optional[PImage.Image]
 
 
 class ThreadLocalPredictor(threading.local):
-    model_path = 'data/tflite-print3d-2020-10-23T18:00:41.136Z/model.tflite'
-    label_path = 'data/tflite-print3d-2020-10-23T18:00:41.136Z/dict.txt'
-    metadata_path = 'data/tflite-print3d-2020-10-23T18:00:41.136Z/tflite_metadata.json'
+    base_path = os.path.join(os.path.dirname(__file__), 'data') 
 
-    def __init__(self, min_score_thresh=0.5, *args, **kwargs):
+    def __init__(self, 
+        min_score_thresh=0.5, 
+        max_boxes_to_draw=10, 
+        model_version='tflite-print3d-2020-10-23T18:00:41.136Z',
+        model_filename='model.tflite',
+        metadata_filename='tflite_metadata.json',
+        label_filename='dict.txt',
+
+        
+        *args, **kwargs
+        ):
+
+        self.model_version = model_version
+        self.model_filename = model_filename
+        self.metadata_filename = metadata_filename
+        self.label_filename = label_filename
+
+        self.model_path = os.path.join(self.base_path, model_version, model_filename)
+        self.label_path = os.path.join(self.base_path, model_version, label_filename)
+        self.metadata_path = os.path.join(self.base_path, model_version, metadata_filename)
+
         self.tflite_interpreter = tf.lite.Interpreter(
             model_path=self.model_path
         )
@@ -28,6 +48,7 @@ class ThreadLocalPredictor(threading.local):
         self.input_details = self.tflite_interpreter.get_input_details()
         self.output_details = self.tflite_interpreter.get_output_details()
         self.min_score_thresh = min_score_thresh
+        self.max_boxes_to_draw = max_boxes_to_draw
         self.__dict__.update(**kwargs)
 
         with open(self.metadata_path) as f:
@@ -53,13 +74,17 @@ class ThreadLocalPredictor(threading.local):
         image = image[tf.newaxis, ...]
         return image
     
-    def write_image(self, filepath: str):
-        pass
-    def postprocess(self, image: PImage, prediction: Prediction):
+    def write_image(self, outfile: str, image_np: np.ndarray):
+
+        img = PImage.fromarray(image_np)
+        img.save(outfile)
+
+    def postprocess(self, image: PImage, prediction: Prediction) -> Prediction:
 
         image_np = np.asarray(image).copy()
+        prediction = prediction.copy()
 
-        return visualize_boxes_and_labels_on_image_array(
+        prediction['viz'] = visualize_boxes_and_labels_on_image_array(
             image_np,
             prediction['detection_boxes'],
             prediction['detection_classes'],
@@ -68,8 +93,9 @@ class ThreadLocalPredictor(threading.local):
             use_normalized_coordinates=True,
             line_thickness=4,
             min_score_thresh=self.min_score_thresh,
-            max_boxes_to_draw=10
+            max_boxes_to_draw=self.max_boxes_to_draw
         )
+        return prediction
 
     def predict(self, image: PImage) -> Prediction:
         tensor = self.preprocess(image)
