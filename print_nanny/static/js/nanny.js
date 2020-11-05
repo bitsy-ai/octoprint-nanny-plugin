@@ -32,6 +32,26 @@
 **
 */
 
+$(function() {
+    function PrintNannyViewModel(parameters) {
+        let self = this;
+        self.apiClient = null;
+    }
+
+    // assign the injected parameters, e.g.:
+    self.loginStateViewModel = parameters[0];
+    self.settingsViewModel = parameters[1];
+
+    OCTOPRINT_VIEWMODELS.push({
+        construct: PrintNannyViewModel,
+        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
+        dependencies: [ "loginStateViewModel", "settingsViewModel"],
+        // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
+        elements: [ '#tab_plugin_print_nanny' ]
+
+    });
+});
+
 
 $(function() {
     function PrintNannySettingsViewModel(parameters) {
@@ -88,6 +108,7 @@ $(function() {
         //     {key: 'swagger_json', display: 'API URI', value: self.settingsViewModel.settings.plugins.print_nanny.swagger_json},
         // ]
     }
+
     self.saveSettingsData = function(userData){
 
         self.notices = {
