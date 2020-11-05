@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "../OctoPrint-TheSpaghettiDetective"
+		},
+		{
+			"path": "../print_nanny_webapp"
 		}
 	]
 }

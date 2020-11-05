@@ -1,0 +1,19 @@
+
+<div class="hero-unit">
+
+<form>
+  <fieldset>
+    <legend>Connect Print Nanny</legend>
+    <label>Auth Token</label>
+    <input data-bind="textInput: authTokenInput" type="text" placeholder="Paste your token here">
+
+    <div class="alert" data-bind="class: authStatusCSS" type="submit" class="btn-large button-primary">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning!</strong> Best check yo self, you're not looking too good.
+    </div>
+    <button data-bind="click: testAuthTokenInput()" type="submit" class="btn-large button-primary">
+        Test Connection
+    </button>
+  </fieldset>
+</form>
+</div>

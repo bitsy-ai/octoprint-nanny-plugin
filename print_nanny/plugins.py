@@ -157,15 +157,22 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
     ## TemplatePlugin mixin
     def get_template_configs(self):
         return [
-            dict(type="wizard", name="Hello!", template="print_nanny_wizard.jinja2"),
+            # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=wizard#octoprint.plugin.types.TemplatePlugin
+            # "mandatory wizard steps will come first, sorted alphabetically, then the optional steps will follow, also alphabetically."
+            dict(type="wizard", name="Hello from Bitsy.ai!", template="print_nanny_wizard.jinja2"),
+            dict(type="wizard", name="Setup Account", template="print_nanny_2_wizard.jinja2"),
+
         ]
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return dict(
-            api_uri='https://api.print-nanny.com',
+            auth_token=None,
+            api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
+            swagger_json='http://localhost:8000/swagger.json', # 'https://api.print-nanny.com/swagger.json'
             prometheus_gateway='https://prom.print-nanny.com'
         )
+
         
     ## Wizard plugin mixin
 
@@ -173,7 +180,7 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         return 0
 
     def is_wizard_required(self):
-        return not self._settings.get(["auth_token"])
+        return self._settings.get(["auth_token"]) is None
 
     ##~~ AssetPlugin mixin
 
@@ -184,7 +191,8 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
             js=["js/nanny.js"],
             css=["css/nanny.css"],
             less=["less/nanny.less"],
-            img=["img/wizard_example.jpg"]
+            img=["img/wizard_example.jpg"],
+            vendor=["vendor/swagger-client@3.12.0.browser.min.js"]
         )
 
     ##~~ Softwareupdate hook
