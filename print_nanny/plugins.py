@@ -169,7 +169,7 @@ class BitsyNannyPlugin(octoprint.plugin.SettingsPlugin,
         return dict(
             auth_token=None,
             api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
-            swagger_json='http://localhost:8000/swagger.json', # 'https://api.print-nanny.com/swagger.json'
+            swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
             prometheus_gateway='https://prom.print-nanny.com'
         )
 

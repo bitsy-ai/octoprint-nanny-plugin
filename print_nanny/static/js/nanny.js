@@ -26,15 +26,23 @@
 //     });
 // });
 
-SwaggerClient.http.withCredentials = true;
-
 
 $(function() {
     function PrintNannyWizardViewModel(parameters) {
+        SwaggerClient.http.withCredentials = true;
+
         let self = this;
         self.swaggerClient = undefined;
         // settings, wizard
         self.authTokenInput = undefined;
+        self.octoUser = undefined;
+        self.verified = undefined;
+        self.error = undefined;
+
+        self.notices = {
+            'alertStong': 'Warning!',
+            'alertText': 'Test connection before saving.'
+        }
 
 
         // assign the injected parameters, e.g.:
@@ -42,20 +50,30 @@ $(function() {
         self.settingsViewModel = parameters[1];
         // self.apiUri = self.settingsViewModel.settings.plugins.print_nanny.api_uri
 
-        authStatusCSS = function(){
-            return 
-        }
-
         self.onAllBound = function(allViewModels){
-            // SwaggerClient(self.settingsViewModel.settings.plugins.print_nanny.swagger_json())
-            // .then( client => {
-            //     console.log('Print Nanny swagger-js client initialized', client)
-            //     self.swaggerClient = client;
-            // });
+            self.octoUser = self.settingsViewModel.currentUser
         }
 
         isAuthenticated = function(){
             return false
+        }
+
+        self.saveSettingsData = function(userData){
+
+            self.notices = {
+                'alertStong': 'Nice!',
+                'alertText': 'Your token is verfied.'
+            }
+            const settings = {
+                plugins: {
+                    print_nanny: {
+                        auth_token: self.authTokenInput,
+                        email: userData.body.email,
+                        lookup: userData.body.url
+                    }
+                }
+            }
+            self.settingsViewModel.saveData(settings);
         }
         testAuthTokenInput = function(){
             if (self.authTokenInput == undefined){
@@ -69,22 +87,11 @@ $(function() {
                 console.log('Print Nanny swagger-js client initialized', client)
                 self.swaggerClient = client;
                 client.apis.me.get_me()
-                .then(res => console.log(res))
-            });
-            // self.swaggerClient.apis.api.api_users_me({}, {securities: { authorized: { Token: self.authTokenInput } }})
-            // .then(response => console.log(response))
+                .then(self.saveSettingsData)
+                });
 
         }
 
-        // TODO: Implement your plugin's view model here.
-
-        // onStartupComplete() = function () {}
-        // onEventPredictDone() = function () {}
-        // onEventCalibrateDone() = function () {}
-        // onEventCalibrateFailed() = function () {}
-
-        
-        // onWizardFinish() = function() {}
     }
 
     /* view model class, parameters for constructor, container to bind to

@@ -7,13 +7,15 @@
     <label>Auth Token</label>
     <input data-bind="textInput: authTokenInput" type="text" placeholder="Paste your token here">
 
-    <div class="alert" data-bind="class: authStatusCSS" type="submit" class="btn-large button-primary">
+    <div class="alert" data-bind="css: {'alert-success': verified, 'alert-error': error}">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <strong>Warning!</strong> Best check yo self, you're not looking too good.
-    </div>
-    <button data-bind="click: testAuthTokenInput()" type="submit" class="btn-large button-primary">
+
+    <strong><!--ko text: notices.alertStrong --><!--/ko--></strong> <!--ko text: notices.alertText --><!--/ko-->
+    <button data-bind="click: testAuthTokenInput()" type="submit" class="btn-large">
         Test Connection
     </button>
   </fieldset>
 </form>
 </div>
+
+<script src="/plugin/print_nanny/static/vendor/swagger-client@3.12.0.browser.min.js"></script>
