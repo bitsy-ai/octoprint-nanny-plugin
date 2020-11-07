@@ -1,27 +1,43 @@
 <div class="hero-unit">
-  <h1>Bitsy Print Nanny 🤖</h1>
+  <h1>OctoPrint Nanny</h1>
 
-<h3>AI-powered defect & safety hazard monitor</h3>
-
-<img class="img-polaroid" src="/plugin/print_nanny/static/img/wizard_example.jpg"/>
-
-<h3>✨ Real-time alerts for poor adhesion, structural failure, warping, and filament "spaghetti." ✨</h3>
-
-
+<h3>Real-time defect and safety hazard detection ✨</h3>
+<p>by <a href="https://www.bitsy.ai/">leigh@bitsy.ai</a>.</p>
   <p>
-    <a class="btn btn-primary btn-large">
+    <a a href="https://print-nanny.com" class="btn btn-primary btn-large">
       Create Beta Account
     </a>
   </p>
 
-  <p>
-    <a class="btn btn-secondary btn">
-      I already have a token
-    </a>
-  </p>
+<img class="img-polaroid" src="/plugin/print_nanny/static/img/wizard_example.jpg"/>
 
-@privacy policy
-@terms of service
+
+<form class="form">
+      <fieldset>
+          <legend>Connect Account</legend>
+
+          <div class="control-group">
+              <label class="control-label" for="print_nanny_settings_auth_token">Authentication Token</label>
+              <div class="controls">
+                  <input 
+                      id="print_nanny_settings_auth_token" 
+                      class="input-xxlarge"
+                      data-bind="textInput: settingsViewModel.settings.plugins.print_nanny.auth_token" type="text" />
+              </div>
+          </div>
+          <div class="alert alert-block" data-bind="css: alertClass">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+          
+              <h4><span data-bind="text: alertHeader"></span></h4> 
+              <span data-bind="text: alertText"></span>
+          </div>
+          <p>
+          <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
+              Test Connection
+          </button>
+          </p>
+      </fieldset>
+</form>
+
 </div>
 
-<script src="/plugin/print_nanny/static/vendor/swagger-client@3.12.0.browser.min.js"></script>

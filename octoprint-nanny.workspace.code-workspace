@@ -1,19 +1,19 @@
 {
 	"folders": [
 		{
-			"path": "../OctoPrint"
-		},
-		{
-			"path": "../../.octoprint"
-		},
-		{
-			"path": "."
+			"path": "../Octolapse"
 		},
 		{
 			"path": "../OctoPrint-TheSpaghettiDetective"
 		},
 		{
 			"path": "../print_nanny_webapp"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../OctoPrint"
 		}
 	]
 }
