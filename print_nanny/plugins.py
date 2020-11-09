@@ -160,6 +160,9 @@ class BitsyNannyPlugin(
     ## Octoprint api routes + handlers
     ##
     # def register_custom_routes(self):
+    @octoprint.plugin.BlueprintPlugin.route("/getPrediction", methods=["GET"]):
+        # if octolapse or timelapse
+
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def testAuthToken(self):
         auth_token = flask.request.json.get('auth_token')

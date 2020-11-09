@@ -1,0 +1,20 @@
+
+---
+- name: "Install"
+    hosts: octoprint.local
+    gather_facts: false
+    tasks:
+        - name: "Install platform dependencies"
+            become: true
+            apt:
+                pkg:
+                    - python3-dev
+                    - libatlas-base-dev
+                    - libjpeg62-turbo-dev 
+                    - libjpeg-dev
+                    - imagemagick 
+                    - ffmpeg 
+                    - libv4l-dev
+                    - cmake
+                    - zlib1g-dev
+                    - libav-tools

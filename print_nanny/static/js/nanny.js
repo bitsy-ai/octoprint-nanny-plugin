@@ -42,6 +42,25 @@ $(function() {
         self.settingsViewModel = parameters[1];
     }
 
+    function getLatestPrediction(){
+        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'calibrate'
+
+        OctoPrint.postJson(url, {})
+        .done((res) =>{
+                console.debug('Print Nanny verification success')
+                self.alertClass(self.alerts.success.class)
+                self.alertHeader(self.alerts.success.header)
+                self.alertText(self.alerts.success.text)
+            })
+        .fail(e => {
+                console.error('Print Nanny token verification failed', e)
+                self.alertClass(self.alerts.error.class)
+                self.alertHeader(self.alerts.error.header)
+                self.alertText(self.alerts.error.text)
+        });
+        
+    }
+
 
 
     OCTOPRINT_VIEWMODELS.push({
