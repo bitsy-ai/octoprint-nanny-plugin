@@ -9,6 +9,7 @@
             apt:
                 pkg:
                     - python3-dev
+                    - subversion
                     - libatlas-base-dev
                     - libjpeg62-turbo-dev 
                     - libjpeg-dev
@@ -18,3 +19,13 @@
                     - cmake
                     - zlib1g-dev
                     - libav-tools
+                    - libyaml-dev
+        - name: "Clone mjpg-streamer"
+            git:
+                repo: 'https://github.com/jacksonliam/mjpg-streamer.git'
+                dest: /opt/mjpg-streamer
+                version: master
+        - name: "Build mjpg-streamer"
+            community.general.make:
+                chdir: /opt/mjpg-streamer/mjpg-streamer-experimental
+        

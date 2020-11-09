@@ -5,8 +5,14 @@
 <p>If a failure is detected, Print Nanny will send an email to <span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span>
 </p>
 
-<button data-bind="click: getPrediction" type="submit" class="btn btn-primary btn-large">
-    Test
+<img data-bind="attr: { src: imageData }"/>
+
+<button data-bind="click: startPredict" type="submit" class="btn btn-primary btn-large">
+    Start
+</button>
+
+<button data-bind="click: stopPredict" type="submit" class="btn btn-primary btn-large">
+    Stop
 </button>
 
 </div>

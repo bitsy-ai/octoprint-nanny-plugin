@@ -1,0 +1,13 @@
+[Unit]
+Description=MJPG Web Stream
+
+
+[Service]
+
+WorkingDirectory=/opt/mjpg-streamer/mjpg-streamer-experimental
+TimeoutStartSec=0
+Restart=always
+ExecStart=./mjpg_streamer -i "./input_raspicam.so" -o "./output_http.so" -o "./output_file.so -f /tmp/ -s 20 -l mjpg-latest.jpg"
+
+[Install]
+WantedBy=multi-user.target

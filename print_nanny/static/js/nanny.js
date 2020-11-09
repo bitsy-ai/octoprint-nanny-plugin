@@ -40,28 +40,55 @@ $(function() {
         // assign the injected parameters, e.g.:
         self.loginStateViewModel = parameters[0];
         self.settingsViewModel = parameters[1];
-    }
 
-    function getLatestPrediction(){
-        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'calibrate'
+        self.imageData = ko.observable()
+
+
+        OctoPrint.socket.onMessage("*", function(message) {
+            console.log(message)
+            if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
+                self.imageData("data:image/jpeg;base64,"+message.data.payload.image)
+            }
+        });
+    
+        startPredict = function(){
+            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'startPredict'
+
+            OctoPrint.postJson(url, {})
+            .done((res) =>{
+                    console.debug('Starting stream', res)
+                    // self.alertClass(self.alerts.success.class)
+                    // self.alertHeader(self.alerts.success.header)
+                    // self.alertText(self.alerts.success.text)
+                })
+            .fail(e => {
+                    console.error('Failed to start stream', e)
+                    // self.alertClass(self.alerts.error.class)
+                    // self.alertHeader(self.alerts.error.header)
+                    // self.alertText(self.alerts.error.text)
+            });
+            
+        }
+
+    stopPredict = function(){
+        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'stopPredict'
 
         OctoPrint.postJson(url, {})
         .done((res) =>{
-                console.debug('Print Nanny verification success')
-                self.alertClass(self.alerts.success.class)
-                self.alertHeader(self.alerts.success.header)
-                self.alertText(self.alerts.success.text)
+                console.debug('Starting stream', res)
+                // self.alertClass(self.alerts.success.class)
+                // self.alertHeader(self.alerts.success.header)
+                // self.alertText(self.alerts.success.text)
             })
         .fail(e => {
-                console.error('Print Nanny token verification failed', e)
-                self.alertClass(self.alerts.error.class)
-                self.alertHeader(self.alerts.error.header)
-                self.alertText(self.alerts.error.text)
-        });
-        
+                console.error('Failed to start stream', e)
+                // self.alertClass(self.alerts.error.class)
+                // self.alertHeader(self.alerts.error.header)
+                // self.alertText(self.alerts.error.text)
+        });        
     }
 
-
+    }
 
     OCTOPRINT_VIEWMODELS.push({
         construct: PrintNannyTabViewModel,

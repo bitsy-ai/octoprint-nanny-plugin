@@ -3,7 +3,9 @@ import queue
 import glob
 import threading
 import os
+import io
 from urllib.parse import urlparse
+import base64
 
 import flask
 import octoprint.plugin
@@ -14,6 +16,7 @@ from octoprint_octolapse import OctolapsePlugin
 from octoprint_octolapse.messenger_worker import MessengerWorker
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
+from PIL import Image
 
 import bravado.exception
 
@@ -32,19 +35,17 @@ class BitsyNannyPlugin(
         octoprint.plugin.StartupPlugin,                  
     ):
     
-    CALIBRATE_START = 'calibrate'
+    CALIBRATE_START = 'calibrate_start'
     CALIBRATE_DONE = 'calibrate_done'
     CALIBRATE_FAILED = 'calibrate_failed'
     
-    OCTOPRINT_PREDICT_START = 'octoprint_predict'
-    OCTOLAPSE_PREDICT_START = 'octolapse_predict'
-
+    PREDICT_START = 'predict_start'
     PREDICT_DONE = 'predict_done'
     PREDICT_FAILED = 'predict_failed'
 
-    UPLOAD_START = 'upload'
+    UPLOAD_START = 'upload_start'
     UPLOAD_FAILED = 'upload_failed'
-    UPLOAD_DONE = 'uplaod_done'
+    UPLOAD_DONE = 'upload_done'
 
     def __init__(self, *args, **kwargs):
 
@@ -63,9 +64,8 @@ class BitsyNannyPlugin(
         self._predictor = ThreadLocalPredictor()
         self._predict_thread = threading.Thread(target=self._predict_worker)
         self._predict_thread.daemon = True
-        self.queue_event_handlers = {
-            self.OCTOPRINT_PREDICT_START: self._handle_predict,
-            self.OCTOLAPSE_PREDICT_START: self._handle_predict,
+        self._queue_event_handlers = {
+            self.PREDICT_START: self._handle_predict,
             self.UPLOAD_START: self._handle_upload
         }
     
@@ -74,6 +74,30 @@ class BitsyNannyPlugin(
 
         self._reset()
         self._active = True
+        self._predict_thread.start()
+        filename =  self._settings.get(['ringbuffer'])
+        logger.info(f'Reading latest frames from {filename}')
+        self._queue_predict(filename)
+
+    
+    def _queue_predict(self, filename):
+        logger.info(f'predict_start on {filename}')
+        # Octoprint event bus
+        # self._event_bus.fire(self.PREDICT_START, {'ringbuffer': filename })
+        # internal queue
+        return self._queue.put({
+            'type': self.PREDICT_START, 
+            'filename': filename
+        })
+
+    def _queue_upload(self, image, prediction):
+        logger.debug(f'upload_start')
+        return self._queue.put({
+            'original_image': image,
+            'prediction': prediction,
+            'type': self.UPLOAD_START
+        })
+
     
     def _resume(self):
         pass
@@ -83,9 +107,9 @@ class BitsyNannyPlugin(
 
     def _drain(self):
         while self._queue.qsize() > 0:
-            logger.debug(f'Waiting for {self._queue.qsize()} to drain from queue')
+            logger.warning(f'Waiting for {self._queue.qsize()} to drain from queue')
             continue
-        self.active = False
+        self._active = False
 
     def _stop(self):
         pass
@@ -93,47 +117,43 @@ class BitsyNannyPlugin(
     def _reset(self):
         pass
 
-    def _handle_predict(self, data, event_type=None, filename=None, **kwargs):
-        if event_type is None:
-            return
-        
-        if event_type is self.OCTOPRINT_PREDICT_START:
-            image = self.load_image(filename)
+    def _handle_predict(self, filename=None, **kwargs):
+        '''
+            data['ringbuffer'] filename
+        '''
+        if filename is None:
+            raise ValueError('Ringbuffer file not configured')
 
-        elif event_type is self.OCTOLAPSE_PREDICT_START:
-            # data = {
-            #     "type": "snapshot-complete",
-            #     "msg": "Octolapse has completed the current snapshot.",
-            #     "status": status_dict,
-            #     "state": OctolapsePlugin._timelapse.to_state_dict(),
-            #     "main_settings": OctolapsePlugin._octolapse_settings.main_settings.to_dict(),
-            #     'success': success,
-            #     'error': error,
-            #     "snapshot_success": snapshot_success,
-            #     "snapshot_error": snapshot_error
-            # }
-            image = self.load_image(self._octolapse_snapshot_path)
-        else:
-            raise ValueError('Received unrecognized event_type={event_type}'.format(event_type=event_type))
+        image = self._predictor.load_image(filename)
         prediction = self._predictor.predict(image)
-        prediction['image'] = self.postprocess(image, prediction)
+        prediction = self._predictor.postprocess(image, prediction)
 
-        eventManager().fire(self.PREDICT_DONE, prediction)
-        msg = {
-            'original_image': image,
-            'prediction': prediction,
-            'type': self.UPLOAD_START
-        }
-        self._queue.put(msg)
+        ## octoprint event
+        viz_image = Image.fromarray(prediction['viz'], 'RGB')
+        buffer = io.BytesIO()
+        viz_image.save(buffer,format="JPEG")
+        viz_bytes = buffer.getvalue()                     
+
+        self._event_bus.fire(Events.PLUGIN_PRINT_NANNY_PREDICT_DONE, payload={
+            'image':  base64.b64encode(viz_bytes)
+        })
+
+        ## internal queue
+        self._queue_upload(image, prediction)
+        self._queue_predict(filename)
+        ## internal queue
+        
 
     def _handle_upload(self, original_image=None, prediction=None, **kwargs):
-        print(f'uploading {original_image}')
         pass
+        #logger.info(f'uploading {original_image}')
+
 
 
     def _predict_worker(self):
+        logger.info('Started _predict_worker thread')
         while self._active:
-            msg = self._predict_queue.get(block=True)
+            msg = self._queue.get(block=True)
             if not msg.get('type'):
                 logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
 
@@ -153,18 +173,35 @@ class BitsyNannyPlugin(
 
         uri = uri or self._settings.get(['api_host'])
         api_host = urlparse(uri).netloc
-        auth_token = 'Token ' + raw_token or 'Token '+ str(self._settings.get(['auth_token']))
+
+        if raw_token is not None:
+            auth_token = 'Token ' + raw_token
+        else:
+            auth_token = 'Token ' + str(self._settings.get(['auth_token']))
         return api_host, auth_token
 
+    def _predict(self, filename):
+        prediction = self._predictor.predict(image)
+        prediction['image'] = self._predictor.postprocess(image, prediction)
+        return prediction
     ##
     ## Octoprint api routes + handlers
     ##
     # def register_custom_routes(self):
-    @octoprint.plugin.BlueprintPlugin.route("/getPrediction", methods=["GET"]):
-        # if octolapse or timelapse
+    @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
+    def start_predict(self):
+        self._start()
+        return flask.json.jsonify({'ok': 1})
+
+    @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
+    def stop_predict(self):
+        self._drain()
+        self._stop()
+        return flask.json.jsonify({'ok': 1})
+
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
-    def testAuthToken(self):
+    def test_auth_token(self):
         auth_token = flask.request.json.get('auth_token')
         api_uri = flask.request.json.get('api_uri')
 
@@ -251,40 +288,27 @@ class BitsyNannyPlugin(
         self._event_bus.subscribe(Events.PRINT_FAILED, self.on_print_failed)
         self._event_bus.subscribe(Events.PRINT_DONE, self.on_print_done)
 
-        # Octoprint built-in timelapse
-        self._event_bus.subscribe(Events.CAPTURE_DONE, self.on_octoprint_capture_done)
-        self._event_bus.subscribe(Events.MOVIE_DONE, self.on_octoprint_movie_done)
+        # # Octoprint built-in timelapse
+        # self._event_bus.subscribe(Events.CAPTURE_DONE, self.on_octoprint_capture_done)
+        # self._event_bus.subscribe(Events.MOVIE_DONE, self.on_octoprint_movie_done)
 
-        # Octolapse 
-        self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_SNAPSHOT_DONE, self.on_octolapse_capture_done)
-        self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_octolapse_movie_done)
-        self._octolapse_data = os.path.join(
-            os.path.split(self.get_plugin_data_folder())[0],
-            'octolapse',
-            'tmp',
-            'octolapse_snapshots_tmp'
-        )
-        # @todo is this readable from Octoprint settings?
-        self._octolapse_snapshot_path = glob.glob(
-            self._octolapse_data + '/latest_*.jpeg'
-        )
-    def on_octoprint_capture_done(self, payload):
-        '''
-        payload:
-            file: the name of the image file that was saved
-        '''
-        filename = self.load_image(payload['file'])
-        self._predict_queue.put(dict(
-            event_type=self.OCTOPRINT_PREDICT_START,
-            data=dict(filename=filename)
-        ))
+        # # Octolapse 
+        # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_SNAPSHOT_DONE, self.on_octolapse_capture_done)
+        # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_octolapse_movie_done)
+
+        # self._octolapse_data = os.path.join(
+        #     os.path.split(self.get_plugin_data_folder())[0],
+        #     'octolapse',
+        #     'tmp',
+        #     'octolapse_snapshots_tmp'
+        # )
+        # # @todo is this configurable in Octoprint settings?
+        # self._octolapse_latest = glob.glob(
+        #     self._octolapse_data + '/latest_*.jpeg'
+        # )
     def on_octoprint_movie_done(self, payload):
         pass
-    def on_octolapse_capture_done(self, payload):
-        self._predict_queue.put(dict(
-            event_type=self.OCTOLAPSE_PREDICT_START,
-            data=payload
-        ))
+
     def on_octolapse_movie_done(self, payload):
         pass
 
@@ -343,7 +367,8 @@ class BitsyNannyPlugin(
             api_host='localhost:8000',
             api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
             swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
-            prometheus_gateway='https://prom.print-nanny.com'
+            prometheus_gateway='https://prom.print-nanny.com',
+            ringbuffer='/tmp/mjpg-streamer-latest.jpg'
         )
 
         
