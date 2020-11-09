@@ -3,6 +3,7 @@ import queue
 import glob
 import threading
 import os
+from urllib.parse import urlparse
 
 import flask
 import octoprint.plugin
@@ -13,6 +14,7 @@ from octoprint_octolapse import OctolapsePlugin
 from octoprint_octolapse.messenger_worker import MessengerWorker
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
+
 import bravado.exception
 
 from .predictor import ThreadLocalPredictor
@@ -137,6 +139,23 @@ class BitsyNannyPlugin(
 
             handler_fn = self._queue_event_handlers[msg['type']]
             handler_fn(**msg)
+    
+    def _api_auth(self, uri=None, raw_token=None):
+        '''
+            Bravado http_client helper
+            Returns
+                Tuple(api_host, auth_token) 
+        '''
+        # @todo does bravado provide securityDefinitions parser?
+        # securityDefinitions": {"Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}}, 
+        # "token": {"title": "Token", "type": "string", "readOnly": true, "minLength": 1}}},
+
+
+        uri = uri or self._settings.get(['api_host'])
+        api_host = urlparse(uri).netloc
+        auth_token = 'Token ' + raw_token or 'Token '+ str(self._settings.get(['auth_token']))
+        return api_host, auth_token
+
     ##
     ## Octoprint api routes + handlers
     ##
@@ -144,19 +163,31 @@ class BitsyNannyPlugin(
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def testAuthToken(self):
         auth_token = flask.request.json.get('auth_token')
+        api_uri = flask.request.json.get('api_uri')
+
+        swagger_json = flask.request.json.get('swagger_json', self._settings.get(['swagger_json']))
+
+
         self.http_client = RequestsClient()
+
+        # _api_auth() extracts domain name from uri, and prefixes bearer token
+        _api_host, _auth_token = self._api_auth(uri=api_uri, raw_token=auth_token)
+        logger.info(f'Creating http_client from api_host {_api_host} auth_token {_auth_token}')
         self.http_client.set_api_key(
-            self._settings.get(['api_host']),
-            'Token '+ auth_token, 
+            _api_host,
+            _auth_token, 
             param_name='Authorization', 
             param_in='header'
             )
 
-        self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
+        logger.info(f'Loading api spec from {swagger_json}')
+        self.swagger_client = SwaggerClient.from_url(swagger_json, http_client=self.http_client)
 
         try:
             user = self.swagger_client.users.getMe().response().result[0]
             self._settings.set(['auth_token'], auth_token)
+            self._settings.set(['api_uri'], api_uri)
+            self._settings.set(['swagger_json'], swagger_json)
             self._settings.set(['user_email'], user.email)
             self._settings.set(['user_url'], user.url)
 
@@ -176,32 +207,38 @@ class BitsyNannyPlugin(
             "upload_failed"
         ]
     
+    
     def on_settings_save(self, data):
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+
+        api_host, auth_token = self._api_auth(uri=data.get('api_uri'), token=data.get('auth_token'))
+
         self.http_client = RequestsClient()
         self.http_client.set_api_key(
-            self._settings.get(['api_host']),
-            'Token '+ self._settings.get(['auth_token']), 
+            api_host,
+            auth_token,
             param_name='Authorization', 
             param_in='header'
-            )
+        )
 
         self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
+
     def on_settings_initialized(self):
         '''
             Called after plugin initialization
         '''
 
         # Settings available, load api spec
-        self.http_client = RequestsClient()
-        self.http_client.set_api_key(
-            self._settings.get(['api_host']),
-            'Token '+ self._settings.get(['auth_token']), 
-            param_name='Authorization', 
-            param_in='header'
-            )
-
-        self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
+        if self._settings.get(['auth_token']) is not None:
+            self.http_client = RequestsClient()
+            api_host, auth_token = self._api_auth()
+            self.http_client.set_api_key(
+                api_host,
+                auth_token, 
+                param_name='Authorization', 
+                param_in='header'
+                )
+            self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
 
         # Octoprint events
         self._event_bus.subscribe(Events.PRINT_STARTED, self.on_print_started)
@@ -284,15 +321,15 @@ class BitsyNannyPlugin(
 
 
     ## TemplatePlugin mixin
-    def get_template_configs(self):
-        return [
-            # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=wizard#octoprint.plugin.types.TemplatePlugin
-            # "mandatory wizard steps will come first, sorted alphabetically, then the optional steps will follow, also alphabetically."
-            dict(type="wizard", name="Hello from Bitsy.ai!", template="print_nanny_wizard.jinja2"),
-            dict(type="generic", template="print_nanny_generic_settings.jinja2"),
-            #dict(type="wizard", name="Setup Account", template="print_nanny_2_wizard.jinja2"),
+    # def get_template_configs(self):
+    #     return [
+    #         # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=wizard#octoprint.plugin.types.TemplatePlugin
+    #         # "mandatory wizard steps will come first, sorted alphabetically, then the optional steps will follow, also alphabetically."
+    #         dict(type="wizard", name="Print Nanny Setup", template="print_nanny_wizard.jinja2"),
+    #         #dict(type="generic", template="print_nanny_generic_settings.jinja2"),
+    #         #dict(type="wizard", name="Setup Account", template="print_nanny_2_wizard.jinja2"),
 
-        ]
+    #     ]
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
@@ -316,6 +353,7 @@ class BitsyNannyPlugin(
 
         return any([
             self._settings.get(["auth_token"]) is None,
+            self._settings.get(["api_uri"]) is None,
             self._settings.get(["user_email"]) is None,
             self._settings.get(["user_url"]) is None
         ])

@@ -32,25 +32,27 @@
 **
 */
 
-// $(function() {
-//     function PrintNannyViewModel(parameters) {
-//         let self = this;
-//         self.apiClient = null;
-//     }
+$(function() {
+    function PrintNannyTabViewModel(parameters) {
+        let self = this;
+        self.apiClient = null;
 
-//     // assign the injected parameters, e.g.:
-//     self.loginStateViewModel = parameters[0];
-//     self.settingsViewModel = parameters[1];
+        // assign the injected parameters, e.g.:
+        self.loginStateViewModel = parameters[0];
+        self.settingsViewModel = parameters[1];
+    }
 
-//     OCTOPRINT_VIEWMODELS.push({
-//         construct: PrintNannyViewModel,
-//         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-//         dependencies: [ "loginStateViewModel", "settingsViewModel"],
-//         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-//         elements: [ '#tab_plugin_print_nanny' ]
 
-//     });
-// });
+
+    OCTOPRINT_VIEWMODELS.push({
+        construct: PrintNannyTabViewModel,
+        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
+        dependencies: [ "loginStateViewModel", "settingsViewModel"],
+        // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
+        elements: [ '#tab_plugin_print_nanny' ]
+
+    });
+});
 
 
 $(function() {
@@ -76,7 +78,7 @@ $(function() {
         },
         'error': {
             header: 'Error!',
-            text: 'Could not verify token.',
+            text: 'Could not verify token. Email support@print-nanny.com for assistance.',
             class: 'alert-error'
         },
         'success': {
@@ -94,7 +96,11 @@ $(function() {
         }
         const url = OctoPrint.getBlueprintUrl('print_nanny') + 'testAuthToken'
         console.debug('Attempting to verify Print Nanny Auth token...')
-        OctoPrint.postJson(url, {'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token()})
+        OctoPrint.postJson(url, {
+            'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token(),
+            'api_uri': self.settingsViewModel.settings.plugins.print_nanny.api_uri(),
+            'swagger_json': self.settingsViewModel.settings.plugins.print_nanny.swagger_json()
+        })
         .done((res) =>{
                 console.debug('Print Nanny verification success')
                 self.alertClass(self.alerts.success.class)
@@ -115,7 +121,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#settings_plugin_print_nanny', '#wizard_plugin_print_nanny', '#wizard_plugin_print_nanny_2']
+        elements: [ '#settings_plugin_print_nanny', '#wizard_plugin_print_nanny']
 
     });
 });

@@ -4,10 +4,19 @@ import json
 import numpy as np
 import os
 from PIL import Image as PImage
-from typing import TypedDict, Optional
+import tensorflow as tf
+
 from print_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
 
-import tensorflow as tf
+# python 3.8
+try:
+    from typing import TypedDict, Optional
+
+# python 3.7
+except:
+    from typing_extensions import TypedDict
+    from typing import Optional
+
 
 class Prediction(TypedDict):
     num_detections: int
