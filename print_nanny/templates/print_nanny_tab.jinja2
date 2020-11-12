@@ -1,0 +1,20 @@
+<div>
+
+<h2>Print Nanny Cam</h2>
+
+<p>If a failure is detected, Print Nanny will send an email to <span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span>
+</p>
+
+<img data-bind="attr: { src: imageData }"/>
+
+<hr/>
+
+<button data-bind="{click: startPredict, attr: { 'disabled': active } }" type="submit" class="btn btn-primary btn-large">
+    Start Preview
+</button>
+
+<button data-bind="{click: stopPredict, attr: { 'disabled': active !== true } }" type="submit" class="btn btn-primary btn-large">
+    Stop Preview
+</button>
+
+</div>

@@ -32,25 +32,77 @@
 **
 */
 
-// $(function() {
-//     function PrintNannyViewModel(parameters) {
-//         let self = this;
-//         self.apiClient = null;
-//     }
+$(function() {
+    function PrintNannyTabViewModel(parameters) {
+        let self = this;
+        self.apiClient = null;
 
-//     // assign the injected parameters, e.g.:
-//     self.loginStateViewModel = parameters[0];
-//     self.settingsViewModel = parameters[1];
+        // assign the injected parameters, e.g.:
+        self.loginStateViewModel = parameters[0];
+        self.settingsViewModel = parameters[1];
 
-//     OCTOPRINT_VIEWMODELS.push({
-//         construct: PrintNannyViewModel,
-//         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-//         dependencies: [ "loginStateViewModel", "settingsViewModel"],
-//         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-//         elements: [ '#tab_plugin_print_nanny' ]
+        self.imageData = ko.observable()
 
-//     });
-// });
+        self.active = ko.observable(false)
+
+
+        OctoPrint.socket.onMessage("*", function(message) {
+            console.log(message)
+            if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
+                self.imageData("data:image/jpeg;base64,"+message.data.payload.image)
+            }
+        });
+    
+        startPredict = function(){
+            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'startPredict'
+
+            OctoPrint.postJson(url, {})
+            .done((res) =>{
+                    console.debug('Starting stream', res)
+                    self.active(true)
+                    // self.alertClass(self.alerts.success.class)
+                    // self.alertHeader(self.alerts.success.header)
+                    // self.alertText(self.alerts.success.text)
+                })
+            .fail(e => {
+                    console.error('Failed to start stream', e)
+                    // self.alertClass(self.alerts.error.class)
+                    // self.alertHeader(self.alerts.error.header)
+                    // self.alertText(self.alerts.error.text)
+            });
+            
+        }
+
+    stopPredict = function(){
+        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'stopPredict'
+
+        OctoPrint.postJson(url, {})
+        .done((res) =>{
+                self.active(false)
+                console.debug('Starting stream', res)
+                // self.alertClass(self.alerts.success.class)
+                // self.alertHeader(self.alerts.success.header)
+                // self.alertText(self.alerts.success.text)
+            })
+        .fail(e => {
+                console.error('Failed to start stream', e)
+                // self.alertClass(self.alerts.error.class)
+                // self.alertHeader(self.alerts.error.header)
+                // self.alertText(self.alerts.error.text)
+        });        
+    }
+
+    }
+
+    OCTOPRINT_VIEWMODELS.push({
+        construct: PrintNannyTabViewModel,
+        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
+        dependencies: [ "loginStateViewModel", "settingsViewModel"],
+        // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
+        elements: [ '#tab_plugin_print_nanny' ]
+
+    });
+});
 
 
 $(function() {
@@ -76,7 +128,7 @@ $(function() {
         },
         'error': {
             header: 'Error!',
-            text: 'Could not verify token.',
+            text: 'Could not verify token. Email support@print-nanny.com for assistance.',
             class: 'alert-error'
         },
         'success': {
@@ -94,7 +146,11 @@ $(function() {
         }
         const url = OctoPrint.getBlueprintUrl('print_nanny') + 'testAuthToken'
         console.debug('Attempting to verify Print Nanny Auth token...')
-        OctoPrint.postJson(url, {'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token()})
+        OctoPrint.postJson(url, {
+            'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token(),
+            'api_uri': self.settingsViewModel.settings.plugins.print_nanny.api_uri(),
+            'swagger_json': self.settingsViewModel.settings.plugins.print_nanny.swagger_json()
+        })
         .done((res) =>{
                 console.debug('Print Nanny verification success')
                 self.alertClass(self.alerts.success.class)
@@ -115,7 +171,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#settings_plugin_print_nanny', '#wizard_plugin_print_nanny', '#wizard_plugin_print_nanny_2']
+        elements: [ '#settings_plugin_print_nanny', '#wizard_plugin_print_nanny']
 
     });
 });

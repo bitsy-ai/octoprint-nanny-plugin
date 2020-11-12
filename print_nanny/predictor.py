@@ -1,13 +1,25 @@
 
+import base64
+import io
 import threading
 import json
 import numpy as np
 import os
 from PIL import Image as PImage
-from typing import TypedDict, Optional
+import tensorflow as tf
+import requests
+
 from print_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
 
-import tensorflow as tf
+# python 3.8
+try:
+    from typing import TypedDict, Optional
+
+# python 3.7
+except:
+    from typing_extensions import TypedDict
+    from typing import Optional
+
 
 class Prediction(TypedDict):
     num_detections: int
@@ -60,7 +72,13 @@ class ThreadLocalPredictor(threading.local):
             print(self.category_index)
         self.input_shape = self.metadata["inputShape"]
 
-    def load_image(self, filepath: str):
+    def load_url(self, url: str):
+        res = requests.get(url)
+        res.raise_for_status()
+        assert res.headers['content-type'] == 'image/jpeg'
+        img = PImage.open(io.BytesIO(res.content))
+        return img
+    def load_file(self, filepath: str):
         return PImage.open(filepath)
     
     def preprocess(self, image: PImage):

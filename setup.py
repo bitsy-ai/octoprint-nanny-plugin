@@ -34,11 +34,28 @@ plugin_url = "https://github.com/bitsy-ai/octoprint-nanny"
 plugin_license = "MIT"
 
 # Any additional requirements besides OctoPrint should be listed here
+
+arch = os.uname().machine
+
+# TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
+if arch == 'armv7l':
+	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/2.4-rc0/tensorflow-2.4.0rc0-cp37-none-linux_armv7l.whl'
+	
+elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-au/tensorflow-arm-bin/releases/download/2.4-rc0/tensorflow-2.4.0rc0-cp37-none-linux_aarch64.whl'
+	
+elif arch == 'x86_64':
+	tensorflow = "tensorflow==2.4.0rc0",
+else:
+	raise Exception(f'OctoPrint Nanny does not support {arch} architechture. Please open a Github issue.')
+
 plugin_requires = [
+	tensorflow,
 	"numpy",
-	"tensorflow",
-	"pillow"
+	"pillow",
+	"bravado",
+	"typing_extensions ; python_version < '3.8'"
 ]
+
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
@@ -67,9 +84,6 @@ plugin_ignored_packages = []
 
 dependency_links = []
 
-#arch = os.uname().machine
-# if arch == 'arm7l':
-# 	dependency_links.append()
 additional_setup_parameters = {
 	"dependency_links": dependency_links
 }
