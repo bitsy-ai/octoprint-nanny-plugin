@@ -16,12 +16,13 @@ from octoprint_octolapse import OctolapsePlugin
 from octoprint_octolapse.messenger_worker import MessengerWorker
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
+import requests
 from PIL import Image
 
 import bravado.exception
 
 from .predictor import ThreadLocalPredictor
-
+from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
 #Events.PLUGIN_OCTOLAPSE_SNAPSHOT_DONE = 'plugin_octolapse_snapshot_done'
@@ -64,30 +65,33 @@ class BitsyNannyPlugin(
         self._predictor = ThreadLocalPredictor()
         self._predict_thread = threading.Thread(target=self._predict_worker)
         self._predict_thread.daemon = True
+        self._predict_thread.start()
         self._queue_event_handlers = {
             self.PREDICT_START: self._handle_predict,
             self.UPLOAD_START: self._handle_upload
         }
     
     ## Internals
+    # def _preflight(self):
+    #     '''
+    #         Sanity check user settings and input before starting predict loop
+    #     '''
+
+
     def _start(self):
 
         self._reset()
         self._active = True
-        self._predict_thread.start()
-        filename =  self._settings.get(['ringbuffer'])
-        logger.info(f'Reading latest frames from {filename}')
-        self._queue_predict(filename)
+        self._queue_predict()
 
     
-    def _queue_predict(self, filename):
-        logger.info(f'predict_start on {filename}')
+    def _queue_predict(self):
         # Octoprint event bus
         # self._event_bus.fire(self.PREDICT_START, {'ringbuffer': filename })
         # internal queue
         return self._queue.put({
             'type': self.PREDICT_START, 
-            'filename': filename
+            'url': self._settings.global_get(['webcam', 'snapshot'])
         })
 
     def _queue_upload(self, image, prediction):
@@ -109,22 +113,19 @@ class BitsyNannyPlugin(
         while self._queue.qsize() > 0:
             logger.warning(f'Waiting for {self._queue.qsize()} to drain from queue')
             continue
-        self._active = False
 
     def _stop(self):
-        pass
+        self._active = False
+
 
     def _reset(self):
         pass
 
-    def _handle_predict(self, filename=None, **kwargs):
-        '''
-            data['ringbuffer'] filename
-        '''
-        if filename is None:
-            raise ValueError('Ringbuffer file not configured')
+    def _handle_predict(self, url=None, **kwargs):
+        if url is None:
+            raise ValueError('Snapshot url is required')
 
-        image = self._predictor.load_image(filename)
+        image = self._predictor.load_url(url)
         prediction = self._predictor.predict(image)
         prediction = self._predictor.postprocess(image, prediction)
 
@@ -138,9 +139,9 @@ class BitsyNannyPlugin(
             'image':  base64.b64encode(viz_bytes)
         })
 
-        ## internal queue
         self._queue_upload(image, prediction)
-        self._queue_predict(filename)
+        if self._active:
+            self._queue_predict()
         ## internal queue
         
 
@@ -152,7 +153,7 @@ class BitsyNannyPlugin(
 
     def _predict_worker(self):
         logger.info('Started _predict_worker thread')
-        while self._active:
+        while True:
             msg = self._queue.get(block=True)
             if not msg.get('type'):
                 logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
@@ -190,6 +191,19 @@ class BitsyNannyPlugin(
     # def register_custom_routes(self):
     @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
     def start_predict(self):
+
+        # settings test#
+        if self._settings.global_get(['webcam', 'snapshot']) is None:
+            raise WebcamSettingsHTTPException()
+        
+        # url test
+        #try:
+        url = self._settings.global_get(['webcam', 'snapshot'])
+        res = requests.get(url)
+        res.raise_for_status()
+        # except:
+        #     raise SnapshotHTTPException()
+
         self._start()
         return flask.json.jsonify({'ok': 1})
 
@@ -267,6 +281,7 @@ class BitsyNannyPlugin(
         '''
             Called after plugin initialization
         '''
+        
 
         # Settings available, load api spec
         if self._settings.get(['auth_token']) is not None:
@@ -368,7 +383,9 @@ class BitsyNannyPlugin(
             api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
             swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
             prometheus_gateway='https://prom.print-nanny.com',
-            ringbuffer='/tmp/mjpg-streamer-latest.jpg'
+            # ./mjpg_streamer -i "./input_raspicam.so" -o "./output_file.so -f /tmp/ -s 20 -l mjpg-streamer-latest.jpg"
+            # snapshot='file:///tmp/mjpg-streamer-latest.jpg'
+            snapshot='http://localhost:8080?action=snapshot'
         )
 
         

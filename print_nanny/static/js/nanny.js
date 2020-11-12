@@ -43,6 +43,8 @@ $(function() {
 
         self.imageData = ko.observable()
 
+        self.active = ko.observable(false)
+
 
         OctoPrint.socket.onMessage("*", function(message) {
             console.log(message)
@@ -57,6 +59,7 @@ $(function() {
             OctoPrint.postJson(url, {})
             .done((res) =>{
                     console.debug('Starting stream', res)
+                    self.active(true)
                     // self.alertClass(self.alerts.success.class)
                     // self.alertHeader(self.alerts.success.header)
                     // self.alertText(self.alerts.success.text)
@@ -75,6 +78,7 @@ $(function() {
 
         OctoPrint.postJson(url, {})
         .done((res) =>{
+                self.active(false)
                 console.debug('Starting stream', res)
                 // self.alertClass(self.alerts.success.class)
                 // self.alertHeader(self.alerts.success.header)

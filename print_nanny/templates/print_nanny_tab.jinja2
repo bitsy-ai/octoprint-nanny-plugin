@@ -7,12 +7,14 @@
 
 <img data-bind="attr: { src: imageData }"/>
 
-<button data-bind="click: startPredict" type="submit" class="btn btn-primary btn-large">
-    Start
+<hr/>
+
+<button data-bind="{click: startPredict, attr: { 'disabled': active } }" type="submit" class="btn btn-primary btn-large">
+    Start Preview
 </button>
 
-<button data-bind="click: stopPredict" type="submit" class="btn btn-primary btn-large">
-    Stop
+<button data-bind="{click: stopPredict, attr: { 'disabled': active !== true } }" type="submit" class="btn btn-primary btn-large">
+    Stop Preview
 </button>
 
 </div>
