@@ -81,16 +81,14 @@ class PredictEvent(ModelNormal):
                 and the value is attribute type.
         """
         return {
-            'event_data': (str,),  # noqa: E501
             'dt': (datetime,),  # noqa: E501
             'original_image': (str,),  # noqa: E501
             'annotated_image': (str,),  # noqa: E501
+            'event_data': (str,),  # noqa: E501
             'plugin_version': (str,),  # noqa: E501
             'octoprint_version': (str,),  # noqa: E501
-            'id': (int,),  # noqa: E501
             'user': (int,),  # noqa: E501
-            'printer': (int,),  # noqa: E501
-            'print_job': (int,),  # noqa: E501
+            'print_job': (int, none_type,),  # noqa: E501
         }
 
     @cached_property
@@ -99,15 +97,13 @@ class PredictEvent(ModelNormal):
 
 
     attribute_map = {
-        'event_data': 'event_data',  # noqa: E501
         'dt': 'dt',  # noqa: E501
         'original_image': 'original_image',  # noqa: E501
         'annotated_image': 'annotated_image',  # noqa: E501
+        'event_data': 'event_data',  # noqa: E501
         'plugin_version': 'plugin_version',  # noqa: E501
         'octoprint_version': 'octoprint_version',  # noqa: E501
-        'id': 'id',  # noqa: E501
         'user': 'user',  # noqa: E501
-        'printer': 'printer',  # noqa: E501
         'print_job': 'print_job',  # noqa: E501
     }
 
@@ -123,14 +119,14 @@ class PredictEvent(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, event_data, dt, original_image, annotated_image, plugin_version, octoprint_version, *args, **kwargs):  # noqa: E501
+    def __init__(self, dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, *args, **kwargs):  # noqa: E501
         """PredictEvent - a model defined in OpenAPI
 
         Args:
-            event_data (str):
             dt (datetime):
             original_image (str):
             annotated_image (str):
+            event_data (str):
             plugin_version (str):
             octoprint_version (str):
 
@@ -165,10 +161,8 @@ class PredictEvent(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
-            id (int): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
-            printer (int): [optional]  # noqa: E501
-            print_job (int): [optional]  # noqa: E501
+            print_job (int, none_type): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -194,10 +188,10 @@ class PredictEvent(ModelNormal):
         self._configuration = _configuration
         self._visited_composed_classes = _visited_composed_classes + (self.__class__,)
 
-        self.event_data = event_data
         self.dt = dt
         self.original_image = original_image
         self.annotated_image = annotated_image
+        self.event_data = event_data
         self.plugin_version = plugin_version
         self.octoprint_version = octoprint_version
         for var_name, var_value in kwargs.items():

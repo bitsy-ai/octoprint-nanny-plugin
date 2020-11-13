@@ -95,7 +95,23 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *AuthTokenApi* | [**auth_token_create**](docs/AuthTokenApi.md#auth_token_create) | **POST** /api/auth-token/ | 
+*EventsApi* | [**events_octoprint_create**](docs/EventsApi.md#events_octoprint_create) | **POST** /api/events/octoprint/ | 
 *EventsApi* | [**events_predict_create**](docs/EventsApi.md#events_predict_create) | **POST** /api/events/predict/ | 
+*GcodeFilesApi* | [**gcode_files_create**](docs/GcodeFilesApi.md#gcode_files_create) | **POST** /api/gcode_files/ | 
+*GcodeFilesApi* | [**gcode_files_list**](docs/GcodeFilesApi.md#gcode_files_list) | **GET** /api/gcode_files/ | 
+*GcodeFilesApi* | [**gcode_files_partial_update**](docs/GcodeFilesApi.md#gcode_files_partial_update) | **PATCH** /api/gcode_files/{id}/ | 
+*GcodeFilesApi* | [**gcode_files_retrieve**](docs/GcodeFilesApi.md#gcode_files_retrieve) | **GET** /api/gcode_files/{id}/ | 
+*GcodeFilesApi* | [**gcode_files_update**](docs/GcodeFilesApi.md#gcode_files_update) | **PUT** /api/gcode_files/{id}/ | 
+*PrintJobsApi* | [**print_jobs_create**](docs/PrintJobsApi.md#print_jobs_create) | **POST** /api/print_jobs/ | 
+*PrintJobsApi* | [**print_jobs_list**](docs/PrintJobsApi.md#print_jobs_list) | **GET** /api/print_jobs/ | 
+*PrintJobsApi* | [**print_jobs_partial_update**](docs/PrintJobsApi.md#print_jobs_partial_update) | **PATCH** /api/print_jobs/{id}/ | 
+*PrintJobsApi* | [**print_jobs_retrieve**](docs/PrintJobsApi.md#print_jobs_retrieve) | **GET** /api/print_jobs/{id}/ | 
+*PrintJobsApi* | [**print_jobs_update**](docs/PrintJobsApi.md#print_jobs_update) | **PUT** /api/print_jobs/{id}/ | 
+*PrinterProfilesApi* | [**printer_profiles_create**](docs/PrinterProfilesApi.md#printer_profiles_create) | **POST** /api/printer_profiles/ | 
+*PrinterProfilesApi* | [**printer_profiles_list**](docs/PrinterProfilesApi.md#printer_profiles_list) | **GET** /api/printer_profiles/ | 
+*PrinterProfilesApi* | [**printer_profiles_partial_update**](docs/PrinterProfilesApi.md#printer_profiles_partial_update) | **PATCH** /api/printer_profiles/{id}/ | 
+*PrinterProfilesApi* | [**printer_profiles_retrieve**](docs/PrinterProfilesApi.md#printer_profiles_retrieve) | **GET** /api/printer_profiles/{id}/ | 
+*PrinterProfilesApi* | [**printer_profiles_update**](docs/PrinterProfilesApi.md#printer_profiles_update) | **PUT** /api/printer_profiles/{id}/ | 
 *SchemaApi* | [**schema_retrieve**](docs/SchemaApi.md#schema_retrieve) | **GET** /api/schema/ | 
 *UsersApi* | [**users_list**](docs/UsersApi.md#users_list) | **GET** /api/users/ | 
 *UsersApi* | [**users_me_retrieve**](docs/UsersApi.md#users_me_retrieve) | **GET** /api/users/me/ | 
@@ -108,9 +124,20 @@ Class | Method | HTTP request | Description
 
  - [AuthToken](docs/AuthToken.md)
  - [AuthTokenRequest](docs/AuthTokenRequest.md)
+ - [GcodeFile](docs/GcodeFile.md)
+ - [GcodeFileRequest](docs/GcodeFileRequest.md)
+ - [OctoPrintEvent](docs/OctoPrintEvent.md)
+ - [OctoPrintEventRequest](docs/OctoPrintEventRequest.md)
+ - [PatchedGcodeFileRequest](docs/PatchedGcodeFileRequest.md)
+ - [PatchedPrintJobRequest](docs/PatchedPrintJobRequest.md)
+ - [PatchedPrinterProfileRequest](docs/PatchedPrinterProfileRequest.md)
  - [PatchedUserRequest](docs/PatchedUserRequest.md)
  - [PredictEvent](docs/PredictEvent.md)
  - [PredictEventRequest](docs/PredictEventRequest.md)
+ - [PrintJob](docs/PrintJob.md)
+ - [PrintJobRequest](docs/PrintJobRequest.md)
+ - [PrinterProfile](docs/PrinterProfile.md)
+ - [PrinterProfileRequest](docs/PrinterProfileRequest.md)
  - [User](docs/User.md)
  - [UserRequest](docs/UserRequest.md)
 
