@@ -14,9 +14,13 @@ __plugin_name__ = "Bitsy Print Nanny"
 
 __plugin_pythoncompat__ = ">=3,<4" # only python 3
 
+__plugin_version__ = "0.1.0"
+
 def __plugin_load__():
     global __plugin_implementation__
     __plugin_implementation__ = BitsyNannyPlugin()
+
+    __plugin_implementation__.version = __plugin_version__
 
     global __plugin_hooks__
     __plugin_hooks__ = {

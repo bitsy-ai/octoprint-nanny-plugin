@@ -1,3 +1,5 @@
+import asyncio
+from datetime import datetime
 import logging
 import queue
 import glob
@@ -6,14 +8,14 @@ import os
 import io
 from urllib.parse import urlparse
 import base64
+import json
 
 import flask
 import octoprint.plugin
+import pytz
 
 from octoprint.events import eventManager, Events
-import octoprint_octolapse.utility as octolapse_util
-from octoprint_octolapse import OctolapsePlugin
-from octoprint_octolapse.messenger_worker import MessengerWorker
+import octoprint.util
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 import requests
@@ -21,8 +23,16 @@ from PIL import Image
 
 import bravado.exception
 
+import print_nanny_client
+from print_nanny_client.api import events_api, users_api
+
+
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
+from .utils.encoder import NumpyEncoder
+
+
+
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
 #Events.PLUGIN_OCTOLAPSE_SNAPSHOT_DONE = 'plugin_octolapse_snapshot_done'
@@ -59,7 +69,7 @@ class BitsyNannyPlugin(
 
         # Threads
         self._active = False
-        self._queue = queue.Queue()
+        self._predict_queue = queue.Queue()
 
         # @todo compare single-threaded perf against multiprocessing.Pool, Queue, Manager
         self._predictor = ThreadLocalPredictor()
@@ -68,15 +78,31 @@ class BitsyNannyPlugin(
         self._predict_thread.start()
         self._queue_event_handlers = {
             self.PREDICT_START: self._handle_predict,
-            self.UPLOAD_START: self._handle_upload
+            self.PREDICT_DONE: self._handle_predict_upload,
         }
-    
-    ## Internals
-    # def _preflight(self):
-    #     '''
-    #         Sanity check user settings and input before starting predict loop
-    #     '''
 
+
+    
+
+        self._api_thread = threading.Thread(target=self._start_api_loop)
+        self._api_thread.daemon = True
+        self._api_thread.start() 
+
+
+    def _start_api_loop(self):
+        self._event_loop = asyncio.new_event_loop()
+        self._upload_queue = asyncio.Queue(loop=self._event_loop)
+        #consumer = asyncio.ensure_future(self._upload_worker())
+        self._event_loop.run_until_complete(self._upload_worker())
+
+    def _get_metadata(self):
+        return {
+            'printer': self._printer.get_current_data(),
+            'temperature':  self._printer.get_current_temperatures(),
+            'dt': datetime.now(pytz.timezone('America/Los_Angeles')),
+            'plugin_version': self.version,
+            'octoprint_version': octoprint.util.version.get_octoprint_version_string()
+        }
 
     def _start(self):
 
@@ -86,21 +112,19 @@ class BitsyNannyPlugin(
 
     
     def _queue_predict(self):
-        # Octoprint event bus
-        # self._event_bus.fire(self.PREDICT_START, {'ringbuffer': filename })
-        # internal queue
-        return self._queue.put({
-            'type': self.PREDICT_START, 
+
+        return self._predict_queue.put({
+            'event_type': self.PREDICT_START, 
             'url': self._settings.global_get(['webcam', 'snapshot'])
         })
 
-    def _queue_upload(self, image, prediction):
-        logger.debug(f'upload_start')
-        return self._queue.put({
-            'original_image': image,
-            'prediction': prediction,
-            'type': self.UPLOAD_START
-        })
+    def _queue_upload(self, data):
+        metadata = self._get_metadata()
+        data['event_data'].update(metadata)
+        event_type = data['event_type']
+        logger.info(f'Submitting {event_type} to upload_queue')
+
+        self._event_loop.call_soon_threadsafe(self._upload_queue.put_nowait, data)
 
     
     def _resume(self):
@@ -110,8 +134,8 @@ class BitsyNannyPlugin(
         pass
 
     def _drain(self):
-        while self._queue.qsize() > 0:
-            logger.warning(f'Waiting for {self._queue.qsize()} to drain from queue')
+        while self._predict_queue.qsize() > 0 or self._upload_queue.qsize() > 0:
+            logger.warning(f'Waiting for predict_queue: {self._predict_queue.qsize()} upload_queue {self._upload_queue.qsize()} to drain from queue')
             continue
 
     def _stop(self):
@@ -127,10 +151,10 @@ class BitsyNannyPlugin(
 
         image = self._predictor.load_url(url)
         prediction = self._predictor.predict(image)
-        prediction = self._predictor.postprocess(image, prediction)
+        viz_np = self._predictor.postprocess(image, prediction)
 
         ## octoprint event
-        viz_image = Image.fromarray(prediction['viz'], 'RGB')
+        viz_image = Image.fromarray(viz_np, 'RGB')
         buffer = io.BytesIO()
         viz_image.save(buffer,format="JPEG")
         viz_bytes = buffer.getvalue()                     
@@ -139,52 +163,78 @@ class BitsyNannyPlugin(
             'image':  base64.b64encode(viz_bytes)
         })
 
-        self._queue_upload(image, prediction)
+        self._queue_upload({
+                'event_type': self.PREDICT_DONE,
+                'original_image': image,
+                'annotated_image': viz_bytes,
+                'event_data': {
+                    'pediction': prediction
+                }
+        })
         if self._active:
             self._queue_predict()
         ## internal queue
-        
 
-    def _handle_upload(self, original_image=None, prediction=None, **kwargs):
-        pass
-        #logger.info(f'uploading {original_image}')
+    async def _test_api_auth(self, loop=None):
+        with print_nanny_client.ApiClient(self._api_config) as api_client:
+            api_instance = users_api.UsersApi(api_client=api_client)
+            return await api_instance.users_me_retrieve()
+        #     user = await future
+        # return user
 
+    async def _handle_predict_upload(self, event_type, event_data, annotated_image, original_image):
+        with print_nanny_client.ApiClient(self._api_config) as api_client:
+            api_instance = events_api.EventsApi(api_client=api_client)
+            res = await api_instance.events_predict_create(
+                dt=event_data.get('dt'),
+                plugin_version=event_data.get('plugin_version'),
+                octoprint_version=event_data.get('octoprint_version'),
+                original_image=original_image,
+                annotated_image=annotated_image,
+                event_data=json.dumps(event_data, cls=NumpyEncoder)
+            )
+            res = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
+            logger.info(f'Uploaded predict event {res}')
+
+    async def _upload_worker(self):
+        '''
+            async
+        '''
+        logger.info('Started _upload_worker thread')
+        while True:
+            logger.info(f'awaiting _upload_worker ')
+
+            msg = await self._upload_queue.get()
+            logger.info(f'Read _upload_worker msg')
+            if not msg.get('event_type'):
+                logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
+                continue
+            handler_fn = self._queue_event_handlers[msg['event_type']]
+            logger.info(f'Calling handler_fn {handler_fn}')
+            await handler_fn(**msg)
+            self._upload_queue.task_done()
 
 
     def _predict_worker(self):
+        '''
+            sync
+        '''
         logger.info('Started _predict_worker thread')
         while True:
-            msg = self._queue.get(block=True)
-            if not msg.get('type'):
+            msg = self._predict_queue.get(block=True)
+            if not msg.get('event_type'):
                 logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
-
-            handler_fn = self._queue_event_handlers[msg['type']]
+                continue
+            handler_fn = self._queue_event_handlers[msg['event_type']]
             handler_fn(**msg)
-    
-    def _api_auth(self, uri=None, raw_token=None):
-        '''
-            Bravado http_client helper
-            Returns
-                Tuple(api_host, auth_token) 
-        '''
-        # @todo does bravado provide securityDefinitions parser?
-        # securityDefinitions": {"Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}}, 
-        # "token": {"title": "Token", "type": "string", "readOnly": true, "minLength": 1}}},
+            self._predict_queue.task_done()
 
-
-        uri = uri or self._settings.get(['api_host'])
-        api_host = urlparse(uri).netloc
-
-        if raw_token is not None:
-            auth_token = 'Token ' + raw_token
-        else:
-            auth_token = 'Token ' + str(self._settings.get(['auth_token']))
-        return api_host, auth_token
 
     def _predict(self, filename):
         prediction = self._predictor.predict(image)
         prediction['image'] = self._predictor.postprocess(image, prediction)
         return prediction
+
     ##
     ## Octoprint api routes + handlers
     ##
@@ -218,41 +268,17 @@ class BitsyNannyPlugin(
     def test_auth_token(self):
         auth_token = flask.request.json.get('auth_token')
         api_uri = flask.request.json.get('api_uri')
-
-        swagger_json = flask.request.json.get('swagger_json', self._settings.get(['swagger_json']))
-
-
-        self.http_client = RequestsClient()
-
-        # _api_auth() extracts domain name from uri, and prefixes bearer token
-        _api_host, _auth_token = self._api_auth(uri=api_uri, raw_token=auth_token)
-        logger.info(f'Creating http_client from api_host {_api_host} auth_token {_auth_token}')
-        self.http_client.set_api_key(
-            _api_host,
-            _auth_token, 
-            param_name='Authorization', 
-            param_in='header'
-            )
-
-        logger.info(f'Loading api spec from {swagger_json}')
-        self.swagger_client = SwaggerClient.from_url(swagger_json, http_client=self.http_client)
-
-        try:
-            user = self.swagger_client.users.getMe().response().result[0]
-            self._settings.set(['auth_token'], auth_token)
-            self._settings.set(['api_uri'], api_uri)
-            self._settings.set(['swagger_json'], swagger_json)
-            self._settings.set(['user_email'], user.email)
-            self._settings.set(['user_url'], user.url)
-
-            return flask.json.jsonify(user)
-
-        except bravado.exception.HTTPClientError as e:
-            return e.message, e.status_code
         
-    ##
-    ## Octoprint events (register + callbacks)
-    ##
+        self._api_config = print_nanny_client.Configuration(
+            host = self._settings.get(['api_host']),
+        )
+        self._api_config.access_token = self._settings.get(['auth_token'])
+
+        user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
+        logger.info(f'Authenticated as {user}')
+        return flask.json.jsonify(user.to_dict())
+
+
     def register_custom_events(self):
         return [
             "predict_done", 
@@ -265,67 +291,56 @@ class BitsyNannyPlugin(
     def on_settings_save(self, data):
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-        api_host, auth_token = self._api_auth(uri=data.get('api_uri'), token=data.get('auth_token'))
 
-        self.http_client = RequestsClient()
-        self.http_client.set_api_key(
-            api_host,
-            auth_token,
-            param_name='Authorization', 
-            param_in='header'
+        self._api_config = print_nanny_client.Configuration(
+            host = self._settings.get(['api_host']),
+            access_token = self._settings.get(['auth_token'])
         )
 
-        self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
+        user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
+        logger.info(f'Authenticated as {user}')
 
     def on_settings_initialized(self):
         '''
             Called after plugin initialization
         '''
-        
-
-        # Settings available, load api spec
         if self._settings.get(['auth_token']) is not None:
-            self.http_client = RequestsClient()
-            api_host, auth_token = self._api_auth()
-            self.http_client.set_api_key(
-                api_host,
-                auth_token, 
-                param_name='Authorization', 
-                param_in='header'
-                )
-            self.swagger_client = SwaggerClient.from_url(self._settings.get(['swagger_json']), http_client=self.http_client)
+
+            self._api_config = print_nanny_client.Configuration(
+                host = self._settings.get(['api_host']),
+            )
+            self._api_config.access_token = self._settings.get(['auth_token'])
+
+            user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
+            logger.info(f'Authenticated as {user}')
+
 
         # Octoprint events
         self._event_bus.subscribe(Events.PRINT_STARTED, self.on_print_started)
         self._event_bus.subscribe(Events.PRINT_RESUMED, self.on_print_resume)
-
         self._event_bus.subscribe(Events.PRINT_PAUSED, self.on_print_paused)
         self._event_bus.subscribe(Events.PRINT_FAILED, self.on_print_failed)
         self._event_bus.subscribe(Events.PRINT_DONE, self.on_print_done)
+        self._event_bus.subscribe(Events.PRINT_CANCELLED, self.on_print_cancelled)
+        
+        self._event_bus.subscribe(Events.MOVIE_DONE, self.on_movie_done)
+        self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_movie_done)
+        # Octolapse events
 
-        # # Octoprint built-in timelapse
-        # self._event_bus.subscribe(Events.CAPTURE_DONE, self.on_octoprint_capture_done)
-        # self._event_bus.subscribe(Events.MOVIE_DONE, self.on_octoprint_movie_done)
+    def on_movie_done(self, payload):
+        data = { 'event_type': Events.MOVIE_DONE, 'event_data': payload }
+        self._event_data[Events.MOVIE_DONE] = data
+        self._queue_upload(data)
 
-        # # Octolapse 
-        # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_SNAPSHOT_DONE, self.on_octolapse_capture_done)
-        # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_octolapse_movie_done)
+    def on_print_cancelled(self, payload):
 
-        # self._octolapse_data = os.path.join(
-        #     os.path.split(self.get_plugin_data_folder())[0],
-        #     'octolapse',
-        #     'tmp',
-        #     'octolapse_snapshots_tmp'
-        # )
-        # # @todo is this configurable in Octoprint settings?
-        # self._octolapse_latest = glob.glob(
-        #     self._octolapse_data + '/latest_*.jpeg'
-        # )
-    def on_octoprint_movie_done(self, payload):
-        pass
-
-    def on_octolapse_movie_done(self, payload):
-        pass
+        data = {'event_type': Events.PRINT_CANCELLED, 'event_data': payload }
+        self._event_data[Events.PRINT_CANCELLED] = data
+        self._queue_upload(data)
+        
+        self._drain()
+        self._stop()
+        self._reset()
 
     def on_print_started(self, payload):
         '''
@@ -337,16 +352,71 @@ class BitsyNannyPlugin(
                 owner: the user who started the print job (if available)
                 user: the user who started the print job (if available)
         '''
+        data = {'event_type': Events.PRINT_STARTED, 'event_data': payload}
+        self._event_data[Events.PRINT_STARTED] = data
+        self._queue_upload(data)
+        
         self._start()
 
-    def on_print_resume(self):
+    def on_print_resume(self, payload):
+        '''
+            payload
+
+                name: the file’s name
+                path: the file’s path within its storage location
+                origin: the origin storage location of the file, either local or sdcard
+                size: the file’s size in bytes (if available)
+                owner: the user who started the print job (if available)
+                user: the user who resumed the print job (if available)
+        '''
+        data = {'event_type': Events.PRINT_RESUMED, 'event_data': payload }
+        self._event_data[Events.PRINT_RESUMED ] = data
+        self._queue_upload(data)
+        
         self._resume()
     
-    def on_print_paused(self):
+    def on_print_paused(self, payload):
+        '''
+            payload
+                name: the file’s name
+                path: the file’s path within its storage location
+                origin: the origin storage location of the file, either local or sdcard
+                size: the file’s size in bytes (if available)
+                owner: the user who started the print job (if available)
+                user: the user who paused the print job (if available)
+                position: the print head position at the time of pausing (if available, not available if the recording of the position on pause is disabled or the pause is completely handled by the printer’s firmware)
+                position.x: x coordinate, as reported back from the firmware through M114
+                position.y: y coordinate, as reported back from the firmware through M114
+                position.z: z coordinate, as reported back from the firmware through M114
+                position.e: e coordinate (of currently selected extruder), as reported back from the firmware through M114
+                position.t: last tool selected through OctoPrint (note that if you did change the printer’s selected tool outside of OctoPrint, e.g. through the printer controller, or if you are printing from SD, this will NOT be accurate)
+                position.f: last feedrate for move commands sent through OctoPrint (note that if you modified the feedrate outside of OctoPrint, e.g. through the printer controller, or if you are printing from SD, this will NOT be accurate)
+        '''
+
+        data = {'event_type': Events.PRINT_PAUSED, 'event_data': payload }
+        self._event_data[Events.PRINT_PAUSED ] = data
+        self._queue_upload(data)
+
         self._pause()
 
-    def on_print_done(self):
-        pass
+    def on_print_done(self, payload):
+        '''
+            payload
+                name: the file’s name
+                path: the file’s path within its storage location
+                origin: the origin storage location of the file, either local or sdcard
+                size: the file’s size in bytes (if available)
+                owner: the user who started the print job (if available)
+                time: the time needed for the print, in seconds (float)
+        '''
+        data = {'event_type': Events.PRINT_DONE, 'event_data': payload }
+        self._event_data[Events.PRINT_DONE ] = data
+        self._queue_upload(data)
+  
+
+        self._drain()
+        self._stop()
+        self._reset()
 
     def on_print_failed(self, payload):
         '''
@@ -358,6 +428,11 @@ class BitsyNannyPlugin(
             time: the elapsed time of the print when it failed, in seconds (float)
             reason: the reason the print failed, either cancelled or error
         '''
+        data = {'event_type': Events.PRINT_FAILED, 'event_data': payload  }
+        self._event_data[Events.PRINT_FAILED ] = data
+        self._queue_upload(data)
+
+        self._drain()
         self._stop()
         self._reset()
 
@@ -379,13 +454,12 @@ class BitsyNannyPlugin(
             auth_token=None,
             user_email=None,
             user_url=None,
-            api_host='localhost:8000',
+            api_host='http://localhost:8000',
             api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
             swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
             prometheus_gateway='https://prom.print-nanny.com',
             # ./mjpg_streamer -i "./input_raspicam.so" -o "./output_file.so -f /tmp/ -s 20 -l mjpg-streamer-latest.jpg"
             # snapshot='file:///tmp/mjpg-streamer-latest.jpg'
-            snapshot='http://localhost:8080?action=snapshot'
         )
 
         

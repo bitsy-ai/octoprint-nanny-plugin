@@ -8,6 +8,7 @@ import os
 from PIL import Image as PImage
 import tensorflow as tf
 import requests
+import pytz
 
 from print_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
 
@@ -33,7 +34,7 @@ class ThreadLocalPredictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), 'data') 
 
     def __init__(self, 
-        min_score_thresh=0.5, 
+        min_score_thresh=0.66, 
         max_boxes_to_draw=10, 
         model_version='tflite-print3d-2020-10-23T18:00:41.136Z',
         model_filename='model.tflite',
@@ -100,9 +101,8 @@ class ThreadLocalPredictor(threading.local):
     def postprocess(self, image: PImage, prediction: Prediction) -> Prediction:
 
         image_np = np.asarray(image).copy()
-        prediction = prediction.copy()
 
-        prediction['viz'] = visualize_boxes_and_labels_on_image_array(
+        viz = visualize_boxes_and_labels_on_image_array(
             image_np,
             prediction['detection_boxes'],
             prediction['detection_classes'],
@@ -113,7 +113,7 @@ class ThreadLocalPredictor(threading.local):
             min_score_thresh=self.min_score_thresh,
             max_boxes_to_draw=self.max_boxes_to_draw
         )
-        return prediction
+        return viz
 
     def predict(self, image: PImage) -> Prediction:
         tensor = self.preprocess(image)
