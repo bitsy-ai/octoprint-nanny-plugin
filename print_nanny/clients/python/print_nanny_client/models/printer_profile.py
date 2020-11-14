@@ -43,7 +43,7 @@ class PrinterProfile(object):
         'axes_z_speed': 'int',
         'extruder_count': 'int',
         'extruder_nozzle_diameter': 'float',
-        'extruder_offsets': 'list[float]',
+        'extruder_offsets': 'list[list[float]]',
         'extruder_shared_nozzle': 'bool',
         'heated_bed': 'bool',
         'heated_chamber': 'bool',
@@ -431,7 +431,7 @@ class PrinterProfile(object):
 
 
         :return: The extruder_offsets of this PrinterProfile.  # noqa: E501
-        :rtype: list[float]
+        :rtype: list[list[float]]
         """
         return self._extruder_offsets
 
@@ -441,7 +441,7 @@ class PrinterProfile(object):
 
 
         :param extruder_offsets: The extruder_offsets of this PrinterProfile.  # noqa: E501
-        :type extruder_offsets: list[float]
+        :type extruder_offsets: list[list[float]]
         """
 
         self._extruder_offsets = extruder_offsets

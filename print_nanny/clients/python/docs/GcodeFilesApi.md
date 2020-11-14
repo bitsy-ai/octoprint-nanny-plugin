@@ -136,7 +136,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **gcode_files_list**
-> list[GcodeFile] gcode_files_list(file_hash=file_hash, name=name)
+> list[GcodeFile] gcode_files_list()
 
 
 
@@ -175,11 +175,9 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = print_nanny_client.GcodeFilesApi(api_client)
-    file_hash = 'file_hash_example' # str | file_hash (optional)
-name = 'name_example' # str | name (optional)
-
+    
     try:
-        api_response = api_instance.gcode_files_list(file_hash=file_hash, name=name)
+        api_response = api_instance.gcode_files_list()
         pprint(api_response)
     except ApiException as e:
         print("Exception when calling GcodeFilesApi->gcode_files_list: %s\n" % e)
@@ -218,22 +216,16 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = print_nanny_client.GcodeFilesApi(api_client)
-    file_hash = 'file_hash_example' # str | file_hash (optional)
-name = 'name_example' # str | name (optional)
-
+    
     try:
-        api_response = api_instance.gcode_files_list(file_hash=file_hash, name=name)
+        api_response = api_instance.gcode_files_list()
         pprint(api_response)
     except ApiException as e:
         print("Exception when calling GcodeFilesApi->gcode_files_list: %s\n" % e)
 ```
 
 ### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **file_hash** | **str**| file_hash | [optional] 
- **name** | **str**| name | [optional] 
+This endpoint does not need any parameter.
 
 ### Return type
 
@@ -625,7 +617,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **gcode_files_update_or_create**
-> GcodeFile gcode_files_update_or_create(name, file, file_hash)
+> PrinterProfile gcode_files_update_or_create(name, file, file_hash)
 
 
 
@@ -729,7 +721,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GcodeFile**](GcodeFile.md)
+[**PrinterProfile**](PrinterProfile.md)
 
 ### Authorization
 
@@ -743,7 +735,9 @@ Name | Type | Description  | Notes
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** |  |  -  |
+**400** |  |  -  |
+**202** |  |  -  |
+**201** |  |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

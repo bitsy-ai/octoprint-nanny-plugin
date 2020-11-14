@@ -130,7 +130,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **printer_profiles_list**
-> list[PrinterProfile] printer_profiles_list()
+> list[PrinterProfile] printer_profiles_list(name=name, user=user)
 
 
 
@@ -169,9 +169,11 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = print_nanny_client.PrinterProfilesApi(api_client)
-    
+    name = 'name_example' # str | name (optional)
+user = 'user_example' # str | user (optional)
+
     try:
-        api_response = api_instance.printer_profiles_list()
+        api_response = api_instance.printer_profiles_list(name=name, user=user)
         pprint(api_response)
     except ApiException as e:
         print("Exception when calling PrinterProfilesApi->printer_profiles_list: %s\n" % e)
@@ -210,16 +212,22 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = print_nanny_client.PrinterProfilesApi(api_client)
-    
+    name = 'name_example' # str | name (optional)
+user = 'user_example' # str | user (optional)
+
     try:
-        api_response = api_instance.printer_profiles_list()
+        api_response = api_instance.printer_profiles_list(name=name, user=user)
         pprint(api_response)
     except ApiException as e:
         print("Exception when calling PrinterProfilesApi->printer_profiles_list: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**| name | [optional] 
+ **user** | **str**| user | [optional] 
 
 ### Return type
 
@@ -711,7 +719,9 @@ Name | Type | Description  | Notes
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** |  |  -  |
+**400** |  |  -  |
+**202** |  |  -  |
+**201** |  |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

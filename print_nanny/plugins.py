@@ -32,6 +32,7 @@ from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
 import print_nanny_client.models.printer_profile_request
 import print_nanny_client.models.octo_print_event_request
+import print_nanny_client.models.print_job_request
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -213,6 +214,7 @@ class BitsyNannyPlugin(
         async with print_nanny_client.ApiClient(self._api_config) as api_client:
 
             # printer profile
+            #import pdb; pdb.set_trace()
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
                 request = print_nanny_client.models.printer_profile_request.PrinterProfileRequest(
@@ -239,9 +241,7 @@ class BitsyNannyPlugin(
                     volume_origin=event_data['printer_profile']['volume']['origin'],
                     volume_width=event_data['printer_profile']['volume']['width']
                 )
-                printer_profile = await api_instance.printer_profiles_update_or_create(
-                    request
-                )
+                printer_profile = await api_instance.printer_profiles_update_or_create(request)
                 self._api_objects['printer_profile'] = printer_profile
             else:
                 printer_profile = self._api_objects.get('printer_profile')
@@ -262,14 +262,16 @@ class BitsyNannyPlugin(
 
 
             # print job
+            import pdb; pdb.set_trace()
             api_instance = PrintJobsApi(api_client=api_client)
-            print_job = await api_instance.print_jobs_create(
+            request = print_nanny_client.models.print_job_request.PrintJobsRequest(                
                 gcode_file=gcode_file,
                 gcode_file_hash=file_hash,
                 dt=event_data['dt'],
                 name=event_data['name'],
                 printer_profile=printer_profile
-            )
+                )
+            print_job = await api_instance.print_jobs_create(request)
             self._api_objects['print_job'] = print_job
 
 

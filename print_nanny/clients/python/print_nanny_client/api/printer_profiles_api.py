@@ -181,6 +181,10 @@ class PrinterProfilesApi(object):
         >>> thread = api.printer_profiles_list(async_req=True)
         >>> result = thread.get()
 
+        :param name: name
+        :type name: str
+        :param user: user
+        :type user: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the urllib3.HTTPResponse object will
@@ -208,6 +212,10 @@ class PrinterProfilesApi(object):
         >>> thread = api.printer_profiles_list_with_http_info(async_req=True)
         >>> result = thread.get()
 
+        :param name: name
+        :type name: str
+        :param user: user
+        :type user: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _return_http_data_only: response data without head status code
@@ -234,6 +242,8 @@ class PrinterProfilesApi(object):
         local_var_params = locals()
 
         all_params = [
+            'name',
+            'user'
         ]
         all_params.extend(
             [
@@ -259,6 +269,10 @@ class PrinterProfilesApi(object):
         path_params = {}
 
         query_params = []
+        if 'name' in local_var_params and local_var_params['name'] is not None:  # noqa: E501
+            query_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'user' in local_var_params and local_var_params['user'] is not None:  # noqa: E501
+            query_params.append(('user', local_var_params['user']))  # noqa: E501
 
         header_params = {}
 
@@ -836,7 +850,9 @@ class PrinterProfilesApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            200: "PrinterProfile",
+            400: "PrinterProfile",
+            202: "PrinterProfile",
+            201: "PrinterProfile",
         }
 
         return self.api_client.call_api(

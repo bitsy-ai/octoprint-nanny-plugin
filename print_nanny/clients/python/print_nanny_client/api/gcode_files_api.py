@@ -209,10 +209,6 @@ class GcodeFilesApi(object):
         >>> thread = api.gcode_files_list(async_req=True)
         >>> result = thread.get()
 
-        :param file_hash: file_hash
-        :type file_hash: str
-        :param name: name
-        :type name: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the urllib3.HTTPResponse object will
@@ -240,10 +236,6 @@ class GcodeFilesApi(object):
         >>> thread = api.gcode_files_list_with_http_info(async_req=True)
         >>> result = thread.get()
 
-        :param file_hash: file_hash
-        :type file_hash: str
-        :param name: name
-        :type name: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _return_http_data_only: response data without head status code
@@ -270,8 +262,6 @@ class GcodeFilesApi(object):
         local_var_params = locals()
 
         all_params = [
-            'file_hash',
-            'name'
         ]
         all_params.extend(
             [
@@ -297,10 +287,6 @@ class GcodeFilesApi(object):
         path_params = {}
 
         query_params = []
-        if 'file_hash' in local_var_params and local_var_params['file_hash'] is not None:  # noqa: E501
-            query_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
-        if 'name' in local_var_params and local_var_params['name'] is not None:  # noqa: E501
-            query_params.append(('name', local_var_params['name']))  # noqa: E501
 
         header_params = {}
 
@@ -837,7 +823,7 @@ class GcodeFilesApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GcodeFile
+        :rtype: PrinterProfile
         """
         kwargs['_return_http_data_only'] = True
         return self.gcode_files_update_or_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
@@ -877,7 +863,7 @@ class GcodeFilesApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
         """
 
         local_var_params = locals()
@@ -954,7 +940,9 @@ class GcodeFilesApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            200: "GcodeFile",
+            400: "PrinterProfile",
+            202: "PrinterProfile",
+            201: "PrinterProfile",
         }
 
         return self.api_client.call_api(
