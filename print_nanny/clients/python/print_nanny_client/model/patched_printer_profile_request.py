@@ -127,7 +127,6 @@ class PatchedPrinterProfileRequest(ModelNormal):
             'volume_form_factor': (str,),  # noqa: E501
             'volume_height': (float,),  # noqa: E501
             'volume_origin': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
         }
 
     @cached_property
@@ -156,7 +155,6 @@ class PatchedPrinterProfileRequest(ModelNormal):
         'volume_form_factor': 'volume_formFactor',  # noqa: E501
         'volume_height': 'volume_height',  # noqa: E501
         'volume_origin': 'volume_origin',  # noqa: E501
-        'user': 'user',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -225,7 +223,6 @@ class PatchedPrinterProfileRequest(ModelNormal):
             volume_form_factor (str): [optional]  # noqa: E501
             volume_height (float): [optional]  # noqa: E501
             volume_origin (str): [optional]  # noqa: E501
-            user (int): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

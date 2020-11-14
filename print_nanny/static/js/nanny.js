@@ -133,7 +133,7 @@ $(function() {
         },
         'success': {
             header: 'Nice!',
-            text: 'Your token is verified',
+            text: 'Your token is verified.',
             class: 'alert-success'
         }
     };

@@ -102,6 +102,7 @@ Class | Method | HTTP request | Description
 *GcodeFilesApi* | [**gcode_files_partial_update**](docs/GcodeFilesApi.md#gcode_files_partial_update) | **PATCH** /api/gcode_files/{id}/ | 
 *GcodeFilesApi* | [**gcode_files_retrieve**](docs/GcodeFilesApi.md#gcode_files_retrieve) | **GET** /api/gcode_files/{id}/ | 
 *GcodeFilesApi* | [**gcode_files_update**](docs/GcodeFilesApi.md#gcode_files_update) | **PUT** /api/gcode_files/{id}/ | 
+*GcodeFilesApi* | [**gcode_files_update_or_create**](docs/GcodeFilesApi.md#gcode_files_update_or_create) | **POST** /api/gcode_files/update_or_create/ | 
 *PrintJobsApi* | [**print_jobs_create**](docs/PrintJobsApi.md#print_jobs_create) | **POST** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_list**](docs/PrintJobsApi.md#print_jobs_list) | **GET** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_partial_update**](docs/PrintJobsApi.md#print_jobs_partial_update) | **PATCH** /api/print_jobs/{id}/ | 
@@ -112,6 +113,7 @@ Class | Method | HTTP request | Description
 *PrinterProfilesApi* | [**printer_profiles_partial_update**](docs/PrinterProfilesApi.md#printer_profiles_partial_update) | **PATCH** /api/printer_profiles/{id}/ | 
 *PrinterProfilesApi* | [**printer_profiles_retrieve**](docs/PrinterProfilesApi.md#printer_profiles_retrieve) | **GET** /api/printer_profiles/{id}/ | 
 *PrinterProfilesApi* | [**printer_profiles_update**](docs/PrinterProfilesApi.md#printer_profiles_update) | **PUT** /api/printer_profiles/{id}/ | 
+*PrinterProfilesApi* | [**printer_profiles_update_or_create**](docs/PrinterProfilesApi.md#printer_profiles_update_or_create) | **POST** /api/printer_profiles/update_or_create/ | 
 *SchemaApi* | [**schema_retrieve**](docs/SchemaApi.md#schema_retrieve) | **GET** /api/schema/ | 
 *UsersApi* | [**users_list**](docs/UsersApi.md#users_list) | **GET** /api/users/ | 
 *UsersApi* | [**users_me_retrieve**](docs/UsersApi.md#users_me_retrieve) | **GET** /api/users/me/ | 

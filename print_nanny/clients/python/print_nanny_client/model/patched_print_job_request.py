@@ -83,10 +83,9 @@ class PatchedPrintJobRequest(ModelNormal):
         return {
             'dt': (datetime,),  # noqa: E501
             'name': (str,),  # noqa: E501
-            'gcode_file_hash': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
+            'gcode_file_hash': (str, none_type,),  # noqa: E501
             'printer_profile': (int,),  # noqa: E501
-            'gcode_file': (int,),  # noqa: E501
+            'gcode_file': (int, none_type,),  # noqa: E501
         }
 
     @cached_property
@@ -98,7 +97,6 @@ class PatchedPrintJobRequest(ModelNormal):
         'dt': 'dt',  # noqa: E501
         'name': 'name',  # noqa: E501
         'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
-        'user': 'user',  # noqa: E501
         'printer_profile': 'printer_profile',  # noqa: E501
         'gcode_file': 'gcode_file',  # noqa: E501
     }
@@ -151,10 +149,9 @@ class PatchedPrintJobRequest(ModelNormal):
                                 _visited_composed_classes = (Animal,)
             dt (datetime): [optional]  # noqa: E501
             name (str): [optional]  # noqa: E501
-            gcode_file_hash (str): [optional]  # noqa: E501
-            user (int): [optional]  # noqa: E501
+            gcode_file_hash (str, none_type): [optional]  # noqa: E501
             printer_profile (int): [optional]  # noqa: E501
-            gcode_file (int): [optional]  # noqa: E501
+            gcode_file (int, none_type): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

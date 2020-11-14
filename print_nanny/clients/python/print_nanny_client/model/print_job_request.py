@@ -83,10 +83,9 @@ class PrintJobRequest(ModelNormal):
         return {
             'dt': (datetime,),  # noqa: E501
             'name': (str,),  # noqa: E501
-            'gcode_file_hash': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
             'printer_profile': (int,),  # noqa: E501
-            'gcode_file': (int,),  # noqa: E501
+            'gcode_file_hash': (str, none_type,),  # noqa: E501
+            'gcode_file': (int, none_type,),  # noqa: E501
         }
 
     @cached_property
@@ -97,9 +96,8 @@ class PrintJobRequest(ModelNormal):
     attribute_map = {
         'dt': 'dt',  # noqa: E501
         'name': 'name',  # noqa: E501
-        'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
-        'user': 'user',  # noqa: E501
         'printer_profile': 'printer_profile',  # noqa: E501
+        'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
         'gcode_file': 'gcode_file',  # noqa: E501
     }
 
@@ -115,16 +113,13 @@ class PrintJobRequest(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, dt, name, gcode_file_hash, user, printer_profile, gcode_file, *args, **kwargs):  # noqa: E501
+    def __init__(self, dt, name, printer_profile, *args, **kwargs):  # noqa: E501
         """PrintJobRequest - a model defined in OpenAPI
 
         Args:
             dt (datetime):
             name (str):
-            gcode_file_hash (str):
-            user (int):
             printer_profile (int):
-            gcode_file (int):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -157,6 +152,8 @@ class PrintJobRequest(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            gcode_file_hash (str, none_type): [optional]  # noqa: E501
+            gcode_file (int, none_type): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -184,10 +181,7 @@ class PrintJobRequest(ModelNormal):
 
         self.dt = dt
         self.name = name
-        self.gcode_file_hash = gcode_file_hash
-        self.user = user
         self.printer_profile = printer_profile
-        self.gcode_file = gcode_file
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

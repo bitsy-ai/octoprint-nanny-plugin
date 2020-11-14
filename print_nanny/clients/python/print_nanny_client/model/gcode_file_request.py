@@ -84,7 +84,6 @@ class GcodeFileRequest(ModelNormal):
             'name': (str,),  # noqa: E501
             'file': (file_type,),  # noqa: E501
             'file_hash': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
         }
 
     @cached_property
@@ -96,7 +95,6 @@ class GcodeFileRequest(ModelNormal):
         'name': 'name',  # noqa: E501
         'file': 'file',  # noqa: E501
         'file_hash': 'file_hash',  # noqa: E501
-        'user': 'user',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -111,14 +109,13 @@ class GcodeFileRequest(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, name, file, file_hash, user, *args, **kwargs):  # noqa: E501
+    def __init__(self, name, file, file_hash, *args, **kwargs):  # noqa: E501
         """GcodeFileRequest - a model defined in OpenAPI
 
         Args:
             name (str):
             file (file_type):
             file_hash (str):
-            user (int):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -179,7 +176,6 @@ class GcodeFileRequest(ModelNormal):
         self.name = name
         self.file = file
         self.file_hash = file_hash
-        self.user = user
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

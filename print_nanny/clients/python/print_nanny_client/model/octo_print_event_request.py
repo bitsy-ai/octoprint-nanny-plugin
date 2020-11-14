@@ -89,7 +89,6 @@ class OctoPrintEventRequest(ModelNormal):
             'event_data': ({str: (bool, date, datetime, dict, float, int, list, str, none_type)},),  # noqa: E501
             'plugin_version': (str,),  # noqa: E501
             'octoprint_version': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
             'print_job': (int, none_type,),  # noqa: E501
         }
 
@@ -104,7 +103,6 @@ class OctoPrintEventRequest(ModelNormal):
         'event_data': 'event_data',  # noqa: E501
         'plugin_version': 'plugin_version',  # noqa: E501
         'octoprint_version': 'octoprint_version',  # noqa: E501
-        'user': 'user',  # noqa: E501
         'print_job': 'print_job',  # noqa: E501
     }
 
@@ -120,7 +118,7 @@ class OctoPrintEventRequest(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, dt, event_type, event_data, plugin_version, octoprint_version, user, *args, **kwargs):  # noqa: E501
+    def __init__(self, dt, event_type, event_data, plugin_version, octoprint_version, *args, **kwargs):  # noqa: E501
         """OctoPrintEventRequest - a model defined in OpenAPI
 
         Args:
@@ -129,7 +127,6 @@ class OctoPrintEventRequest(ModelNormal):
             event_data ({str: (bool, date, datetime, dict, float, int, list, str, none_type)}):
             plugin_version (str):
             octoprint_version (str):
-            user (int):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -193,7 +190,6 @@ class OctoPrintEventRequest(ModelNormal):
         self.event_data = event_data
         self.plugin_version = plugin_version
         self.octoprint_version = octoprint_version
-        self.user = user
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

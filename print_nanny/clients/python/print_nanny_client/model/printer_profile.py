@@ -127,8 +127,8 @@ class PrinterProfile(ModelNormal):
             'volume_form_factor': (str,),  # noqa: E501
             'volume_height': (float,),  # noqa: E501
             'volume_origin': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
             'id': (int,),  # noqa: E501
+            'user': (int,),  # noqa: E501
         }
 
     @cached_property
@@ -157,8 +157,8 @@ class PrinterProfile(ModelNormal):
         'volume_form_factor': 'volume_formFactor',  # noqa: E501
         'volume_height': 'volume_height',  # noqa: E501
         'volume_origin': 'volume_origin',  # noqa: E501
-        'user': 'user',  # noqa: E501
         'id': 'id',  # noqa: E501
+        'user': 'user',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -173,7 +173,7 @@ class PrinterProfile(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, axes_e_inverted, axes_e_speed, axes_x_speed, axes_y_inverted, axes_y_speed, axes_z_inverted, axes_z_speed, extruder_count, extruder_nozzle_diameter, extruder_offsets, extruder_shared_nozzle, heated_bed, heated_chamber, model, name, volume_custom_box, volume_depth, volume_form_factor, volume_height, volume_origin, user, *args, **kwargs):  # noqa: E501
+    def __init__(self, axes_e_inverted, axes_e_speed, axes_x_speed, axes_y_inverted, axes_y_speed, axes_z_inverted, axes_z_speed, extruder_count, extruder_nozzle_diameter, extruder_offsets, extruder_shared_nozzle, heated_bed, heated_chamber, model, name, volume_custom_box, volume_depth, volume_form_factor, volume_height, volume_origin, *args, **kwargs):  # noqa: E501
         """PrinterProfile - a model defined in OpenAPI
 
         Args:
@@ -197,7 +197,6 @@ class PrinterProfile(ModelNormal):
             volume_form_factor (str):
             volume_height (float):
             volume_origin (str):
-            user (int):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -231,6 +230,7 @@ class PrinterProfile(ModelNormal):
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
+            user (int): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -276,7 +276,6 @@ class PrinterProfile(ModelNormal):
         self.volume_form_factor = volume_form_factor
         self.volume_height = volume_height
         self.volume_origin = volume_origin
-        self.user = user
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

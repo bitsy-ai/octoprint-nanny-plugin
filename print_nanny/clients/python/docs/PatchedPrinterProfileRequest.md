@@ -23,7 +23,6 @@ Name | Type | Description | Notes
 **volume_form_factor** | **str** |  | [optional] 
 **volume_height** | **float** |  | [optional] 
 **volume_origin** | **str** |  | [optional] 
-**user** | **int** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

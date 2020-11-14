@@ -23,8 +23,6 @@ from print_nanny_client.model_utils import (  # noqa: F401
     validate_and_convert_types
 )
 from print_nanny_client.model.gcode_file import GcodeFile
-from print_nanny_client.model.gcode_file_request import GcodeFileRequest
-from print_nanny_client.model.patched_gcode_file_request import PatchedGcodeFileRequest
 
 
 class GcodeFilesApi(object):
@@ -41,7 +39,9 @@ class GcodeFilesApi(object):
 
         def __gcode_files_create(
             self,
-            gcode_file_request,
+            name,
+            file,
+            file_hash,
             **kwargs
         ):
             """gcode_files_create  # noqa: E501
@@ -49,11 +49,13 @@ class GcodeFilesApi(object):
             This method makes a synchronous HTTP request by default. To make an
             asynchronous HTTP request, please pass async_req=True
 
-            >>> thread = api.gcode_files_create(gcode_file_request, async_req=True)
+            >>> thread = api.gcode_files_create(name, file, file_hash, async_req=True)
             >>> result = thread.get()
 
             Args:
-                gcode_file_request (GcodeFileRequest):
+                name (str):
+                file (file_type):
+                file_hash (str):
 
             Keyword Args:
                 _return_http_data_only (bool): response data without head status
@@ -100,8 +102,12 @@ class GcodeFilesApi(object):
                 '_check_return_type', True
             )
             kwargs['_host_index'] = kwargs.get('_host_index')
-            kwargs['gcode_file_request'] = \
-                gcode_file_request
+            kwargs['name'] = \
+                name
+            kwargs['file'] = \
+                file
+            kwargs['file_hash'] = \
+                file_hash
             return self.call_with_http_info(**kwargs)
 
         self.gcode_files_create = Endpoint(
@@ -118,31 +124,52 @@ class GcodeFilesApi(object):
             },
             params_map={
                 'all': [
-                    'gcode_file_request',
+                    'name',
+                    'file',
+                    'file_hash',
                 ],
                 'required': [
-                    'gcode_file_request',
+                    'name',
+                    'file',
+                    'file_hash',
                 ],
                 'nullable': [
                 ],
                 'enum': [
                 ],
                 'validation': [
+                    'name',
+                    'file_hash',
                 ]
             },
             root_map={
                 'validations': {
+                    ('name',): {
+                        'max_length': 255,
+                    },
+                    ('file_hash',): {
+                        'max_length': 255,
+                    },
                 },
                 'allowed_values': {
                 },
                 'openapi_types': {
-                    'gcode_file_request':
-                        (GcodeFileRequest,),
+                    'name':
+                        (str,),
+                    'file':
+                        (file_type,),
+                    'file_hash':
+                        (str,),
                 },
                 'attribute_map': {
+                    'name': 'name',
+                    'file': 'file',
+                    'file_hash': 'file_hash',
                 },
                 'location_map': {
-                    'gcode_file_request': 'body',
+                    'name': 'form',
+                    'file': 'form',
+                    'file_hash': 'form',
                 },
                 'collection_format_map': {
                 }
@@ -152,9 +179,8 @@ class GcodeFilesApi(object):
                     'application/json'
                 ],
                 'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded'
                 ]
             },
             api_client=api_client,
@@ -175,6 +201,8 @@ class GcodeFilesApi(object):
 
 
             Keyword Args:
+                file_hash (str): file_hash. [optional]
+                name (str): name. [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
                 _preload_content (bool): if False, the urllib3.HTTPResponse object
@@ -235,6 +263,8 @@ class GcodeFilesApi(object):
             },
             params_map={
                 'all': [
+                    'file_hash',
+                    'name',
                 ],
                 'required': [],
                 'nullable': [
@@ -250,10 +280,18 @@ class GcodeFilesApi(object):
                 'allowed_values': {
                 },
                 'openapi_types': {
+                    'file_hash':
+                        (str,),
+                    'name':
+                        (str,),
                 },
                 'attribute_map': {
+                    'file_hash': 'file_hash',
+                    'name': 'name',
                 },
                 'location_map': {
+                    'file_hash': 'query',
+                    'name': 'query',
                 },
                 'collection_format_map': {
                 }
@@ -285,7 +323,9 @@ class GcodeFilesApi(object):
                 id (int): A unique integer value identifying this gcode file.
 
             Keyword Args:
-                patched_gcode_file_request (PatchedGcodeFileRequest): [optional]
+                name (str): [optional]
+                file (file_type): [optional]
+                file_hash (str): [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
                 _preload_content (bool): if False, the urllib3.HTTPResponse object
@@ -349,7 +389,9 @@ class GcodeFilesApi(object):
             params_map={
                 'all': [
                     'id',
-                    'patched_gcode_file_request',
+                    'name',
+                    'file',
+                    'file_hash',
                 ],
                 'required': [
                     'id',
@@ -359,25 +401,42 @@ class GcodeFilesApi(object):
                 'enum': [
                 ],
                 'validation': [
+                    'name',
+                    'file_hash',
                 ]
             },
             root_map={
                 'validations': {
+                    ('name',): {
+                        'max_length': 255,
+                    },
+                    ('file_hash',): {
+                        'max_length': 255,
+                    },
                 },
                 'allowed_values': {
                 },
                 'openapi_types': {
                     'id':
                         (int,),
-                    'patched_gcode_file_request':
-                        (PatchedGcodeFileRequest,),
+                    'name':
+                        (str,),
+                    'file':
+                        (file_type,),
+                    'file_hash':
+                        (str,),
                 },
                 'attribute_map': {
                     'id': 'id',
+                    'name': 'name',
+                    'file': 'file',
+                    'file_hash': 'file_hash',
                 },
                 'location_map': {
                     'id': 'path',
-                    'patched_gcode_file_request': 'body',
+                    'name': 'form',
+                    'file': 'form',
+                    'file_hash': 'form',
                 },
                 'collection_format_map': {
                 }
@@ -387,9 +446,8 @@ class GcodeFilesApi(object):
                     'application/json'
                 ],
                 'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded'
                 ]
             },
             api_client=api_client,
@@ -518,7 +576,9 @@ class GcodeFilesApi(object):
         def __gcode_files_update(
             self,
             id,
-            gcode_file_request,
+            name,
+            file,
+            file_hash,
             **kwargs
         ):
             """gcode_files_update  # noqa: E501
@@ -526,12 +586,14 @@ class GcodeFilesApi(object):
             This method makes a synchronous HTTP request by default. To make an
             asynchronous HTTP request, please pass async_req=True
 
-            >>> thread = api.gcode_files_update(id, gcode_file_request, async_req=True)
+            >>> thread = api.gcode_files_update(id, name, file, file_hash, async_req=True)
             >>> result = thread.get()
 
             Args:
                 id (int): A unique integer value identifying this gcode file.
-                gcode_file_request (GcodeFileRequest):
+                name (str):
+                file (file_type):
+                file_hash (str):
 
             Keyword Args:
                 _return_http_data_only (bool): response data without head status
@@ -580,8 +642,12 @@ class GcodeFilesApi(object):
             kwargs['_host_index'] = kwargs.get('_host_index')
             kwargs['id'] = \
                 id
-            kwargs['gcode_file_request'] = \
-                gcode_file_request
+            kwargs['name'] = \
+                name
+            kwargs['file'] = \
+                file
+            kwargs['file_hash'] = \
+                file_hash
             return self.call_with_http_info(**kwargs)
 
         self.gcode_files_update = Endpoint(
@@ -599,36 +665,57 @@ class GcodeFilesApi(object):
             params_map={
                 'all': [
                     'id',
-                    'gcode_file_request',
+                    'name',
+                    'file',
+                    'file_hash',
                 ],
                 'required': [
                     'id',
-                    'gcode_file_request',
+                    'name',
+                    'file',
+                    'file_hash',
                 ],
                 'nullable': [
                 ],
                 'enum': [
                 ],
                 'validation': [
+                    'name',
+                    'file_hash',
                 ]
             },
             root_map={
                 'validations': {
+                    ('name',): {
+                        'max_length': 255,
+                    },
+                    ('file_hash',): {
+                        'max_length': 255,
+                    },
                 },
                 'allowed_values': {
                 },
                 'openapi_types': {
                     'id':
                         (int,),
-                    'gcode_file_request':
-                        (GcodeFileRequest,),
+                    'name':
+                        (str,),
+                    'file':
+                        (file_type,),
+                    'file_hash':
+                        (str,),
                 },
                 'attribute_map': {
                     'id': 'id',
+                    'name': 'name',
+                    'file': 'file',
+                    'file_hash': 'file_hash',
                 },
                 'location_map': {
                     'id': 'path',
-                    'gcode_file_request': 'body',
+                    'name': 'form',
+                    'file': 'form',
+                    'file_hash': 'form',
                 },
                 'collection_format_map': {
                 }
@@ -638,11 +725,160 @@ class GcodeFilesApi(object):
                     'application/json'
                 ],
                 'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded'
                 ]
             },
             api_client=api_client,
             callable=__gcode_files_update
+        )
+
+        def __gcode_files_update_or_create(
+            self,
+            name,
+            file,
+            file_hash,
+            **kwargs
+        ):
+            """gcode_files_update_or_create  # noqa: E501
+
+            This method makes a synchronous HTTP request by default. To make an
+            asynchronous HTTP request, please pass async_req=True
+
+            >>> thread = api.gcode_files_update_or_create(name, file, file_hash, async_req=True)
+            >>> result = thread.get()
+
+            Args:
+                name (str):
+                file (file_type):
+                file_hash (str):
+
+            Keyword Args:
+                _return_http_data_only (bool): response data without head status
+                    code and headers. Default is True.
+                _preload_content (bool): if False, the urllib3.HTTPResponse object
+                    will be returned without reading/decoding response data.
+                    Default is True.
+                _request_timeout (float/tuple): timeout setting for this request. If one
+                    number provided, it will be total request timeout. It can also
+                    be a pair (tuple) of (connection, read) timeouts.
+                    Default is None.
+                _check_input_type (bool): specifies if type checking
+                    should be done one the data sent to the server.
+                    Default is True.
+                _check_return_type (bool): specifies if type checking
+                    should be done one the data received from the server.
+                    Default is True.
+                _host_index (int/None): specifies the index of the server
+                    that we want to use.
+                    Default is read from the configuration.
+                async_req (bool): execute request asynchronously
+
+            Returns:
+                GcodeFile
+                    If the method is called asynchronously, returns the request
+                    thread.
+            """
+            kwargs['async_req'] = kwargs.get(
+                'async_req', False
+            )
+            kwargs['_return_http_data_only'] = kwargs.get(
+                '_return_http_data_only', True
+            )
+            kwargs['_preload_content'] = kwargs.get(
+                '_preload_content', True
+            )
+            kwargs['_request_timeout'] = kwargs.get(
+                '_request_timeout', None
+            )
+            kwargs['_check_input_type'] = kwargs.get(
+                '_check_input_type', True
+            )
+            kwargs['_check_return_type'] = kwargs.get(
+                '_check_return_type', True
+            )
+            kwargs['_host_index'] = kwargs.get('_host_index')
+            kwargs['name'] = \
+                name
+            kwargs['file'] = \
+                file
+            kwargs['file_hash'] = \
+                file_hash
+            return self.call_with_http_info(**kwargs)
+
+        self.gcode_files_update_or_create = Endpoint(
+            settings={
+                'response_type': (GcodeFile,),
+                'auth': [
+                    'cookieAuth',
+                    'tokenAuth'
+                ],
+                'endpoint_path': '/api/gcode_files/update_or_create/',
+                'operation_id': 'gcode_files_update_or_create',
+                'http_method': 'POST',
+                'servers': None,
+            },
+            params_map={
+                'all': [
+                    'name',
+                    'file',
+                    'file_hash',
+                ],
+                'required': [
+                    'name',
+                    'file',
+                    'file_hash',
+                ],
+                'nullable': [
+                ],
+                'enum': [
+                ],
+                'validation': [
+                    'name',
+                    'file_hash',
+                ]
+            },
+            root_map={
+                'validations': {
+                    ('name',): {
+                        'max_length': 255,
+                    },
+                    ('file_hash',): {
+                        'max_length': 255,
+                    },
+                },
+                'allowed_values': {
+                },
+                'openapi_types': {
+                    'name':
+                        (str,),
+                    'file':
+                        (file_type,),
+                    'file_hash':
+                        (str,),
+                },
+                'attribute_map': {
+                    'name': 'name',
+                    'file': 'file',
+                    'file_hash': 'file_hash',
+                },
+                'location_map': {
+                    'name': 'form',
+                    'file': 'form',
+                    'file_hash': 'form',
+                },
+                'collection_format_map': {
+                }
+            },
+            headers_map={
+                'accept': [
+                    'application/json'
+                ],
+                'content_type': [
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded'
+                ]
+            },
+            api_client=api_client,
+            callable=__gcode_files_update_or_create
         )

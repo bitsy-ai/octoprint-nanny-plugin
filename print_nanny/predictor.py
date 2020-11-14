@@ -73,12 +73,16 @@ class ThreadLocalPredictor(threading.local):
             print(self.category_index)
         self.input_shape = self.metadata["inputShape"]
 
-    def load_url(self, url: str):
+    def load_url_buffer(self, url: str):
         res = requests.get(url)
         res.raise_for_status()
         assert res.headers['content-type'] == 'image/jpeg'
-        img = PImage.open(io.BytesIO(res.content))
-        return img
+        return io.BytesIO(res.content)
+    
+    def load_image(self, bytes):
+        return PImage.open(bytes)
+
+
     def load_file(self, filepath: str):
         return PImage.open(filepath)
     

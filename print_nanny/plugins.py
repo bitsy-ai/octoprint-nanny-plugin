@@ -9,6 +9,7 @@ import io
 from urllib.parse import urlparse
 import base64
 import json
+import hashlib
 
 import flask
 import octoprint.plugin
@@ -24,8 +25,11 @@ from PIL import Image
 import bravado.exception
 
 import print_nanny_client
-from print_nanny_client.api import events_api, users_api
-
+from print_nanny_client.api.events_api import EventsApi
+from print_nanny_client.api.print_jobs_api import PrintJobsApi
+from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
+from print_nanny_client.api.users_api import UsersApi
+from print_nanny_client.api.gcode_files_api import GcodeFilesApi
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -79,11 +83,13 @@ class BitsyNannyPlugin(
         self._queue_event_handlers = {
             self.PREDICT_START: self._handle_predict,
             self.PREDICT_DONE: self._handle_predict_upload,
+            Events.PRINT_STARTED: self._handle_print_upload,
+            Events.UPLOAD: self._handle_file_upload
         }
 
 
     
-
+        self._api_objects = {}
         self._api_thread = threading.Thread(target=self._start_api_loop)
         self._api_thread.daemon = True
         self._api_thread.start() 
@@ -97,10 +103,11 @@ class BitsyNannyPlugin(
 
     def _get_metadata(self):
         return {
-            'printer': self._printer.get_current_data(),
+            'printer_data': self._printer.get_current_data(),
+            'printer_profile': self._printer_profile_manager.get_current_or_default(),
             'temperature':  self._printer.get_current_temperatures(),
             'dt': datetime.now(pytz.timezone('America/Los_Angeles')),
-            'plugin_version': self.version,
+            'plugin_version': self._plugin_version,
             'octoprint_version': octoprint.util.version.get_octoprint_version_string()
         }
 
@@ -119,11 +126,6 @@ class BitsyNannyPlugin(
         })
 
     def _queue_upload(self, data):
-        metadata = self._get_metadata()
-        data['event_data'].update(metadata)
-        event_type = data['event_type']
-        logger.info(f'Submitting {event_type} to upload_queue')
-
         self._event_loop.call_soon_threadsafe(self._upload_queue.put_nowait, data)
 
     
@@ -149,15 +151,18 @@ class BitsyNannyPlugin(
         if url is None:
             raise ValueError('Snapshot url is required')
 
-        image = self._predictor.load_url(url)
+        image_buffer = self._predictor.load_url_buffer(url)
+        image_buffer.name = 'original_image.jpg'
+        image = self._predictor.load_image(image_buffer)
         prediction = self._predictor.predict(image)
         viz_np = self._predictor.postprocess(image, prediction)
 
         ## octoprint event
         viz_image = Image.fromarray(viz_np, 'RGB')
-        buffer = io.BytesIO()
-        viz_image.save(buffer,format="JPEG")
-        viz_bytes = buffer.getvalue()                     
+        viz_buffer = io.BytesIO()
+        viz_buffer.name = 'annotated_image.jpg'
+        viz_image.save(viz_buffer,format="JPEG")
+        viz_bytes = viz_buffer.getvalue()                     
 
         self._event_bus.fire(Events.PLUGIN_PRINT_NANNY_PREDICT_DONE, payload={
             'image':  base64.b64encode(viz_bytes)
@@ -165,8 +170,8 @@ class BitsyNannyPlugin(
 
         self._queue_upload({
                 'event_type': self.PREDICT_DONE,
-                'original_image': image,
-                'annotated_image': viz_bytes,
+                'original_image': image_buffer,
+                'annotated_image':viz_buffer,
                 'event_data': {
                     'pediction': prediction
                 }
@@ -174,17 +179,109 @@ class BitsyNannyPlugin(
         if self._active:
             self._queue_predict()
         ## internal queue
+    
 
-    async def _test_api_auth(self, loop=None):
-        with print_nanny_client.ApiClient(self._api_config) as api_client:
-            api_instance = users_api.UsersApi(api_client=api_client)
+
+    async def _test_api_auth(self, auth_token, api_uri):
+        parsed_uri = urlparse(api_uri)
+        host = f'{parsed_uri.scheme}://{parsed_uri.netloc}'
+        api_config = print_nanny_client.Configuration(
+            host = host        
+            )
+        api_config.access_token = auth_token
+        with print_nanny_client.ApiClient(api_config) as api_client:
+            api_instance = UsersApi(api_client=api_client)
             return await api_instance.users_me_retrieve()
-        #     user = await future
-        # return user
+
+    async def _handle_file_upload(self, event_type, event_data):
+
+        gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
+        gcode_f = open(gcode_file_path, 'rb')
+        file_hash = hashlib.md5(gcode_f.read()).hexdigest()
+        gcode_f.seek(0)
+        with print_nanny_client.ApiClient(self._api_config) as api_client:
+
+            gcode_file = await GcodeFilesApi(api_client=api_client).gcode_files_update_or_create(
+                name=event_data['name'],
+                file_hash=file_hash,
+                file=gcode_f
+            )
+        logger.info(f'gcode file upload succeeded {gcode_file_path} \n {gcode_file}')
+        return gcode_file
+
+    async def _handle_print_upload(self, event_type, event_data):
+
+        event_data = self._get_metadata() + event_data
+
+
+        with print_nanny_client.ApiClient(self._api_config) as api_client:
+
+            if self._api_objects.get('printer_profile') is None:
+                #api_instance = PrinterProfilesApi(api_client=api_client)
+                api_instance = PrinterProfilesApi(api_client=api_client)
+                printer_profile = await api_instance.printer_profiles_update_or_create(
+                    axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
+                    axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
+                    axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
+                    axes_z_inverted=event_data['printer_profile']['axes']['z']['inverted'],
+                    axes_e_speed=event_data['printer_profile']['axes']['e']['speed'],
+                    axes_x_speed=event_data['printer_profile']['axes']['x']['speed'],
+                    axes_y_speed=event_data['printer_profile']['axes']['y']['speed'],
+                    axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
+                    extruder_count=event_data['printer_profile']['extruder']['count'],
+                    extruder_nozzleDiameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
+                    extruder_offsets=event_data['printer_profile']['extruder']['offsets'],
+                    extruder_sharedNozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
+                    name=event_data['printer_profile']['name'],
+                    model=event_data['printer_profile']['model'],
+                    heatedBed=event_data['heatedBed'],
+                    heatedChamber=event_data['heatedChamber'],
+                    volume_customBox=event_data['volume']['customBox'],
+                    volume_depth=event_data['volume']['depth'],
+                    volume_formFactor=event_data['volume']['formFactor'],
+                    volume_height=event_data['volume']['height'],
+                    volume_origin=event_data['volume']['origin'],
+                    volume_width=event_data['volume']['width']
+                )
+                self._api_objects['printer_profile'] = printer_profile
+            else:
+                printer_profile = self._api_objects.get('printer_profile')
+        
+
+            gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
+            logging.info(f'Hashing contents of gcode file {gcode_file_path}')
+            gcode_f = open(gcode_file_path, 'rb')
+            file_hash = hashlib.md5(gcode_f.read()).hexdigest()
+            logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
+
+            gcode_file = await GcodeFilesApi(api_client=api_client).gcode_files_list(file_hash=file_hash)
+            logging.info(f'Results gdcodefile object {gcode_file}')
+
+            # if gcode file location is local, upsert contents
+            # elif gcode location is sd, direct downloading is not supported (understandable - @ printer baud rates this would be slow and disruptive)
+            # attempt to get file uploaded via sd_card_upload_hook()
+                # if file already uploaded, great!
+
+                # else no gcode available
+
+            # if code location is sd, get gcode dataset )w
+                #...
+            
+            api_instance = await PrintJobsApi(api_client=api_client).print_jobs_create(
+                dt=event_data.get('dt'),
+                event_data=json.dumps(event_data, cls=NumpyEncoder)
+            )
+            print_job = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
+            self._api_objects['print_job'] = print_job
+            logger.info(f'Created print_job object {print_job}')
+
 
     async def _handle_predict_upload(self, event_type, event_data, annotated_image, original_image):
+        # reset stream position to prepare for upload
+        original_image.seek(0)
+        annotated_image.seek(0)
         with print_nanny_client.ApiClient(self._api_config) as api_client:
-            api_instance = events_api.EventsApi(api_client=api_client)
+            api_instance = EventsApi(api_client=api_client)
             res = await api_instance.events_predict_create(
                 dt=event_data.get('dt'),
                 plugin_version=event_data.get('plugin_version'),
@@ -193,8 +290,8 @@ class BitsyNannyPlugin(
                 annotated_image=annotated_image,
                 event_data=json.dumps(event_data, cls=NumpyEncoder)
             )
-            res = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
-            logger.info(f'Uploaded predict event {res}')
+            #res = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
+            logger.info(f'Uploaded predict event')
 
     async def _upload_worker(self):
         '''
@@ -269,12 +366,12 @@ class BitsyNannyPlugin(
         auth_token = flask.request.json.get('auth_token')
         api_uri = flask.request.json.get('api_uri')
         
-        self._api_config = print_nanny_client.Configuration(
-            host = self._settings.get(['api_host']),
-        )
-        self._api_config.access_token = self._settings.get(['auth_token'])
-
-        user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
+        user = asyncio.run_coroutine_threadsafe(self._test_api_auth(
+            auth_token=auth_token,
+            api_uri=api_uri
+        ), self._event_loop).result()
+        self._settings.set(['auth_token'], auth_token)
+        self._settings.set(['api_uri'], api_uri)
         logger.info(f'Authenticated as {user}')
         return flask.json.jsonify(user.to_dict())
 
@@ -291,14 +388,17 @@ class BitsyNannyPlugin(
     def on_settings_save(self, data):
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-
-        self._api_config = print_nanny_client.Configuration(
-            host = self._settings.get(['api_host']),
-            access_token = self._settings.get(['auth_token'])
+    @property
+    def _api_config(self):
+        parsed_uri = urlparse(self._settings.get(['api_host']))
+        host = f'{parsed_uri.scheme}://{parsed_uri.netloc}'
+        config = print_nanny_client.Configuration(
+            host = host
         )
 
-        user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
-        logger.info(f'Authenticated as {user}')
+        config.access_token = self._settings.get(['auth_token'])
+        return config
+
 
     def on_settings_initialized(self):
         '''
@@ -315,18 +415,27 @@ class BitsyNannyPlugin(
             logger.info(f'Authenticated as {user}')
 
 
-        # Octoprint events
+        # Print job events
         self._event_bus.subscribe(Events.PRINT_STARTED, self.on_print_started)
         self._event_bus.subscribe(Events.PRINT_RESUMED, self.on_print_resume)
         self._event_bus.subscribe(Events.PRINT_PAUSED, self.on_print_paused)
         self._event_bus.subscribe(Events.PRINT_FAILED, self.on_print_failed)
         self._event_bus.subscribe(Events.PRINT_DONE, self.on_print_done)
         self._event_bus.subscribe(Events.PRINT_CANCELLED, self.on_print_cancelled)
+
+        # File handling events
+        self._event_bus.subscribe(Events.UPLOAD, self.on_octoprint_event)
+
+
+
+
         
         self._event_bus.subscribe(Events.MOVIE_DONE, self.on_movie_done)
         self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_movie_done)
-        # Octolapse events
 
+    def on_octoprint_event(self, event_type, payload):
+        self._queue_upload({ 'event_type': event_type, 'event_data': payload })
+    
     def on_movie_done(self, payload):
         data = { 'event_type': Events.MOVIE_DONE, 'event_data': payload }
         self._event_data[Events.MOVIE_DONE] = data
@@ -357,6 +466,7 @@ class BitsyNannyPlugin(
         self._queue_upload(data)
         
         self._start()
+
 
     def on_print_resume(self, payload):
         '''

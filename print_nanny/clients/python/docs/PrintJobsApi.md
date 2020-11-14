@@ -57,7 +57,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        user=1,
         printer_profile=1,
         gcode_file=1,
     ) # PrintJobRequest | 
@@ -216,7 +215,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        user=1,
         printer_profile=1,
         gcode_file=1,
     ) # PatchedPrintJobRequest |  (optional)
@@ -388,7 +386,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        user=1,
         printer_profile=1,
         gcode_file=1,
     ) # PrintJobRequest | 

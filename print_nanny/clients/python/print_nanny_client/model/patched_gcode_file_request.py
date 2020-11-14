@@ -84,7 +84,6 @@ class PatchedGcodeFileRequest(ModelNormal):
             'name': (str,),  # noqa: E501
             'file': (file_type,),  # noqa: E501
             'file_hash': (str,),  # noqa: E501
-            'user': (int,),  # noqa: E501
         }
 
     @cached_property
@@ -96,7 +95,6 @@ class PatchedGcodeFileRequest(ModelNormal):
         'name': 'name',  # noqa: E501
         'file': 'file',  # noqa: E501
         'file_hash': 'file_hash',  # noqa: E501
-        'user': 'user',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -148,7 +146,6 @@ class PatchedGcodeFileRequest(ModelNormal):
             name (str): [optional]  # noqa: E501
             file (file_type): [optional]  # noqa: E501
             file_hash (str): [optional]  # noqa: E501
-            user (int): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

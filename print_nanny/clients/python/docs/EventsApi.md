@@ -58,7 +58,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         },
         plugin_version="plugin_version_example",
         octoprint_version="octoprint_version_example",
-        user=1,
         print_job=1,
     ) # OctoPrintEventRequest | 
 
