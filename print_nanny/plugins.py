@@ -30,8 +30,8 @@ from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
-import print_nanny_client.model.printer_profile_request
-import print_nanny_client.model.octo_print_event_request
+import print_nanny_client.models.printer_profile_request
+import print_nanny_client.models.octo_print_event_request
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -215,7 +215,7 @@ class BitsyNannyPlugin(
             # printer profile
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
-                request = print_nanny_client.model.printer_profile_request.PrinterProfileRequest(
+                request = print_nanny_client.models.printer_profile_request.PrinterProfileRequest(
                     axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
                     axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
                     axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
@@ -300,7 +300,7 @@ class BitsyNannyPlugin(
             
         async with print_nanny_client.ApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
-            request = print_nanny_client.model.octo_print_event_request.OctoPrintEventRequest(
+            request = print_nanny_client.models.octo_print_event_request.OctoPrintEventRequest(
                 dt=event_data['dt'],
                 event_type=event_type,
                 event_data=event_data,

@@ -33,6 +33,12 @@ class TestEventsApi(unittest.TestCase):
         """
         pass
 
+    def test_events_octoprint_list(self):
+        """Test case for events_octoprint_list
+
+        """
+        pass
+
     def test_events_predict_create(self):
         """Test case for events_predict_create
 

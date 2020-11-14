@@ -41,8 +41,7 @@ class TestOctoPrintEventRequest(unittest.TestCase):
                     'key' : null
                     }, 
                 plugin_version = '0', 
-                octoprint_version = '0', 
-                print_job = 56
+                octoprint_version = '0'
             )
         else :
             return OctoPrintEventRequest(

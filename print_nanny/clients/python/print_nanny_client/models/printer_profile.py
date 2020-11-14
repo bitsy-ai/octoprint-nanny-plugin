@@ -36,6 +36,7 @@ class PrinterProfile(object):
         'axes_e_inverted': 'bool',
         'axes_e_speed': 'int',
         'axes_x_speed': 'int',
+        'axes_x_inverted': 'bool',
         'axes_y_inverted': 'bool',
         'axes_y_speed': 'int',
         'axes_z_inverted': 'bool',
@@ -53,6 +54,7 @@ class PrinterProfile(object):
         'volume_formfactor': 'str',
         'volume_height': 'float',
         'volume_origin': 'str',
+        'volume_width': 'float',
         'user': 'int'
     }
 
@@ -61,6 +63,7 @@ class PrinterProfile(object):
         'axes_e_inverted': 'axes_e_inverted',
         'axes_e_speed': 'axes_e_speed',
         'axes_x_speed': 'axes_x_speed',
+        'axes_x_inverted': 'axes_x_inverted',
         'axes_y_inverted': 'axes_y_inverted',
         'axes_y_speed': 'axes_y_speed',
         'axes_z_inverted': 'axes_z_inverted',
@@ -78,10 +81,11 @@ class PrinterProfile(object):
         'volume_formfactor': 'volume_formfactor',
         'volume_height': 'volume_height',
         'volume_origin': 'volume_origin',
+        'volume_width': 'volume_width',
         'user': 'user'
     }
 
-    def __init__(self, id=None, axes_e_inverted=None, axes_e_speed=None, axes_x_speed=None, axes_y_inverted=None, axes_y_speed=None, axes_z_inverted=None, axes_z_speed=None, extruder_count=None, extruder_nozzle_diameter=None, extruder_offsets=None, extruder_shared_nozzle=None, heated_bed=None, heated_chamber=None, model=None, name=None, volume_custom_box=None, volume_depth=None, volume_formfactor=None, volume_height=None, volume_origin=None, user=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(self, id=None, axes_e_inverted=None, axes_e_speed=None, axes_x_speed=None, axes_x_inverted=None, axes_y_inverted=None, axes_y_speed=None, axes_z_inverted=None, axes_z_speed=None, extruder_count=None, extruder_nozzle_diameter=None, extruder_offsets=None, extruder_shared_nozzle=None, heated_bed=None, heated_chamber=None, model=None, name=None, volume_custom_box=None, volume_depth=None, volume_formfactor=None, volume_height=None, volume_origin=None, volume_width=None, user=None, local_vars_configuration=None):  # noqa: E501
         """PrinterProfile - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -91,6 +95,7 @@ class PrinterProfile(object):
         self._axes_e_inverted = None
         self._axes_e_speed = None
         self._axes_x_speed = None
+        self._axes_x_inverted = None
         self._axes_y_inverted = None
         self._axes_y_speed = None
         self._axes_z_inverted = None
@@ -108,6 +113,7 @@ class PrinterProfile(object):
         self._volume_formfactor = None
         self._volume_height = None
         self._volume_origin = None
+        self._volume_width = None
         self._user = None
         self.discriminator = None
 
@@ -116,6 +122,7 @@ class PrinterProfile(object):
         self.axes_e_inverted = axes_e_inverted
         self.axes_e_speed = axes_e_speed
         self.axes_x_speed = axes_x_speed
+        self.axes_x_inverted = axes_x_inverted
         self.axes_y_inverted = axes_y_inverted
         self.axes_y_speed = axes_y_speed
         self.axes_z_inverted = axes_z_inverted
@@ -133,6 +140,7 @@ class PrinterProfile(object):
         self.volume_formfactor = volume_formfactor
         self.volume_height = volume_height
         self.volume_origin = volume_origin
+        self.volume_width = volume_width
         if user is not None:
             self.user = user
 
@@ -237,6 +245,29 @@ class PrinterProfile(object):
             raise ValueError("Invalid value for `axes_x_speed`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
 
         self._axes_x_speed = axes_x_speed
+
+    @property
+    def axes_x_inverted(self):
+        """Gets the axes_x_inverted of this PrinterProfile.  # noqa: E501
+
+
+        :return: The axes_x_inverted of this PrinterProfile.  # noqa: E501
+        :rtype: bool
+        """
+        return self._axes_x_inverted
+
+    @axes_x_inverted.setter
+    def axes_x_inverted(self, axes_x_inverted):
+        """Sets the axes_x_inverted of this PrinterProfile.
+
+
+        :param axes_x_inverted: The axes_x_inverted of this PrinterProfile.  # noqa: E501
+        :type axes_x_inverted: bool
+        """
+        if self.local_vars_configuration.client_side_validation and axes_x_inverted is None:  # noqa: E501
+            raise ValueError("Invalid value for `axes_x_inverted`, must not be `None`")  # noqa: E501
+
+        self._axes_x_inverted = axes_x_inverted
 
     @property
     def axes_y_inverted(self):
@@ -412,8 +443,6 @@ class PrinterProfile(object):
         :param extruder_offsets: The extruder_offsets of this PrinterProfile.  # noqa: E501
         :type extruder_offsets: list[float]
         """
-        if self.local_vars_configuration.client_side_validation and extruder_offsets is None:  # noqa: E501
-            raise ValueError("Invalid value for `extruder_offsets`, must not be `None`")  # noqa: E501
 
         self._extruder_offsets = extruder_offsets
 
@@ -658,6 +687,29 @@ class PrinterProfile(object):
             raise ValueError("Invalid value for `volume_origin`, length must be less than or equal to `255`")  # noqa: E501
 
         self._volume_origin = volume_origin
+
+    @property
+    def volume_width(self):
+        """Gets the volume_width of this PrinterProfile.  # noqa: E501
+
+
+        :return: The volume_width of this PrinterProfile.  # noqa: E501
+        :rtype: float
+        """
+        return self._volume_width
+
+    @volume_width.setter
+    def volume_width(self, volume_width):
+        """Sets the volume_width of this PrinterProfile.
+
+
+        :param volume_width: The volume_width of this PrinterProfile.  # noqa: E501
+        :type volume_width: float
+        """
+        if self.local_vars_configuration.client_side_validation and volume_width is None:  # noqa: E501
+            raise ValueError("Invalid value for `volume_width`, must not be `None`")  # noqa: E501
+
+        self._volume_width = volume_width
 
     @property
     def user(self):

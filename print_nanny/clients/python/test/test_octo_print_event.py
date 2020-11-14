@@ -43,8 +43,7 @@ class TestOctoPrintEvent(unittest.TestCase):
                     }, 
                 plugin_version = '0', 
                 octoprint_version = '0', 
-                user = 56, 
-                print_job = 56
+                user = 56
             )
         else :
             return OctoPrintEvent(

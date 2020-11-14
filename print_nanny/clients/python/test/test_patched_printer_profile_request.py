@@ -54,7 +54,7 @@ class TestPatchedPrinterProfileRequest(unittest.TestCase):
                 name = '0', 
                 volume_custom_box = True, 
                 volume_depth = 1.337, 
-                volume_form_factor = '0', 
+                volume_formfactor = '0', 
                 volume_height = 1.337, 
                 volume_origin = '0'
             )

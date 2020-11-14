@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 **axes_e_inverted** | **bool** |  | [optional] 
 **axes_e_speed** | **int** |  | [optional] 
 **axes_x_speed** | **int** |  | [optional] 
+**axes_x_inverted** | **bool** |  | [optional] 
 **axes_y_inverted** | **bool** |  | [optional] 
 **axes_y_speed** | **int** |  | [optional] 
 **axes_z_inverted** | **bool** |  | [optional] 
@@ -23,6 +24,7 @@ Name | Type | Description | Notes
 **volume_formfactor** | **str** |  | [optional] 
 **volume_height** | **float** |  | [optional] 
 **volume_origin** | **str** |  | [optional] 
+**volume_width** | **float** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
