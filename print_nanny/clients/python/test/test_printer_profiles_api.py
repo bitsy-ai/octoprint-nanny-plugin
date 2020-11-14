@@ -9,17 +9,20 @@
 """
 
 
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPrinterProfilesApi(unittest.TestCase):
     """PrinterProfilesApi unit test stubs"""
 
     def setUp(self):
-        self.api = PrinterProfilesApi()  # noqa: E501
+        self.api = print_nanny_client.api.printer_profiles_api.PrinterProfilesApi()  # noqa: E501
 
     def tearDown(self):
         pass
@@ -50,6 +53,12 @@ class TestPrinterProfilesApi(unittest.TestCase):
 
     def test_printer_profiles_update(self):
         """Test case for printer_profiles_update
+
+        """
+        pass
+
+    def test_printer_profiles_update_or_create(self):
+        """Test case for printer_profiles_update_or_create
 
         """
         pass

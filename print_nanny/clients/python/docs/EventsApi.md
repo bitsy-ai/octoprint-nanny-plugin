@@ -16,13 +16,11 @@ Method | HTTP request | Description
 ### Example
 
 * Api Key Authentication (cookieAuth):
-* Bearer (Bearer) Authentication (tokenAuth):
 ```python
+from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.api import events_api
-from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.model.octo_print_event import OctoPrintEvent
+from print_nanny_client.rest import ApiException
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -49,23 +47,55 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = events_api.EventsApi(api_client)
-    octo_print_event_request = OctoPrintEventRequest(
-        dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
-        event_type="event_type_example",
-        event_data={
-            "key": None,
-        },
-        plugin_version="plugin_version_example",
-        octoprint_version="octoprint_version_example",
-        print_job=1,
-    ) # OctoPrintEventRequest | 
+    api_instance = print_nanny_client.EventsApi(api_client)
+    octo_print_event_request = print_nanny_client.OctoPrintEventRequest() # OctoPrintEventRequest | 
 
-    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.events_octoprint_create(octo_print_event_request)
         pprint(api_response)
-    except print_nanny_client.ApiException as e:
+    except ApiException as e:
+        print("Exception when calling EventsApi->events_octoprint_create: %s\n" % e)
+```
+
+* Bearer (Bearer) Authentication (tokenAuth):
+```python
+from __future__ import print_function
+import time
+import print_nanny_client
+from print_nanny_client.rest import ApiException
+from pprint import pprint
+# Defining the host is optional and defaults to http://localhost
+# See configuration.py for a list of all supported configuration parameters.
+configuration = print_nanny_client.Configuration(
+    host = "http://localhost"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: cookieAuth
+configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
+
+# Configure Bearer authorization (Bearer): tokenAuth
+configuration = print_nanny_client.Configuration(
+    access_token = 'YOUR_BEARER_TOKEN'
+)
+
+# Enter a context with an instance of the API client
+with print_nanny_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = print_nanny_client.EventsApi(api_client)
+    octo_print_event_request = print_nanny_client.OctoPrintEventRequest() # OctoPrintEventRequest | 
+
+    try:
+        api_response = api_instance.events_octoprint_create(octo_print_event_request)
+        pprint(api_response)
+    except ApiException as e:
         print("Exception when calling EventsApi->events_octoprint_create: %s\n" % e)
 ```
 
@@ -73,7 +103,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **octo_print_event_request** | [**OctoPrintEventRequest**](OctoPrintEventRequest.md)|  |
+ **octo_print_event_request** | [**OctoPrintEventRequest**](OctoPrintEventRequest.md)|  | 
 
 ### Return type
 
@@ -96,19 +126,18 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **events_predict_create**
-> PredictEvent events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version)
+> PredictEvent events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, print_job=print_job)
 
 
 
 ### Example
 
 * Api Key Authentication (cookieAuth):
-* Bearer (Bearer) Authentication (tokenAuth):
 ```python
+from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.api import events_api
-from print_nanny_client.model.predict_event import PredictEvent
+from print_nanny_client.rest import ApiException
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -135,28 +164,67 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = events_api.EventsApi(api_client)
-    dt = dateutil_parser('1970-01-01T00:00:00.00Z') # datetime | 
-    original_image = open('/path/to/file', 'rb') # file_type | 
-    annotated_image = open('/path/to/file', 'rb') # file_type | 
-    event_data = "event_data_example" # str | 
-    plugin_version = "plugin_version_example" # str | 
-    octoprint_version = "octoprint_version_example" # str | 
-    print_job = 1 # int, none_type |  (optional)
+    api_instance = print_nanny_client.EventsApi(api_client)
+    dt = '2013-10-20T19:20:30+01:00' # datetime | 
+original_image = '/path/to/file' # file | 
+annotated_image = '/path/to/file' # file | 
+event_data = 'event_data_example' # str | 
+plugin_version = 'plugin_version_example' # str | 
+octoprint_version = 'octoprint_version_example' # str | 
+print_job = 56 # int |  (optional)
 
-    # example passing only required values which don't have defaults set
-    try:
-        api_response = api_instance.events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version)
-        pprint(api_response)
-    except print_nanny_client.ApiException as e:
-        print("Exception when calling EventsApi->events_predict_create: %s\n" % e)
-
-    # example passing only required values which don't have defaults set
-    # and optional values
     try:
         api_response = api_instance.events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, print_job=print_job)
         pprint(api_response)
-    except print_nanny_client.ApiException as e:
+    except ApiException as e:
+        print("Exception when calling EventsApi->events_predict_create: %s\n" % e)
+```
+
+* Bearer (Bearer) Authentication (tokenAuth):
+```python
+from __future__ import print_function
+import time
+import print_nanny_client
+from print_nanny_client.rest import ApiException
+from pprint import pprint
+# Defining the host is optional and defaults to http://localhost
+# See configuration.py for a list of all supported configuration parameters.
+configuration = print_nanny_client.Configuration(
+    host = "http://localhost"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: cookieAuth
+configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
+
+# Configure Bearer authorization (Bearer): tokenAuth
+configuration = print_nanny_client.Configuration(
+    access_token = 'YOUR_BEARER_TOKEN'
+)
+
+# Enter a context with an instance of the API client
+with print_nanny_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = print_nanny_client.EventsApi(api_client)
+    dt = '2013-10-20T19:20:30+01:00' # datetime | 
+original_image = '/path/to/file' # file | 
+annotated_image = '/path/to/file' # file | 
+event_data = 'event_data_example' # str | 
+plugin_version = 'plugin_version_example' # str | 
+octoprint_version = 'octoprint_version_example' # str | 
+print_job = 56 # int |  (optional)
+
+    try:
+        api_response = api_instance.events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, print_job=print_job)
+        pprint(api_response)
+    except ApiException as e:
         print("Exception when calling EventsApi->events_predict_create: %s\n" % e)
 ```
 
@@ -164,13 +232,13 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **dt** | **datetime**|  |
- **original_image** | **file_type**|  |
- **annotated_image** | **file_type**|  |
- **event_data** | **str**|  |
- **plugin_version** | **str**|  |
- **octoprint_version** | **str**|  |
- **print_job** | **int, none_type**|  | [optional]
+ **dt** | **datetime**|  | 
+ **original_image** | **file**|  | 
+ **annotated_image** | **file**|  | 
+ **event_data** | **str**|  | 
+ **plugin_version** | **str**|  | 
+ **octoprint_version** | **str**|  | 
+ **print_job** | **int**|  | [optional] 
 
 ### Return type
 

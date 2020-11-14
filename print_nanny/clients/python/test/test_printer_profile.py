@@ -9,12 +9,14 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
+import datetime
 
 import print_nanny_client
-from print_nanny_client.model.printer_profile import PrinterProfile
-
+from print_nanny_client.models.printer_profile import PrinterProfile  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 class TestPrinterProfile(unittest.TestCase):
     """PrinterProfile unit test stubs"""
@@ -25,11 +27,69 @@ class TestPrinterProfile(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test PrinterProfile
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # model = print_nanny_client.models.printer_profile.PrinterProfile()  # noqa: E501
+        if include_optional :
+            return PrinterProfile(
+                id = 56, 
+                axes_e_inverted = True, 
+                axes_e_speed = -2147483648, 
+                axes_x_speed = -2147483648, 
+                axes_y_inverted = True, 
+                axes_y_speed = -2147483648, 
+                axes_z_inverted = True, 
+                axes_z_speed = -2147483648, 
+                extruder_count = -2147483648, 
+                extruder_nozzle_diameter = 1.337, 
+                extruder_offsets = [
+                    1.337
+                    ], 
+                extruder_shared_nozzle = True, 
+                heated_bed = True, 
+                heated_chamber = True, 
+                model = '0', 
+                name = '0', 
+                volume_custom_box = True, 
+                volume_depth = 1.337, 
+                volume_form_factor = '0', 
+                volume_height = 1.337, 
+                volume_origin = '0', 
+                user = 56
+            )
+        else :
+            return PrinterProfile(
+                axes_e_inverted = True,
+                axes_e_speed = -2147483648,
+                axes_x_speed = -2147483648,
+                axes_y_inverted = True,
+                axes_y_speed = -2147483648,
+                axes_z_inverted = True,
+                axes_z_speed = -2147483648,
+                extruder_count = -2147483648,
+                extruder_nozzle_diameter = 1.337,
+                extruder_offsets = [
+                    1.337
+                    ],
+                extruder_shared_nozzle = True,
+                heated_bed = True,
+                heated_chamber = True,
+                model = '0',
+                name = '0',
+                volume_custom_box = True,
+                volume_depth = 1.337,
+                volume_form_factor = '0',
+                volume_height = 1.337,
+                volume_origin = '0',
+        )
+
     def testPrinterProfile(self):
         """Test PrinterProfile"""
-        # FIXME: construct object with mandatory attributes with example values
-        # model = PrinterProfile()  # noqa: E501
-        pass
+        inst_req_only = self.make_instance(include_optional=False)
+        inst_req_and_optional = self.make_instance(include_optional=True)
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **axes_z_speed** | **int** |  | 
 **extruder_count** | **int** |  | 
 **extruder_nozzle_diameter** | **float** |  | 
-**extruder_offsets** | **[float]** |  | 
+**extruder_offsets** | **list[float]** |  | 
 **extruder_shared_nozzle** | **bool** |  | 
 **heated_bed** | **bool** |  | 
 **heated_chamber** | **bool** |  | 

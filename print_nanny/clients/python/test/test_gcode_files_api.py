@@ -9,17 +9,20 @@
 """
 
 
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestGcodeFilesApi(unittest.TestCase):
     """GcodeFilesApi unit test stubs"""
 
     def setUp(self):
-        self.api = GcodeFilesApi()  # noqa: E501
+        self.api = print_nanny_client.api.gcode_files_api.GcodeFilesApi()  # noqa: E501
 
     def tearDown(self):
         pass
@@ -50,6 +53,12 @@ class TestGcodeFilesApi(unittest.TestCase):
 
     def test_gcode_files_update(self):
         """Test case for gcode_files_update
+
+        """
+        pass
+
+    def test_gcode_files_update_or_create(self):
+        """Test case for gcode_files_update_or_create
 
         """
         pass

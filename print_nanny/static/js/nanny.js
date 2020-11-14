@@ -148,7 +148,7 @@ $(function() {
         console.debug('Attempting to verify Print Nanny Auth token...')
         OctoPrint.postJson(url, {
             'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token(),
-            'api_uri': self.settingsViewModel.settings.plugins.print_nanny.api_uri(),
+            'api_url': self.settingsViewModel.settings.plugins.print_nanny.api_url(),
             'swagger_json': self.settingsViewModel.settings.plugins.print_nanny.swagger_json()
         })
         .done((res) =>{

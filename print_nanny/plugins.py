@@ -182,31 +182,30 @@ class BitsyNannyPlugin(
     
 
 
-    async def _test_api_auth(self, auth_token, api_uri):
-        parsed_uri = urlparse(api_uri)
+    async def _test_api_auth(self, auth_token, api_url):
+        parsed_uri = urlparse(api_url)
         host = f'{parsed_uri.scheme}://{parsed_uri.netloc}'
         api_config = print_nanny_client.Configuration(
             host = host        
             )
         api_config.access_token = auth_token
-        with print_nanny_client.ApiClient(api_config) as api_client:
+        async with print_nanny_client.ApiClient(api_config) as api_client:
             api_instance = UsersApi(api_client=api_client)
-            return await api_instance.users_me_retrieve()
+            user = await api_instance.users_me_retrieve()
+        return user
 
     async def _handle_file_upload(self, event_type, event_data):
 
         gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
         gcode_f = open(gcode_file_path, 'rb')
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-        gcode_f.seek(0)
-        with print_nanny_client.ApiClient(self._api_config) as api_client:
-
-            gcode_file = await GcodeFilesApi(api_client=api_client).gcode_files_update_or_create(
+        async with print_nanny_client.ApiClient(self._api_config) as api_client:
+            api_instance = GcodeFilesApi(api_client=api_client)
+            gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data['name'],
                 file_hash=file_hash,
-                file=gcode_f
+                file=gcode_file_path
             )
-        logger.info(f'gcode file upload succeeded {gcode_file_path} \n {gcode_file}')
         return gcode_file
 
     async def _handle_print_upload(self, event_type, event_data):
@@ -248,14 +247,14 @@ class BitsyNannyPlugin(
                 printer_profile = self._api_objects.get('printer_profile')
         
 
-            gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
-            logging.info(f'Hashing contents of gcode file {gcode_file_path}')
-            gcode_f = open(gcode_file_path, 'rb')
-            file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-            logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
+            # gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
+            # logging.info(f'Hashing contents of gcode file {gcode_file_path}')
+            # gcode_f = open(gcode_file_path, 'rb')
+            # file_hash = hashlib.md5(gcode_f.read()).hexdigest()
+            # logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
 
-            gcode_file = await GcodeFilesApi(api_client=api_client).gcode_files_list(file_hash=file_hash)
-            logging.info(f'Results gdcodefile object {gcode_file}')
+            # gcode_file = await GcodeFilesApi(api_client=api_client).gcode_files_list(file_hash=file_hash)
+            # logging.info(f'Results gdcodefile object {gcode_file}')
 
             # if gcode file location is local, upsert contents
             # elif gcode location is sd, direct downloading is not supported (understandable - @ printer baud rates this would be slow and disruptive)
@@ -267,13 +266,13 @@ class BitsyNannyPlugin(
             # if code location is sd, get gcode dataset )w
                 #...
             
-            api_instance = await PrintJobsApi(api_client=api_client).print_jobs_create(
-                dt=event_data.get('dt'),
-                event_data=json.dumps(event_data, cls=NumpyEncoder)
-            )
-            print_job = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
-            self._api_objects['print_job'] = print_job
-            logger.info(f'Created print_job object {print_job}')
+            # api_instance = await PrintJobsApi(api_client=api_client).print_jobs_create(
+            #     dt=event_data.get('dt'),
+            #     event_data=json.dumps(event_data, cls=NumpyEncoder)
+            # )
+            # print_job = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
+            # self._api_objects['print_job'] = print_job
+            # logger.info(f'Created print_job object {print_job}')
 
 
     async def _handle_predict_upload(self, event_type, event_data, annotated_image, original_image):
@@ -309,7 +308,8 @@ class BitsyNannyPlugin(
             handler_fn = self._queue_event_handlers[msg['event_type']]
             logger.info(f'Calling handler_fn {handler_fn}')
             await handler_fn(**msg)
-            self._upload_queue.task_done()
+            logger.info(f'Finished calling {handler_fn}')
+            #self._upload_queue.task_done()
 
 
     def _predict_worker(self):
@@ -343,13 +343,11 @@ class BitsyNannyPlugin(
         if self._settings.global_get(['webcam', 'snapshot']) is None:
             raise WebcamSettingsHTTPException()
         
-        # url test
-        #try:
+
         url = self._settings.global_get(['webcam', 'snapshot'])
         res = requests.get(url)
         res.raise_for_status()
-        # except:
-        #     raise SnapshotHTTPException()
+
 
         self._start()
         return flask.json.jsonify({'ok': 1})
@@ -364,14 +362,19 @@ class BitsyNannyPlugin(
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
         auth_token = flask.request.json.get('auth_token')
-        api_uri = flask.request.json.get('api_uri')
+        api_url = flask.request.json.get('api_url')
         
         user = asyncio.run_coroutine_threadsafe(self._test_api_auth(
-            auth_token=auth_token,
-            api_uri=api_uri
+            auth_token,
+            api_url
         ), self._event_loop).result()
         self._settings.set(['auth_token'], auth_token)
-        self._settings.set(['api_uri'], api_uri)
+        self._settings.set(['api_url'], api_url)
+        self._settings.set(['user_email'], user.email)
+        self._settings.set(['user_url'], user.url)
+
+        self._settings.save()
+
         logger.info(f'Authenticated as {user}')
         return flask.json.jsonify(user.to_dict())
 
@@ -385,12 +388,9 @@ class BitsyNannyPlugin(
         ]
     
     
-    def on_settings_save(self, data):
-        octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
-
     @property
     def _api_config(self):
-        parsed_uri = urlparse(self._settings.get(['api_host']))
+        parsed_uri = urlparse(self._settings.get(['api_url']))
         host = f'{parsed_uri.scheme}://{parsed_uri.netloc}'
         config = print_nanny_client.Configuration(
             host = host
@@ -406,13 +406,13 @@ class BitsyNannyPlugin(
         '''
         if self._settings.get(['auth_token']) is not None:
 
-            self._api_config = print_nanny_client.Configuration(
-                host = self._settings.get(['api_host']),
-            )
-            self._api_config.access_token = self._settings.get(['auth_token'])
-
-            user = asyncio.run_coroutine_threadsafe(self._test_api_auth(), self._event_loop).result()
+            user = asyncio.run_coroutine_threadsafe(self._test_api_auth(
+                auth_token=self._settings.get(['auth_token']),
+                api_url=self._settings.get(['api_url'])
+            ), self._event_loop).result()
             logger.info(f'Authenticated as {user}')
+            self._settings.set(['user_email'], user.email)
+            self._settings.set(['user_url'], user.url)
 
 
         # Print job events
@@ -426,14 +426,12 @@ class BitsyNannyPlugin(
         # File handling events
         self._event_bus.subscribe(Events.UPLOAD, self.on_octoprint_event)
 
-
-
-
         
         self._event_bus.subscribe(Events.MOVIE_DONE, self.on_movie_done)
         self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_movie_done)
 
     def on_octoprint_event(self, event_type, payload):
+        logger.info(f'Received event_type {event_type}')
         self._queue_upload({ 'event_type': event_type, 'event_data': payload })
     
     def on_movie_done(self, payload):
@@ -564,8 +562,9 @@ class BitsyNannyPlugin(
             auth_token=None,
             user_email=None,
             user_url=None,
+            user=None,
             api_host='http://localhost:8000',
-            api_uri='http://localhost:8000/api/', # 'https://api.print-nanny.com',
+            api_url='http://localhost:8000/api/', # 'https://api.print-nanny.com',
             swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
             prometheus_gateway='https://prom.print-nanny.com',
             # ./mjpg_streamer -i "./input_raspicam.so" -o "./output_file.so -f /tmp/ -s 20 -l mjpg-streamer-latest.jpg"
@@ -582,7 +581,7 @@ class BitsyNannyPlugin(
 
         return any([
             self._settings.get(["auth_token"]) is None,
-            self._settings.get(["api_uri"]) is None,
+            self._settings.get(["api_url"]) is None,
             self._settings.get(["user_email"]) is None,
             self._settings.get(["user_url"]) is None
         ])
