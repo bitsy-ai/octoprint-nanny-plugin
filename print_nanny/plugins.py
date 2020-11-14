@@ -31,6 +31,7 @@ from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
 import print_nanny_client.model.printer_profile_request
+import print_nanny_client.model.octo_print_event_request
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -291,16 +292,22 @@ class BitsyNannyPlugin(
 
 
     async def _handle_octoprint_event_upload(self, event_type, event_data):
+        if event_data is not None:
+            event_data.update(self._get_metadata())
+        else:
+            event_data = self._get_metadata()
 
+            
         async with print_nanny_client.ApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
-            event = await api_instance.octoprint_events_create(
+            request = print_nanny_client.model.octo_print_event_request.OctoPrintEventRequest(
                 dt=event_data['dt'],
                 event_type=event_type,
                 event_data=event_data,
                 plugin_version=self._plugin_version,
                 octoprint_version=event_data['octoprint_version']
             )
+            event = await api_instance.events_octoprint_create(request)
         return event
 
     async def _upload_worker(self):
