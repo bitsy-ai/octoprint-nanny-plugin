@@ -36,8 +36,7 @@ class OctoPrintEventRequest(object):
         'event_type': 'str',
         'event_data': 'dict(str, object)',
         'plugin_version': 'str',
-        'octoprint_version': 'str',
-        'print_job': 'int'
+        'octoprint_version': 'str'
     }
 
     attribute_map = {
@@ -45,11 +44,10 @@ class OctoPrintEventRequest(object):
         'event_type': 'event_type',
         'event_data': 'event_data',
         'plugin_version': 'plugin_version',
-        'octoprint_version': 'octoprint_version',
-        'print_job': 'print_job'
+        'octoprint_version': 'octoprint_version'
     }
 
-    def __init__(self, dt=None, event_type=None, event_data=None, plugin_version=None, octoprint_version=None, print_job=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(self, dt=None, event_type=None, event_data=None, plugin_version=None, octoprint_version=None, local_vars_configuration=None):  # noqa: E501
         """OctoPrintEventRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -60,7 +58,6 @@ class OctoPrintEventRequest(object):
         self._event_data = None
         self._plugin_version = None
         self._octoprint_version = None
-        self._print_job = None
         self.discriminator = None
 
         self.dt = dt
@@ -68,7 +65,6 @@ class OctoPrintEventRequest(object):
         self.event_data = event_data
         self.plugin_version = plugin_version
         self.octoprint_version = octoprint_version
-        self.print_job = print_job
 
     @property
     def dt(self):
@@ -193,27 +189,6 @@ class OctoPrintEventRequest(object):
             raise ValueError("Invalid value for `octoprint_version`, length must be less than or equal to `30`")  # noqa: E501
 
         self._octoprint_version = octoprint_version
-
-    @property
-    def print_job(self):
-        """Gets the print_job of this OctoPrintEventRequest.  # noqa: E501
-
-
-        :return: The print_job of this OctoPrintEventRequest.  # noqa: E501
-        :rtype: int
-        """
-        return self._print_job
-
-    @print_job.setter
-    def print_job(self, print_job):
-        """Sets the print_job of this OctoPrintEventRequest.
-
-
-        :param print_job: The print_job of this OctoPrintEventRequest.  # noqa: E501
-        :type print_job: int
-        """
-
-        self._print_job = print_job
 
     def to_dict(self, serialize=False):
         """Returns the model properties as a dict"""

@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 **name** | **str** |  | [optional] 
 **volume_custom_box** | **bool** |  | [optional] 
 **volume_depth** | **float** |  | [optional] 
-**volume_form_factor** | **str** |  | [optional] 
+**volume_formfactor** | **str** |  | [optional] 
 **volume_height** | **float** |  | [optional] 
 **volume_origin** | **str** |  | [optional] 
 

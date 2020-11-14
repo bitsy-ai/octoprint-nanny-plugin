@@ -49,7 +49,7 @@ class PrinterProfileRequest(object):
         'name': 'str',
         'volume_custom_box': 'bool',
         'volume_depth': 'float',
-        'volume_form_factor': 'str',
+        'volume_formfactor': 'str',
         'volume_height': 'float',
         'volume_origin': 'str'
     }
@@ -63,21 +63,21 @@ class PrinterProfileRequest(object):
         'axes_z_inverted': 'axes_z_inverted',
         'axes_z_speed': 'axes_z_speed',
         'extruder_count': 'extruder_count',
-        'extruder_nozzle_diameter': 'extruder_nozzleDiameter',
+        'extruder_nozzle_diameter': 'extruder_nozzle_diameter',
         'extruder_offsets': 'extruder_offsets',
-        'extruder_shared_nozzle': 'extruder_sharedNozzle',
-        'heated_bed': 'heatedBed',
-        'heated_chamber': 'heatedChamber',
+        'extruder_shared_nozzle': 'extruder_shared_nozzle',
+        'heated_bed': 'heated_bed',
+        'heated_chamber': 'heated_chamber',
         'model': 'model',
         'name': 'name',
-        'volume_custom_box': 'volume_customBox',
+        'volume_custom_box': 'volume_custom_box',
         'volume_depth': 'volume_depth',
-        'volume_form_factor': 'volume_formFactor',
+        'volume_formfactor': 'volume_formfactor',
         'volume_height': 'volume_height',
         'volume_origin': 'volume_origin'
     }
 
-    def __init__(self, axes_e_inverted=None, axes_e_speed=None, axes_x_speed=None, axes_y_inverted=None, axes_y_speed=None, axes_z_inverted=None, axes_z_speed=None, extruder_count=None, extruder_nozzle_diameter=None, extruder_offsets=None, extruder_shared_nozzle=None, heated_bed=None, heated_chamber=None, model=None, name=None, volume_custom_box=None, volume_depth=None, volume_form_factor=None, volume_height=None, volume_origin=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(self, axes_e_inverted=None, axes_e_speed=None, axes_x_speed=None, axes_y_inverted=None, axes_y_speed=None, axes_z_inverted=None, axes_z_speed=None, extruder_count=None, extruder_nozzle_diameter=None, extruder_offsets=None, extruder_shared_nozzle=None, heated_bed=None, heated_chamber=None, model=None, name=None, volume_custom_box=None, volume_depth=None, volume_formfactor=None, volume_height=None, volume_origin=None, local_vars_configuration=None):  # noqa: E501
         """PrinterProfileRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -100,7 +100,7 @@ class PrinterProfileRequest(object):
         self._name = None
         self._volume_custom_box = None
         self._volume_depth = None
-        self._volume_form_factor = None
+        self._volume_formfactor = None
         self._volume_height = None
         self._volume_origin = None
         self.discriminator = None
@@ -122,7 +122,7 @@ class PrinterProfileRequest(object):
         self.name = name
         self.volume_custom_box = volume_custom_box
         self.volume_depth = volume_depth
-        self.volume_form_factor = volume_form_factor
+        self.volume_formfactor = volume_formfactor
         self.volume_height = volume_height
         self.volume_origin = volume_origin
 
@@ -554,30 +554,30 @@ class PrinterProfileRequest(object):
         self._volume_depth = volume_depth
 
     @property
-    def volume_form_factor(self):
-        """Gets the volume_form_factor of this PrinterProfileRequest.  # noqa: E501
+    def volume_formfactor(self):
+        """Gets the volume_formfactor of this PrinterProfileRequest.  # noqa: E501
 
 
-        :return: The volume_form_factor of this PrinterProfileRequest.  # noqa: E501
+        :return: The volume_formfactor of this PrinterProfileRequest.  # noqa: E501
         :rtype: str
         """
-        return self._volume_form_factor
+        return self._volume_formfactor
 
-    @volume_form_factor.setter
-    def volume_form_factor(self, volume_form_factor):
-        """Sets the volume_form_factor of this PrinterProfileRequest.
+    @volume_formfactor.setter
+    def volume_formfactor(self, volume_formfactor):
+        """Sets the volume_formfactor of this PrinterProfileRequest.
 
 
-        :param volume_form_factor: The volume_form_factor of this PrinterProfileRequest.  # noqa: E501
-        :type volume_form_factor: str
+        :param volume_formfactor: The volume_formfactor of this PrinterProfileRequest.  # noqa: E501
+        :type volume_formfactor: str
         """
-        if self.local_vars_configuration.client_side_validation and volume_form_factor is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_form_factor`, must not be `None`")  # noqa: E501
+        if self.local_vars_configuration.client_side_validation and volume_formfactor is None:  # noqa: E501
+            raise ValueError("Invalid value for `volume_formfactor`, must not be `None`")  # noqa: E501
         if (self.local_vars_configuration.client_side_validation and
-                volume_form_factor is not None and len(volume_form_factor) > 255):
-            raise ValueError("Invalid value for `volume_form_factor`, length must be less than or equal to `255`")  # noqa: E501
+                volume_formfactor is not None and len(volume_formfactor) > 255):
+            raise ValueError("Invalid value for `volume_formfactor`, length must be less than or equal to `255`")  # noqa: E501
 
-        self._volume_form_factor = volume_form_factor
+        self._volume_formfactor = volume_formfactor
 
     @property
     def volume_height(self):

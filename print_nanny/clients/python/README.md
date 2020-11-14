@@ -98,6 +98,7 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *AuthTokenApi* | [**auth_token_create**](docs/AuthTokenApi.md#auth_token_create) | **POST** /api/auth-token/ | 
 *EventsApi* | [**events_octoprint_create**](docs/EventsApi.md#events_octoprint_create) | **POST** /api/events/octoprint/ | 
+*EventsApi* | [**events_octoprint_list**](docs/EventsApi.md#events_octoprint_list) | **GET** /api/events/octoprint/ | 
 *EventsApi* | [**events_predict_create**](docs/EventsApi.md#events_predict_create) | **POST** /api/events/predict/ | 
 *GcodeFilesApi* | [**gcode_files_create**](docs/GcodeFilesApi.md#gcode_files_create) | **POST** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_list**](docs/GcodeFilesApi.md#gcode_files_list) | **GET** /api/gcode_files/ | 

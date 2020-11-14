@@ -21,7 +21,7 @@ Name | Type | Description | Notes
 **name** | **str** |  | 
 **volume_custom_box** | **bool** |  | 
 **volume_depth** | **float** |  | 
-**volume_form_factor** | **str** |  | 
+**volume_formfactor** | **str** |  | 
 **volume_height** | **float** |  | 
 **volume_origin** | **str** |  | 
 **user** | **int** |  | [optional] [readonly] 
