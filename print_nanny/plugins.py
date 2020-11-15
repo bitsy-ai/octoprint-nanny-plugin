@@ -247,7 +247,7 @@ class BitsyNannyPlugin(
                     axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
                     extruder_count=event_data['printer_profile']['extruder']['count'],
                     extruder_nozzle_diameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
-                    extruder_offsets=event_data['printer_profile']['extruder']['offsets'],
+                    extruder_offsets=list(list(x) for x in event_data['printer_profile']['extruder']['offsets'] ),
                     extruder_shared_nozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
                     name=event_data['printer_profile']['name'],
                     model=event_data['printer_profile']['model'],
@@ -261,6 +261,7 @@ class BitsyNannyPlugin(
                     volume_width=event_data['printer_profile']['volume']['width']
                 )
                 printer_profile = await api_instance.printer_profiles_update_or_create(request)
+                logger.info(f'Synced printer_profile {printer_profile}')
                 self._api_objects['printer_profile'] = printer_profile
             else:
                 printer_profile = self._api_objects.get('printer_profile')
@@ -276,30 +277,28 @@ class BitsyNannyPlugin(
 
 
             api_instance = GcodeFilesApi(api_client=api_client)
-            # request =  print_nanny_client.model.gcode_file_request.GcodeFileRequest(
-            #     name=event_data['name'],
-            #     file_hash=file_hash,
-            #     file=gcode_file_path
-            # )
             gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data['name'],
                 file_hash=file_hash,
                 file=gcode_f
             )
             self._api_objects['gcode_file'] = gcode_file
+            logger.info(f'Synced gcode_file {gcode_file}')
 
 
             # print job
             api_instance = PrintJobsApi(api_client=api_client)
-            request = print_nanny_client.model.print_job_request.PrintJobsRequest(                
-                gcode_file=gcode_file,
+            request = print_nanny_client.model.print_job_request.PrintJobRequest(                
+                gcode_file=gcode_file.id,
                 gcode_file_hash=file_hash,
                 dt=event_data['dt'],
                 name=event_data['name'],
-                printer_profile=printer_profile
+                printer_profile=printer_profile.id
                 )
             print_job = await api_instance.print_jobs_create(request)
             self._api_objects['print_job'] = print_job
+            logger.info(f'Created print_job {print_job}')
+
 
 
     async def _handle_predict_upload(self, event_type, event_data, annotated_image, original_image):
