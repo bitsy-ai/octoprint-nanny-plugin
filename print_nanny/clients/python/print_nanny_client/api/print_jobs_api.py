@@ -22,6 +22,7 @@ from print_nanny_client.model_utils import (  # noqa: F401
     none_type,
     validate_and_convert_types
 )
+from print_nanny_client.model.paginated_print_job_list import PaginatedPrintJobList
 from print_nanny_client.model.patched_print_job_request import PatchedPrintJobRequest
 from print_nanny_client.model.print_job import PrintJob
 from print_nanny_client.model.print_job_request import PrintJobRequest
@@ -175,6 +176,8 @@ class PrintJobsApi(object):
 
 
             Keyword Args:
+                limit (int): Number of results to return per page.. [optional]
+                offset (int): The initial index from which to return the results.. [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
                 _preload_content (bool): if False, the urllib3.HTTPResponse object
@@ -196,7 +199,7 @@ class PrintJobsApi(object):
                 async_req (bool): execute request asynchronously
 
             Returns:
-                [PrintJob]
+                PaginatedPrintJobList
                     If the method is called asynchronously, returns the request
                     thread.
             """
@@ -223,7 +226,7 @@ class PrintJobsApi(object):
 
         self.print_jobs_list = Endpoint(
             settings={
-                'response_type': ([PrintJob],),
+                'response_type': (PaginatedPrintJobList,),
                 'auth': [
                     'cookieAuth',
                     'tokenAuth'
@@ -235,6 +238,8 @@ class PrintJobsApi(object):
             },
             params_map={
                 'all': [
+                    'limit',
+                    'offset',
                 ],
                 'required': [],
                 'nullable': [
@@ -250,10 +255,18 @@ class PrintJobsApi(object):
                 'allowed_values': {
                 },
                 'openapi_types': {
+                    'limit':
+                        (int,),
+                    'offset':
+                        (int,),
                 },
                 'attribute_map': {
+                    'limit': 'limit',
+                    'offset': 'offset',
                 },
                 'location_map': {
+                    'limit': 'query',
+                    'offset': 'query',
                 },
                 'collection_format_map': {
                 }

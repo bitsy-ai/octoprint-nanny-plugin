@@ -23,6 +23,7 @@ from print_nanny_client.model_utils import (  # noqa: F401
     validate_and_convert_types
 )
 from print_nanny_client.model.gcode_file import GcodeFile
+from print_nanny_client.model.paginated_gcode_file_list import PaginatedGcodeFileList
 
 
 class GcodeFilesApi(object):
@@ -201,6 +202,8 @@ class GcodeFilesApi(object):
 
 
             Keyword Args:
+                limit (int): Number of results to return per page.. [optional]
+                offset (int): The initial index from which to return the results.. [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
                 _preload_content (bool): if False, the urllib3.HTTPResponse object
@@ -222,7 +225,7 @@ class GcodeFilesApi(object):
                 async_req (bool): execute request asynchronously
 
             Returns:
-                [GcodeFile]
+                PaginatedGcodeFileList
                     If the method is called asynchronously, returns the request
                     thread.
             """
@@ -249,7 +252,7 @@ class GcodeFilesApi(object):
 
         self.gcode_files_list = Endpoint(
             settings={
-                'response_type': ([GcodeFile],),
+                'response_type': (PaginatedGcodeFileList,),
                 'auth': [
                     'cookieAuth',
                     'tokenAuth'
@@ -261,6 +264,8 @@ class GcodeFilesApi(object):
             },
             params_map={
                 'all': [
+                    'limit',
+                    'offset',
                 ],
                 'required': [],
                 'nullable': [
@@ -276,10 +281,18 @@ class GcodeFilesApi(object):
                 'allowed_values': {
                 },
                 'openapi_types': {
+                    'limit':
+                        (int,),
+                    'offset':
+                        (int,),
                 },
                 'attribute_map': {
+                    'limit': 'limit',
+                    'offset': 'offset',
                 },
                 'location_map': {
+                    'limit': 'query',
+                    'offset': 'query',
                 },
                 'collection_format_map': {
                 }

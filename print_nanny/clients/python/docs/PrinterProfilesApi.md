@@ -118,7 +118,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **printer_profiles_list**
-> [PrinterProfile] printer_profiles_list()
+> PaginatedPrinterProfileList printer_profiles_list()
 
 
 
@@ -130,7 +130,7 @@ Name | Type | Description  | Notes
 import time
 import print_nanny_client
 from print_nanny_client.api import printer_profiles_api
-from print_nanny_client.model.printer_profile import PrinterProfile
+from print_nanny_client.model.paginated_printer_profile_list import PaginatedPrinterProfileList
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -158,13 +158,15 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = printer_profiles_api.PrinterProfilesApi(api_client)
+    limit = 1 # int | Number of results to return per page. (optional)
     name = "name_example" # str | name (optional)
+    offset = 1 # int | The initial index from which to return the results. (optional)
     user = "user_example" # str | user (optional)
 
     # example passing only required values which don't have defaults set
     # and optional values
     try:
-        api_response = api_instance.printer_profiles_list(name=name, user=user)
+        api_response = api_instance.printer_profiles_list(limit=limit, name=name, offset=offset, user=user)
         pprint(api_response)
     except print_nanny_client.ApiException as e:
         print("Exception when calling PrinterProfilesApi->printer_profiles_list: %s\n" % e)
@@ -174,12 +176,14 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **limit** | **int**| Number of results to return per page. | [optional]
  **name** | **str**| name | [optional]
+ **offset** | **int**| The initial index from which to return the results. | [optional]
  **user** | **str**| user | [optional]
 
 ### Return type
 
-[**[PrinterProfile]**](PrinterProfile.md)
+[**PaginatedPrinterProfileList**](PaginatedPrinterProfileList.md)
 
 ### Authorization
 

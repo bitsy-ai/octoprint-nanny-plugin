@@ -13,13 +13,13 @@ import sys
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.last_status_enum import LastStatusEnum
-globals()['LastStatusEnum'] = LastStatusEnum
-from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.user import User
+globals()['User'] = User
+from print_nanny_client.model.paginated_user_list import PaginatedUserList
 
 
-class TestPrintJob(unittest.TestCase):
-    """PrintJob unit test stubs"""
+class TestPaginatedUserList(unittest.TestCase):
+    """PaginatedUserList unit test stubs"""
 
     def setUp(self):
         pass
@@ -27,10 +27,10 @@ class TestPrintJob(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testPrintJob(self):
-        """Test PrintJob"""
+    def testPaginatedUserList(self):
+        """Test PaginatedUserList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PrintJob()  # noqa: E501
+        # model = PaginatedUserList()  # noqa: E501
         pass
 
 

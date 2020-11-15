@@ -22,6 +22,7 @@ from print_nanny_client.model_utils import (  # noqa: F401
     none_type,
     validate_and_convert_types
 )
+from print_nanny_client.model.paginated_printer_profile_list import PaginatedPrinterProfileList
 from print_nanny_client.model.patched_printer_profile_request import PatchedPrinterProfileRequest
 from print_nanny_client.model.printer_profile import PrinterProfile
 from print_nanny_client.model.printer_profile_request import PrinterProfileRequest
@@ -175,7 +176,9 @@ class PrinterProfilesApi(object):
 
 
             Keyword Args:
+                limit (int): Number of results to return per page.. [optional]
                 name (str): name. [optional]
+                offset (int): The initial index from which to return the results.. [optional]
                 user (str): user. [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
@@ -198,7 +201,7 @@ class PrinterProfilesApi(object):
                 async_req (bool): execute request asynchronously
 
             Returns:
-                [PrinterProfile]
+                PaginatedPrinterProfileList
                     If the method is called asynchronously, returns the request
                     thread.
             """
@@ -225,7 +228,7 @@ class PrinterProfilesApi(object):
 
         self.printer_profiles_list = Endpoint(
             settings={
-                'response_type': ([PrinterProfile],),
+                'response_type': (PaginatedPrinterProfileList,),
                 'auth': [
                     'cookieAuth',
                     'tokenAuth'
@@ -237,7 +240,9 @@ class PrinterProfilesApi(object):
             },
             params_map={
                 'all': [
+                    'limit',
                     'name',
+                    'offset',
                     'user',
                 ],
                 'required': [],
@@ -254,17 +259,25 @@ class PrinterProfilesApi(object):
                 'allowed_values': {
                 },
                 'openapi_types': {
+                    'limit':
+                        (int,),
                     'name':
                         (str,),
+                    'offset':
+                        (int,),
                     'user':
                         (str,),
                 },
                 'attribute_map': {
+                    'limit': 'limit',
                     'name': 'name',
+                    'offset': 'offset',
                     'user': 'user',
                 },
                 'location_map': {
+                    'limit': 'query',
                     'name': 'query',
+                    'offset': 'query',
                     'user': 'query',
                 },
                 'collection_format_map': {

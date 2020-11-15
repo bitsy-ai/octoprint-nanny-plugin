@@ -42,6 +42,12 @@ class TestEventsApi(unittest.TestCase):
         """
         pass
 
+    def test_events_predict_list(self):
+        """Test case for events_predict_list
+
+        """
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

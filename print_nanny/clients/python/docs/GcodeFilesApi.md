@@ -94,7 +94,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **gcode_files_list**
-> [GcodeFile] gcode_files_list()
+> PaginatedGcodeFileList gcode_files_list()
 
 
 
@@ -106,7 +106,7 @@ Name | Type | Description  | Notes
 import time
 import print_nanny_client
 from print_nanny_client.api import gcode_files_api
-from print_nanny_client.model.gcode_file import GcodeFile
+from print_nanny_client.model.paginated_gcode_file_list import PaginatedGcodeFileList
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -134,21 +134,28 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gcode_files_api.GcodeFilesApi(api_client)
+    limit = 1 # int | Number of results to return per page. (optional)
+    offset = 1 # int | The initial index from which to return the results. (optional)
 
-    # example, this endpoint has no required or optional parameters
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
-        api_response = api_instance.gcode_files_list()
+        api_response = api_instance.gcode_files_list(limit=limit, offset=offset)
         pprint(api_response)
     except print_nanny_client.ApiException as e:
         print("Exception when calling GcodeFilesApi->gcode_files_list: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int**| Number of results to return per page. | [optional]
+ **offset** | **int**| The initial index from which to return the results. | [optional]
 
 ### Return type
 
-[**[GcodeFile]**](GcodeFile.md)
+[**PaginatedGcodeFileList**](PaginatedGcodeFileList.md)
 
 ### Authorization
 

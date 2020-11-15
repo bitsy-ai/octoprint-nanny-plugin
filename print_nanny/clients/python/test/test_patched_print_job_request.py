@@ -13,6 +13,8 @@ import sys
 import unittest
 
 import print_nanny_client
+from print_nanny_client.model.last_status_enum import LastStatusEnum
+globals()['LastStatusEnum'] = LastStatusEnum
 from print_nanny_client.model.patched_print_job_request import PatchedPrintJobRequest
 
 

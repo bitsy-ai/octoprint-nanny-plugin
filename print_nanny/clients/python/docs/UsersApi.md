@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 
 # **users_list**
-> [User] users_list()
+> PaginatedUserList users_list()
 
 
 
@@ -24,7 +24,7 @@ Method | HTTP request | Description
 import time
 import print_nanny_client
 from print_nanny_client.api import users_api
-from print_nanny_client.model.user import User
+from print_nanny_client.model.paginated_user_list import PaginatedUserList
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -52,21 +52,28 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = users_api.UsersApi(api_client)
+    limit = 1 # int | Number of results to return per page. (optional)
+    offset = 1 # int | The initial index from which to return the results. (optional)
 
-    # example, this endpoint has no required or optional parameters
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
-        api_response = api_instance.users_list()
+        api_response = api_instance.users_list(limit=limit, offset=offset)
         pprint(api_response)
     except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_list: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int**| Number of results to return per page. | [optional]
+ **offset** | **int**| The initial index from which to return the results. | [optional]
 
 ### Return type
 
-[**[User]**](User.md)
+[**PaginatedUserList**](PaginatedUserList.md)
 
 ### Authorization
 

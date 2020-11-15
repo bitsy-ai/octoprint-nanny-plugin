@@ -32,9 +32,9 @@ from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
-import print_nanny_client.model.printer_profile_request
-import print_nanny_client.model.octo_print_event_request
-import print_nanny_client.model.print_job_request
+from print_nanny_client.model.printer_profile_request import PrinterProfileRequest
+from print_nanny_client.model.print_job_request import PrintJobRequest
+from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -97,8 +97,14 @@ class BitsyNannyPlugin(
         self._queue_event_handlers = {
             self.PREDICT_START: self._handle_predict,
             self.PREDICT_DONE: self._handle_predict_upload,
-            Events.PRINT_STARTED: self._handle_print_upload,
+            Events.PRINT_STARTED: self._handle_print_start,
+            Events.PRINT_FAILED: self._handle_print_job_status,
+            Events.PRINT_DONE: self._handle_print_job_status,
+            Events.PRINT_CANCELLING: self._handle_print_job_status,
+            Events.PRINT_CANCELLED: self._handle_print_job_status,
+            Events.PRINT_PAUSED: self._handle_print_job_status,
             Events.UPLOAD: self._handle_file_upload,
+
         # self._event_bus.subscribe(Events.MOVIE_DONE, self.on_movie_done)
         # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_movie_done)
         }
@@ -126,15 +132,13 @@ class BitsyNannyPlugin(
         }
 
     def _start(self):
-
         self._reset()
         self._active = True
         self._queue_predict()
 
     
     def _queue_predict(self):
-
-        return self._predict_queue.put({
+        self._predict_queue.put({
             'event_type': self.PREDICT_START, 
             'url': self._settings.global_get(['webcam', 'snapshot'])
         })
@@ -144,10 +148,10 @@ class BitsyNannyPlugin(
 
     
     def _resume(self):
-        pass
+        self._active = True
     
     def _pause(self):
-        pass
+        self._active = False
 
     def _drain(self):
         while self._predict_queue.qsize() > 0 or self._upload_queue.qsize() > 0:
@@ -157,9 +161,8 @@ class BitsyNannyPlugin(
     def _stop(self):
         self._active = False
 
-
     def _reset(self):
-        pass
+        self._api_objects = {}
 
     def _handle_predict(self, url=None, **kwargs):
         if url is None:
@@ -187,7 +190,7 @@ class BitsyNannyPlugin(
                 'original_image': image_buffer,
                 'annotated_image':viz_buffer,
                 'event_data': {
-                    'pediction': prediction
+                    'prediction': prediction
                 }
         })
         if self._active:
@@ -226,9 +229,35 @@ class BitsyNannyPlugin(
             )
         logging.info(f'Upserted gcode_file {gcode_file}')
         return gcode_file
+    
 
-    async def _handle_print_upload(self, event_type, event_data):
+    async def _handle_print_job_status(self, event_type, event_data):
 
+        status = event_type.replace('Print', '').upper()
+        async with AsyncApiClient(self._api_config) as api_client:
+
+            # printer profile
+            if self._api_objects.get('print_job') is None:
+                return
+            
+            api_instance = PrintJobsApi(api_client=api_client)
+            request = PrintJobRequest(
+                id=self._api_objects.get('print_job').id,
+                last_status=status
+            )
+            print_job = await api_instance.print_job_partial_update(request)
+            logger.info(f'Updated print_job.status {print_job}')
+        
+        if status == 'FAILED' or status == 'DONE' or status == 'CANCELLING':
+            self._stop()
+            self._reset()
+        elif status == 'PAUSED':
+            self._pause()
+        elif status == 'RESUMED':
+            self._resume()
+
+    async def _handle_print_start(self, event_type, event_data):
+    
         event_data.update(self._get_metadata())
         #import pdb; pdb.set_trace()
         async with AsyncApiClient(self._api_config) as api_client:
@@ -236,7 +265,7 @@ class BitsyNannyPlugin(
             # printer profile
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
-                request = print_nanny_client.model.printer_profile_request.PrinterProfileRequest(
+                request = PrinterProfileRequest(
                     axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
                     axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
                     axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
@@ -258,7 +287,7 @@ class BitsyNannyPlugin(
                     volume_formfactor=event_data['printer_profile']['volume']['formFactor'],
                     volume_height=event_data['printer_profile']['volume']['height'],
                     volume_origin=event_data['printer_profile']['volume']['origin'],
-                    volume_width=event_data['printer_profile']['volume']['width']
+                    volume_width=event_data['printer_profile']['volume']['width'],
                 )
                 printer_profile = await api_instance.printer_profiles_update_or_create(request)
                 logger.info(f'Synced printer_profile {printer_profile}')
@@ -294,10 +323,12 @@ class BitsyNannyPlugin(
                 dt=event_data['dt'],
                 name=event_data['name'],
                 printer_profile=printer_profile.id
-                )
+            )
             print_job = await api_instance.print_jobs_create(request)
             self._api_objects['print_job'] = print_job
             logger.info(f'Created print_job {print_job}')
+
+            self._start()
 
 
 
@@ -305,6 +336,8 @@ class BitsyNannyPlugin(
         # reset stream position to prepare for upload
         original_image.seek(0)
         annotated_image.seek(0)
+        event_data.update(self._get_metadata())
+
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             res = await api_instance.events_predict_create(
@@ -319,7 +352,7 @@ class BitsyNannyPlugin(
             logger.info(f'Uploaded predict event')
 
 
-    async def _handle_octoprint_event_upload(self, event_type, event_data):
+    async def _handle_octoprint_event(self, event_type, event_data):
         if event_data is not None:
             event_data.update(self._get_metadata())
         else:
@@ -355,7 +388,7 @@ class BitsyNannyPlugin(
             if handler_fn:
                 logger.info(f'Calling handler_fn {handler_fn}')
                 await handler_fn(**event)
-            await self._handle_octoprint_event_upload(**event)
+            await self._handle_octoprint_event(**event)
 
     def _predict_worker(self):
         '''
@@ -387,12 +420,9 @@ class BitsyNannyPlugin(
         # settings test#
         if self._settings.global_get(['webcam', 'snapshot']) is None:
             raise WebcamSettingsHTTPException()
-        
-
         url = self._settings.global_get(['webcam', 'snapshot'])
         res = requests.get(url)
         res.raise_for_status()
-
 
         self._start()
         return flask.json.jsonify({'ok': 1})
@@ -423,7 +453,6 @@ class BitsyNannyPlugin(
         logger.info(f'Authenticated as {user}')
         return flask.json.jsonify(user.to_dict())
 
-
     def register_custom_events(self):
         return [
             "predict_done", 
@@ -431,7 +460,6 @@ class BitsyNannyPlugin(
             "upload_done", 
             "upload_failed"
         ]
-    
     
     @property
     def _api_config(self):
@@ -445,8 +473,10 @@ class BitsyNannyPlugin(
         return config
 
     def on_event(self, event_type, event_data):
-        logger.info(f'on_event called {event_type}')
-        self._queue_upload({ 'event_type': event_type, 'event_data': event_data})
+        IGNORED = [ Events.PLUGIN_PRINT_NANNY_PREDICT_DONE ]
+        if event_type not in IGNORED:
+            self._queue_upload({ 'event_type': event_type, 'event_data': event_data})
+            logger.info(f'{event_type} added to upload queue')
 
     def on_settings_initialized(self):
         '''
@@ -461,122 +491,6 @@ class BitsyNannyPlugin(
             logger.info(f'Authenticated as {user}')
             self._settings.set(['user_email'], user.email)
             self._settings.set(['user_url'], user.url)
-
-    def on_octoprint_event(self, event_type, payload):
-        logger.info(f'Received event_type {event_type}')
-
-        self._queue_upload({ 'event_type': event_type, 'event_data': payload })
-    
-    def on_movie_done(self, payload):
-        data = { 'event_type': Events.MOVIE_DONE, 'event_data': payload }
-        self._event_data[Events.MOVIE_DONE] = data
-        self._queue_upload(data)
-
-    def on_print_cancelled(self, payload):
-
-        data = {'event_type': Events.PRINT_CANCELLED, 'event_data': payload }
-        self._event_data[Events.PRINT_CANCELLED] = data
-        self._queue_upload(data)
-        
-        self._drain()
-        self._stop()
-        self._reset()
-
-    def on_print_started(self, payload):
-        '''
-            payload:
-                name: the file’s name
-                path: the file’s path within its storage location
-                origin: the origin storage location of the file, either local or sdcard
-                size: the file’s size in bytes (if available)
-                owner: the user who started the print job (if available)
-                user: the user who started the print job (if available)
-        '''
-        data = {'event_type': Events.PRINT_STARTED, 'event_data': payload}
-        self._event_data[Events.PRINT_STARTED] = data
-        self._queue_upload(data)
-        
-        self._start()
-
-
-    def on_print_resume(self, payload):
-        '''
-            payload
-
-                name: the file’s name
-                path: the file’s path within its storage location
-                origin: the origin storage location of the file, either local or sdcard
-                size: the file’s size in bytes (if available)
-                owner: the user who started the print job (if available)
-                user: the user who resumed the print job (if available)
-        '''
-        data = {'event_type': Events.PRINT_RESUMED, 'event_data': payload }
-        self._event_data[Events.PRINT_RESUMED ] = data
-        self._queue_upload(data)
-        
-        self._resume()
-    
-    def on_print_paused(self, payload):
-        '''
-            payload
-                name: the file’s name
-                path: the file’s path within its storage location
-                origin: the origin storage location of the file, either local or sdcard
-                size: the file’s size in bytes (if available)
-                owner: the user who started the print job (if available)
-                user: the user who paused the print job (if available)
-                position: the print head position at the time of pausing (if available, not available if the recording of the position on pause is disabled or the pause is completely handled by the printer’s firmware)
-                position.x: x coordinate, as reported back from the firmware through M114
-                position.y: y coordinate, as reported back from the firmware through M114
-                position.z: z coordinate, as reported back from the firmware through M114
-                position.e: e coordinate (of currently selected extruder), as reported back from the firmware through M114
-                position.t: last tool selected through OctoPrint (note that if you did change the printer’s selected tool outside of OctoPrint, e.g. through the printer controller, or if you are printing from SD, this will NOT be accurate)
-                position.f: last feedrate for move commands sent through OctoPrint (note that if you modified the feedrate outside of OctoPrint, e.g. through the printer controller, or if you are printing from SD, this will NOT be accurate)
-        '''
-
-        data = {'event_type': Events.PRINT_PAUSED, 'event_data': payload }
-        self._event_data[Events.PRINT_PAUSED ] = data
-        self._queue_upload(data)
-
-        self._pause()
-
-    def on_print_done(self, payload):
-        '''
-            payload
-                name: the file’s name
-                path: the file’s path within its storage location
-                origin: the origin storage location of the file, either local or sdcard
-                size: the file’s size in bytes (if available)
-                owner: the user who started the print job (if available)
-                time: the time needed for the print, in seconds (float)
-        '''
-        data = {'event_type': Events.PRINT_DONE, 'event_data': payload }
-        self._event_data[Events.PRINT_DONE ] = data
-        self._queue_upload(data)
-  
-
-        self._drain()
-        self._stop()
-        self._reset()
-
-    def on_print_failed(self, payload):
-        '''
-            name: the file’s name
-            path: the file’s path within its storage location
-            origin: the origin storage location of the file, either local or sdcard
-            size: the file’s size in bytes (if available)
-            owner: the user who started the print job (if available)
-            time: the elapsed time of the print when it failed, in seconds (float)
-            reason: the reason the print failed, either cancelled or error
-        '''
-        data = {'event_type': Events.PRINT_FAILED, 'event_data': payload  }
-        self._event_data[Events.PRINT_FAILED ] = data
-        self._queue_upload(data)
-
-        self._drain()
-        self._stop()
-        self._reset()
-
 
     ## TemplatePlugin mixin
     # def get_template_configs(self):

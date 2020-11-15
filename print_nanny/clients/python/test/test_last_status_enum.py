@@ -14,12 +14,10 @@ import unittest
 
 import print_nanny_client
 from print_nanny_client.model.last_status_enum import LastStatusEnum
-globals()['LastStatusEnum'] = LastStatusEnum
-from print_nanny_client.model.print_job import PrintJob
 
 
-class TestPrintJob(unittest.TestCase):
-    """PrintJob unit test stubs"""
+class TestLastStatusEnum(unittest.TestCase):
+    """LastStatusEnum unit test stubs"""
 
     def setUp(self):
         pass
@@ -27,10 +25,10 @@ class TestPrintJob(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testPrintJob(self):
-        """Test PrintJob"""
+    def testLastStatusEnum(self):
+        """Test LastStatusEnum"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PrintJob()  # noqa: E501
+        # model = LastStatusEnum()  # noqa: E501
         pass
 
 

@@ -98,6 +98,7 @@ Class | Method | HTTP request | Description
 *EventsApi* | [**events_octoprint_create**](docs/EventsApi.md#events_octoprint_create) | **POST** /api/events/octoprint/ | 
 *EventsApi* | [**events_octoprint_list**](docs/EventsApi.md#events_octoprint_list) | **GET** /api/events/octoprint/ | 
 *EventsApi* | [**events_predict_create**](docs/EventsApi.md#events_predict_create) | **POST** /api/events/predict/ | 
+*EventsApi* | [**events_predict_list**](docs/EventsApi.md#events_predict_list) | **GET** /api/events/predict/ | 
 *GcodeFilesApi* | [**gcode_files_create**](docs/GcodeFilesApi.md#gcode_files_create) | **POST** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_list**](docs/GcodeFilesApi.md#gcode_files_list) | **GET** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_partial_update**](docs/GcodeFilesApi.md#gcode_files_partial_update) | **PATCH** /api/gcode_files/{id}/ | 
@@ -129,8 +130,15 @@ Class | Method | HTTP request | Description
  - [AuthTokenRequest](docs/AuthTokenRequest.md)
  - [GcodeFile](docs/GcodeFile.md)
  - [GcodeFileRequest](docs/GcodeFileRequest.md)
+ - [LastStatusEnum](docs/LastStatusEnum.md)
  - [OctoPrintEvent](docs/OctoPrintEvent.md)
  - [OctoPrintEventRequest](docs/OctoPrintEventRequest.md)
+ - [PaginatedGcodeFileList](docs/PaginatedGcodeFileList.md)
+ - [PaginatedOctoPrintEventList](docs/PaginatedOctoPrintEventList.md)
+ - [PaginatedPredictEventList](docs/PaginatedPredictEventList.md)
+ - [PaginatedPrintJobList](docs/PaginatedPrintJobList.md)
+ - [PaginatedPrinterProfileList](docs/PaginatedPrinterProfileList.md)
+ - [PaginatedUserList](docs/PaginatedUserList.md)
  - [PatchedGcodeFileRequest](docs/PatchedGcodeFileRequest.md)
  - [PatchedPrintJobRequest](docs/PatchedPrintJobRequest.md)
  - [PatchedPrinterProfileRequest](docs/PatchedPrinterProfileRequest.md)

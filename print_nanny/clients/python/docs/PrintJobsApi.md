@@ -57,6 +57,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
+        last_status=LastStatusEnum("STARTED"),
         printer_profile=1,
         gcode_file=1,
     ) # PrintJobRequest | 
@@ -96,7 +97,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **print_jobs_list**
-> [PrintJob] print_jobs_list()
+> PaginatedPrintJobList print_jobs_list()
 
 
 
@@ -108,7 +109,7 @@ Name | Type | Description  | Notes
 import time
 import print_nanny_client
 from print_nanny_client.api import print_jobs_api
-from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.paginated_print_job_list import PaginatedPrintJobList
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -136,21 +137,28 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = print_jobs_api.PrintJobsApi(api_client)
+    limit = 1 # int | Number of results to return per page. (optional)
+    offset = 1 # int | The initial index from which to return the results. (optional)
 
-    # example, this endpoint has no required or optional parameters
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
-        api_response = api_instance.print_jobs_list()
+        api_response = api_instance.print_jobs_list(limit=limit, offset=offset)
         pprint(api_response)
     except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_list: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int**| Number of results to return per page. | [optional]
+ **offset** | **int**| The initial index from which to return the results. | [optional]
 
 ### Return type
 
-[**[PrintJob]**](PrintJob.md)
+[**PaginatedPrintJobList**](PaginatedPrintJobList.md)
 
 ### Authorization
 
@@ -215,6 +223,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
+        last_status=LastStatusEnum("STARTED"),
         printer_profile=1,
         gcode_file=1,
     ) # PatchedPrintJobRequest |  (optional)
@@ -386,6 +395,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
+        last_status=LastStatusEnum("STARTED"),
         printer_profile=1,
         gcode_file=1,
     ) # PrintJobRequest | 

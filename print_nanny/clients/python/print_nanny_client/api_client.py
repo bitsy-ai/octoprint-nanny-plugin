@@ -510,7 +510,6 @@ class ApiClient(object):
                     # if the file field is nullable, skip None values
                     continue
                 if file_instance.closed is True:
-                    
                     raise ApiValueError(
                         "Cannot read a closed file. The passed in file_type "
                         "for %s must be open." % param_name

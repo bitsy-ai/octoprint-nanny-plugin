@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **printer_profile** | **int** |  | 
 **id** | **int** |  | [optional] [readonly] 
 **gcode_file_hash** | **str, none_type** |  | [optional] 
+**last_status** | [**LastStatusEnum**](LastStatusEnum.md) |  | [optional] 
 **user** | **int** |  | [optional] [readonly] 
 **gcode_file** | **int, none_type** |  | [optional] 
 

@@ -22,6 +22,7 @@ from print_nanny_client.model_utils import (  # noqa: F401
     none_type,
     validate_and_convert_types
 )
+from print_nanny_client.model.paginated_user_list import PaginatedUserList
 from print_nanny_client.model.patched_user_request import PatchedUserRequest
 from print_nanny_client.model.user import User
 from print_nanny_client.model.user_request import UserRequest
@@ -53,6 +54,8 @@ class UsersApi(object):
 
 
             Keyword Args:
+                limit (int): Number of results to return per page.. [optional]
+                offset (int): The initial index from which to return the results.. [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
                 _preload_content (bool): if False, the urllib3.HTTPResponse object
@@ -74,7 +77,7 @@ class UsersApi(object):
                 async_req (bool): execute request asynchronously
 
             Returns:
-                [User]
+                PaginatedUserList
                     If the method is called asynchronously, returns the request
                     thread.
             """
@@ -101,7 +104,7 @@ class UsersApi(object):
 
         self.users_list = Endpoint(
             settings={
-                'response_type': ([User],),
+                'response_type': (PaginatedUserList,),
                 'auth': [
                     'cookieAuth',
                     'tokenAuth'
@@ -113,6 +116,8 @@ class UsersApi(object):
             },
             params_map={
                 'all': [
+                    'limit',
+                    'offset',
                 ],
                 'required': [],
                 'nullable': [
@@ -128,10 +133,18 @@ class UsersApi(object):
                 'allowed_values': {
                 },
                 'openapi_types': {
+                    'limit':
+                        (int,),
+                    'offset':
+                        (int,),
                 },
                 'attribute_map': {
+                    'limit': 'limit',
+                    'offset': 'offset',
                 },
                 'location_map': {
+                    'limit': 'query',
+                    'offset': 'query',
                 },
                 'collection_format_map': {
                 }

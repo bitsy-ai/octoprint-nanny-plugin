@@ -13,13 +13,13 @@ import sys
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.last_status_enum import LastStatusEnum
-globals()['LastStatusEnum'] = LastStatusEnum
-from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.gcode_file import GcodeFile
+globals()['GcodeFile'] = GcodeFile
+from print_nanny_client.model.paginated_gcode_file_list import PaginatedGcodeFileList
 
 
-class TestPrintJob(unittest.TestCase):
-    """PrintJob unit test stubs"""
+class TestPaginatedGcodeFileList(unittest.TestCase):
+    """PaginatedGcodeFileList unit test stubs"""
 
     def setUp(self):
         pass
@@ -27,10 +27,10 @@ class TestPrintJob(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testPrintJob(self):
-        """Test PrintJob"""
+    def testPaginatedGcodeFileList(self):
+        """Test PaginatedGcodeFileList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PrintJob()  # noqa: E501
+        # model = PaginatedGcodeFileList()  # noqa: E501
         pass
 
 
