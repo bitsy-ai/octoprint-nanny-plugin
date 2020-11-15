@@ -98,6 +98,8 @@ Class | Method | HTTP request | Description
 *EventsApi* | [**events_octoprint_create**](docs/EventsApi.md#events_octoprint_create) | **POST** /api/events/octoprint/ | 
 *EventsApi* | [**events_octoprint_list**](docs/EventsApi.md#events_octoprint_list) | **GET** /api/events/octoprint/ | 
 *EventsApi* | [**events_predict_create**](docs/EventsApi.md#events_predict_create) | **POST** /api/events/predict/ | 
+*EventsApi* | [**events_predict_files_create**](docs/EventsApi.md#events_predict_files_create) | **POST** /api/events/predict/files/ | 
+*EventsApi* | [**events_predict_files_list**](docs/EventsApi.md#events_predict_files_list) | **GET** /api/events/predict/files/ | 
 *EventsApi* | [**events_predict_list**](docs/EventsApi.md#events_predict_list) | **GET** /api/events/predict/ | 
 *GcodeFilesApi* | [**gcode_files_create**](docs/GcodeFilesApi.md#gcode_files_create) | **POST** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_list**](docs/GcodeFilesApi.md#gcode_files_list) | **GET** /api/gcode_files/ | 
@@ -135,6 +137,7 @@ Class | Method | HTTP request | Description
  - [OctoPrintEventRequest](docs/OctoPrintEventRequest.md)
  - [PaginatedGcodeFileList](docs/PaginatedGcodeFileList.md)
  - [PaginatedOctoPrintEventList](docs/PaginatedOctoPrintEventList.md)
+ - [PaginatedPredictEventFileList](docs/PaginatedPredictEventFileList.md)
  - [PaginatedPredictEventList](docs/PaginatedPredictEventList.md)
  - [PaginatedPrintJobList](docs/PaginatedPrintJobList.md)
  - [PaginatedPrinterProfileList](docs/PaginatedPrinterProfileList.md)
@@ -144,6 +147,8 @@ Class | Method | HTTP request | Description
  - [PatchedPrinterProfileRequest](docs/PatchedPrinterProfileRequest.md)
  - [PatchedUserRequest](docs/PatchedUserRequest.md)
  - [PredictEvent](docs/PredictEvent.md)
+ - [PredictEventFile](docs/PredictEventFile.md)
+ - [PredictEventFileRequest](docs/PredictEventFileRequest.md)
  - [PredictEventRequest](docs/PredictEventRequest.md)
  - [PrintJob](docs/PrintJob.md)
  - [PrintJobRequest](docs/PrintJobRequest.md)

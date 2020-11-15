@@ -3,12 +3,13 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**original_image** | **str** |  | 
-**annotated_image** | **str** |  | 
-**event_data** | **{str: (bool, date, datetime, dict, float, int, list, str, none_type)}** |  | 
+**predict_data** | **{str: (bool, date, datetime, dict, float, int, list, str, none_type)}** |  | 
 **plugin_version** | **str** |  | 
 **octoprint_version** | **str** |  | 
+**files** | **int** |  | 
+**id** | **int** |  | [optional] [readonly] 
 **dt** | **datetime** |  | [optional] 
+**event_data** | **{str: (bool, date, datetime, dict, float, int, list, str, none_type)}, none_type** |  | [optional] 
 **user** | **int** |  | [optional] [readonly] 
 **print_job** | **int, none_type** |  | [optional] 
 

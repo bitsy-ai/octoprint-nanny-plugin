@@ -51,7 +51,6 @@ class SchemaApi(object):
 
 
             Keyword Args:
-                format (str): [optional]
                 lang (str): [optional]
                 _return_http_data_only (bool): response data without head status
                     code and headers. Default is True.
@@ -113,14 +112,12 @@ class SchemaApi(object):
             },
             params_map={
                 'all': [
-                    'format',
                     'lang',
                 ],
                 'required': [],
                 'nullable': [
                 ],
                 'enum': [
-                    'format',
                     'lang',
                 ],
                 'validation': [
@@ -130,11 +127,6 @@ class SchemaApi(object):
                 'validations': {
                 },
                 'allowed_values': {
-                    ('format',): {
-
-                        "JSON": "json",
-                        "YAML": "yaml"
-                    },
                     ('lang',): {
 
                         "AF": "af",
@@ -236,17 +228,13 @@ class SchemaApi(object):
                     },
                 },
                 'openapi_types': {
-                    'format':
-                        (str,),
                     'lang':
                         (str,),
                 },
                 'attribute_map': {
-                    'format': 'format',
                     'lang': 'lang',
                 },
                 'location_map': {
-                    'format': 'query',
                     'lang': 'query',
                 },
                 'collection_format_map': {
@@ -254,8 +242,6 @@ class SchemaApi(object):
             },
             headers_map={
                 'accept': [
-                    'application/vnd.oai.openapi',
-                    'application/yaml',
                     'application/vnd.oai.openapi+json',
                     'application/json'
                 ],

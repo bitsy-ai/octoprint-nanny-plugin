@@ -14,6 +14,7 @@ docs/OctoPrintEvent.md
 docs/OctoPrintEventRequest.md
 docs/PaginatedGcodeFileList.md
 docs/PaginatedOctoPrintEventList.md
+docs/PaginatedPredictEventFileList.md
 docs/PaginatedPredictEventList.md
 docs/PaginatedPrintJobList.md
 docs/PaginatedPrinterProfileList.md
@@ -23,6 +24,8 @@ docs/PatchedPrintJobRequest.md
 docs/PatchedPrinterProfileRequest.md
 docs/PatchedUserRequest.md
 docs/PredictEvent.md
+docs/PredictEventFile.md
+docs/PredictEventFileRequest.md
 docs/PredictEventRequest.md
 docs/PrintJob.md
 docs/PrintJobRequest.md
@@ -58,6 +61,7 @@ print_nanny_client/model/octo_print_event.py
 print_nanny_client/model/octo_print_event_request.py
 print_nanny_client/model/paginated_gcode_file_list.py
 print_nanny_client/model/paginated_octo_print_event_list.py
+print_nanny_client/model/paginated_predict_event_file_list.py
 print_nanny_client/model/paginated_predict_event_list.py
 print_nanny_client/model/paginated_print_job_list.py
 print_nanny_client/model/paginated_printer_profile_list.py
@@ -67,6 +71,8 @@ print_nanny_client/model/patched_print_job_request.py
 print_nanny_client/model/patched_printer_profile_request.py
 print_nanny_client/model/patched_user_request.py
 print_nanny_client/model/predict_event.py
+print_nanny_client/model/predict_event_file.py
+print_nanny_client/model/predict_event_file_request.py
 print_nanny_client/model/predict_event_request.py
 print_nanny_client/model/print_job.py
 print_nanny_client/model/print_job_request.py

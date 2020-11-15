@@ -49,13 +49,12 @@ configuration = print_nanny_client.Configuration(
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = schema_api.SchemaApi(api_client)
-    format = "json" # str |  (optional)
     lang = "af" # str |  (optional)
 
     # example passing only required values which don't have defaults set
     # and optional values
     try:
-        api_response = api_instance.schema_retrieve(format=format, lang=lang)
+        api_response = api_instance.schema_retrieve(lang=lang)
         pprint(api_response)
     except print_nanny_client.ApiException as e:
         print("Exception when calling SchemaApi->schema_retrieve: %s\n" % e)
@@ -65,7 +64,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **format** | **str**|  | [optional]
  **lang** | **str**|  | [optional]
 
 ### Return type
@@ -79,7 +77,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/vnd.oai.openapi, application/yaml, application/vnd.oai.openapi+json, application/json
+ - **Accept**: application/vnd.oai.openapi+json, application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |

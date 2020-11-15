@@ -89,6 +89,7 @@ class OctoPrintEventRequest(ModelNormal):
             'event_data': ({str: (bool, date, datetime, dict, float, int, list, str, none_type)},),  # noqa: E501
             'plugin_version': (str,),  # noqa: E501
             'octoprint_version': (str,),  # noqa: E501
+            'print_job': (int, none_type,),  # noqa: E501
         }
 
     @cached_property
@@ -102,6 +103,7 @@ class OctoPrintEventRequest(ModelNormal):
         'event_data': 'event_data',  # noqa: E501
         'plugin_version': 'plugin_version',  # noqa: E501
         'octoprint_version': 'octoprint_version',  # noqa: E501
+        'print_job': 'print_job',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -157,6 +159,7 @@ class OctoPrintEventRequest(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            print_job (int, none_type): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
