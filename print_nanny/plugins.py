@@ -25,14 +25,16 @@ from PIL import Image
 import bravado.exception
 
 import print_nanny_client
+
+from print_nanny_client import ApiClient
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
-import print_nanny_client.models.printer_profile_request
-import print_nanny_client.models.octo_print_event_request
-import print_nanny_client.models.print_job_request
+import print_nanny_client.model.printer_profile_request
+import print_nanny_client.model.octo_print_event_request
+import print_nanny_client.model.print_job_request
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -40,6 +42,17 @@ from .utils.encoder import NumpyEncoder
 
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
+
+class AsyncApiClient(ApiClient):
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
+
+    async def close(self):
+        await self.rest_client.close()
 
 class BitsyNannyPlugin(
         octoprint.plugin.SettingsPlugin,
@@ -187,7 +200,7 @@ class BitsyNannyPlugin(
             host = host        
             )
         api_config.access_token = auth_token
-        async with print_nanny_client.ApiClient(api_config) as api_client:
+        async with AsyncApiClient(api_config) as api_client:
             api_instance = UsersApi(api_client=api_client)
             user = await api_instance.users_me_retrieve()
         return user
@@ -198,26 +211,32 @@ class BitsyNannyPlugin(
         gcode_f = open(gcode_file_path, 'rb')
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
         gcode_f.seek(0)
-        async with print_nanny_client.ApiClient(self._api_config) as api_client:
+        async with AsyncApiClient(self._api_config) as api_client:
             api_instance = GcodeFilesApi(api_client=api_client)
-            gcode_file = await api_instance.gcode_files_update_or_create(
+            # request = print_nanny_client.model.gcode_file_request.GcodeFileRequest(
+            #     name=event_data['name'],
+            #     file_hash=file_hash,
+            #     file=gcode_file_path
+            # )
+            gcode_file = await api_instance.gcode_files_update_or_create(                
                 name=event_data['name'],
                 file_hash=file_hash,
-                file=gcode_file_path
+                file=gcode_f,
+                _check_return_type=False
             )
+        logging.info(f'Upserted gcode_file {gcode_file}')
         return gcode_file
 
     async def _handle_print_upload(self, event_type, event_data):
 
         event_data.update(self._get_metadata())
         #import pdb; pdb.set_trace()
-        async with print_nanny_client.ApiClient(self._api_config) as api_client:
+        async with AsyncApiClient(self._api_config) as api_client:
 
             # printer profile
-            #import pdb; pdb.set_trace()
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
-                request = print_nanny_client.models.printer_profile_request.PrinterProfileRequest(
+                request = print_nanny_client.model.printer_profile_request.PrinterProfileRequest(
                     axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
                     axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
                     axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
@@ -251,20 +270,28 @@ class BitsyNannyPlugin(
             logging.info(f'Hashing contents of gcode file {gcode_file_path}')
             gcode_f = open(gcode_file_path, 'rb')
             file_hash = hashlib.md5(gcode_f.read()).hexdigest()
+            gcode_f.seek(0)
             logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
+
+
+
             api_instance = GcodeFilesApi(api_client=api_client)
+            # request =  print_nanny_client.model.gcode_file_request.GcodeFileRequest(
+            #     name=event_data['name'],
+            #     file_hash=file_hash,
+            #     file=gcode_file_path
+            # )
             gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data['name'],
                 file_hash=file_hash,
-                file=gcode_file_path
+                file=gcode_f
             )
             self._api_objects['gcode_file'] = gcode_file
 
 
             # print job
-            import pdb; pdb.set_trace()
             api_instance = PrintJobsApi(api_client=api_client)
-            request = print_nanny_client.models.print_job_request.PrintJobsRequest(                
+            request = print_nanny_client.model.print_job_request.PrintJobsRequest(                
                 gcode_file=gcode_file,
                 gcode_file_hash=file_hash,
                 dt=event_data['dt'],
@@ -279,7 +306,7 @@ class BitsyNannyPlugin(
         # reset stream position to prepare for upload
         original_image.seek(0)
         annotated_image.seek(0)
-        with print_nanny_client.ApiClient(self._api_config) as api_client:
+        async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             res = await api_instance.events_predict_create(
                 dt=event_data.get('dt'),
@@ -300,9 +327,9 @@ class BitsyNannyPlugin(
             event_data = self._get_metadata()
 
             
-        async with print_nanny_client.ApiClient(self._api_config) as api_client:
+        async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
-            request = print_nanny_client.models.octo_print_event_request.OctoPrintEventRequest(
+            request = print_nanny_client.model.octo_print_event_request.OctoPrintEventRequest(
                 dt=event_data['dt'],
                 event_type=event_type,
                 event_data=event_data,

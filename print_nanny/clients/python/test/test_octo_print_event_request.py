@@ -9,14 +9,12 @@
 """
 
 
-from __future__ import absolute_import
-
+import sys
 import unittest
-import datetime
 
 import print_nanny_client
-from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest  # noqa: E501
-from print_nanny_client.rest import ApiException
+from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
+
 
 class TestOctoPrintEventRequest(unittest.TestCase):
     """OctoPrintEventRequest unit test stubs"""
@@ -27,37 +25,11 @@ class TestOctoPrintEventRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional):
-        """Test OctoPrintEventRequest
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # model = print_nanny_client.models.octo_print_event_request.OctoPrintEventRequest()  # noqa: E501
-        if include_optional :
-            return OctoPrintEventRequest(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                event_type = '0', 
-                event_data = {
-                    'key' : null
-                    }, 
-                plugin_version = '0', 
-                octoprint_version = '0'
-            )
-        else :
-            return OctoPrintEventRequest(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
-                event_type = '0',
-                event_data = {
-                    'key' : null
-                    },
-                plugin_version = '0',
-                octoprint_version = '0',
-        )
-
     def testOctoPrintEventRequest(self):
         """Test OctoPrintEventRequest"""
-        inst_req_only = self.make_instance(include_optional=False)
-        inst_req_and_optional = self.make_instance(include_optional=True)
+        # FIXME: construct object with mandatory attributes with example values
+        # model = OctoPrintEventRequest()  # noqa: E501
+        pass
 
 
 if __name__ == '__main__':

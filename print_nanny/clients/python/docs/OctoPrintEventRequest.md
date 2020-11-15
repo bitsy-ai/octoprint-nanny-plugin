@@ -5,7 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **dt** | **datetime** |  | 
 **event_type** | **str** |  | 
-**event_data** | **dict(str, object)** |  | 
+**event_data** | **{str: (bool, date, datetime, dict, float, int, list, str, none_type)}** |  | 
 **plugin_version** | **str** |  | 
 **octoprint_version** | **str** |  | 
 

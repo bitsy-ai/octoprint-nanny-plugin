@@ -11,45 +11,18 @@
 """
 
 
-from __future__ import absolute_import
-
 __version__ = "0.1.0"
-
-# import apis into sdk package
-from print_nanny_client.api.auth_token_api import AuthTokenApi
-from print_nanny_client.api.events_api import EventsApi
-from print_nanny_client.api.gcode_files_api import GcodeFilesApi
-from print_nanny_client.api.print_jobs_api import PrintJobsApi
-from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
-from print_nanny_client.api.schema_api import SchemaApi
-from print_nanny_client.api.users_api import UsersApi
 
 # import ApiClient
 from print_nanny_client.api_client import ApiClient
+
+# import Configuration
 from print_nanny_client.configuration import Configuration
+
+# import exceptions
 from print_nanny_client.exceptions import OpenApiException
+from print_nanny_client.exceptions import ApiAttributeError
 from print_nanny_client.exceptions import ApiTypeError
 from print_nanny_client.exceptions import ApiValueError
 from print_nanny_client.exceptions import ApiKeyError
-from print_nanny_client.exceptions import ApiAttributeError
 from print_nanny_client.exceptions import ApiException
-# import models into sdk package
-from print_nanny_client.models.auth_token import AuthToken
-from print_nanny_client.models.auth_token_request import AuthTokenRequest
-from print_nanny_client.models.gcode_file import GcodeFile
-from print_nanny_client.models.gcode_file_request import GcodeFileRequest
-from print_nanny_client.models.octo_print_event import OctoPrintEvent
-from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.models.patched_gcode_file_request import PatchedGcodeFileRequest
-from print_nanny_client.models.patched_print_job_request import PatchedPrintJobRequest
-from print_nanny_client.models.patched_printer_profile_request import PatchedPrinterProfileRequest
-from print_nanny_client.models.patched_user_request import PatchedUserRequest
-from print_nanny_client.models.predict_event import PredictEvent
-from print_nanny_client.models.predict_event_request import PredictEventRequest
-from print_nanny_client.models.print_job import PrintJob
-from print_nanny_client.models.print_job_request import PrintJobRequest
-from print_nanny_client.models.printer_profile import PrinterProfile
-from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.user import User
-from print_nanny_client.models.user_request import UserRequest
-

@@ -9,14 +9,12 @@
 """
 
 
-from __future__ import absolute_import
-
+import sys
 import unittest
-import datetime
 
 import print_nanny_client
-from print_nanny_client.models.print_job import PrintJob  # noqa: E501
-from print_nanny_client.rest import ApiException
+from print_nanny_client.model.print_job import PrintJob
+
 
 class TestPrintJob(unittest.TestCase):
     """PrintJob unit test stubs"""
@@ -27,33 +25,11 @@ class TestPrintJob(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional):
-        """Test PrintJob
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # model = print_nanny_client.models.print_job.PrintJob()  # noqa: E501
-        if include_optional :
-            return PrintJob(
-                id = 56, 
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                name = '0', 
-                gcode_file_hash = '0', 
-                user = 56, 
-                printer_profile = 56, 
-                gcode_file = 56
-            )
-        else :
-            return PrintJob(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
-                name = '0',
-                printer_profile = 56,
-        )
-
     def testPrintJob(self):
         """Test PrintJob"""
-        inst_req_only = self.make_instance(include_optional=False)
-        inst_req_and_optional = self.make_instance(include_optional=True)
+        # FIXME: construct object with mandatory attributes with example values
+        # model = PrintJob()  # noqa: E501
+        pass
 
 
 if __name__ == '__main__':

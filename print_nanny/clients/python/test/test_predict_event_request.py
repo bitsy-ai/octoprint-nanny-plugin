@@ -9,14 +9,12 @@
 """
 
 
-from __future__ import absolute_import
-
+import sys
 import unittest
-import datetime
 
 import print_nanny_client
-from print_nanny_client.models.predict_event_request import PredictEventRequest  # noqa: E501
-from print_nanny_client.rest import ApiException
+from print_nanny_client.model.predict_event_request import PredictEventRequest
+
 
 class TestPredictEventRequest(unittest.TestCase):
     """PredictEventRequest unit test stubs"""
@@ -27,36 +25,11 @@ class TestPredictEventRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional):
-        """Test PredictEventRequest
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # model = print_nanny_client.models.predict_event_request.PredictEventRequest()  # noqa: E501
-        if include_optional :
-            return PredictEventRequest(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                original_image = bytes(b'blah'), 
-                annotated_image = bytes(b'blah'), 
-                event_data = '0', 
-                plugin_version = '0', 
-                octoprint_version = '0', 
-                print_job = 56
-            )
-        else :
-            return PredictEventRequest(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
-                original_image = bytes(b'blah'),
-                annotated_image = bytes(b'blah'),
-                event_data = '0',
-                plugin_version = '0',
-                octoprint_version = '0',
-        )
-
     def testPredictEventRequest(self):
         """Test PredictEventRequest"""
-        inst_req_only = self.make_instance(include_optional=False)
-        inst_req_and_optional = self.make_instance(include_optional=True)
+        # FIXME: construct object with mandatory attributes with example values
+        # model = PredictEventRequest()  # noqa: E501
+        pass
 
 
 if __name__ == '__main__':

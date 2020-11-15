@@ -8,7 +8,7 @@ Method | HTTP request | Description
 
 
 # **schema_retrieve**
-> dict(str, object) schema_retrieve(format=format, lang=lang)
+> {str: (bool, date, datetime, dict, float, int, list, str, none_type)} schema_retrieve()
 
 
 
@@ -17,54 +17,11 @@ OpenApi3 schema for this API. Format can be selected via content negotiation.  -
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.SchemaApi(api_client)
-    format = 'format_example' # str |  (optional)
-lang = 'lang_example' # str |  (optional)
-
-    try:
-        api_response = api_instance.schema_retrieve(format=format, lang=lang)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling SchemaApi->schema_retrieve: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import schema_api
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -91,14 +48,16 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.SchemaApi(api_client)
-    format = 'format_example' # str |  (optional)
-lang = 'lang_example' # str |  (optional)
+    api_instance = schema_api.SchemaApi(api_client)
+    format = "json" # str |  (optional)
+    lang = "af" # str |  (optional)
 
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
         api_response = api_instance.schema_retrieve(format=format, lang=lang)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling SchemaApi->schema_retrieve: %s\n" % e)
 ```
 
@@ -106,12 +65,12 @@ lang = 'lang_example' # str |  (optional)
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **format** | **str**|  | [optional] 
- **lang** | **str**|  | [optional] 
+ **format** | **str**|  | [optional]
+ **lang** | **str**|  | [optional]
 
 ### Return type
 
-**dict(str, object)**
+**{str: (bool, date, datetime, dict, float, int, list, str, none_type)}**
 
 ### Authorization
 

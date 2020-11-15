@@ -9,18 +9,22 @@
 """
 
 
-from __future__ import absolute_import
-
 import re  # noqa: F401
+import sys  # noqa: F401
 
-# python 2 and python 3 compatibility library
-import six
-
-from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
+from print_nanny_client.api_client import ApiClient, Endpoint
+from print_nanny_client.model_utils import (  # noqa: F401
+    check_allowed_values,
+    check_validations,
+    date,
+    datetime,
+    file_type,
+    none_type,
+    validate_and_convert_types
 )
+from print_nanny_client.model.octo_print_event import OctoPrintEvent
+from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
+from print_nanny_client.model.predict_event import PredictEvent
 
 
 class EventsApi(object):
@@ -35,466 +39,418 @@ class EventsApi(object):
             api_client = ApiClient()
         self.api_client = api_client
 
-    def events_octoprint_create(self, octo_print_event_request, **kwargs):  # noqa: E501
-        """events_octoprint_create  # noqa: E501
+        def __events_octoprint_create(
+            self,
+            octo_print_event_request,
+            **kwargs
+        ):
+            """events_octoprint_create  # noqa: E501
 
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+            This method makes a synchronous HTTP request by default. To make an
+            asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.events_octoprint_create(octo_print_event_request, async_req=True)
-        >>> result = thread.get()
+            >>> thread = api.events_octoprint_create(octo_print_event_request, async_req=True)
+            >>> result = thread.get()
 
-        :param octo_print_event_request: (required)
-        :type octo_print_event_request: OctoPrintEventRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: OctoPrintEvent
-        """
-        kwargs['_return_http_data_only'] = True
-        return self.events_octoprint_create_with_http_info(octo_print_event_request, **kwargs)  # noqa: E501
+            Args:
+                octo_print_event_request (OctoPrintEventRequest):
 
-    def events_octoprint_create_with_http_info(self, octo_print_event_request, **kwargs):  # noqa: E501
-        """events_octoprint_create  # noqa: E501
+            Keyword Args:
+                _return_http_data_only (bool): response data without head status
+                    code and headers. Default is True.
+                _preload_content (bool): if False, the urllib3.HTTPResponse object
+                    will be returned without reading/decoding response data.
+                    Default is True.
+                _request_timeout (float/tuple): timeout setting for this request. If one
+                    number provided, it will be total request timeout. It can also
+                    be a pair (tuple) of (connection, read) timeouts.
+                    Default is None.
+                _check_input_type (bool): specifies if type checking
+                    should be done one the data sent to the server.
+                    Default is True.
+                _check_return_type (bool): specifies if type checking
+                    should be done one the data received from the server.
+                    Default is True.
+                _host_index (int/None): specifies the index of the server
+                    that we want to use.
+                    Default is read from the configuration.
+                async_req (bool): execute request asynchronously
 
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+            Returns:
+                OctoPrintEvent
+                    If the method is called asynchronously, returns the request
+                    thread.
+            """
+            kwargs['async_req'] = kwargs.get(
+                'async_req', False
+            )
+            kwargs['_return_http_data_only'] = kwargs.get(
+                '_return_http_data_only', True
+            )
+            kwargs['_preload_content'] = kwargs.get(
+                '_preload_content', True
+            )
+            kwargs['_request_timeout'] = kwargs.get(
+                '_request_timeout', None
+            )
+            kwargs['_check_input_type'] = kwargs.get(
+                '_check_input_type', True
+            )
+            kwargs['_check_return_type'] = kwargs.get(
+                '_check_return_type', True
+            )
+            kwargs['_host_index'] = kwargs.get('_host_index')
+            kwargs['octo_print_event_request'] = \
+                octo_print_event_request
+            return self.call_with_http_info(**kwargs)
 
-        >>> thread = api.events_octoprint_create_with_http_info(octo_print_event_request, async_req=True)
-        >>> result = thread.get()
-
-        :param octo_print_event_request: (required)
-        :type octo_print_event_request: OctoPrintEventRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _return_http_data_only: response data without head status code
-                                       and headers
-        :type _return_http_data_only: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(OctoPrintEvent, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        local_var_params = locals()
-
-        all_params = [
-            'octo_print_event_request'
-        ]
-        all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
-            ]
+        self.events_octoprint_create = Endpoint(
+            settings={
+                'response_type': (OctoPrintEvent,),
+                'auth': [
+                    'cookieAuth',
+                    'tokenAuth'
+                ],
+                'endpoint_path': '/api/events/octoprint/',
+                'operation_id': 'events_octoprint_create',
+                'http_method': 'POST',
+                'servers': None,
+            },
+            params_map={
+                'all': [
+                    'octo_print_event_request',
+                ],
+                'required': [
+                    'octo_print_event_request',
+                ],
+                'nullable': [
+                ],
+                'enum': [
+                ],
+                'validation': [
+                ]
+            },
+            root_map={
+                'validations': {
+                },
+                'allowed_values': {
+                },
+                'openapi_types': {
+                    'octo_print_event_request':
+                        (OctoPrintEventRequest,),
+                },
+                'attribute_map': {
+                },
+                'location_map': {
+                    'octo_print_event_request': 'body',
+                },
+                'collection_format_map': {
+                }
+            },
+            headers_map={
+                'accept': [
+                    'application/json'
+                ],
+                'content_type': [
+                    'application/json',
+                    'application/x-www-form-urlencoded',
+                    'multipart/form-data'
+                ]
+            },
+            api_client=api_client,
+            callable=__events_octoprint_create
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
-            if key not in all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method events_octoprint_create" % key
-                )
-            local_var_params[key] = val
-        del local_var_params['kwargs']
-        # verify the required parameter 'octo_print_event_request' is set
-        if self.api_client.client_side_validation and ('octo_print_event_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['octo_print_event_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `octo_print_event_request` when calling `events_octoprint_create`")  # noqa: E501
+        def __events_octoprint_list(
+            self,
+            **kwargs
+        ):
+            """events_octoprint_list  # noqa: E501
 
-        collection_formats = {}
+            This method makes a synchronous HTTP request by default. To make an
+            asynchronous HTTP request, please pass async_req=True
 
-        path_params = {}
+            >>> thread = api.events_octoprint_list(async_req=True)
+            >>> result = thread.get()
 
-        query_params = []
 
-        header_params = {}
+            Keyword Args:
+                _return_http_data_only (bool): response data without head status
+                    code and headers. Default is True.
+                _preload_content (bool): if False, the urllib3.HTTPResponse object
+                    will be returned without reading/decoding response data.
+                    Default is True.
+                _request_timeout (float/tuple): timeout setting for this request. If one
+                    number provided, it will be total request timeout. It can also
+                    be a pair (tuple) of (connection, read) timeouts.
+                    Default is None.
+                _check_input_type (bool): specifies if type checking
+                    should be done one the data sent to the server.
+                    Default is True.
+                _check_return_type (bool): specifies if type checking
+                    should be done one the data received from the server.
+                    Default is True.
+                _host_index (int/None): specifies the index of the server
+                    that we want to use.
+                    Default is read from the configuration.
+                async_req (bool): execute request asynchronously
 
-        form_params = []
-        local_var_files = {}
+            Returns:
+                [OctoPrintEvent]
+                    If the method is called asynchronously, returns the request
+                    thread.
+            """
+            kwargs['async_req'] = kwargs.get(
+                'async_req', False
+            )
+            kwargs['_return_http_data_only'] = kwargs.get(
+                '_return_http_data_only', True
+            )
+            kwargs['_preload_content'] = kwargs.get(
+                '_preload_content', True
+            )
+            kwargs['_request_timeout'] = kwargs.get(
+                '_request_timeout', None
+            )
+            kwargs['_check_input_type'] = kwargs.get(
+                '_check_input_type', True
+            )
+            kwargs['_check_return_type'] = kwargs.get(
+                '_check_return_type', True
+            )
+            kwargs['_host_index'] = kwargs.get('_host_index')
+            return self.call_with_http_info(**kwargs)
 
-        body_params = None
-        if 'octo_print_event_request' in local_var_params:
-            body_params = local_var_params['octo_print_event_request']
-        # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
-
-        # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
-        response_types_map = {
-            200: "OctoPrintEvent",
-        }
-
-        return self.api_client.call_api(
-            '/api/events/octoprint/', 'POST',
-            path_params,
-            query_params,
-            header_params,
-            body=body_params,
-            post_params=form_params,
-            files=local_var_files,
-            response_types_map=response_types_map,
-            auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
-            collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
-
-    def events_octoprint_list(self, **kwargs):  # noqa: E501
-        """events_octoprint_list  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.events_octoprint_list(async_req=True)
-        >>> result = thread.get()
-
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: list[OctoPrintEvent]
-        """
-        kwargs['_return_http_data_only'] = True
-        return self.events_octoprint_list_with_http_info(**kwargs)  # noqa: E501
-
-    def events_octoprint_list_with_http_info(self, **kwargs):  # noqa: E501
-        """events_octoprint_list  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.events_octoprint_list_with_http_info(async_req=True)
-        >>> result = thread.get()
-
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _return_http_data_only: response data without head status code
-                                       and headers
-        :type _return_http_data_only: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(list[OctoPrintEvent], status_code(int), headers(HTTPHeaderDict))
-        """
-
-        local_var_params = locals()
-
-        all_params = [
-        ]
-        all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
-            ]
+        self.events_octoprint_list = Endpoint(
+            settings={
+                'response_type': ([OctoPrintEvent],),
+                'auth': [
+                    'cookieAuth',
+                    'tokenAuth'
+                ],
+                'endpoint_path': '/api/events/octoprint/',
+                'operation_id': 'events_octoprint_list',
+                'http_method': 'GET',
+                'servers': None,
+            },
+            params_map={
+                'all': [
+                ],
+                'required': [],
+                'nullable': [
+                ],
+                'enum': [
+                ],
+                'validation': [
+                ]
+            },
+            root_map={
+                'validations': {
+                },
+                'allowed_values': {
+                },
+                'openapi_types': {
+                },
+                'attribute_map': {
+                },
+                'location_map': {
+                },
+                'collection_format_map': {
+                }
+            },
+            headers_map={
+                'accept': [
+                    'application/json'
+                ],
+                'content_type': [],
+            },
+            api_client=api_client,
+            callable=__events_octoprint_list
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
-            if key not in all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method events_octoprint_list" % key
-                )
-            local_var_params[key] = val
-        del local_var_params['kwargs']
+        def __events_predict_create(
+            self,
+            dt,
+            original_image,
+            annotated_image,
+            event_data,
+            plugin_version,
+            octoprint_version,
+            **kwargs
+        ):
+            """events_predict_create  # noqa: E501
 
-        collection_formats = {}
+            This method makes a synchronous HTTP request by default. To make an
+            asynchronous HTTP request, please pass async_req=True
 
-        path_params = {}
+            >>> thread = api.events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, async_req=True)
+            >>> result = thread.get()
 
-        query_params = []
+            Args:
+                dt (datetime):
+                original_image (file_type):
+                annotated_image (file_type):
+                event_data (str):
+                plugin_version (str):
+                octoprint_version (str):
 
-        header_params = {}
+            Keyword Args:
+                print_job (int, none_type): [optional]
+                _return_http_data_only (bool): response data without head status
+                    code and headers. Default is True.
+                _preload_content (bool): if False, the urllib3.HTTPResponse object
+                    will be returned without reading/decoding response data.
+                    Default is True.
+                _request_timeout (float/tuple): timeout setting for this request. If one
+                    number provided, it will be total request timeout. It can also
+                    be a pair (tuple) of (connection, read) timeouts.
+                    Default is None.
+                _check_input_type (bool): specifies if type checking
+                    should be done one the data sent to the server.
+                    Default is True.
+                _check_return_type (bool): specifies if type checking
+                    should be done one the data received from the server.
+                    Default is True.
+                _host_index (int/None): specifies the index of the server
+                    that we want to use.
+                    Default is read from the configuration.
+                async_req (bool): execute request asynchronously
 
-        form_params = []
-        local_var_files = {}
+            Returns:
+                PredictEvent
+                    If the method is called asynchronously, returns the request
+                    thread.
+            """
+            kwargs['async_req'] = kwargs.get(
+                'async_req', False
+            )
+            kwargs['_return_http_data_only'] = kwargs.get(
+                '_return_http_data_only', True
+            )
+            kwargs['_preload_content'] = kwargs.get(
+                '_preload_content', True
+            )
+            kwargs['_request_timeout'] = kwargs.get(
+                '_request_timeout', None
+            )
+            kwargs['_check_input_type'] = kwargs.get(
+                '_check_input_type', True
+            )
+            kwargs['_check_return_type'] = kwargs.get(
+                '_check_return_type', True
+            )
+            kwargs['_host_index'] = kwargs.get('_host_index')
+            kwargs['dt'] = \
+                dt
+            kwargs['original_image'] = \
+                original_image
+            kwargs['annotated_image'] = \
+                annotated_image
+            kwargs['event_data'] = \
+                event_data
+            kwargs['plugin_version'] = \
+                plugin_version
+            kwargs['octoprint_version'] = \
+                octoprint_version
+            return self.call_with_http_info(**kwargs)
 
-        body_params = None
-        # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
-        response_types_map = {
-            200: "list[OctoPrintEvent]",
-        }
-
-        return self.api_client.call_api(
-            '/api/events/octoprint/', 'GET',
-            path_params,
-            query_params,
-            header_params,
-            body=body_params,
-            post_params=form_params,
-            files=local_var_files,
-            response_types_map=response_types_map,
-            auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
-            collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
-
-    def events_predict_create(self, dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, **kwargs):  # noqa: E501
-        """events_predict_create  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.events_predict_create(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, async_req=True)
-        >>> result = thread.get()
-
-        :param dt: (required)
-        :type dt: datetime
-        :param original_image: (required)
-        :type original_image: file
-        :param annotated_image: (required)
-        :type annotated_image: file
-        :param event_data: (required)
-        :type event_data: str
-        :param plugin_version: (required)
-        :type plugin_version: str
-        :param octoprint_version: (required)
-        :type octoprint_version: str
-        :param print_job:
-        :type print_job: int
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: PredictEvent
-        """
-        kwargs['_return_http_data_only'] = True
-        return self.events_predict_create_with_http_info(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, **kwargs)  # noqa: E501
-
-    def events_predict_create_with_http_info(self, dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, **kwargs):  # noqa: E501
-        """events_predict_create  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.events_predict_create_with_http_info(dt, original_image, annotated_image, event_data, plugin_version, octoprint_version, async_req=True)
-        >>> result = thread.get()
-
-        :param dt: (required)
-        :type dt: datetime
-        :param original_image: (required)
-        :type original_image: file
-        :param annotated_image: (required)
-        :type annotated_image: file
-        :param event_data: (required)
-        :type event_data: str
-        :param plugin_version: (required)
-        :type plugin_version: str
-        :param octoprint_version: (required)
-        :type octoprint_version: str
-        :param print_job:
-        :type print_job: int
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _return_http_data_only: response data without head status code
-                                       and headers
-        :type _return_http_data_only: bool, optional
-        :param _preload_content: if False, the urllib3.HTTPResponse object will
-                                 be returned without reading/decoding response
-                                 data. Default is True.
-        :type _preload_content: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(PredictEvent, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        local_var_params = locals()
-
-        all_params = [
-            'dt',
-            'original_image',
-            'annotated_image',
-            'event_data',
-            'plugin_version',
-            'octoprint_version',
-            'print_job'
-        ]
-        all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
-            ]
+        self.events_predict_create = Endpoint(
+            settings={
+                'response_type': (PredictEvent,),
+                'auth': [
+                    'cookieAuth',
+                    'tokenAuth'
+                ],
+                'endpoint_path': '/api/events/predict/',
+                'operation_id': 'events_predict_create',
+                'http_method': 'POST',
+                'servers': None,
+            },
+            params_map={
+                'all': [
+                    'dt',
+                    'original_image',
+                    'annotated_image',
+                    'event_data',
+                    'plugin_version',
+                    'octoprint_version',
+                    'print_job',
+                ],
+                'required': [
+                    'dt',
+                    'original_image',
+                    'annotated_image',
+                    'event_data',
+                    'plugin_version',
+                    'octoprint_version',
+                ],
+                'nullable': [
+                    'print_job',
+                ],
+                'enum': [
+                ],
+                'validation': [
+                    'plugin_version',
+                    'octoprint_version',
+                ]
+            },
+            root_map={
+                'validations': {
+                    ('plugin_version',): {
+                        'max_length': 30,
+                    },
+                    ('octoprint_version',): {
+                        'max_length': 30,
+                    },
+                },
+                'allowed_values': {
+                },
+                'openapi_types': {
+                    'dt':
+                        (datetime,),
+                    'original_image':
+                        (file_type,),
+                    'annotated_image':
+                        (file_type,),
+                    'event_data':
+                        (str,),
+                    'plugin_version':
+                        (str,),
+                    'octoprint_version':
+                        (str,),
+                    'print_job':
+                        (int, none_type,),
+                },
+                'attribute_map': {
+                    'dt': 'dt',
+                    'original_image': 'original_image',
+                    'annotated_image': 'annotated_image',
+                    'event_data': 'event_data',
+                    'plugin_version': 'plugin_version',
+                    'octoprint_version': 'octoprint_version',
+                    'print_job': 'print_job',
+                },
+                'location_map': {
+                    'dt': 'form',
+                    'original_image': 'form',
+                    'annotated_image': 'form',
+                    'event_data': 'form',
+                    'plugin_version': 'form',
+                    'octoprint_version': 'form',
+                    'print_job': 'form',
+                },
+                'collection_format_map': {
+                }
+            },
+            headers_map={
+                'accept': [
+                    'application/json'
+                ],
+                'content_type': [
+                    'multipart/form-data',
+                    'application/x-www-form-urlencoded'
+                ]
+            },
+            api_client=api_client,
+            callable=__events_predict_create
         )
-
-        for key, val in six.iteritems(local_var_params['kwargs']):
-            if key not in all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method events_predict_create" % key
-                )
-            local_var_params[key] = val
-        del local_var_params['kwargs']
-        # verify the required parameter 'dt' is set
-        if self.api_client.client_side_validation and ('dt' not in local_var_params or  # noqa: E501
-                                                        local_var_params['dt'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `dt` when calling `events_predict_create`")  # noqa: E501
-        # verify the required parameter 'original_image' is set
-        if self.api_client.client_side_validation and ('original_image' not in local_var_params or  # noqa: E501
-                                                        local_var_params['original_image'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `original_image` when calling `events_predict_create`")  # noqa: E501
-        # verify the required parameter 'annotated_image' is set
-        if self.api_client.client_side_validation and ('annotated_image' not in local_var_params or  # noqa: E501
-                                                        local_var_params['annotated_image'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `annotated_image` when calling `events_predict_create`")  # noqa: E501
-        # verify the required parameter 'event_data' is set
-        if self.api_client.client_side_validation and ('event_data' not in local_var_params or  # noqa: E501
-                                                        local_var_params['event_data'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `event_data` when calling `events_predict_create`")  # noqa: E501
-        # verify the required parameter 'plugin_version' is set
-        if self.api_client.client_side_validation and ('plugin_version' not in local_var_params or  # noqa: E501
-                                                        local_var_params['plugin_version'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `plugin_version` when calling `events_predict_create`")  # noqa: E501
-        # verify the required parameter 'octoprint_version' is set
-        if self.api_client.client_side_validation and ('octoprint_version' not in local_var_params or  # noqa: E501
-                                                        local_var_params['octoprint_version'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `octoprint_version` when calling `events_predict_create`")  # noqa: E501
-
-        if self.api_client.client_side_validation and ('plugin_version' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['plugin_version']) > 30):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `plugin_version` when calling `events_predict_create`, length must be less than or equal to `30`")  # noqa: E501
-        if self.api_client.client_side_validation and ('octoprint_version' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['octoprint_version']) > 30):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `octoprint_version` when calling `events_predict_create`, length must be less than or equal to `30`")  # noqa: E501
-        collection_formats = {}
-
-        path_params = {}
-
-        query_params = []
-
-        header_params = {}
-
-        form_params = []
-        local_var_files = {}
-        if 'dt' in local_var_params:
-            form_params.append(('dt', local_var_params['dt']))  # noqa: E501
-        if 'original_image' in local_var_params:
-            local_var_files['original_image'] = local_var_params['original_image']  # noqa: E501
-        if 'annotated_image' in local_var_params:
-            local_var_files['annotated_image'] = local_var_params['annotated_image']  # noqa: E501
-        if 'event_data' in local_var_params:
-            form_params.append(('event_data', local_var_params['event_data']))  # noqa: E501
-        if 'plugin_version' in local_var_params:
-            form_params.append(('plugin_version', local_var_params['plugin_version']))  # noqa: E501
-        if 'octoprint_version' in local_var_params:
-            form_params.append(('octoprint_version', local_var_params['octoprint_version']))  # noqa: E501
-        if 'print_job' in local_var_params:
-            form_params.append(('print_job', local_var_params['print_job']))  # noqa: E501
-
-        body_params = None
-        # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
-
-        # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
-        response_types_map = {
-            200: "PredictEvent",
-        }
-
-        return self.api_client.call_api(
-            '/api/events/predict/', 'POST',
-            path_params,
-            query_params,
-            header_params,
-            body=body_params,
-            post_params=form_params,
-            files=local_var_files,
-            response_types_map=response_types_map,
-            auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
-            collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))

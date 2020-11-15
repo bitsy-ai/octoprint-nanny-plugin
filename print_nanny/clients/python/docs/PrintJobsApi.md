@@ -19,53 +19,13 @@ Method | HTTP request | Description
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    print_job_request = print_nanny_client.PrintJobRequest() # PrintJobRequest | 
-
-    try:
-        api_response = api_instance.print_jobs_create(print_job_request)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling PrintJobsApi->print_jobs_create: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import print_jobs_api
+from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.print_job_request import PrintJobRequest
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -92,13 +52,20 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    print_job_request = print_nanny_client.PrintJobRequest() # PrintJobRequest | 
+    api_instance = print_jobs_api.PrintJobsApi(api_client)
+    print_job_request = PrintJobRequest(
+        dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        name="name_example",
+        gcode_file_hash="gcode_file_hash_example",
+        printer_profile=1,
+        gcode_file=1,
+    ) # PrintJobRequest | 
 
+    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.print_jobs_create(print_job_request)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_create: %s\n" % e)
 ```
 
@@ -106,7 +73,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **print_job_request** | [**PrintJobRequest**](PrintJobRequest.md)|  | 
+ **print_job_request** | [**PrintJobRequest**](PrintJobRequest.md)|  |
 
 ### Return type
 
@@ -129,59 +96,19 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **print_jobs_list**
-> list[PrintJob] print_jobs_list()
+> [PrintJob] print_jobs_list()
 
 
 
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    
-    try:
-        api_response = api_instance.print_jobs_list()
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling PrintJobsApi->print_jobs_list: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import print_jobs_api
+from print_nanny_client.model.print_job import PrintJob
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -208,12 +135,13 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    
+    api_instance = print_jobs_api.PrintJobsApi(api_client)
+
+    # example, this endpoint has no required or optional parameters
     try:
         api_response = api_instance.print_jobs_list()
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_list: %s\n" % e)
 ```
 
@@ -222,7 +150,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**list[PrintJob]**](PrintJob.md)
+[**[PrintJob]**](PrintJob.md)
 
 ### Authorization
 
@@ -241,61 +169,20 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **print_jobs_partial_update**
-> PrintJob print_jobs_partial_update(id, patched_print_job_request=patched_print_job_request)
+> PrintJob print_jobs_partial_update(id)
 
 
 
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
-patched_print_job_request = print_nanny_client.PatchedPrintJobRequest() # PatchedPrintJobRequest |  (optional)
-
-    try:
-        api_response = api_instance.print_jobs_partial_update(id, patched_print_job_request=patched_print_job_request)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling PrintJobsApi->print_jobs_partial_update: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import print_jobs_api
+from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.patched_print_job_request import PatchedPrintJobRequest
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -322,14 +209,29 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
-patched_print_job_request = print_nanny_client.PatchedPrintJobRequest() # PatchedPrintJobRequest |  (optional)
+    api_instance = print_jobs_api.PrintJobsApi(api_client)
+    id = 1 # int | A unique integer value identifying this print job.
+    patched_print_job_request = PatchedPrintJobRequest(
+        dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        name="name_example",
+        gcode_file_hash="gcode_file_hash_example",
+        printer_profile=1,
+        gcode_file=1,
+    ) # PatchedPrintJobRequest |  (optional)
 
+    # example passing only required values which don't have defaults set
+    try:
+        api_response = api_instance.print_jobs_partial_update(id)
+        pprint(api_response)
+    except print_nanny_client.ApiException as e:
+        print("Exception when calling PrintJobsApi->print_jobs_partial_update: %s\n" % e)
+
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
         api_response = api_instance.print_jobs_partial_update(id, patched_print_job_request=patched_print_job_request)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_partial_update: %s\n" % e)
 ```
 
@@ -337,8 +239,8 @@ patched_print_job_request = print_nanny_client.PatchedPrintJobRequest() # Patche
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this print job. | 
- **patched_print_job_request** | [**PatchedPrintJobRequest**](PatchedPrintJobRequest.md)|  | [optional] 
+ **id** | **int**| A unique integer value identifying this print job. |
+ **patched_print_job_request** | [**PatchedPrintJobRequest**](PatchedPrintJobRequest.md)|  | [optional]
 
 ### Return type
 
@@ -368,53 +270,12 @@ Name | Type | Description  | Notes
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
-
-    try:
-        api_response = api_instance.print_jobs_retrieve(id)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling PrintJobsApi->print_jobs_retrieve: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import print_jobs_api
+from print_nanny_client.model.print_job import PrintJob
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -441,13 +302,14 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
+    api_instance = print_jobs_api.PrintJobsApi(api_client)
+    id = 1 # int | A unique integer value identifying this print job.
 
+    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.print_jobs_retrieve(id)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_retrieve: %s\n" % e)
 ```
 
@@ -455,7 +317,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this print job. | 
+ **id** | **int**| A unique integer value identifying this print job. |
 
 ### Return type
 
@@ -485,54 +347,13 @@ Name | Type | Description  | Notes
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
-print_job_request = print_nanny_client.PrintJobRequest() # PrintJobRequest | 
-
-    try:
-        api_response = api_instance.print_jobs_update(id, print_job_request)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling PrintJobsApi->print_jobs_update: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import print_jobs_api
+from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.model.print_job_request import PrintJobRequest
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -559,14 +380,21 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.PrintJobsApi(api_client)
-    id = 56 # int | A unique integer value identifying this print job.
-print_job_request = print_nanny_client.PrintJobRequest() # PrintJobRequest | 
+    api_instance = print_jobs_api.PrintJobsApi(api_client)
+    id = 1 # int | A unique integer value identifying this print job.
+    print_job_request = PrintJobRequest(
+        dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        name="name_example",
+        gcode_file_hash="gcode_file_hash_example",
+        printer_profile=1,
+        gcode_file=1,
+    ) # PrintJobRequest | 
 
+    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.print_jobs_update(id, print_job_request)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling PrintJobsApi->print_jobs_update: %s\n" % e)
 ```
 
@@ -574,8 +402,8 @@ print_job_request = print_nanny_client.PrintJobRequest() # PrintJobRequest |
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this print job. | 
- **print_job_request** | [**PrintJobRequest**](PrintJobRequest.md)|  | 
+ **id** | **int**| A unique integer value identifying this print job. |
+ **print_job_request** | [**PrintJobRequest**](PrintJobRequest.md)|  |
 
 ### Return type
 

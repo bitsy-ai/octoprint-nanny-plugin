@@ -9,20 +9,17 @@
 """
 
 
-from __future__ import absolute_import
-
 import unittest
 
 import print_nanny_client
 from print_nanny_client.api.auth_token_api import AuthTokenApi  # noqa: E501
-from print_nanny_client.rest import ApiException
 
 
 class TestAuthTokenApi(unittest.TestCase):
     """AuthTokenApi unit test stubs"""
 
     def setUp(self):
-        self.api = print_nanny_client.api.auth_token_api.AuthTokenApi()  # noqa: E501
+        self.api = AuthTokenApi()  # noqa: E501
 
     def tearDown(self):
         pass

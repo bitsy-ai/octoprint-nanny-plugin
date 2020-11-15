@@ -9,14 +9,12 @@
 """
 
 
-from __future__ import absolute_import
-
+import sys
 import unittest
-import datetime
 
 import print_nanny_client
-from print_nanny_client.models.octo_print_event import OctoPrintEvent  # noqa: E501
-from print_nanny_client.rest import ApiException
+from print_nanny_client.model.octo_print_event import OctoPrintEvent
+
 
 class TestOctoPrintEvent(unittest.TestCase):
     """OctoPrintEvent unit test stubs"""
@@ -27,39 +25,11 @@ class TestOctoPrintEvent(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional):
-        """Test OctoPrintEvent
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # model = print_nanny_client.models.octo_print_event.OctoPrintEvent()  # noqa: E501
-        if include_optional :
-            return OctoPrintEvent(
-                id = 56, 
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                event_type = '0', 
-                event_data = {
-                    'key' : null
-                    }, 
-                plugin_version = '0', 
-                octoprint_version = '0', 
-                user = 56
-            )
-        else :
-            return OctoPrintEvent(
-                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
-                event_type = '0',
-                event_data = {
-                    'key' : null
-                    },
-                plugin_version = '0',
-                octoprint_version = '0',
-        )
-
     def testOctoPrintEvent(self):
         """Test OctoPrintEvent"""
-        inst_req_only = self.make_instance(include_optional=False)
-        inst_req_and_optional = self.make_instance(include_optional=True)
+        # FIXME: construct object with mandatory attributes with example values
+        # model = OctoPrintEvent()  # noqa: E501
+        pass
 
 
 if __name__ == '__main__':

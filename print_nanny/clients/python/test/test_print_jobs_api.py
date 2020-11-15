@@ -9,20 +9,17 @@
 """
 
 
-from __future__ import absolute_import
-
 import unittest
 
 import print_nanny_client
 from print_nanny_client.api.print_jobs_api import PrintJobsApi  # noqa: E501
-from print_nanny_client.rest import ApiException
 
 
 class TestPrintJobsApi(unittest.TestCase):
     """PrintJobsApi unit test stubs"""
 
     def setUp(self):
-        self.api = print_nanny_client.api.print_jobs_api.PrintJobsApi()  # noqa: E501
+        self.api = PrintJobsApi()  # noqa: E501
 
     def tearDown(self):
         pass

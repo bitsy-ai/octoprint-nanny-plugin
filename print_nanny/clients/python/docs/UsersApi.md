@@ -12,59 +12,19 @@ Method | HTTP request | Description
 
 
 # **users_list**
-> list[User] users_list()
+> [User] users_list()
 
 
 
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    
-    try:
-        api_response = api_instance.users_list()
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling UsersApi->users_list: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import users_api
+from print_nanny_client.model.user import User
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -91,12 +51,13 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    
+    api_instance = users_api.UsersApi(api_client)
+
+    # example, this endpoint has no required or optional parameters
     try:
         api_response = api_instance.users_list()
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_list: %s\n" % e)
 ```
 
@@ -105,7 +66,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**list[User]**](User.md)
+[**[User]**](User.md)
 
 ### Authorization
 
@@ -131,52 +92,12 @@ This endpoint does not need any parameter.
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    
-    try:
-        api_response = api_instance.users_me_retrieve()
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling UsersApi->users_me_retrieve: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import users_api
+from print_nanny_client.model.user import User
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -203,12 +124,13 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    
+    api_instance = users_api.UsersApi(api_client)
+
+    # example, this endpoint has no required or optional parameters
     try:
         api_response = api_instance.users_me_retrieve()
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_me_retrieve: %s\n" % e)
 ```
 
@@ -236,61 +158,20 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **users_partial_update**
-> User users_partial_update(id, patched_user_request=patched_user_request)
+> User users_partial_update(id)
 
 
 
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
-patched_user_request = print_nanny_client.PatchedUserRequest() # PatchedUserRequest |  (optional)
-
-    try:
-        api_response = api_instance.users_partial_update(id, patched_user_request=patched_user_request)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling UsersApi->users_partial_update: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import users_api
+from print_nanny_client.model.user import User
+from print_nanny_client.model.patched_user_request import PatchedUserRequest
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -317,14 +198,25 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
-patched_user_request = print_nanny_client.PatchedUserRequest() # PatchedUserRequest |  (optional)
+    api_instance = users_api.UsersApi(api_client)
+    id = 1 # int | A unique integer value identifying this user.
+    patched_user_request = PatchedUserRequest(
+        email="email_example",
+    ) # PatchedUserRequest |  (optional)
 
+    # example passing only required values which don't have defaults set
+    try:
+        api_response = api_instance.users_partial_update(id)
+        pprint(api_response)
+    except print_nanny_client.ApiException as e:
+        print("Exception when calling UsersApi->users_partial_update: %s\n" % e)
+
+    # example passing only required values which don't have defaults set
+    # and optional values
     try:
         api_response = api_instance.users_partial_update(id, patched_user_request=patched_user_request)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_partial_update: %s\n" % e)
 ```
 
@@ -332,8 +224,8 @@ patched_user_request = print_nanny_client.PatchedUserRequest() # PatchedUserRequ
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this user. | 
- **patched_user_request** | [**PatchedUserRequest**](PatchedUserRequest.md)|  | [optional] 
+ **id** | **int**| A unique integer value identifying this user. |
+ **patched_user_request** | [**PatchedUserRequest**](PatchedUserRequest.md)|  | [optional]
 
 ### Return type
 
@@ -363,53 +255,12 @@ Name | Type | Description  | Notes
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
-
-    try:
-        api_response = api_instance.users_retrieve(id)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling UsersApi->users_retrieve: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import users_api
+from print_nanny_client.model.user import User
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -436,13 +287,14 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
+    api_instance = users_api.UsersApi(api_client)
+    id = 1 # int | A unique integer value identifying this user.
 
+    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.users_retrieve(id)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_retrieve: %s\n" % e)
 ```
 
@@ -450,7 +302,7 @@ with print_nanny_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this user. | 
+ **id** | **int**| A unique integer value identifying this user. |
 
 ### Return type
 
@@ -480,54 +332,13 @@ Name | Type | Description  | Notes
 ### Example
 
 * Api Key Authentication (cookieAuth):
-```python
-from __future__ import print_function
-import time
-import print_nanny_client
-from print_nanny_client.rest import ApiException
-from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
-# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
-# Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
-
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
-user_request = print_nanny_client.UserRequest() # UserRequest | 
-
-    try:
-        api_response = api_instance.users_update(id, user_request)
-        pprint(api_response)
-    except ApiException as e:
-        print("Exception when calling UsersApi->users_update: %s\n" % e)
-```
-
 * Bearer (Bearer) Authentication (tokenAuth):
 ```python
-from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.rest import ApiException
+from print_nanny_client.api import users_api
+from print_nanny_client.model.user import User
+from print_nanny_client.model.user_request import UserRequest
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -554,14 +365,17 @@ configuration = print_nanny_client.Configuration(
 # Enter a context with an instance of the API client
 with print_nanny_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = print_nanny_client.UsersApi(api_client)
-    id = 56 # int | A unique integer value identifying this user.
-user_request = print_nanny_client.UserRequest() # UserRequest | 
+    api_instance = users_api.UsersApi(api_client)
+    id = 1 # int | A unique integer value identifying this user.
+    user_request = UserRequest(
+        email="email_example",
+    ) # UserRequest | 
 
+    # example passing only required values which don't have defaults set
     try:
         api_response = api_instance.users_update(id, user_request)
         pprint(api_response)
-    except ApiException as e:
+    except print_nanny_client.ApiException as e:
         print("Exception when calling UsersApi->users_update: %s\n" % e)
 ```
 
@@ -569,8 +383,8 @@ user_request = print_nanny_client.UserRequest() # UserRequest |
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **int**| A unique integer value identifying this user. | 
- **user_request** | [**UserRequest**](UserRequest.md)|  | 
+ **id** | **int**| A unique integer value identifying this user. |
+ **user_request** | [**UserRequest**](UserRequest.md)|  |
 
 ### Return type
 

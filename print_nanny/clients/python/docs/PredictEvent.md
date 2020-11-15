@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **plugin_version** | **str** |  | 
 **octoprint_version** | **str** |  | 
 **user** | **int** |  | [optional] [readonly] 
-**print_job** | **int** |  | [optional] 
+**print_job** | **int, none_type** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
