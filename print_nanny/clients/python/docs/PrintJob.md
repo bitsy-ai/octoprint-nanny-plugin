@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **id** | **int** |  | [optional] [readonly] 
 **gcode_file_hash** | **str, none_type** |  | [optional] 
 **last_status** | [**LastStatusEnum**](LastStatusEnum.md) |  | [optional] 
+**last_seen** | **datetime** |  | [optional] [readonly] 
 **user** | **int** |  | [optional] [readonly] 
 **gcode_file** | **int, none_type** |  | [optional] 
 

@@ -92,6 +92,7 @@ class PrintJob(ModelNormal):
             'id': (int,),  # noqa: E501
             'gcode_file_hash': (str, none_type,),  # noqa: E501
             'last_status': (LastStatusEnum,),  # noqa: E501
+            'last_seen': (datetime,),  # noqa: E501
             'user': (int,),  # noqa: E501
             'gcode_file': (int, none_type,),  # noqa: E501
         }
@@ -108,6 +109,7 @@ class PrintJob(ModelNormal):
         'id': 'id',  # noqa: E501
         'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
         'last_status': 'last_status',  # noqa: E501
+        'last_seen': 'last_seen',  # noqa: E501
         'user': 'user',  # noqa: E501
         'gcode_file': 'gcode_file',  # noqa: E501
     }
@@ -166,6 +168,7 @@ class PrintJob(ModelNormal):
             id (int): [optional]  # noqa: E501
             gcode_file_hash (str, none_type): [optional]  # noqa: E501
             last_status (LastStatusEnum): [optional]  # noqa: E501
+            last_seen (datetime): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
             gcode_file (int, none_type): [optional]  # noqa: E501
         """

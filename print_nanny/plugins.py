@@ -21,7 +21,7 @@ from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 import requests
 from PIL import Image
-
+import aiohttp.client_exceptions
 import bravado.exception
 
 import print_nanny_client
@@ -44,6 +44,7 @@ from .utils.encoder import NumpyEncoder
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
 
+CLIENT_EXCEPTIONS = (print_nanny_client.exceptions.ApiException, aiohttp.client_exceptions.ClientError)
 class AsyncApiClient(ApiClient):
 
     async def __aenter__(self):
@@ -207,8 +208,8 @@ class BitsyNannyPlugin(
             api_instance = UsersApi(api_client=api_client)
             try:
                 user = await api_instance.users_me_retrieve()
-            except print_nanny_client.exceptions.ApiException as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_test_api_auth API call failed {e}')
                 return
         return user
 
@@ -220,11 +221,7 @@ class BitsyNannyPlugin(
         gcode_f.seek(0)
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = GcodeFilesApi(api_client=api_client)
-            # request = print_nanny_client.model.gcode_file_request.GcodeFileRequest(
-            #     name=event_data['name'],
-            #     file_hash=file_hash,
-            #     file=gcode_file_path
-            # )
+
             try:
                 gcode_file = await api_instance.gcode_files_update_or_create(                
                     name=event_data['name'],
@@ -234,8 +231,8 @@ class BitsyNannyPlugin(
                 )
                 logging.info(f'Upserted gcode_file {gcode_file}')
                 return gcode_file
-            except print_nanny_client.exceptions.ApiException as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_file_upload API call failed {e}')
 
     
 
@@ -256,8 +253,8 @@ class BitsyNannyPlugin(
             try:
                 print_job = await api_instance.print_job_partial_update(request)
                 logger.info(f'Updated print_job.status {print_job}')
-            except print_nanny_client.exceptions.ApiException as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_print_job_status API called failed {e}')
                 
         if status == 'FAILED' or status == 'DONE' or status == 'CANCELLING':
             self._stop()
@@ -304,7 +301,7 @@ class BitsyNannyPlugin(
                     printer_profile = await api_instance.printer_profiles_update_or_create(request)
                     logger.info(f'Synced printer_profile {printer_profile}')
                     printer_profile_id = printer_profile.id
-                except print_nanny_client.exceptions.ApiException as e:
+                except CLIENT_EXCEPTIONS as e:
                     logger.error(f'_handle_octoprint_event API called failed {e}')
                     printer_profile_id = None
                 self._api_objects['printer_profile'] = printer_profile
@@ -331,8 +328,8 @@ class BitsyNannyPlugin(
                 self._api_objects['gcode_file'] = gcode_file
                 logger.info(f'Synced gcode_file {gcode_file}')
                 gcode_file_id = gcode_file.id
-            except print_nanny_client.exceptions.ApiException as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_print_start API call failed {e}')
                 gcode_file_id = None
 
 
@@ -349,8 +346,8 @@ class BitsyNannyPlugin(
                 print_job = await api_instance.print_jobs_create(request)
                 self._api_objects['print_job'] = print_job
                 logger.info(f'Created print_job {print_job}')
-            except print_nanny_client.exceptions.ApiException as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_print_start API call failed {e}')
             self._start()
 
 
@@ -381,7 +378,10 @@ class BitsyNannyPlugin(
                 files = predict_event_files.id,
                 predict_data=json.loads(json.dumps(prediction, cls=NumpyEncoder))
             )
-            predict_event = await api_instance.events_predict_create(request)
+            try:
+                predict_event = await api_instance.events_predict_create(request)
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_predict_upload API call failed failed {e}')
             #res = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
             logger.info(f'Uploaded predict event')
 
@@ -413,7 +413,7 @@ class BitsyNannyPlugin(
             try:
                 event = await api_instance.events_octoprint_create(request)
                 return event
-            except print_nanny_client.exceptions.ApiException as e:
+            except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_octoprint_event API called failed {e}')
 
     async def _upload_worker(self):
@@ -422,8 +422,6 @@ class BitsyNannyPlugin(
         '''
         logger.info('Started _upload_worker thread')
         while True:
-            logger.info(f'awaiting _upload_worker ')
-
             event = await self._upload_queue.get()
 
             if not event.get('event_type'):
@@ -431,7 +429,7 @@ class BitsyNannyPlugin(
                 continue
             handler_fn = self._queue_event_handlers.get(event['event_type'])
             if handler_fn:
-                logger.info(f'Calling handler_fn {handler_fn}')
+                logger.debug(f'Calling handler_fn {handler_fn}')
                 await handler_fn(**event)
             await self._handle_octoprint_event(**event)
 
