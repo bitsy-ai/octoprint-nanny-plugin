@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 **extruder_shared_nozzle** | **bool** |  | [optional] 
 **heated_bed** | **bool** |  | [optional] 
 **heated_chamber** | **bool** |  | [optional] 
-**model** | **str** |  | [optional] 
+**model** | **str, none_type** |  | [optional] 
 **name** | **str** |  | [optional] 
 **volume_custom_box** | **bool** |  | [optional] 
 **volume_depth** | **float** |  | [optional] 

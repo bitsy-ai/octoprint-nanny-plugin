@@ -121,7 +121,7 @@ class PatchedPrinterProfileRequest(ModelNormal):
             'extruder_shared_nozzle': (bool,),  # noqa: E501
             'heated_bed': (bool,),  # noqa: E501
             'heated_chamber': (bool,),  # noqa: E501
-            'model': (str,),  # noqa: E501
+            'model': (str, none_type,),  # noqa: E501
             'name': (str,),  # noqa: E501
             'volume_custom_box': (bool,),  # noqa: E501
             'volume_depth': (float,),  # noqa: E501
@@ -221,7 +221,7 @@ class PatchedPrinterProfileRequest(ModelNormal):
             extruder_shared_nozzle (bool): [optional]  # noqa: E501
             heated_bed (bool): [optional]  # noqa: E501
             heated_chamber (bool): [optional]  # noqa: E501
-            model (str): [optional]  # noqa: E501
+            model (str, none_type): [optional]  # noqa: E501
             name (str): [optional]  # noqa: E501
             volume_custom_box (bool): [optional]  # noqa: E501
             volume_depth (float): [optional]  # noqa: E501

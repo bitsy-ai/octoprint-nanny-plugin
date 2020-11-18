@@ -155,10 +155,12 @@ class BitsyNannyPlugin(
     def _pause(self):
         self._active = False
 
-    def _drain(self):
-        while self._predict_queue.qsize() > 0 or self._upload_queue.qsize() > 0:
-            logger.warning(f'Waiting for predict_queue: {self._predict_queue.qsize()} upload_queue {self._upload_queue.qsize()} to drain from queue')
-            continue
+    async def _drain(self, tries=3):
+        if self._predict_queue.qsize() > 0 or self._upload_queue.qsize() > 0 and tries > 0:
+            logger.warning(f'Waiting 30s for predict_queue: {self._predict_queue.qsize()} upload_queue {self._upload_queue.qsize()} to drain from queue')
+            await asyncio.sleep(30)
+            return await self._drain(tries=tries-1)
+
 
     def _stop(self):
         self._active = False
@@ -238,25 +240,32 @@ class BitsyNannyPlugin(
 
     async def _handle_print_job_status(self, event_type, event_data):
 
+        print_job = self._api_objects.get('print_job')
+        logger.info(f'_handle_print_job_status called for {event_type} in job {print_job}')
         status = event_type.replace('Print', '').upper()
-        async with AsyncApiClient(self._api_config) as api_client:
 
+        async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
-            if self._api_objects.get('print_job') is None:
-                return
-            
-            api_instance = PrintJobsApi(api_client=api_client)
-            request = PrintJobRequest(
-                id=self._api_objects.get('print_job').id,
-                last_status=status
-            )
-            try:
-                print_job = await api_instance.print_job_partial_update(request)
-                logger.info(f'Updated print_job.status {print_job}')
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_print_job_status API called failed {e}')
-                
-        if status == 'FAILED' or status == 'DONE' or status == 'CANCELLING':
+
+            if print_job is not None:
+                status_enum = print_nanny_client.model.last_status_enum.LastStatusEnum(status)
+                api_instance = PrintJobsApi(api_client=api_client)
+                try:
+                    request = print_nanny_client.model.patched_print_job_request.PatchedPrintJobRequest(
+                        last_status=status_enum
+                    )
+                    print_job = await api_instance.print_jobs_partial_update(
+                        print_job.id,
+                        patched_print_job_request=request
+                    )
+                    logger.info(f'Updated print_job.status {print_job.last_status}')
+                    self._api_objects['print_job'] = print_job
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f'_handle_print_job_status API called failed {e}')
+        
+        if status == 'CANCELLING':
+            self._stop()
+        if status == 'FAILED' or status == 'DONE' or status == 'CANCELLED':
             self._stop()
             self._reset()
         elif status == 'PAUSED':
@@ -265,11 +274,11 @@ class BitsyNannyPlugin(
             self._resume()
 
     async def _handle_print_start(self, event_type, event_data):
-    
-        event_data.update(self._get_metadata())
-        #import pdb; pdb.set_trace()
-        async with AsyncApiClient(self._api_config) as api_client:
 
+        self._start()
+        event_data.update(self._get_metadata())
+        async with AsyncApiClient(self._api_config) as api_client:
+            extruder_offsets = list(list(x) for x in event_data['printer_profile']['extruder']['offsets'])
             # printer profile
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
@@ -284,7 +293,7 @@ class BitsyNannyPlugin(
                     axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
                     extruder_count=event_data['printer_profile']['extruder']['count'],
                     extruder_nozzle_diameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
-                    extruder_offsets=list(list(x) for x in event_data['printer_profile']['extruder']['offsets'] ),
+                    extruder_offsets=extruder_offsets,
                     extruder_shared_nozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
                     name=event_data['printer_profile']['name'],
                     model=event_data['printer_profile']['model'],
@@ -299,12 +308,12 @@ class BitsyNannyPlugin(
                 )
                 try:
                     printer_profile = await api_instance.printer_profiles_update_or_create(request)
-                    logger.info(f'Synced printer_profile {printer_profile}')
+                    logger.info(f'Synced printer_profile {printer_profile.id}')
                     printer_profile_id = printer_profile.id
+                    self._api_objects['printer_profile'] = printer_profile
                 except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_octoprint_event API called failed {e}')
+                    logger.error(f'_handle_print_start API called failed {e}')
                     printer_profile_id = None
-                self._api_objects['printer_profile'] = printer_profile
             else:
                 printer_profile = self._api_objects.get('printer_profile')
         
@@ -326,7 +335,7 @@ class BitsyNannyPlugin(
                     file=gcode_f
                 )
                 self._api_objects['gcode_file'] = gcode_file
-                logger.info(f'Synced gcode_file {gcode_file}')
+                logger.info(f'Synced gcode_file {gcode_file.id}')
                 gcode_file_id = gcode_file.id
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_print_start API call failed {e}')
@@ -345,18 +354,16 @@ class BitsyNannyPlugin(
             try:
                 print_job = await api_instance.print_jobs_create(request)
                 self._api_objects['print_job'] = print_job
-                logger.info(f'Created print_job {print_job}')
+                logger.info(f'Created print_job {print_job.id}')
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_print_start API call failed {e}')
-            self._start()
 
 
 
     async def _handle_predict_upload(self, event_type, event_data, annotated_image, prediction, original_image):
-        # reset stream position to prepare for upload
-
         file_hash = hashlib.md5(original_image.read()).hexdigest()
 
+        # reset stream position to prepare for upload
         original_image.seek(0)
         annotated_image.seek(0)
         event_data.update(self._get_metadata())
@@ -376,19 +383,19 @@ class BitsyNannyPlugin(
                 octoprint_version=event_data.get('octoprint_version'),
                 event_data=json.loads(json.dumps(event_data, cls=NumpyEncoder)),
                 files = predict_event_files.id,
-                predict_data=json.loads(json.dumps(prediction, cls=NumpyEncoder))
+                predict_data=json.loads(json.dumps(prediction, cls=NumpyEncoder)),
+                print_job=self._api_objects.get('print_job').id if self._api_objects.get('print_job') else None
             )
             try:
                 predict_event = await api_instance.events_predict_create(request)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_predict_upload API call failed failed {e}')
-            #res = await asyncio.run_coroutine_threadsafe(res, self._event_loop)
-            logger.info(f'Uploaded predict event')
-
 
     async def _handle_octoprint_event(self, event_type, event_data, **kwargs):
         # predict events serialize differently
-        if event_type is Events.PLUGIN_PRINT_NANNY_PREDICT_DONE:
+        logger.debug(f'_handle_octoprint_event processing {event_type}')
+        if event_type == self.PREDICT_DONE:
+
             return
         if event_data is not None:
             event_data.update(self._get_metadata())
@@ -423,15 +430,32 @@ class BitsyNannyPlugin(
         logger.info('Started _upload_worker thread')
         while True:
             event = await self._upload_queue.get()
-
-            if not event.get('event_type'):
+            event_type = event.get('event_type')
+            if event.get('event_type') is None:
                 logger.warning('Ignoring enqueued msg without type declared {event}'.format(event_type=event))
                 continue
             handler_fn = self._queue_event_handlers.get(event['event_type'])
+
             if handler_fn:
-                logger.debug(f'Calling handler_fn {handler_fn}')
-                await handler_fn(**event)
-            await self._handle_octoprint_event(**event)
+                logger.debug(f'Calling handler_fn {handler_fn} in _upload_worker for {event_type}')
+                
+                try:
+                    await handler_fn(**event)
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
+                logger.debug(f'Calling _handle_octoprint_event {handler_fn} in _upload_worker for {event_type}')
+
+                try:
+                    await self._handle_octoprint_event(**event)
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
+            else:
+                try:
+                    await self._handle_octoprint_event(**event)
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
+                    
+            self._upload_queue.task_done()
 
     def _predict_worker(self):
         '''
@@ -444,14 +468,11 @@ class BitsyNannyPlugin(
                 logger.warning('Ignoring enqueued msg without type declared {msg}'.format(msg=msg))
                 continue
             handler_fn = self._queue_event_handlers[msg['event_type']]
-            handler_fn(**msg)
+            try:
+                handler_fn(**msg)
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_fn {handler_fn} failed with error {e}')
             self._predict_queue.task_done()
-
-
-    def _predict(self, filename):
-        prediction = self._predictor.predict(image)
-        prediction['image'] = self._predictor.postprocess(image, prediction)
-        return prediction
 
     ##
     ## Octoprint api routes + handlers
@@ -467,7 +488,8 @@ class BitsyNannyPlugin(
         res = requests.get(url)
         res.raise_for_status()
 
-        self._start()
+        if not self._active:
+            self._start()
         return flask.json.jsonify({'ok': 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])

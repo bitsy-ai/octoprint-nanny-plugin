@@ -78,9 +78,6 @@ class PrinterProfile(ModelNormal):
             'inclusive_maximum': 2147483647,
             'inclusive_minimum': -2147483648,
         },
-        ('model',): {
-            'max_length': 255,
-        },
         ('name',): {
             'max_length': 255,
         },
@@ -88,6 +85,9 @@ class PrinterProfile(ModelNormal):
             'max_length': 255,
         },
         ('volume_origin',): {
+            'max_length': 255,
+        },
+        ('model',): {
             'max_length': 255,
         },
     }
@@ -120,7 +120,6 @@ class PrinterProfile(ModelNormal):
             'extruder_shared_nozzle': (bool,),  # noqa: E501
             'heated_bed': (bool,),  # noqa: E501
             'heated_chamber': (bool,),  # noqa: E501
-            'model': (str,),  # noqa: E501
             'name': (str,),  # noqa: E501
             'volume_custom_box': (bool,),  # noqa: E501
             'volume_depth': (float,),  # noqa: E501
@@ -130,6 +129,7 @@ class PrinterProfile(ModelNormal):
             'volume_width': (float,),  # noqa: E501
             'id': (int,),  # noqa: E501
             'extruder_offsets': ([[float]], none_type,),  # noqa: E501
+            'model': (str, none_type,),  # noqa: E501
             'user': (int,),  # noqa: E501
         }
 
@@ -152,7 +152,6 @@ class PrinterProfile(ModelNormal):
         'extruder_shared_nozzle': 'extruder_shared_nozzle',  # noqa: E501
         'heated_bed': 'heated_bed',  # noqa: E501
         'heated_chamber': 'heated_chamber',  # noqa: E501
-        'model': 'model',  # noqa: E501
         'name': 'name',  # noqa: E501
         'volume_custom_box': 'volume_custom_box',  # noqa: E501
         'volume_depth': 'volume_depth',  # noqa: E501
@@ -162,6 +161,7 @@ class PrinterProfile(ModelNormal):
         'volume_width': 'volume_width',  # noqa: E501
         'id': 'id',  # noqa: E501
         'extruder_offsets': 'extruder_offsets',  # noqa: E501
+        'model': 'model',  # noqa: E501
         'user': 'user',  # noqa: E501
     }
 
@@ -177,7 +177,7 @@ class PrinterProfile(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, axes_e_inverted, axes_e_speed, axes_x_speed, axes_x_inverted, axes_y_inverted, axes_y_speed, axes_z_inverted, axes_z_speed, extruder_count, extruder_nozzle_diameter, extruder_shared_nozzle, heated_bed, heated_chamber, model, name, volume_custom_box, volume_depth, volume_formfactor, volume_height, volume_origin, volume_width, *args, **kwargs):  # noqa: E501
+    def __init__(self, axes_e_inverted, axes_e_speed, axes_x_speed, axes_x_inverted, axes_y_inverted, axes_y_speed, axes_z_inverted, axes_z_speed, extruder_count, extruder_nozzle_diameter, extruder_shared_nozzle, heated_bed, heated_chamber, name, volume_custom_box, volume_depth, volume_formfactor, volume_height, volume_origin, volume_width, *args, **kwargs):  # noqa: E501
         """PrinterProfile - a model defined in OpenAPI
 
         Args:
@@ -194,7 +194,6 @@ class PrinterProfile(ModelNormal):
             extruder_shared_nozzle (bool):
             heated_bed (bool):
             heated_chamber (bool):
-            model (str):
             name (str):
             volume_custom_box (bool):
             volume_depth (float):
@@ -236,6 +235,7 @@ class PrinterProfile(ModelNormal):
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
             extruder_offsets ([[float]], none_type): [optional]  # noqa: E501
+            model (str, none_type): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
         """
 
@@ -275,7 +275,6 @@ class PrinterProfile(ModelNormal):
         self.extruder_shared_nozzle = extruder_shared_nozzle
         self.heated_bed = heated_bed
         self.heated_chamber = heated_chamber
-        self.model = model
         self.name = name
         self.volume_custom_box = volume_custom_box
         self.volume_depth = volume_depth

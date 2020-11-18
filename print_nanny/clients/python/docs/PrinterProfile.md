@@ -16,7 +16,6 @@ Name | Type | Description | Notes
 **extruder_shared_nozzle** | **bool** |  | 
 **heated_bed** | **bool** |  | 
 **heated_chamber** | **bool** |  | 
-**model** | **str** |  | 
 **name** | **str** |  | 
 **volume_custom_box** | **bool** |  | 
 **volume_depth** | **float** |  | 
@@ -26,6 +25,7 @@ Name | Type | Description | Notes
 **volume_width** | **float** |  | 
 **id** | **int** |  | [optional] [readonly] 
 **extruder_offsets** | **[[float]], none_type** |  | [optional] 
+**model** | **str, none_type** |  | [optional] 
 **user** | **int** |  | [optional] [readonly] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
