@@ -103,10 +103,13 @@ Class | Method | HTTP request | Description
 *GcodeFilesApi* | [**gcode_files_update_or_create**](docs/GcodeFilesApi.md#gcode_files_update_or_create) | **POST** /api/gcode_files/update_or_create/ | 
 *OctoprintEventsApi* | [**octoprint_events_create**](docs/OctoprintEventsApi.md#octoprint_events_create) | **POST** /api/octoprint_events/ | 
 *OctoprintEventsApi* | [**octoprint_events_list**](docs/OctoprintEventsApi.md#octoprint_events_list) | **GET** /api/octoprint_events/ | 
+*OctoprintEventsApi* | [**octoprint_events_retrieve**](docs/OctoprintEventsApi.md#octoprint_events_retrieve) | **GET** /api/octoprint_events/{id}/ | 
 *PredictEventFilesApi* | [**predict_event_files_create**](docs/PredictEventFilesApi.md#predict_event_files_create) | **POST** /api/predict_event_files/ | 
 *PredictEventFilesApi* | [**predict_event_files_list**](docs/PredictEventFilesApi.md#predict_event_files_list) | **GET** /api/predict_event_files/ | 
+*PredictEventFilesApi* | [**predict_event_files_retrieve**](docs/PredictEventFilesApi.md#predict_event_files_retrieve) | **GET** /api/predict_event_files/{id}/ | 
 *PredictEventsApi* | [**predict_events_create**](docs/PredictEventsApi.md#predict_events_create) | **POST** /api/predict_events/ | 
 *PredictEventsApi* | [**predict_events_list**](docs/PredictEventsApi.md#predict_events_list) | **GET** /api/predict_events/ | 
+*PredictEventsApi* | [**predict_events_retrieve**](docs/PredictEventsApi.md#predict_events_retrieve) | **GET** /api/predict_events/{id}/ | 
 *PrintJobsApi* | [**print_jobs_create**](docs/PrintJobsApi.md#print_jobs_create) | **POST** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_list**](docs/PrintJobsApi.md#print_jobs_list) | **GET** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_partial_update**](docs/PrintJobsApi.md#print_jobs_partial_update) | **PATCH** /api/print_jobs/{id}/ | 

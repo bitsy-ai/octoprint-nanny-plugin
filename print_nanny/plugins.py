@@ -27,7 +27,9 @@ import bravado.exception
 import print_nanny_client
 
 from print_nanny_client import ApiClient
-from print_nanny_client.api.events_api import EventsApi
+from print_nanny_client.api.predict_events_api import PredictEventsApi
+from print_nanny_client.api.octoprint_events_api import OctoprintEventsApi
+
 from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
@@ -368,9 +370,9 @@ class BitsyNannyPlugin(
 
         async with AsyncApiClient(self._api_config) as api_client:
 
-            api_instance = EventsApi(api_client=api_client)
+            api_instance = PredictEventsApi(api_client=api_client)
 
-            predict_event_files = await api_instance.events_predict_files_create(
+            predict_event_files = await api_instance.predict_events_file_create(
                 original_image=original_image,
                 annotated_image=annotated_image,
                 hash=file_hash
@@ -388,7 +390,7 @@ class BitsyNannyPlugin(
                 print_job=self._api_objects.get('print_job').id
             )
             try:
-                predict_event = await api_instance.events_predict_create(request)
+                predict_event = await api_instance.predict_events_create(request)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_predict_upload API call failed failed {e}')
 
@@ -409,7 +411,7 @@ class BitsyNannyPlugin(
             print_job_id = None
             
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = EventsApi(api_client=api_client)
+            api_instance = OctoprintEventsApi(api_client=api_client)
             request = print_nanny_client.model.octo_print_event_request.OctoPrintEventRequest(
                 dt=event_data['dt'],
                 event_type=event_type,
@@ -419,7 +421,7 @@ class BitsyNannyPlugin(
                 print_job=print_job_id
             )
             try:
-                event = await api_instance.events_octoprint_create(request)
+                event = await api_instance.octoprint_events_create(request)
                 return event
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_octoprint_event API called failed {e}')

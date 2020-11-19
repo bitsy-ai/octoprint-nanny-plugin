@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**octoprint_events_create**](OctoprintEventsApi.md#octoprint_events_create) | **POST** /api/octoprint_events/ | 
 [**octoprint_events_list**](OctoprintEventsApi.md#octoprint_events_list) | **GET** /api/octoprint_events/ | 
+[**octoprint_events_retrieve**](OctoprintEventsApi.md#octoprint_events_retrieve) | **GET** /api/octoprint_events/{id}/ | 
 
 
 # **octoprint_events_create**
@@ -158,6 +159,83 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**PaginatedOctoPrintEventList**](PaginatedOctoPrintEventList.md)
+
+### Authorization
+
+[cookieAuth](../README.md#cookieAuth), [tokenAuth](../README.md#tokenAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** |  |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **octoprint_events_retrieve**
+> OctoPrintEvent octoprint_events_retrieve(id)
+
+
+
+### Example
+
+* Api Key Authentication (cookieAuth):
+* Bearer (Bearer) Authentication (tokenAuth):
+```python
+import time
+import print_nanny_client
+from print_nanny_client.api import octoprint_events_api
+from print_nanny_client.model.octo_print_event import OctoPrintEvent
+from pprint import pprint
+# Defining the host is optional and defaults to http://localhost
+# See configuration.py for a list of all supported configuration parameters.
+configuration = print_nanny_client.Configuration(
+    host = "http://localhost"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: cookieAuth
+configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
+
+# Configure Bearer authorization (Bearer): tokenAuth
+configuration = print_nanny_client.Configuration(
+    access_token = 'YOUR_BEARER_TOKEN'
+)
+
+# Enter a context with an instance of the API client
+with print_nanny_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = octoprint_events_api.OctoprintEventsApi(api_client)
+    id = 1 # int | A unique integer value identifying this octo print event.
+
+    # example passing only required values which don't have defaults set
+    try:
+        api_response = api_instance.octoprint_events_retrieve(id)
+        pprint(api_response)
+    except print_nanny_client.ApiException as e:
+        print("Exception when calling OctoprintEventsApi->octoprint_events_retrieve: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **int**| A unique integer value identifying this octo print event. |
+
+### Return type
+
+[**OctoPrintEvent**](OctoPrintEvent.md)
 
 ### Authorization
 
