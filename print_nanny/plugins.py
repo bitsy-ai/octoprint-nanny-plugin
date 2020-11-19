@@ -28,8 +28,9 @@ import print_nanny_client
 
 from print_nanny_client import ApiClient
 from print_nanny_client.api.predict_events_api import PredictEventsApi
-from print_nanny_client.api.octoprint_events_api import OctoprintEventsApi
+from print_nanny_client.api.predict_event_files_api import PredictEventFilesApi
 
+from print_nanny_client.api.octoprint_events_api import OctoprintEventsApi
 from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.users_api import UsersApi
@@ -370,9 +371,9 @@ class BitsyNannyPlugin(
 
         async with AsyncApiClient(self._api_config) as api_client:
 
-            api_instance = PredictEventsApi(api_client=api_client)
+            api_instance = PredictEventFilesApi(api_client=api_client)
 
-            predict_event_files = await api_instance.predict_events_file_create(
+            predict_event_files = await api_instance.predict_event_files_create(
                 original_image=original_image,
                 annotated_image=annotated_image,
                 hash=file_hash
