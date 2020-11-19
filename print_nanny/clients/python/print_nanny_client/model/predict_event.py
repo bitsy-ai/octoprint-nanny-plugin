@@ -82,14 +82,15 @@ class PredictEvent(ModelNormal):
         """
         return {
             'predict_data': ({str: (bool, date, datetime, dict, float, int, list, str, none_type)},),  # noqa: E501
+            'files': (int,),  # noqa: E501
+            'print_job': (int,),  # noqa: E501
             'plugin_version': (str,),  # noqa: E501
             'octoprint_version': (str,),  # noqa: E501
-            'files': (int,),  # noqa: E501
             'id': (int,),  # noqa: E501
             'dt': (datetime,),  # noqa: E501
             'event_data': ({str: (bool, date, datetime, dict, float, int, list, str, none_type)}, none_type,),  # noqa: E501
             'user': (int,),  # noqa: E501
-            'print_job': (int, none_type,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -99,14 +100,15 @@ class PredictEvent(ModelNormal):
 
     attribute_map = {
         'predict_data': 'predict_data',  # noqa: E501
+        'files': 'files',  # noqa: E501
+        'print_job': 'print_job',  # noqa: E501
         'plugin_version': 'plugin_version',  # noqa: E501
         'octoprint_version': 'octoprint_version',  # noqa: E501
-        'files': 'files',  # noqa: E501
         'id': 'id',  # noqa: E501
         'dt': 'dt',  # noqa: E501
         'event_data': 'event_data',  # noqa: E501
         'user': 'user',  # noqa: E501
-        'print_job': 'print_job',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -121,14 +123,15 @@ class PredictEvent(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, predict_data, plugin_version, octoprint_version, files, *args, **kwargs):  # noqa: E501
+    def __init__(self, predict_data, files, print_job, plugin_version, octoprint_version, *args, **kwargs):  # noqa: E501
         """PredictEvent - a model defined in OpenAPI
 
         Args:
             predict_data ({str: (bool, date, datetime, dict, float, int, list, str, none_type)}):
+            files (int):
+            print_job (int):
             plugin_version (str):
             octoprint_version (str):
-            files (int):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -165,7 +168,7 @@ class PredictEvent(ModelNormal):
             dt (datetime): [optional]  # noqa: E501
             event_data ({str: (bool, date, datetime, dict, float, int, list, str, none_type)}, none_type): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
-            print_job (int, none_type): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -192,9 +195,10 @@ class PredictEvent(ModelNormal):
         self._visited_composed_classes = _visited_composed_classes + (self.__class__,)
 
         self.predict_data = predict_data
+        self.files = files
+        self.print_job = print_job
         self.plugin_version = plugin_version
         self.octoprint_version = octoprint_version
-        self.files = files
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

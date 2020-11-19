@@ -95,18 +95,18 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *AuthTokenApi* | [**auth_token_create**](docs/AuthTokenApi.md#auth_token_create) | **POST** /api/auth-token/ | 
-*EventsApi* | [**events_octoprint_create**](docs/EventsApi.md#events_octoprint_create) | **POST** /api/events/octoprint/ | 
-*EventsApi* | [**events_octoprint_list**](docs/EventsApi.md#events_octoprint_list) | **GET** /api/events/octoprint/ | 
-*EventsApi* | [**events_predict_create**](docs/EventsApi.md#events_predict_create) | **POST** /api/events/predict/ | 
-*EventsApi* | [**events_predict_files_create**](docs/EventsApi.md#events_predict_files_create) | **POST** /api/events/predict/files/ | 
-*EventsApi* | [**events_predict_files_list**](docs/EventsApi.md#events_predict_files_list) | **GET** /api/events/predict/files/ | 
-*EventsApi* | [**events_predict_list**](docs/EventsApi.md#events_predict_list) | **GET** /api/events/predict/ | 
 *GcodeFilesApi* | [**gcode_files_create**](docs/GcodeFilesApi.md#gcode_files_create) | **POST** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_list**](docs/GcodeFilesApi.md#gcode_files_list) | **GET** /api/gcode_files/ | 
 *GcodeFilesApi* | [**gcode_files_partial_update**](docs/GcodeFilesApi.md#gcode_files_partial_update) | **PATCH** /api/gcode_files/{id}/ | 
 *GcodeFilesApi* | [**gcode_files_retrieve**](docs/GcodeFilesApi.md#gcode_files_retrieve) | **GET** /api/gcode_files/{id}/ | 
 *GcodeFilesApi* | [**gcode_files_update**](docs/GcodeFilesApi.md#gcode_files_update) | **PUT** /api/gcode_files/{id}/ | 
 *GcodeFilesApi* | [**gcode_files_update_or_create**](docs/GcodeFilesApi.md#gcode_files_update_or_create) | **POST** /api/gcode_files/update_or_create/ | 
+*OctoprintEventsApi* | [**octoprint_events_create**](docs/OctoprintEventsApi.md#octoprint_events_create) | **POST** /api/octoprint_events/ | 
+*OctoprintEventsApi* | [**octoprint_events_list**](docs/OctoprintEventsApi.md#octoprint_events_list) | **GET** /api/octoprint_events/ | 
+*PredictEventFilesApi* | [**predict_event_files_create**](docs/PredictEventFilesApi.md#predict_event_files_create) | **POST** /api/predict_event_files/ | 
+*PredictEventFilesApi* | [**predict_event_files_list**](docs/PredictEventFilesApi.md#predict_event_files_list) | **GET** /api/predict_event_files/ | 
+*PredictEventsApi* | [**predict_events_create**](docs/PredictEventsApi.md#predict_events_create) | **POST** /api/predict_events/ | 
+*PredictEventsApi* | [**predict_events_list**](docs/PredictEventsApi.md#predict_events_list) | **GET** /api/predict_events/ | 
 *PrintJobsApi* | [**print_jobs_create**](docs/PrintJobsApi.md#print_jobs_create) | **POST** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_list**](docs/PrintJobsApi.md#print_jobs_list) | **GET** /api/print_jobs/ | 
 *PrintJobsApi* | [**print_jobs_partial_update**](docs/PrintJobsApi.md#print_jobs_partial_update) | **PATCH** /api/print_jobs/{id}/ | 

@@ -82,6 +82,7 @@ class PredictEventFile(ModelNormal):
             'hash': (str,),  # noqa: E501
             'original_image': (str,),  # noqa: E501
             'id': (int,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -94,6 +95,7 @@ class PredictEventFile(ModelNormal):
         'hash': 'hash',  # noqa: E501
         'original_image': 'original_image',  # noqa: E501
         'id': 'id',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -148,6 +150,7 @@ class PredictEventFile(ModelNormal):
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

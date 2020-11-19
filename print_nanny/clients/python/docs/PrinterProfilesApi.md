@@ -65,11 +65,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         axes_z_speed=-2147483648,
         extruder_count=-2147483648,
         extruder_nozzle_diameter=3.14,
-        extruder_offsets=[
-            [
-                3.14,
-            ],
-        ],
         extruder_shared_nozzle=True,
         heated_bed=True,
         heated_chamber=True,
@@ -255,11 +250,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         axes_z_speed=-2147483648,
         extruder_count=-2147483648,
         extruder_nozzle_diameter=3.14,
-        extruder_offsets=[
-            [
-                3.14,
-            ],
-        ],
         extruder_shared_nozzle=True,
         heated_bed=True,
         heated_chamber=True,
@@ -447,11 +437,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         axes_z_speed=-2147483648,
         extruder_count=-2147483648,
         extruder_nozzle_diameter=3.14,
-        extruder_offsets=[
-            [
-                3.14,
-            ],
-        ],
         extruder_shared_nozzle=True,
         heated_bed=True,
         heated_chamber=True,
@@ -553,11 +538,6 @@ with print_nanny_client.ApiClient(configuration) as api_client:
         axes_z_speed=-2147483648,
         extruder_count=-2147483648,
         extruder_nozzle_diameter=3.14,
-        extruder_offsets=[
-            [
-                3.14,
-            ],
-        ],
         extruder_shared_nozzle=True,
         heated_bed=True,
         heated_chamber=True,

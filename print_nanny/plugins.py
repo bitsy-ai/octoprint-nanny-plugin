@@ -263,9 +263,9 @@ class BitsyNannyPlugin(
                 except CLIENT_EXCEPTIONS as e:
                     logger.error(f'_handle_print_job_status API called failed {e}')
         
-        if status == 'CANCELLING':
-            self._stop()
-        if status == 'FAILED' or status == 'DONE' or status == 'CANCELLED':
+        if status == 'CANCELLING' or status == 'CANCELLED':
+            return
+        elif status == 'FAILED' or status == 'DONE' or status == 'CANCELLED':
             self._stop()
             self._reset()
         elif status == 'PAUSED':
@@ -278,7 +278,6 @@ class BitsyNannyPlugin(
         self._start()
         event_data.update(self._get_metadata())
         async with AsyncApiClient(self._api_config) as api_client:
-            extruder_offsets = list(list(x) for x in event_data['printer_profile']['extruder']['offsets'])
             # printer profile
             if self._api_objects.get('printer_profile') is None:
                 api_instance = PrinterProfilesApi(api_client=api_client)
@@ -293,7 +292,6 @@ class BitsyNannyPlugin(
                     axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
                     extruder_count=event_data['printer_profile']['extruder']['count'],
                     extruder_nozzle_diameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
-                    extruder_offsets=extruder_offsets,
                     extruder_shared_nozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
                     name=event_data['printer_profile']['name'],
                     model=event_data['printer_profile']['model'],
@@ -313,7 +311,7 @@ class BitsyNannyPlugin(
                     self._api_objects['printer_profile'] = printer_profile
                 except CLIENT_EXCEPTIONS as e:
                     logger.error(f'_handle_print_start API called failed {e}')
-                    printer_profile_id = None
+                    return
             else:
                 printer_profile = self._api_objects.get('printer_profile')
         
@@ -377,6 +375,9 @@ class BitsyNannyPlugin(
                 annotated_image=annotated_image,
                 hash=file_hash
             )
+            if not self._api_objects.get('print_job'):
+                logger.info('No print_job is active, skipping _handle_predict_upload()')
+                return
             request = PredictEventRequest(
                 dt=event_data.get('dt'),
                 plugin_version=event_data.get('plugin_version'),
@@ -384,7 +385,7 @@ class BitsyNannyPlugin(
                 event_data=json.loads(json.dumps(event_data, cls=NumpyEncoder)),
                 files = predict_event_files.id,
                 predict_data=json.loads(json.dumps(prediction, cls=NumpyEncoder)),
-                print_job=self._api_objects.get('print_job').id if self._api_objects.get('print_job') else None
+                print_job=self._api_objects.get('print_job').id
             )
             try:
                 predict_event = await api_instance.events_predict_create(request)

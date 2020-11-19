@@ -5,13 +5,13 @@ README.md
 docs/AuthToken.md
 docs/AuthTokenApi.md
 docs/AuthTokenRequest.md
-docs/EventsApi.md
 docs/GcodeFile.md
 docs/GcodeFileRequest.md
 docs/GcodeFilesApi.md
 docs/LastStatusEnum.md
 docs/OctoPrintEvent.md
 docs/OctoPrintEventRequest.md
+docs/OctoprintEventsApi.md
 docs/PaginatedGcodeFileList.md
 docs/PaginatedOctoPrintEventList.md
 docs/PaginatedPredictEventFileList.md
@@ -26,7 +26,9 @@ docs/PatchedUserRequest.md
 docs/PredictEvent.md
 docs/PredictEventFile.md
 docs/PredictEventFileRequest.md
+docs/PredictEventFilesApi.md
 docs/PredictEventRequest.md
+docs/PredictEventsApi.md
 docs/PrintJob.md
 docs/PrintJobRequest.md
 docs/PrintJobsApi.md
@@ -41,8 +43,10 @@ git_push.sh
 print_nanny_client/__init__.py
 print_nanny_client/api/__init__.py
 print_nanny_client/api/auth_token_api.py
-print_nanny_client/api/events_api.py
 print_nanny_client/api/gcode_files_api.py
+print_nanny_client/api/octoprint_events_api.py
+print_nanny_client/api/predict_event_files_api.py
+print_nanny_client/api/predict_events_api.py
 print_nanny_client/api/print_jobs_api.py
 print_nanny_client/api/printer_profiles_api.py
 print_nanny_client/api/schema_api.py

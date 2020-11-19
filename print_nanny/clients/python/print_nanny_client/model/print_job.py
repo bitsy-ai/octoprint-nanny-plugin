@@ -87,14 +87,15 @@ class PrintJob(ModelNormal):
         lazy_import()
         return {
             'dt': (datetime,),  # noqa: E501
-            'name': (str,),  # noqa: E501
             'printer_profile': (int,),  # noqa: E501
+            'name': (str,),  # noqa: E501
             'id': (int,),  # noqa: E501
+            'user': (int,),  # noqa: E501
             'gcode_file_hash': (str, none_type,),  # noqa: E501
+            'gcode_file': (int, none_type,),  # noqa: E501
             'last_status': (LastStatusEnum,),  # noqa: E501
             'last_seen': (datetime,),  # noqa: E501
-            'user': (int,),  # noqa: E501
-            'gcode_file': (int, none_type,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -104,14 +105,15 @@ class PrintJob(ModelNormal):
 
     attribute_map = {
         'dt': 'dt',  # noqa: E501
-        'name': 'name',  # noqa: E501
         'printer_profile': 'printer_profile',  # noqa: E501
+        'name': 'name',  # noqa: E501
         'id': 'id',  # noqa: E501
+        'user': 'user',  # noqa: E501
         'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
+        'gcode_file': 'gcode_file',  # noqa: E501
         'last_status': 'last_status',  # noqa: E501
         'last_seen': 'last_seen',  # noqa: E501
-        'user': 'user',  # noqa: E501
-        'gcode_file': 'gcode_file',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -126,13 +128,13 @@ class PrintJob(ModelNormal):
     ])
 
     @convert_js_args_to_python_args
-    def __init__(self, dt, name, printer_profile, *args, **kwargs):  # noqa: E501
+    def __init__(self, dt, printer_profile, name, *args, **kwargs):  # noqa: E501
         """PrintJob - a model defined in OpenAPI
 
         Args:
             dt (datetime):
-            name (str):
             printer_profile (int):
+            name (str):
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -166,11 +168,12 @@ class PrintJob(ModelNormal):
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
+            user (int): [optional]  # noqa: E501
             gcode_file_hash (str, none_type): [optional]  # noqa: E501
+            gcode_file (int, none_type): [optional]  # noqa: E501
             last_status (LastStatusEnum): [optional]  # noqa: E501
             last_seen (datetime): [optional]  # noqa: E501
-            user (int): [optional]  # noqa: E501
-            gcode_file (int, none_type): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -197,8 +200,8 @@ class PrintJob(ModelNormal):
         self._visited_composed_classes = _visited_composed_classes + (self.__class__,)
 
         self.dt = dt
-        self.name = name
         self.printer_profile = printer_profile
+        self.name = name
         for var_name, var_value in kwargs.items():
             if var_name not in self.attribute_map and \
                         self._configuration is not None and \

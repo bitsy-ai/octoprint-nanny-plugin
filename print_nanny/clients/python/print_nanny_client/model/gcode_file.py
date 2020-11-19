@@ -86,6 +86,7 @@ class GcodeFile(ModelNormal):
             'file_hash': (str,),  # noqa: E501
             'id': (int,),  # noqa: E501
             'user': (int,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -99,6 +100,7 @@ class GcodeFile(ModelNormal):
         'file_hash': 'file_hash',  # noqa: E501
         'id': 'id',  # noqa: E501
         'user': 'user',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -154,6 +156,7 @@ class GcodeFile(ModelNormal):
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

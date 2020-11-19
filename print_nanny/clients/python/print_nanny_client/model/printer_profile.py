@@ -128,9 +128,9 @@ class PrinterProfile(ModelNormal):
             'volume_origin': (str,),  # noqa: E501
             'volume_width': (float,),  # noqa: E501
             'id': (int,),  # noqa: E501
-            'extruder_offsets': ([[float]], none_type,),  # noqa: E501
-            'model': (str, none_type,),  # noqa: E501
             'user': (int,),  # noqa: E501
+            'model': (str, none_type,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -160,9 +160,9 @@ class PrinterProfile(ModelNormal):
         'volume_origin': 'volume_origin',  # noqa: E501
         'volume_width': 'volume_width',  # noqa: E501
         'id': 'id',  # noqa: E501
-        'extruder_offsets': 'extruder_offsets',  # noqa: E501
-        'model': 'model',  # noqa: E501
         'user': 'user',  # noqa: E501
+        'model': 'model',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -234,9 +234,9 @@ class PrinterProfile(ModelNormal):
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
             id (int): [optional]  # noqa: E501
-            extruder_offsets ([[float]], none_type): [optional]  # noqa: E501
-            model (str, none_type): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
+            model (str, none_type): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

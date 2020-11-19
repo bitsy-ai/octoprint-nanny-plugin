@@ -87,11 +87,11 @@ class PatchedPrintJobRequest(ModelNormal):
         lazy_import()
         return {
             'dt': (datetime,),  # noqa: E501
+            'printer_profile': (int,),  # noqa: E501
             'name': (str,),  # noqa: E501
             'gcode_file_hash': (str, none_type,),  # noqa: E501
-            'last_status': (LastStatusEnum,),  # noqa: E501
-            'printer_profile': (int,),  # noqa: E501
             'gcode_file': (int, none_type,),  # noqa: E501
+            'last_status': (LastStatusEnum,),  # noqa: E501
         }
 
     @cached_property
@@ -101,11 +101,11 @@ class PatchedPrintJobRequest(ModelNormal):
 
     attribute_map = {
         'dt': 'dt',  # noqa: E501
+        'printer_profile': 'printer_profile',  # noqa: E501
         'name': 'name',  # noqa: E501
         'gcode_file_hash': 'gcode_file_hash',  # noqa: E501
-        'last_status': 'last_status',  # noqa: E501
-        'printer_profile': 'printer_profile',  # noqa: E501
         'gcode_file': 'gcode_file',  # noqa: E501
+        'last_status': 'last_status',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -155,11 +155,11 @@ class PatchedPrintJobRequest(ModelNormal):
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
             dt (datetime): [optional]  # noqa: E501
+            printer_profile (int): [optional]  # noqa: E501
             name (str): [optional]  # noqa: E501
             gcode_file_hash (str, none_type): [optional]  # noqa: E501
-            last_status (LastStatusEnum): [optional]  # noqa: E501
-            printer_profile (int): [optional]  # noqa: E501
             gcode_file (int, none_type): [optional]  # noqa: E501
+            last_status (LastStatusEnum): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

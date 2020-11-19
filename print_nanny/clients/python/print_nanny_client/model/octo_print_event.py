@@ -92,6 +92,7 @@ class OctoPrintEvent(ModelNormal):
             'id': (int,),  # noqa: E501
             'user': (int,),  # noqa: E501
             'print_job': (int, none_type,),  # noqa: E501
+            'url': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -108,6 +109,7 @@ class OctoPrintEvent(ModelNormal):
         'id': 'id',  # noqa: E501
         'user': 'user',  # noqa: E501
         'print_job': 'print_job',  # noqa: E501
+        'url': 'url',  # noqa: E501
     }
 
     _composed_schemas = {}
@@ -166,6 +168,7 @@ class OctoPrintEvent(ModelNormal):
             id (int): [optional]  # noqa: E501
             user (int): [optional]  # noqa: E501
             print_job (int, none_type): [optional]  # noqa: E501
+            url (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

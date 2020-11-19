@@ -127,7 +127,6 @@ class PrinterProfileRequest(ModelNormal):
             'volume_height': (float,),  # noqa: E501
             'volume_origin': (str,),  # noqa: E501
             'volume_width': (float,),  # noqa: E501
-            'extruder_offsets': ([[float]], none_type,),  # noqa: E501
             'model': (str, none_type,),  # noqa: E501
         }
 
@@ -157,7 +156,6 @@ class PrinterProfileRequest(ModelNormal):
         'volume_height': 'volume_height',  # noqa: E501
         'volume_origin': 'volume_origin',  # noqa: E501
         'volume_width': 'volume_width',  # noqa: E501
-        'extruder_offsets': 'extruder_offsets',  # noqa: E501
         'model': 'model',  # noqa: E501
     }
 
@@ -229,7 +227,6 @@ class PrinterProfileRequest(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
-            extruder_offsets ([[float]], none_type): [optional]  # noqa: E501
             model (str, none_type): [optional]  # noqa: E501
         """
 

@@ -16,8 +16,10 @@
 
 # Import APIs into API package:
 from print_nanny_client.api.auth_token_api import AuthTokenApi
-from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.gcode_files_api import GcodeFilesApi
+from print_nanny_client.api.octoprint_events_api import OctoprintEventsApi
+from print_nanny_client.api.predict_event_files_api import PredictEventFilesApi
+from print_nanny_client.api.predict_events_api import PredictEventsApi
 from print_nanny_client.api.print_jobs_api import PrintJobsApi
 from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
 from print_nanny_client.api.schema_api import SchemaApi

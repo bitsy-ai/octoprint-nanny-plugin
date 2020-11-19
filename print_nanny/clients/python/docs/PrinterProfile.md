@@ -24,9 +24,9 @@ Name | Type | Description | Notes
 **volume_origin** | **str** |  | 
 **volume_width** | **float** |  | 
 **id** | **int** |  | [optional] [readonly] 
-**extruder_offsets** | **[[float]], none_type** |  | [optional] 
-**model** | **str, none_type** |  | [optional] 
 **user** | **int** |  | [optional] [readonly] 
+**model** | **str, none_type** |  | [optional] 
+**url** | **str** |  | [optional] [readonly] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

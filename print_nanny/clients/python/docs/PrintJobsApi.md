@@ -55,11 +55,11 @@ with print_nanny_client.ApiClient(configuration) as api_client:
     api_instance = print_jobs_api.PrintJobsApi(api_client)
     print_job_request = PrintJobRequest(
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        printer_profile=1,
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        last_status=LastStatusEnum("STARTED"),
-        printer_profile=1,
         gcode_file=1,
+        last_status=LastStatusEnum("STARTED"),
     ) # PrintJobRequest | 
 
     # example passing only required values which don't have defaults set
@@ -221,11 +221,11 @@ with print_nanny_client.ApiClient(configuration) as api_client:
     id = 1 # int | A unique integer value identifying this print job.
     patched_print_job_request = PatchedPrintJobRequest(
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        printer_profile=1,
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        last_status=LastStatusEnum("STARTED"),
-        printer_profile=1,
         gcode_file=1,
+        last_status=LastStatusEnum("STARTED"),
     ) # PatchedPrintJobRequest |  (optional)
 
     # example passing only required values which don't have defaults set
@@ -393,11 +393,11 @@ with print_nanny_client.ApiClient(configuration) as api_client:
     id = 1 # int | A unique integer value identifying this print job.
     print_job_request = PrintJobRequest(
         dt=dateutil_parser('1970-01-01T00:00:00.00Z'),
+        printer_profile=1,
         name="name_example",
         gcode_file_hash="gcode_file_hash_example",
-        last_status=LastStatusEnum("STARTED"),
-        printer_profile=1,
         gcode_file=1,
+        last_status=LastStatusEnum("STARTED"),
     ) # PrintJobRequest | 
 
     # example passing only required values which don't have defaults set
