@@ -270,7 +270,6 @@ class BitsyNannyPlugin(
             return
         elif status == 'FAILED' or status == 'DONE' or status == 'CANCELLED':
             self._stop()
-            self._reset()
         elif status == 'PAUSED':
             self._pause()
         elif status == 'RESUMED':
@@ -282,41 +281,39 @@ class BitsyNannyPlugin(
         event_data.update(self._get_metadata())
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
-            if self._api_objects.get('printer_profile') is None:
-                api_instance = PrinterProfilesApi(api_client=api_client)
-                request = PrinterProfileRequest(
-                    axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
-                    axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
-                    axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
-                    axes_z_inverted=event_data['printer_profile']['axes']['z']['inverted'],
-                    axes_e_speed=event_data['printer_profile']['axes']['e']['speed'],
-                    axes_x_speed=event_data['printer_profile']['axes']['x']['speed'],
-                    axes_y_speed=event_data['printer_profile']['axes']['y']['speed'],
-                    axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
-                    extruder_count=event_data['printer_profile']['extruder']['count'],
-                    extruder_nozzle_diameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
-                    extruder_shared_nozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
-                    name=event_data['printer_profile']['name'],
-                    model=event_data['printer_profile']['model'],
-                    heated_bed=event_data['printer_profile']['heatedBed'],
-                    heated_chamber=event_data['printer_profile']['heatedChamber'],
-                    volume_custom_box=event_data['printer_profile']['volume']['custom_box'],
-                    volume_depth=event_data['printer_profile']['volume']['depth'],
-                    volume_formfactor=event_data['printer_profile']['volume']['formFactor'],
-                    volume_height=event_data['printer_profile']['volume']['height'],
-                    volume_origin=event_data['printer_profile']['volume']['origin'],
-                    volume_width=event_data['printer_profile']['volume']['width'],
-                )
-                try:
-                    printer_profile = await api_instance.printer_profiles_update_or_create(request)
-                    logger.info(f'Synced printer_profile {printer_profile.id}')
-                    printer_profile_id = printer_profile.id
-                    self._api_objects['printer_profile'] = printer_profile
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_print_start API called failed {e}')
-                    return
-            else:
-                printer_profile = self._api_objects.get('printer_profile')
+            api_instance = PrinterProfilesApi(api_client=api_client)
+            request = PrinterProfileRequest(
+                axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
+                axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
+                axes_y_inverted=event_data['printer_profile']['axes']['y']['inverted'],
+                axes_z_inverted=event_data['printer_profile']['axes']['z']['inverted'],
+                axes_e_speed=event_data['printer_profile']['axes']['e']['speed'],
+                axes_x_speed=event_data['printer_profile']['axes']['x']['speed'],
+                axes_y_speed=event_data['printer_profile']['axes']['y']['speed'],
+                axes_z_speed=event_data['printer_profile']['axes']['z']['speed'], 
+                extruder_count=event_data['printer_profile']['extruder']['count'],
+                extruder_nozzle_diameter=event_data['printer_profile']['extruder']['nozzleDiameter'],
+                extruder_shared_nozzle=event_data['printer_profile']['extruder']['sharedNozzle'],
+                name=event_data['printer_profile']['name'],
+                model=event_data['printer_profile']['model'],
+                heated_bed=event_data['printer_profile']['heatedBed'],
+                heated_chamber=event_data['printer_profile']['heatedChamber'],
+                volume_custom_box=event_data['printer_profile']['volume']['custom_box'],
+                volume_depth=event_data['printer_profile']['volume']['depth'],
+                volume_formfactor=event_data['printer_profile']['volume']['formFactor'],
+                volume_height=event_data['printer_profile']['volume']['height'],
+                volume_origin=event_data['printer_profile']['volume']['origin'],
+                volume_width=event_data['printer_profile']['volume']['width'],
+            )
+            try:
+                printer_profile = await api_instance.printer_profiles_update_or_create(request)
+                logger.info(f'Synced printer_profile {printer_profile.id}')
+                printer_profile_id = printer_profile.id
+                self._api_objects['printer_profile'] = printer_profile
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(f'_handle_print_start API called failed {e}')
+                return
+
         
             # gcode file
             gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
@@ -391,6 +388,8 @@ class BitsyNannyPlugin(
                 print_job=self._api_objects.get('print_job').id
             )
             try:
+                api_instance = PredictEventsApi(api_client=api_client)
+
                 predict_event = await api_instance.predict_events_create(request)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_predict_upload API call failed failed {e}')
