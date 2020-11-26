@@ -9,13 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.last_status_enum import LastStatusEnum
-globals()['LastStatusEnum'] = LastStatusEnum
-from print_nanny_client.model.print_job import PrintJob
+from print_nanny_client.models.print_job import PrintJob  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPrintJob(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestPrintJob(unittest.TestCase):
     def testPrintJob(self):
         """Test PrintJob"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PrintJob()  # noqa: E501
+        # model = print_nanny_client.models.print_job.PrintJob()  # noqa: E501
         pass
 
 

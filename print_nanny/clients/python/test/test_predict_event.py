@@ -9,11 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.predict_event import PredictEvent
+from print_nanny_client.models.predict_event import PredictEvent  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPredictEvent(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestPredictEvent(unittest.TestCase):
     def testPredictEvent(self):
         """Test PredictEvent"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PredictEvent()  # noqa: E501
+        # model = print_nanny_client.models.predict_event.PredictEvent()  # noqa: E501
         pass
 
 

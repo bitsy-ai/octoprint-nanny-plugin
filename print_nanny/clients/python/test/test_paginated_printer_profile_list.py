@@ -9,13 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.printer_profile import PrinterProfile
-globals()['PrinterProfile'] = PrinterProfile
-from print_nanny_client.model.paginated_printer_profile_list import PaginatedPrinterProfileList
+from print_nanny_client.models.paginated_printer_profile_list import PaginatedPrinterProfileList  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPaginatedPrinterProfileList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestPaginatedPrinterProfileList(unittest.TestCase):
     def testPaginatedPrinterProfileList(self):
         """Test PaginatedPrinterProfileList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PaginatedPrinterProfileList()  # noqa: E501
+        # model = print_nanny_client.models.paginated_printer_profile_list.PaginatedPrinterProfileList()  # noqa: E501
         pass
 
 

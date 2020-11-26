@@ -9,13 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.gcode_file import GcodeFile
-globals()['GcodeFile'] = GcodeFile
-from print_nanny_client.model.paginated_gcode_file_list import PaginatedGcodeFileList
+from print_nanny_client.models.paginated_gcode_file_list import PaginatedGcodeFileList  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPaginatedGcodeFileList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestPaginatedGcodeFileList(unittest.TestCase):
     def testPaginatedGcodeFileList(self):
         """Test PaginatedGcodeFileList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PaginatedGcodeFileList()  # noqa: E501
+        # model = print_nanny_client.models.paginated_gcode_file_list.PaginatedGcodeFileList()  # noqa: E501
         pass
 
 

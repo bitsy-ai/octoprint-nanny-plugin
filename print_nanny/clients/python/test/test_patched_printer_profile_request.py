@@ -9,11 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.patched_printer_profile_request import PatchedPrinterProfileRequest
+from print_nanny_client.models.patched_printer_profile_request import PatchedPrinterProfileRequest  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPatchedPrinterProfileRequest(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestPatchedPrinterProfileRequest(unittest.TestCase):
     def testPatchedPrinterProfileRequest(self):
         """Test PatchedPrinterProfileRequest"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PatchedPrinterProfileRequest()  # noqa: E501
+        # model = print_nanny_client.models.patched_printer_profile_request.PatchedPrinterProfileRequest()  # noqa: E501
         pass
 
 

@@ -9,11 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
+from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestOctoPrintEventRequest(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestOctoPrintEventRequest(unittest.TestCase):
     def testOctoPrintEventRequest(self):
         """Test OctoPrintEventRequest"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = OctoPrintEventRequest()  # noqa: E501
+        # model = print_nanny_client.models.octo_print_event_request.OctoPrintEventRequest()  # noqa: E501
         pass
 
 

@@ -9,13 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.octo_print_event import OctoPrintEvent
-globals()['OctoPrintEvent'] = OctoPrintEvent
-from print_nanny_client.model.paginated_octo_print_event_list import PaginatedOctoPrintEventList
+from print_nanny_client.models.paginated_octo_print_event_list import PaginatedOctoPrintEventList  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPaginatedOctoPrintEventList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestPaginatedOctoPrintEventList(unittest.TestCase):
     def testPaginatedOctoPrintEventList(self):
         """Test PaginatedOctoPrintEventList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PaginatedOctoPrintEventList()  # noqa: E501
+        # model = print_nanny_client.models.paginated_octo_print_event_list.PaginatedOctoPrintEventList()  # noqa: E501
         pass
 
 

@@ -9,13 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.predict_event import PredictEvent
-globals()['PredictEvent'] = PredictEvent
-from print_nanny_client.model.paginated_predict_event_list import PaginatedPredictEventList
+from print_nanny_client.models.paginated_predict_event_list import PaginatedPredictEventList  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPaginatedPredictEventList(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestPaginatedPredictEventList(unittest.TestCase):
     def testPaginatedPredictEventList(self):
         """Test PaginatedPredictEventList"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PaginatedPredictEventList()  # noqa: E501
+        # model = print_nanny_client.models.paginated_predict_event_list.PaginatedPredictEventList()  # noqa: E501
         pass
 
 

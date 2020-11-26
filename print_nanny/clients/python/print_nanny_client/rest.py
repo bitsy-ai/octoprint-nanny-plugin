@@ -17,6 +17,7 @@ import ssl
 
 import aiohttp
 import certifi
+import asyncio
 # python 2 and python 3 compatibility library
 from six.moves.urllib.parse import urlencode
 
@@ -72,16 +73,19 @@ class RESTClientObject(object):
             ssl=ssl_context
         )
 
-        self.proxy = configuration.proxy
-        self.proxy_headers = configuration.proxy_headers
-
         # https pool manager
-        self.pool_manager = aiohttp.ClientSession(
-            connector=connector
-        )
+        if configuration.proxy:
+            self.pool_manager = aiohttp.ClientSession(
+                connector=connector,
+                proxy=configuration.proxy
+            )
+        else:
+            self.pool_manager = aiohttp.ClientSession(
+                connector=connector
+            )
 
-    async def close(self):
-        await self.pool_manager.close()
+    def __del__(self):
+        asyncio.ensure_future(self.pool_manager.close())
 
     async def request(self, method, url, query_params=None, headers=None,
                       body=None, post_params=None, _preload_content=True,
@@ -126,11 +130,6 @@ class RESTClientObject(object):
             "headers": headers
         }
 
-        if self.proxy:
-            args["proxy"] = self.proxy
-        if self.proxy_headers:
-            args["proxy_headers"] = self.proxy_headers
-
         if query_params:
             args["url"] += '?' + urlencode(query_params)
 
@@ -173,7 +172,7 @@ class RESTClientObject(object):
         r = await self.pool_manager.request(**args)
         if _preload_content:
 
-            data = await r.read()
+            data = await r.text()
             r = RESTResponse(r, data)
 
             # log response body

@@ -23,7 +23,7 @@ Name | Type | Description | Notes
 **volume_height** | **float** |  | 
 **volume_origin** | **str** |  | 
 **volume_width** | **float** |  | 
-**model** | **str, none_type** |  | [optional] 
+**model** | **str** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -9,11 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.auth_token_request import AuthTokenRequest
+from print_nanny_client.models.auth_token_request import AuthTokenRequest  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestAuthTokenRequest(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestAuthTokenRequest(unittest.TestCase):
     def testAuthTokenRequest(self):
         """Test AuthTokenRequest"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = AuthTokenRequest()  # noqa: E501
+        # model = print_nanny_client.models.auth_token_request.AuthTokenRequest()  # noqa: E501
         pass
 
 

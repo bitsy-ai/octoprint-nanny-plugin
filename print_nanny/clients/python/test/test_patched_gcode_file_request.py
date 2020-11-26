@@ -9,11 +9,13 @@
 """
 
 
-import sys
+from __future__ import absolute_import
+
 import unittest
 
 import print_nanny_client
-from print_nanny_client.model.patched_gcode_file_request import PatchedGcodeFileRequest
+from print_nanny_client.models.patched_gcode_file_request import PatchedGcodeFileRequest  # noqa: E501
+from print_nanny_client.rest import ApiException
 
 
 class TestPatchedGcodeFileRequest(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestPatchedGcodeFileRequest(unittest.TestCase):
     def testPatchedGcodeFileRequest(self):
         """Test PatchedGcodeFileRequest"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = PatchedGcodeFileRequest()  # noqa: E501
+        # model = print_nanny_client.models.patched_gcode_file_request.PatchedGcodeFileRequest()  # noqa: E501
         pass
 
 

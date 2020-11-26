@@ -23,10 +23,10 @@ Name | Type | Description | Notes
 **volume_height** | **float** |  | 
 **volume_origin** | **str** |  | 
 **volume_width** | **float** |  | 
-**id** | **int** |  | [optional] [readonly] 
-**user** | **int** |  | [optional] [readonly] 
-**model** | **str, none_type** |  | [optional] 
-**url** | **str** |  | [optional] [readonly] 
+**id** | **int** |  | [optional] 
+**user** | **int** |  | [optional] 
+**model** | **str** |  | [optional] 
+**url** | **str** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

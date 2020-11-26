@@ -15,48 +15,63 @@ Method | HTTP request | Description
 ### Example
 
 * Api Key Authentication (cookieAuth):
-* Bearer (Bearer) Authentication (tokenAuth):
 ```python
+from __future__ import print_function
 import time
 import print_nanny_client
-from print_nanny_client.api import auth_token_api
-from print_nanny_client.model.auth_token import AuthToken
+from print_nanny_client.rest import ApiException
 from pprint import pprint
-# Defining the host is optional and defaults to http://localhost
-# See configuration.py for a list of all supported configuration parameters.
-configuration = print_nanny_client.Configuration(
-    host = "http://localhost"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
+configuration = print_nanny_client.Configuration()
 # Configure API key authorization: cookieAuth
-configuration.api_key['cookieAuth'] = 'YOUR_API_KEY'
-
+configuration.api_key['Session'] = 'YOUR_API_KEY'
 # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['cookieAuth'] = 'Bearer'
-
+# configuration.api_key_prefix['Session'] = 'Bearer'
+configuration = print_nanny_client.Configuration()
 # Configure Bearer authorization (Bearer): tokenAuth
-configuration = print_nanny_client.Configuration(
-    access_token = 'YOUR_BEARER_TOKEN'
-)
+configuration.access_token = 'YOUR_BEARER_TOKEN'
 
-# Enter a context with an instance of the API client
-with print_nanny_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = auth_token_api.AuthTokenApi(api_client)
-    username = "username_example" # str | 
-    password = "password_example" # str | 
+# Defining host is optional and default to http://localhost
+configuration.host = "http://localhost"
+# Create an instance of the API class
+api_instance = print_nanny_client.AuthTokenApi(print_nanny_client.ApiClient(configuration))
+username = 'username_example' # str | 
+password = 'password_example' # str | 
 
-    # example passing only required values which don't have defaults set
-    try:
-        api_response = api_instance.auth_token_create(username, password)
-        pprint(api_response)
-    except print_nanny_client.ApiException as e:
-        print("Exception when calling AuthTokenApi->auth_token_create: %s\n" % e)
+try:
+    api_response = api_instance.auth_token_create(username, password)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling AuthTokenApi->auth_token_create: %s\n" % e)
+```
+
+* Bearer (Bearer) Authentication (tokenAuth):
+```python
+from __future__ import print_function
+import time
+import print_nanny_client
+from print_nanny_client.rest import ApiException
+from pprint import pprint
+configuration = print_nanny_client.Configuration()
+# Configure API key authorization: cookieAuth
+configuration.api_key['Session'] = 'YOUR_API_KEY'
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['Session'] = 'Bearer'
+configuration = print_nanny_client.Configuration()
+# Configure Bearer authorization (Bearer): tokenAuth
+configuration.access_token = 'YOUR_BEARER_TOKEN'
+
+# Defining host is optional and default to http://localhost
+configuration.host = "http://localhost"
+# Create an instance of the API class
+api_instance = print_nanny_client.AuthTokenApi(print_nanny_client.ApiClient(configuration))
+username = 'username_example' # str | 
+password = 'password_example' # str | 
+
+try:
+    api_response = api_instance.auth_token_create(username, password)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling AuthTokenApi->auth_token_create: %s\n" % e)
 ```
 
 ### Parameters
