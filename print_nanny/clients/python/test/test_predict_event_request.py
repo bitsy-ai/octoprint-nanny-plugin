@@ -12,11 +12,11 @@
 from __future__ import absolute_import
 
 import unittest
+import datetime
 
 import print_nanny_client
 from print_nanny_client.models.predict_event_request import PredictEventRequest  # noqa: E501
 from print_nanny_client.rest import ApiException
-
 
 class TestPredictEventRequest(unittest.TestCase):
     """PredictEventRequest unit test stubs"""
@@ -27,12 +27,41 @@ class TestPredictEventRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test PredictEventRequest
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # model = print_nanny_client.models.predict_event_request.PredictEventRequest()  # noqa: E501
+        if include_optional :
+            return PredictEventRequest(
+                dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                event_data = {
+                    'key' : null
+                    }, 
+                predict_data = {
+                    'key' : null
+                    }, 
+                files = 56, 
+                print_job = 56, 
+                plugin_version = '', 
+                octoprint_version = ''
+            )
+        else :
+            return PredictEventRequest(
+                predict_data = {
+                    'key' : null
+                    },
+                files = 56,
+                print_job = 56,
+                plugin_version = '',
+                octoprint_version = '',
+        )
+
     def testPredictEventRequest(self):
         """Test PredictEventRequest"""
-        # FIXME: construct object with mandatory attributes with example values
-        # model = print_nanny_client.models.predict_event_request.PredictEventRequest()  # noqa: E501
-        pass
-
+        inst_req_only = self.make_instance(include_optional=False)
+        inst_req_and_optional = self.make_instance(include_optional=True)
 
 if __name__ == '__main__':
     unittest.main()

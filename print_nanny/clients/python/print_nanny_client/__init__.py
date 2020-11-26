@@ -29,6 +29,7 @@ from print_nanny_client.exceptions import OpenApiException
 from print_nanny_client.exceptions import ApiTypeError
 from print_nanny_client.exceptions import ApiValueError
 from print_nanny_client.exceptions import ApiKeyError
+from print_nanny_client.exceptions import ApiAttributeError
 from print_nanny_client.exceptions import ApiException
 # import models into sdk package
 from print_nanny_client.models.auth_token import AuthToken

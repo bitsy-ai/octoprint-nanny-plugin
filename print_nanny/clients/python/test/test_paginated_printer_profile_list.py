@@ -12,11 +12,11 @@
 from __future__ import absolute_import
 
 import unittest
+import datetime
 
 import print_nanny_client
 from print_nanny_client.models.paginated_printer_profile_list import PaginatedPrinterProfileList  # noqa: E501
 from print_nanny_client.rest import ApiException
-
 
 class TestPaginatedPrinterProfileList(unittest.TestCase):
     """PaginatedPrinterProfileList unit test stubs"""
@@ -27,12 +27,53 @@ class TestPaginatedPrinterProfileList(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test PaginatedPrinterProfileList
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # model = print_nanny_client.models.paginated_printer_profile_list.PaginatedPrinterProfileList()  # noqa: E501
+        if include_optional :
+            return PaginatedPrinterProfileList(
+                count = 123, 
+                next = 'http://api.example.org/accounts/?offset=400&limit=100', 
+                previous = 'http://api.example.org/accounts/?offset=200&limit=100', 
+                results = [
+                    print_nanny_client.models.printer_profile.PrinterProfile(
+                        id = 56, 
+                        user = 56, 
+                        axes_e_inverted = True, 
+                        axes_e_speed = -2147483648, 
+                        axes_x_speed = -2147483648, 
+                        axes_x_inverted = True, 
+                        axes_y_inverted = True, 
+                        axes_y_speed = -2147483648, 
+                        axes_z_inverted = True, 
+                        axes_z_speed = -2147483648, 
+                        extruder_count = -2147483648, 
+                        extruder_nozzle_diameter = 1.337, 
+                        extruder_shared_nozzle = True, 
+                        heated_bed = True, 
+                        heated_chamber = True, 
+                        model = '', 
+                        name = '', 
+                        volume_custom_box = True, 
+                        volume_depth = 1.337, 
+                        volume_formfactor = '', 
+                        volume_height = 1.337, 
+                        volume_origin = '', 
+                        volume_width = 1.337, 
+                        url = '', )
+                    ]
+            )
+        else :
+            return PaginatedPrinterProfileList(
+        )
+
     def testPaginatedPrinterProfileList(self):
         """Test PaginatedPrinterProfileList"""
-        # FIXME: construct object with mandatory attributes with example values
-        # model = print_nanny_client.models.paginated_printer_profile_list.PaginatedPrinterProfileList()  # noqa: E501
-        pass
-
+        inst_req_only = self.make_instance(include_optional=False)
+        inst_req_and_optional = self.make_instance(include_optional=True)
 
 if __name__ == '__main__':
     unittest.main()

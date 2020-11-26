@@ -12,11 +12,11 @@
 from __future__ import absolute_import
 
 import unittest
+import datetime
 
 import print_nanny_client
 from print_nanny_client.models.paginated_predict_event_list import PaginatedPredictEventList  # noqa: E501
 from print_nanny_client.rest import ApiException
-
 
 class TestPaginatedPredictEventList(unittest.TestCase):
     """PaginatedPredictEventList unit test stubs"""
@@ -27,12 +27,43 @@ class TestPaginatedPredictEventList(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test PaginatedPredictEventList
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # model = print_nanny_client.models.paginated_predict_event_list.PaginatedPredictEventList()  # noqa: E501
+        if include_optional :
+            return PaginatedPredictEventList(
+                count = 123, 
+                next = 'http://api.example.org/accounts/?offset=400&limit=100', 
+                previous = 'http://api.example.org/accounts/?offset=200&limit=100', 
+                results = [
+                    print_nanny_client.models.predict_event.PredictEvent(
+                        id = 56, 
+                        dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                        event_data = {
+                            'key' : null
+                            }, 
+                        predict_data = {
+                            'key' : null
+                            }, 
+                        user = 56, 
+                        files = 56, 
+                        print_job = 56, 
+                        plugin_version = '', 
+                        octoprint_version = '', 
+                        url = '', )
+                    ]
+            )
+        else :
+            return PaginatedPredictEventList(
+        )
+
     def testPaginatedPredictEventList(self):
         """Test PaginatedPredictEventList"""
-        # FIXME: construct object with mandatory attributes with example values
-        # model = print_nanny_client.models.paginated_predict_event_list.PaginatedPredictEventList()  # noqa: E501
-        pass
-
+        inst_req_only = self.make_instance(include_optional=False)
+        inst_req_and_optional = self.make_instance(include_optional=True)
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,13 +17,9 @@ import re  # noqa: F401
 import six
 
 from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (
+from print_nanny_client.exceptions import (  # noqa: F401
     ApiTypeError,
     ApiValueError
-)
-from print_nanny_client.model_utils import (
-    check_allowed_values,
-    check_validations
 )
 
 
@@ -39,606 +35,685 @@ class UsersApi(object):
             api_client = ApiClient()
         self.api_client = api_client
 
-        def __users_list(self, **kwargs):  # noqa: E501
-            """users_list  # noqa: E501
+    def users_list(self, **kwargs):  # noqa: E501
+        """users_list  # noqa: E501
 
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.users_list(async_req=True)
-            >>> result = thread.get()
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
 
-            :param async_req bool: execute request asynchronously
-            :param int limit: Number of results to return per page.
-            :param int offset: The initial index from which to return the results.
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PaginatedUserList
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            return self.call_with_http_info(**kwargs)
+        >>> thread = api.users_list(async_req=True)
+        >>> result = thread.get()
 
-        self.users_list = Endpoint(
-            settings={
-                'response_type': 'PaginatedUserList',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/users/',
-                'operation_id': 'users_list',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'limit',
-                    'offset',
-                ],
-                'required': [],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'limit': 'int',
-                    'offset': 'int',
-                },
-                'attribute_map': {
-                    'limit': 'limit',
-                    'offset': 'offset',
-                },
-                'location_map': {
-                    'limit': 'query',
-                    'offset': 'query',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__users_list
-        )
-
-        def __users_me_retrieve(self, **kwargs):  # noqa: E501
-            """users_me_retrieve  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.users_me_retrieve(async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: User
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            return self.call_with_http_info(**kwargs)
-
-        self.users_me_retrieve = Endpoint(
-            settings={
-                'response_type': 'User',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/users/me/',
-                'operation_id': 'users_me_retrieve',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                ],
-                'required': [],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                },
-                'attribute_map': {
-                },
-                'location_map': {
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__users_me_retrieve
-        )
-
-        def __users_partial_update(self, id, **kwargs):  # noqa: E501
-            """users_partial_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.users_partial_update(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this user. (required)
-            :param PatchedUserRequest patched_user_request:
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: User
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.users_partial_update = Endpoint(
-            settings={
-                'response_type': 'User',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/users/{id}/',
-                'operation_id': 'users_partial_update',
-                'http_method': 'PATCH',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'patched_user_request',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'patched_user_request': 'PatchedUserRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'patched_user_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__users_partial_update
-        )
-
-        def __users_retrieve(self, id, **kwargs):  # noqa: E501
-            """users_retrieve  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.users_retrieve(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this user. (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: User
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.users_retrieve = Endpoint(
-            settings={
-                'response_type': 'User',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/users/{id}/',
-                'operation_id': 'users_retrieve',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__users_retrieve
-        )
-
-        def __users_update(self, id, user_request, **kwargs):  # noqa: E501
-            """users_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.users_update(id, user_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this user. (required)
-            :param UserRequest user_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: User
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            kwargs['user_request'] = user_request
-            return self.call_with_http_info(**kwargs)
-
-        self.users_update = Endpoint(
-            settings={
-                'response_type': 'User',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/users/{id}/',
-                'operation_id': 'users_update',
-                'http_method': 'PUT',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'user_request',
-                ],
-                'required': [
-                    'id',
-                    'user_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'user_request': 'UserRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'user_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__users_update
-        )
-
-
-class Endpoint(object):
-    def __init__(self, settings=None, params_map=None, root_map=None,
-                 headers_map=None, api_client=None, callable=None):
-        """Creates an endpoint
-
-        Args:
-            settings (dict): see below key value pairs
-                'response_type' (str): response type
-                'auth' (list): a list of auth type keys
-                'endpoint_path' (str): the endpoint path
-                'operation_id' (str): endpoint string identifier
-                'http_method' (str): POST/PUT/PATCH/GET etc
-                'servers' (list): list of str servers that this endpoint is at
-            params_map (dict): see below key value pairs
-                'all' (list): list of str endpoint parameter names
-                'required' (list): list of required parameter names
-                'nullable' (list): list of nullable parameter names
-                'enum' (list): list of parameters with enum values
-                'validation' (list): list of parameters with validations
-            root_map
-                'validations' (dict): the dict mapping endpoint parameter tuple
-                    paths to their validation dictionaries
-                'allowed_values' (dict): the dict mapping endpoint parameter
-                    tuple paths to their allowed_values (enum) dictionaries
-                'openapi_types' (dict): param_name to openapi type
-                'attribute_map' (dict): param_name to camelCase name
-                'location_map' (dict): param_name to  'body', 'file', 'form',
-                    'header', 'path', 'query'
-                collection_format_map (dict): param_name to `csv` etc.
-            headers_map (dict): see below key value pairs
-                'accept' (list): list of Accept header strings
-                'content_type' (list): list of Content-Type header strings
-            api_client (ApiClient) api client instance
-            callable (function): the function which is invoked when the
-                Endpoint is called
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PaginatedUserList
         """
-        self.settings = settings
-        self.params_map = params_map
-        self.params_map['all'].extend([
-            'async_req',
-            '_host_index',
-            '_preload_content',
-            '_request_timeout',
-            '_return_http_data_only'
-        ])
-        self.validations = root_map['validations']
-        self.allowed_values = root_map['allowed_values']
-        self.openapi_types = root_map['openapi_types']
-        self.attribute_map = root_map['attribute_map']
-        self.location_map = root_map['location_map']
-        self.collection_format_map = root_map['collection_format_map']
-        self.headers_map = headers_map
-        self.api_client = api_client
-        self.callable = callable
+        kwargs['_return_http_data_only'] = True
+        return self.users_list_with_http_info(**kwargs)  # noqa: E501
 
-    def __validate_inputs(self, kwargs):
-        for param in self.params_map['enum']:
-            if param in kwargs:
-                check_allowed_values(
-                    self.allowed_values,
-                    (param,),
-                    kwargs[param],
-                    self.validations
+    def users_list_with_http_info(self, **kwargs):  # noqa: E501
+        """users_list  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_list_with_http_info(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PaginatedUserList, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'limit',
+            'offset'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method users_list" % key
                 )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
 
-        for param in self.params_map['validation']:
-            if param in kwargs:
-                check_validations(
-                    self.validations,
-                    (param,),
-                    kwargs[param]
-                )
+        collection_formats = {}
 
-    def __gather_params(self, kwargs):
-        params = {
-            'body': None,
-            'collection_format': {},
-            'file': {},
-            'form': [],
-            'header': {},
-            'path': {},
-            'query': []
+        path_params = {}
+
+        query_params = []
+        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
+            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
+        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
+            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PaginatedUserList",
         }
 
-        for param_name, param_value in six.iteritems(kwargs):
-            param_location = self.location_map.get(param_name)
-            if param_location:
-                if param_location == 'body':
-                    params['body'] = param_value
-                    continue
-                base_name = self.attribute_map[param_name]
-                if (param_location == 'form' and
-                        self.openapi_types[param_name] == 'file'):
-                    param_location = 'file'
-                elif param_location in {'form', 'query'}:
-                    param_value_full = (base_name, param_value)
-                    params[param_location].append(param_value_full)
-                if param_location not in {'form', 'query'}:
-                    params[param_location][base_name] = param_value
-                collection_format = self.collection_format_map.get(param_name)
-                if collection_format:
-                    params['collection_format'][base_name] = collection_format
+        return self.api_client.call_api(
+            '/api/users/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
 
-        return params
+    def users_me_retrieve(self, **kwargs):  # noqa: E501
+        """users_me_retrieve  # noqa: E501
 
-    def __call__(self, *args, **kwargs):
-        """ This method is invoked when endpoints are called
-        Example:
-        pet_api = PetApi()
-        pet_api.add_pet  # this is an instance of the class Endpoint
-        pet_api.add_pet()  # this invokes pet_api.add_pet.__call__()
-        which then invokes the callable functions stored in that endpoint at
-        pet_api.add_pet.callable or self.callable in this class
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_me_retrieve(async_req=True)
+        >>> result = thread.get()
+
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: User
         """
-        return self.callable(self, *args, **kwargs)
+        kwargs['_return_http_data_only'] = True
+        return self.users_me_retrieve_with_http_info(**kwargs)  # noqa: E501
 
-    def call_with_http_info(self, **kwargs):
+    def users_me_retrieve_with_http_info(self, **kwargs):  # noqa: E501
+        """users_me_retrieve  # noqa: E501
 
-        if kwargs.get('_host_index') and self.settings['servers']:
-            _host_index = kwargs.get('_host_index')
-            try:
-                _host = self.settings['servers'][_host_index]
-            except IndexError:
-                raise ApiValueError(
-                    "Invalid host index. Must be 0 <= index < %s" %
-                    len(self.settings['servers'])
-                )
-        else:
-            try:
-                _host = self.settings['servers'][0]
-            except IndexError:
-                _host = None
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
 
-        for key, value in six.iteritems(kwargs):
-            if key not in self.params_map['all']:
+        >>> thread = api.users_me_retrieve_with_http_info(async_req=True)
+        >>> result = thread.get()
+
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(User, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
                 raise ApiTypeError(
-                    "Got an unexpected parameter '%s'"
-                    " to method `%s`" %
-                    (key, self.settings['operation_id'])
+                    "Got an unexpected keyword argument '%s'"
+                    " to method users_me_retrieve" % key
                 )
-            if key not in self.params_map['nullable'] and value is None:
-                raise ApiValueError(
-                    "Value may not be None for non-nullable parameter `%s`"
-                    " when calling `%s`" %
-                    (key, self.settings['operation_id'])
-                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
 
-        for key in self.params_map['required']:
-            if key not in kwargs.keys():
-                raise ApiValueError(
-                    "Missing the required parameter `%s` when calling "
-                    "`%s`" % (key, self.settings['operation_id'])
-                )
+        collection_formats = {}
 
-        self.__validate_inputs(kwargs)
+        path_params = {}
 
-        params = self.__gather_params(kwargs)
+        query_params = []
 
-        accept_headers_list = self.headers_map['accept']
-        if accept_headers_list:
-            params['header']['Accept'] = self.api_client.select_header_accept(
-                accept_headers_list)
+        header_params = {}
 
-        content_type_headers_list = self.headers_map['content_type']
-        if content_type_headers_list:
-            header_list = self.api_client.select_header_content_type(
-                content_type_headers_list)
-            params['header']['Content-Type'] = header_list
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "User",
+        }
 
         return self.api_client.call_api(
-            self.settings['endpoint_path'], self.settings['http_method'],
-            params['path'],
-            params['query'],
-            params['header'],
-            body=params['body'],
-            post_params=params['form'],
-            files=params['file'],
-            response_type=self.settings['response_type'],
-            auth_settings=self.settings['auth'],
-            async_req=kwargs.get('async_req'),
-            _return_http_data_only=kwargs.get('_return_http_data_only'),
-            _preload_content=kwargs.get('_preload_content', True),
-            _request_timeout=kwargs.get('_request_timeout'),
-            _host=_host,
-            collection_formats=params['collection_format'])
+            '/api/users/me/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def users_partial_update(self, id, **kwargs):  # noqa: E501
+        """users_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_partial_update(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param patched_user_request:
+        :type patched_user_request: PatchedUserRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: User
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.users_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+
+    def users_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
+        """users_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_partial_update_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param patched_user_request:
+        :type patched_user_request: PatchedUserRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(User, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'patched_user_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method users_partial_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `users_partial_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'patched_user_request' in local_var_params:
+            body_params = local_var_params['patched_user_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "User",
+        }
+
+        return self.api_client.call_api(
+            '/api/users/{id}/', 'PATCH',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def users_retrieve(self, id, **kwargs):  # noqa: E501
+        """users_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_retrieve(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: User
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.users_retrieve_with_http_info(id, **kwargs)  # noqa: E501
+
+    def users_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
+        """users_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_retrieve_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(User, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method users_retrieve" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `users_retrieve`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "User",
+        }
+
+        return self.api_client.call_api(
+            '/api/users/{id}/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def users_update(self, id, user_request, **kwargs):  # noqa: E501
+        """users_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_update(id, user_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param user_request: (required)
+        :type user_request: UserRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: User
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.users_update_with_http_info(id, user_request, **kwargs)  # noqa: E501
+
+    def users_update_with_http_info(self, id, user_request, **kwargs):  # noqa: E501
+        """users_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.users_update_with_http_info(id, user_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this user. (required)
+        :type id: int
+        :param user_request: (required)
+        :type user_request: UserRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(User, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'user_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method users_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `users_update`")  # noqa: E501
+        # verify the required parameter 'user_request' is set
+        if self.api_client.client_side_validation and ('user_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['user_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `user_request` when calling `users_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'user_request' in local_var_params:
+            body_params = local_var_params['user_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "User",
+        }
+
+        return self.api_client.call_api(
+            '/api/users/{id}/', 'PUT',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))

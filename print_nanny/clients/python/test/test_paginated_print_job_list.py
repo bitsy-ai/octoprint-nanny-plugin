@@ -12,11 +12,11 @@
 from __future__ import absolute_import
 
 import unittest
+import datetime
 
 import print_nanny_client
 from print_nanny_client.models.paginated_print_job_list import PaginatedPrintJobList  # noqa: E501
 from print_nanny_client.rest import ApiException
-
 
 class TestPaginatedPrintJobList(unittest.TestCase):
     """PaginatedPrintJobList unit test stubs"""
@@ -27,12 +27,39 @@ class TestPaginatedPrintJobList(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test PaginatedPrintJobList
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # model = print_nanny_client.models.paginated_print_job_list.PaginatedPrintJobList()  # noqa: E501
+        if include_optional :
+            return PaginatedPrintJobList(
+                count = 123, 
+                next = 'http://api.example.org/accounts/?offset=400&limit=100', 
+                previous = 'http://api.example.org/accounts/?offset=200&limit=100', 
+                results = [
+                    print_nanny_client.models.print_job.PrintJob(
+                        id = 56, 
+                        dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                        user = 56, 
+                        printer_profile = 56, 
+                        name = '', 
+                        gcode_file_hash = '', 
+                        gcode_file = 56, 
+                        last_status = 'STARTED', 
+                        last_seen = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                        url = '', )
+                    ]
+            )
+        else :
+            return PaginatedPrintJobList(
+        )
+
     def testPaginatedPrintJobList(self):
         """Test PaginatedPrintJobList"""
-        # FIXME: construct object with mandatory attributes with example values
-        # model = print_nanny_client.models.paginated_print_job_list.PaginatedPrintJobList()  # noqa: E501
-        pass
-
+        inst_req_only = self.make_instance(include_optional=False)
+        inst_req_and_optional = self.make_instance(include_optional=True)
 
 if __name__ == '__main__':
     unittest.main()

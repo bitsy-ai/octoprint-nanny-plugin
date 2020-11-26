@@ -31,17 +31,12 @@ from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.users_api import UsersApi
 
-from print_nanny_client.api.predict_event_files_api import EventsApi
 
-from print_nanny_client.api.octoprint_events_api import OctoprintEventsApi
-from print_nanny_client.api.print_jobs_api import PrintJobsApi
-from print_nanny_client.api.printer_profiles_api import PrinterProfilesApi
-from print_nanny_client.api.users_api import UsersApi
-from print_nanny_client.api.gcode_files_api import GcodeFilesApi
-from print_nanny_client.model.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.model.print_job_request import PrintJobRequest
-from print_nanny_client.model.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.model.predict_event_request import PredictEventRequest
+from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
+from print_nanny_client.models.print_job_request import PrintJobRequest
+from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
+from print_nanny_client.models.predict_event_request import PredictEventRequest
+
 
 from .predictor import ThreadLocalPredictor
 from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
@@ -228,7 +223,7 @@ class BitsyNannyPlugin(
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
         gcode_f.seek(0)
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = GcodeFilesApi(api_client=api_client)
+            api_instance = RemoteControlApi(api_client=api_client)
 
             try:
                 gcode_file = await api_instance.gcode_files_update_or_create(                
@@ -255,7 +250,7 @@ class BitsyNannyPlugin(
 
             if print_job is not None:
                 status_enum = print_nanny_client.model.last_status_enum.LastStatusEnum(status)
-                api_instance = PrintJobsApi(api_client=api_client)
+                api_instance = RemoteControlApi(api_client=api_client)
                 try:
                     request = print_nanny_client.model.patched_print_job_request.PatchedPrintJobRequest(
                         last_status=status_enum
@@ -284,7 +279,7 @@ class BitsyNannyPlugin(
         event_data.update(self._get_metadata())
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
-            api_instance = PrinterProfilesApi(api_client=api_client)
+            api_instance = RemoteControlApi(api_client=api_client)
             request = PrinterProfileRequest(
                 axes_e_inverted=event_data['printer_profile']['axes']['e']['inverted'],
                 axes_x_inverted=event_data['printer_profile']['axes']['x']['inverted'],
@@ -328,7 +323,7 @@ class BitsyNannyPlugin(
 
 
 
-            api_instance = GcodeFilesApi(api_client=api_client)
+            api_instance = RemoteControlApi(api_client=api_client)
             try:
                 gcode_file = await api_instance.gcode_files_update_or_create(
                     name=event_data['name'],
@@ -344,7 +339,7 @@ class BitsyNannyPlugin(
 
 
             # print job
-            api_instance = PrintJobsApi(api_client=api_client)
+            api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.model.print_job_request.PrintJobRequest(                
                 gcode_file=gcode_file_id,
                 gcode_file_hash=file_hash,
@@ -414,8 +409,8 @@ class BitsyNannyPlugin(
             print_job_id = None
             
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = OctoprintEventsApi(api_client=api_client)
-            request = print_nanny_client.model.octo_print_event_request.OctoPrintEventRequest(
+            api_instance = EventsApi(api_client=api_client)
+            request = OctoPrintEventRequest(
                 dt=event_data['dt'],
                 event_type=event_type,
                 event_data=event_data,

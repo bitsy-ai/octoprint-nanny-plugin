@@ -17,13 +17,9 @@ import re  # noqa: F401
 import six
 
 from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (
+from print_nanny_client.exceptions import (  # noqa: F401
     ApiTypeError,
     ApiValueError
-)
-from print_nanny_client.model_utils import (
-    check_allowed_values,
-    check_validations
 )
 
 
@@ -39,1735 +35,2492 @@ class RemoteControlApi(object):
             api_client = ApiClient()
         self.api_client = api_client
 
-        def __gcode_files_create(self, name, file, file_hash, **kwargs):  # noqa: E501
-            """gcode_files_create  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_create(name, file, file_hash, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param str name: (required)
-            :param file file: (required)
-            :param str file_hash: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: GcodeFile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['name'] = name
-            kwargs['file'] = file
-            kwargs['file_hash'] = file_hash
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_create = Endpoint(
-            settings={
-                'response_type': 'GcodeFile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/',
-                'operation_id': 'gcode_files_create',
-                'http_method': 'POST',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'required': [
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                    'name',
-                    'file_hash',
-                ]
-            },
-            root_map={
-                'validations': {
-                    ('name',): {
-                        'max_length': 255,
-                    },
-                    ('file_hash',): {
-                        'max_length': 255,
-                    },
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'name': 'str',
-                    'file': 'file',
-                    'file_hash': 'str',
-                },
-                'attribute_map': {
-                    'name': 'name',
-                    'file': 'file',
-                    'file_hash': 'file_hash',
-                },
-                'location_map': {
-                    'name': 'form',
-                    'file': 'form',
-                    'file_hash': 'form',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'multipart/form-data',
-                    'application/x-www-form-urlencoded'
-                ]
-            },
-            api_client=api_client,
-            callable=__gcode_files_create
-        )
-
-        def __gcode_files_list(self, **kwargs):  # noqa: E501
-            """gcode_files_list  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_list(async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int limit: Number of results to return per page.
-            :param int offset: The initial index from which to return the results.
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PaginatedGcodeFileList
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_list = Endpoint(
-            settings={
-                'response_type': 'PaginatedGcodeFileList',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/',
-                'operation_id': 'gcode_files_list',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'limit',
-                    'offset',
-                ],
-                'required': [],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'limit': 'int',
-                    'offset': 'int',
-                },
-                'attribute_map': {
-                    'limit': 'limit',
-                    'offset': 'offset',
-                },
-                'location_map': {
-                    'limit': 'query',
-                    'offset': 'query',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__gcode_files_list
-        )
-
-        def __gcode_files_partial_update(self, id, **kwargs):  # noqa: E501
-            """gcode_files_partial_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_partial_update(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this gcode file. (required)
-            :param str name:
-            :param file file:
-            :param str file_hash:
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: GcodeFile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_partial_update = Endpoint(
-            settings={
-                'response_type': 'GcodeFile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/{id}/',
-                'operation_id': 'gcode_files_partial_update',
-                'http_method': 'PATCH',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                    'name',
-                    'file_hash',
-                ]
-            },
-            root_map={
-                'validations': {
-                    ('name',): {
-                        'max_length': 255,
-                    },
-                    ('file_hash',): {
-                        'max_length': 255,
-                    },
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'name': 'str',
-                    'file': 'file',
-                    'file_hash': 'str',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                    'name': 'name',
-                    'file': 'file',
-                    'file_hash': 'file_hash',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'name': 'form',
-                    'file': 'form',
-                    'file_hash': 'form',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'multipart/form-data',
-                    'application/x-www-form-urlencoded'
-                ]
-            },
-            api_client=api_client,
-            callable=__gcode_files_partial_update
-        )
-
-        def __gcode_files_retrieve(self, id, **kwargs):  # noqa: E501
-            """gcode_files_retrieve  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_retrieve(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this gcode file. (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: GcodeFile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_retrieve = Endpoint(
-            settings={
-                'response_type': 'GcodeFile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/{id}/',
-                'operation_id': 'gcode_files_retrieve',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__gcode_files_retrieve
-        )
-
-        def __gcode_files_update(self, id, name, file, file_hash, **kwargs):  # noqa: E501
-            """gcode_files_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_update(id, name, file, file_hash, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this gcode file. (required)
-            :param str name: (required)
-            :param file file: (required)
-            :param str file_hash: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: GcodeFile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            kwargs['name'] = name
-            kwargs['file'] = file
-            kwargs['file_hash'] = file_hash
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_update = Endpoint(
-            settings={
-                'response_type': 'GcodeFile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/{id}/',
-                'operation_id': 'gcode_files_update',
-                'http_method': 'PUT',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'required': [
-                    'id',
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                    'name',
-                    'file_hash',
-                ]
-            },
-            root_map={
-                'validations': {
-                    ('name',): {
-                        'max_length': 255,
-                    },
-                    ('file_hash',): {
-                        'max_length': 255,
-                    },
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'name': 'str',
-                    'file': 'file',
-                    'file_hash': 'str',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                    'name': 'name',
-                    'file': 'file',
-                    'file_hash': 'file_hash',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'name': 'form',
-                    'file': 'form',
-                    'file_hash': 'form',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'multipart/form-data',
-                    'application/x-www-form-urlencoded'
-                ]
-            },
-            api_client=api_client,
-            callable=__gcode_files_update
-        )
-
-        def __gcode_files_update_or_create(self, name, file, file_hash, **kwargs):  # noqa: E501
-            """gcode_files_update_or_create  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.gcode_files_update_or_create(name, file, file_hash, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param str name: (required)
-            :param file file: (required)
-            :param str file_hash: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: GcodeFile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['name'] = name
-            kwargs['file'] = file
-            kwargs['file_hash'] = file_hash
-            return self.call_with_http_info(**kwargs)
-
-        self.gcode_files_update_or_create = Endpoint(
-            settings={
-                'response_type': 'GcodeFile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/gcode-files/update_or_create/',
-                'operation_id': 'gcode_files_update_or_create',
-                'http_method': 'POST',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'required': [
-                    'name',
-                    'file',
-                    'file_hash',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                    'name',
-                    'file_hash',
-                ]
-            },
-            root_map={
-                'validations': {
-                    ('name',): {
-                        'max_length': 255,
-                    },
-                    ('file_hash',): {
-                        'max_length': 255,
-                    },
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'name': 'str',
-                    'file': 'file',
-                    'file_hash': 'str',
-                },
-                'attribute_map': {
-                    'name': 'name',
-                    'file': 'file',
-                    'file_hash': 'file_hash',
-                },
-                'location_map': {
-                    'name': 'form',
-                    'file': 'form',
-                    'file_hash': 'form',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'multipart/form-data',
-                    'application/x-www-form-urlencoded'
-                ]
-            },
-            api_client=api_client,
-            callable=__gcode_files_update_or_create
-        )
-
-        def __print_jobs_create(self, print_job_request, **kwargs):  # noqa: E501
-            """print_jobs_create  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.print_jobs_create(print_job_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param PrintJobRequest print_job_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrintJob
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['print_job_request'] = print_job_request
-            return self.call_with_http_info(**kwargs)
-
-        self.print_jobs_create = Endpoint(
-            settings={
-                'response_type': 'PrintJob',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/print-jobs/',
-                'operation_id': 'print_jobs_create',
-                'http_method': 'POST',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'print_job_request',
-                ],
-                'required': [
-                    'print_job_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'print_job_request': 'PrintJobRequest',
-                },
-                'attribute_map': {
-                },
-                'location_map': {
-                    'print_job_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__print_jobs_create
-        )
-
-        def __print_jobs_list(self, **kwargs):  # noqa: E501
-            """print_jobs_list  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.print_jobs_list(async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int limit: Number of results to return per page.
-            :param int offset: The initial index from which to return the results.
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PaginatedPrintJobList
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            return self.call_with_http_info(**kwargs)
-
-        self.print_jobs_list = Endpoint(
-            settings={
-                'response_type': 'PaginatedPrintJobList',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/print-jobs/',
-                'operation_id': 'print_jobs_list',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'limit',
-                    'offset',
-                ],
-                'required': [],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'limit': 'int',
-                    'offset': 'int',
-                },
-                'attribute_map': {
-                    'limit': 'limit',
-                    'offset': 'offset',
-                },
-                'location_map': {
-                    'limit': 'query',
-                    'offset': 'query',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__print_jobs_list
-        )
-
-        def __print_jobs_partial_update(self, id, **kwargs):  # noqa: E501
-            """print_jobs_partial_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.print_jobs_partial_update(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this print job. (required)
-            :param PatchedPrintJobRequest patched_print_job_request:
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrintJob
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.print_jobs_partial_update = Endpoint(
-            settings={
-                'response_type': 'PrintJob',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/print-jobs/{id}/',
-                'operation_id': 'print_jobs_partial_update',
-                'http_method': 'PATCH',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'patched_print_job_request',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'patched_print_job_request': 'PatchedPrintJobRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'patched_print_job_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__print_jobs_partial_update
-        )
-
-        def __print_jobs_retrieve(self, id, **kwargs):  # noqa: E501
-            """print_jobs_retrieve  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.print_jobs_retrieve(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this print job. (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrintJob
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.print_jobs_retrieve = Endpoint(
-            settings={
-                'response_type': 'PrintJob',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/print-jobs/{id}/',
-                'operation_id': 'print_jobs_retrieve',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__print_jobs_retrieve
-        )
-
-        def __print_jobs_update(self, id, print_job_request, **kwargs):  # noqa: E501
-            """print_jobs_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.print_jobs_update(id, print_job_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this print job. (required)
-            :param PrintJobRequest print_job_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrintJob
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            kwargs['print_job_request'] = print_job_request
-            return self.call_with_http_info(**kwargs)
-
-        self.print_jobs_update = Endpoint(
-            settings={
-                'response_type': 'PrintJob',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/print-jobs/{id}/',
-                'operation_id': 'print_jobs_update',
-                'http_method': 'PUT',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'print_job_request',
-                ],
-                'required': [
-                    'id',
-                    'print_job_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'print_job_request': 'PrintJobRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'print_job_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__print_jobs_update
-        )
-
-        def __printer_profiles_create(self, printer_profile_request, **kwargs):  # noqa: E501
-            """printer_profiles_create  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_create(printer_profile_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param PrinterProfileRequest printer_profile_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrinterProfile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['printer_profile_request'] = printer_profile_request
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_create = Endpoint(
-            settings={
-                'response_type': 'PrinterProfile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/',
-                'operation_id': 'printer_profiles_create',
-                'http_method': 'POST',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'printer_profile_request',
-                ],
-                'required': [
-                    'printer_profile_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'printer_profile_request': 'PrinterProfileRequest',
-                },
-                'attribute_map': {
-                },
-                'location_map': {
-                    'printer_profile_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__printer_profiles_create
-        )
-
-        def __printer_profiles_list(self, **kwargs):  # noqa: E501
-            """printer_profiles_list  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_list(async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int limit: Number of results to return per page.
-            :param str name: name
-            :param int offset: The initial index from which to return the results.
-            :param str user: user
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PaginatedPrinterProfileList
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_list = Endpoint(
-            settings={
-                'response_type': 'PaginatedPrinterProfileList',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/',
-                'operation_id': 'printer_profiles_list',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'limit',
-                    'name',
-                    'offset',
-                    'user',
-                ],
-                'required': [],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'limit': 'int',
-                    'name': 'str',
-                    'offset': 'int',
-                    'user': 'str',
-                },
-                'attribute_map': {
-                    'limit': 'limit',
-                    'name': 'name',
-                    'offset': 'offset',
-                    'user': 'user',
-                },
-                'location_map': {
-                    'limit': 'query',
-                    'name': 'query',
-                    'offset': 'query',
-                    'user': 'query',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__printer_profiles_list
-        )
-
-        def __printer_profiles_partial_update(self, id, **kwargs):  # noqa: E501
-            """printer_profiles_partial_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_partial_update(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this printer profile. (required)
-            :param PatchedPrinterProfileRequest patched_printer_profile_request:
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrinterProfile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_partial_update = Endpoint(
-            settings={
-                'response_type': 'PrinterProfile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/{id}/',
-                'operation_id': 'printer_profiles_partial_update',
-                'http_method': 'PATCH',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'patched_printer_profile_request',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'patched_printer_profile_request': 'PatchedPrinterProfileRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'patched_printer_profile_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__printer_profiles_partial_update
-        )
-
-        def __printer_profiles_retrieve(self, id, **kwargs):  # noqa: E501
-            """printer_profiles_retrieve  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_retrieve(id, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this printer profile. (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrinterProfile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_retrieve = Endpoint(
-            settings={
-                'response_type': 'PrinterProfile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/{id}/',
-                'operation_id': 'printer_profiles_retrieve',
-                'http_method': 'GET',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                ],
-                'required': [
-                    'id',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [],
-            },
-            api_client=api_client,
-            callable=__printer_profiles_retrieve
-        )
-
-        def __printer_profiles_update(self, id, printer_profile_request, **kwargs):  # noqa: E501
-            """printer_profiles_update  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_update(id, printer_profile_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param int id: A unique integer value identifying this printer profile. (required)
-            :param PrinterProfileRequest printer_profile_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrinterProfile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['id'] = id
-            kwargs['printer_profile_request'] = printer_profile_request
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_update = Endpoint(
-            settings={
-                'response_type': 'PrinterProfile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/{id}/',
-                'operation_id': 'printer_profiles_update',
-                'http_method': 'PUT',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'id',
-                    'printer_profile_request',
-                ],
-                'required': [
-                    'id',
-                    'printer_profile_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'id': 'int',
-                    'printer_profile_request': 'PrinterProfileRequest',
-                },
-                'attribute_map': {
-                    'id': 'id',
-                },
-                'location_map': {
-                    'id': 'path',
-                    'printer_profile_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__printer_profiles_update
-        )
-
-        def __printer_profiles_update_or_create(self, printer_profile_request, **kwargs):  # noqa: E501
-            """printer_profiles_update_or_create  # noqa: E501
-
-            This method makes a synchronous HTTP request by default. To make an
-            asynchronous HTTP request, please pass async_req=True
-            >>> thread = api.printer_profiles_update_or_create(printer_profile_request, async_req=True)
-            >>> result = thread.get()
-
-            :param async_req bool: execute request asynchronously
-            :param PrinterProfileRequest printer_profile_request: (required)
-            :param _return_http_data_only: response data without head status
-                code and headers
-            :param _preload_content: if False, the urllib3.HTTPResponse object
-                will be returned without reading/decoding response data.
-                Default is True.
-            :param _request_timeout: timeout setting for this request. If one
-                number provided, it will be total request timeout. It can also
-                be a pair (tuple) of (connection, read) timeouts.
-            :return: PrinterProfile
-                If the method is called asynchronously, returns the request
-                thread.
-            """
-            kwargs['_return_http_data_only'] = kwargs.get(
-                '_return_http_data_only', True
-            )
-            kwargs['printer_profile_request'] = printer_profile_request
-            return self.call_with_http_info(**kwargs)
-
-        self.printer_profiles_update_or_create = Endpoint(
-            settings={
-                'response_type': 'PrinterProfile',
-                'auth': [
-                    'cookieAuth', 
-                    'tokenAuth'
-                ],
-                'endpoint_path': '/api/printer-profiles/update_or_create/',
-                'operation_id': 'printer_profiles_update_or_create',
-                'http_method': 'POST',
-                'servers': [],
-            },
-            params_map={
-                'all': [
-                    'printer_profile_request',
-                ],
-                'required': [
-                    'printer_profile_request',
-                ],
-                'nullable': [
-                ],
-                'enum': [
-                ],
-                'validation': [
-                ]
-            },
-            root_map={
-                'validations': {
-                },
-                'allowed_values': {
-                },
-                'openapi_types': {
-                    'printer_profile_request': 'PrinterProfileRequest',
-                },
-                'attribute_map': {
-                },
-                'location_map': {
-                    'printer_profile_request': 'body',
-                },
-                'collection_format_map': {
-                }
-            },
-            headers_map={
-                'accept': [
-                    'application/json'
-                ],
-                'content_type': [
-                    'application/json',
-                    'application/x-www-form-urlencoded',
-                    'multipart/form-data'
-                ]
-            },
-            api_client=api_client,
-            callable=__printer_profiles_update_or_create
-        )
-
-
-class Endpoint(object):
-    def __init__(self, settings=None, params_map=None, root_map=None,
-                 headers_map=None, api_client=None, callable=None):
-        """Creates an endpoint
-
-        Args:
-            settings (dict): see below key value pairs
-                'response_type' (str): response type
-                'auth' (list): a list of auth type keys
-                'endpoint_path' (str): the endpoint path
-                'operation_id' (str): endpoint string identifier
-                'http_method' (str): POST/PUT/PATCH/GET etc
-                'servers' (list): list of str servers that this endpoint is at
-            params_map (dict): see below key value pairs
-                'all' (list): list of str endpoint parameter names
-                'required' (list): list of required parameter names
-                'nullable' (list): list of nullable parameter names
-                'enum' (list): list of parameters with enum values
-                'validation' (list): list of parameters with validations
-            root_map
-                'validations' (dict): the dict mapping endpoint parameter tuple
-                    paths to their validation dictionaries
-                'allowed_values' (dict): the dict mapping endpoint parameter
-                    tuple paths to their allowed_values (enum) dictionaries
-                'openapi_types' (dict): param_name to openapi type
-                'attribute_map' (dict): param_name to camelCase name
-                'location_map' (dict): param_name to  'body', 'file', 'form',
-                    'header', 'path', 'query'
-                collection_format_map (dict): param_name to `csv` etc.
-            headers_map (dict): see below key value pairs
-                'accept' (list): list of Accept header strings
-                'content_type' (list): list of Content-Type header strings
-            api_client (ApiClient) api client instance
-            callable (function): the function which is invoked when the
-                Endpoint is called
+    def gcode_files_create(self, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_create(name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GcodeFile
         """
-        self.settings = settings
-        self.params_map = params_map
-        self.params_map['all'].extend([
-            'async_req',
-            '_host_index',
-            '_preload_content',
-            '_request_timeout',
-            '_return_http_data_only'
-        ])
-        self.validations = root_map['validations']
-        self.allowed_values = root_map['allowed_values']
-        self.openapi_types = root_map['openapi_types']
-        self.attribute_map = root_map['attribute_map']
-        self.location_map = root_map['location_map']
-        self.collection_format_map = root_map['collection_format_map']
-        self.headers_map = headers_map
-        self.api_client = api_client
-        self.callable = callable
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
 
-    def __validate_inputs(self, kwargs):
-        for param in self.params_map['enum']:
-            if param in kwargs:
-                check_allowed_values(
-                    self.allowed_values,
-                    (param,),
-                    kwargs[param],
-                    self.validations
+    def gcode_files_create_with_http_info(self, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_create_with_http_info(name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'name',
+            'file',
+            'file_hash'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_create" % key
                 )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'name' is set
+        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
+                                                        local_var_params['name'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_create`")  # noqa: E501
+        # verify the required parameter 'file' is set
+        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_create`")  # noqa: E501
+        # verify the required parameter 'file_hash' is set
+        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file_hash'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_create`")  # noqa: E501
 
-        for param in self.params_map['validation']:
-            if param in kwargs:
-                check_validations(
-                    self.validations,
-                    (param,),
-                    kwargs[param]
-                )
+        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['name']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_create`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_create`, length must be less than or equal to `255`")  # noqa: E501
+        collection_formats = {}
 
-    def __gather_params(self, kwargs):
-        params = {
-            'body': None,
-            'collection_format': {},
-            'file': {},
-            'form': [],
-            'header': {},
-            'path': {},
-            'query': []
+        path_params = {}
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+        if 'name' in local_var_params:
+            form_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'file' in local_var_params:
+            local_var_files['file'] = local_var_params['file']  # noqa: E501
+        if 'file_hash' in local_var_params:
+            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "GcodeFile",
         }
 
-        for param_name, param_value in six.iteritems(kwargs):
-            param_location = self.location_map.get(param_name)
-            if param_location:
-                if param_location == 'body':
-                    params['body'] = param_value
-                    continue
-                base_name = self.attribute_map[param_name]
-                if (param_location == 'form' and
-                        self.openapi_types[param_name] == 'file'):
-                    param_location = 'file'
-                elif param_location in {'form', 'query'}:
-                    param_value_full = (base_name, param_value)
-                    params[param_location].append(param_value_full)
-                if param_location not in {'form', 'query'}:
-                    params[param_location][base_name] = param_value
-                collection_format = self.collection_format_map.get(param_name)
-                if collection_format:
-                    params['collection_format'][base_name] = collection_format
+        return self.api_client.call_api(
+            '/api/gcode-files/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
 
-        return params
+    def gcode_files_list(self, **kwargs):  # noqa: E501
+        """gcode_files_list  # noqa: E501
 
-    def __call__(self, *args, **kwargs):
-        """ This method is invoked when endpoints are called
-        Example:
-        pet_api = PetApi()
-        pet_api.add_pet  # this is an instance of the class Endpoint
-        pet_api.add_pet()  # this invokes pet_api.add_pet.__call__()
-        which then invokes the callable functions stored in that endpoint at
-        pet_api.add_pet.callable or self.callable in this class
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_list(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PaginatedGcodeFileList
         """
-        return self.callable(self, *args, **kwargs)
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_list_with_http_info(**kwargs)  # noqa: E501
 
-    def call_with_http_info(self, **kwargs):
+    def gcode_files_list_with_http_info(self, **kwargs):  # noqa: E501
+        """gcode_files_list  # noqa: E501
 
-        if kwargs.get('_host_index') and self.settings['servers']:
-            _host_index = kwargs.get('_host_index')
-            try:
-                _host = self.settings['servers'][_host_index]
-            except IndexError:
-                raise ApiValueError(
-                    "Invalid host index. Must be 0 <= index < %s" %
-                    len(self.settings['servers'])
-                )
-        else:
-            try:
-                _host = self.settings['servers'][0]
-            except IndexError:
-                _host = None
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
 
-        for key, value in six.iteritems(kwargs):
-            if key not in self.params_map['all']:
+        >>> thread = api.gcode_files_list_with_http_info(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PaginatedGcodeFileList, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'limit',
+            'offset'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
                 raise ApiTypeError(
-                    "Got an unexpected parameter '%s'"
-                    " to method `%s`" %
-                    (key, self.settings['operation_id'])
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_list" % key
                 )
-            if key not in self.params_map['nullable'] and value is None:
-                raise ApiValueError(
-                    "Value may not be None for non-nullable parameter `%s`"
-                    " when calling `%s`" %
-                    (key, self.settings['operation_id'])
-                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
 
-        for key in self.params_map['required']:
-            if key not in kwargs.keys():
-                raise ApiValueError(
-                    "Missing the required parameter `%s` when calling "
-                    "`%s`" % (key, self.settings['operation_id'])
-                )
+        collection_formats = {}
 
-        self.__validate_inputs(kwargs)
+        path_params = {}
 
-        params = self.__gather_params(kwargs)
+        query_params = []
+        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
+            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
+        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
+            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
 
-        accept_headers_list = self.headers_map['accept']
-        if accept_headers_list:
-            params['header']['Accept'] = self.api_client.select_header_accept(
-                accept_headers_list)
+        header_params = {}
 
-        content_type_headers_list = self.headers_map['content_type']
-        if content_type_headers_list:
-            header_list = self.api_client.select_header_content_type(
-                content_type_headers_list)
-            params['header']['Content-Type'] = header_list
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PaginatedGcodeFileList",
+        }
 
         return self.api_client.call_api(
-            self.settings['endpoint_path'], self.settings['http_method'],
-            params['path'],
-            params['query'],
-            params['header'],
-            body=params['body'],
-            post_params=params['form'],
-            files=params['file'],
-            response_type=self.settings['response_type'],
-            auth_settings=self.settings['auth'],
-            async_req=kwargs.get('async_req'),
-            _return_http_data_only=kwargs.get('_return_http_data_only'),
-            _preload_content=kwargs.get('_preload_content', True),
-            _request_timeout=kwargs.get('_request_timeout'),
-            _host=_host,
-            collection_formats=params['collection_format'])
+            '/api/gcode-files/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def gcode_files_partial_update(self, id, **kwargs):  # noqa: E501
+        """gcode_files_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_partial_update(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param name:
+        :type name: str
+        :param file:
+        :type file: file
+        :param file_hash:
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GcodeFile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+
+    def gcode_files_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
+        """gcode_files_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_partial_update_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param name:
+        :type name: str
+        :param file:
+        :type file: file
+        :param file_hash:
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'name',
+            'file',
+            'file_hash'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_partial_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_partial_update`")  # noqa: E501
+
+        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['name']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_partial_update`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_partial_update`, length must be less than or equal to `255`")  # noqa: E501
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+        if 'name' in local_var_params:
+            form_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'file' in local_var_params:
+            local_var_files['file'] = local_var_params['file']  # noqa: E501
+        if 'file_hash' in local_var_params:
+            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "GcodeFile",
+        }
+
+        return self.api_client.call_api(
+            '/api/gcode-files/{id}/', 'PATCH',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def gcode_files_retrieve(self, id, **kwargs):  # noqa: E501
+        """gcode_files_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_retrieve(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GcodeFile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_retrieve_with_http_info(id, **kwargs)  # noqa: E501
+
+    def gcode_files_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
+        """gcode_files_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_retrieve_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_retrieve" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_retrieve`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "GcodeFile",
+        }
+
+        return self.api_client.call_api(
+            '/api/gcode-files/{id}/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def gcode_files_update(self, id, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_update(id, name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GcodeFile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_update_with_http_info(id, name, file, file_hash, **kwargs)  # noqa: E501
+
+    def gcode_files_update_with_http_info(self, id, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_update_with_http_info(id, name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this gcode file. (required)
+        :type id: int
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'name',
+            'file',
+            'file_hash'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_update`")  # noqa: E501
+        # verify the required parameter 'name' is set
+        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
+                                                        local_var_params['name'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_update`")  # noqa: E501
+        # verify the required parameter 'file' is set
+        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_update`")  # noqa: E501
+        # verify the required parameter 'file_hash' is set
+        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file_hash'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_update`")  # noqa: E501
+
+        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['name']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_update`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_update`, length must be less than or equal to `255`")  # noqa: E501
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+        if 'name' in local_var_params:
+            form_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'file' in local_var_params:
+            local_var_files['file'] = local_var_params['file']  # noqa: E501
+        if 'file_hash' in local_var_params:
+            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "GcodeFile",
+        }
+
+        return self.api_client.call_api(
+            '/api/gcode-files/{id}/', 'PUT',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def gcode_files_update_or_create(self, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_update_or_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_update_or_create(name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GcodeFile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.gcode_files_update_or_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
+
+    def gcode_files_update_or_create_with_http_info(self, name, file, file_hash, **kwargs):  # noqa: E501
+        """gcode_files_update_or_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.gcode_files_update_or_create_with_http_info(name, file, file_hash, async_req=True)
+        >>> result = thread.get()
+
+        :param name: (required)
+        :type name: str
+        :param file: (required)
+        :type file: file
+        :param file_hash: (required)
+        :type file_hash: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'name',
+            'file',
+            'file_hash'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method gcode_files_update_or_create" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'name' is set
+        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
+                                                        local_var_params['name'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_update_or_create`")  # noqa: E501
+        # verify the required parameter 'file' is set
+        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_update_or_create`")  # noqa: E501
+        # verify the required parameter 'file_hash' is set
+        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
+                                                        local_var_params['file_hash'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_update_or_create`")  # noqa: E501
+
+        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['name']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
+                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
+            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`")  # noqa: E501
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+        if 'name' in local_var_params:
+            form_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'file' in local_var_params:
+            local_var_files['file'] = local_var_params['file']  # noqa: E501
+        if 'file_hash' in local_var_params:
+            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            400: "GcodeFile",
+            202: "GcodeFile",
+            201: "GcodeFile",
+        }
+
+        return self.api_client.call_api(
+            '/api/gcode-files/update_or_create/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def print_jobs_create(self, print_job_request, **kwargs):  # noqa: E501
+        """print_jobs_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_create(print_job_request, async_req=True)
+        >>> result = thread.get()
+
+        :param print_job_request: (required)
+        :type print_job_request: PrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrintJob
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.print_jobs_create_with_http_info(print_job_request, **kwargs)  # noqa: E501
+
+    def print_jobs_create_with_http_info(self, print_job_request, **kwargs):  # noqa: E501
+        """print_jobs_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_create_with_http_info(print_job_request, async_req=True)
+        >>> result = thread.get()
+
+        :param print_job_request: (required)
+        :type print_job_request: PrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'print_job_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method print_jobs_create" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'print_job_request' is set
+        if self.api_client.client_side_validation and ('print_job_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['print_job_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `print_job_request` when calling `print_jobs_create`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'print_job_request' in local_var_params:
+            body_params = local_var_params['print_job_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrintJob",
+        }
+
+        return self.api_client.call_api(
+            '/api/print-jobs/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def print_jobs_list(self, **kwargs):  # noqa: E501
+        """print_jobs_list  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_list(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PaginatedPrintJobList
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.print_jobs_list_with_http_info(**kwargs)  # noqa: E501
+
+    def print_jobs_list_with_http_info(self, **kwargs):  # noqa: E501
+        """print_jobs_list  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_list_with_http_info(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PaginatedPrintJobList, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'limit',
+            'offset'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method print_jobs_list" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
+            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
+        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
+            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PaginatedPrintJobList",
+        }
+
+        return self.api_client.call_api(
+            '/api/print-jobs/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def print_jobs_partial_update(self, id, **kwargs):  # noqa: E501
+        """print_jobs_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_partial_update(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param patched_print_job_request:
+        :type patched_print_job_request: PatchedPrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrintJob
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.print_jobs_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+
+    def print_jobs_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
+        """print_jobs_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_partial_update_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param patched_print_job_request:
+        :type patched_print_job_request: PatchedPrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'patched_print_job_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method print_jobs_partial_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_partial_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'patched_print_job_request' in local_var_params:
+            body_params = local_var_params['patched_print_job_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrintJob",
+        }
+
+        return self.api_client.call_api(
+            '/api/print-jobs/{id}/', 'PATCH',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def print_jobs_retrieve(self, id, **kwargs):  # noqa: E501
+        """print_jobs_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_retrieve(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrintJob
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.print_jobs_retrieve_with_http_info(id, **kwargs)  # noqa: E501
+
+    def print_jobs_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
+        """print_jobs_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_retrieve_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method print_jobs_retrieve" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_retrieve`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrintJob",
+        }
+
+        return self.api_client.call_api(
+            '/api/print-jobs/{id}/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def print_jobs_update(self, id, print_job_request, **kwargs):  # noqa: E501
+        """print_jobs_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_update(id, print_job_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param print_job_request: (required)
+        :type print_job_request: PrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrintJob
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.print_jobs_update_with_http_info(id, print_job_request, **kwargs)  # noqa: E501
+
+    def print_jobs_update_with_http_info(self, id, print_job_request, **kwargs):  # noqa: E501
+        """print_jobs_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.print_jobs_update_with_http_info(id, print_job_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this print job. (required)
+        :type id: int
+        :param print_job_request: (required)
+        :type print_job_request: PrintJobRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'print_job_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method print_jobs_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_update`")  # noqa: E501
+        # verify the required parameter 'print_job_request' is set
+        if self.api_client.client_side_validation and ('print_job_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['print_job_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `print_job_request` when calling `print_jobs_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'print_job_request' in local_var_params:
+            body_params = local_var_params['print_job_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrintJob",
+        }
+
+        return self.api_client.call_api(
+            '/api/print-jobs/{id}/', 'PUT',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_create(self, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_create(printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrinterProfile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_create_with_http_info(printer_profile_request, **kwargs)  # noqa: E501
+
+    def printer_profiles_create_with_http_info(self, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_create_with_http_info(printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'printer_profile_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_create" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'printer_profile_request' is set
+        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_create`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'printer_profile_request' in local_var_params:
+            body_params = local_var_params['printer_profile_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrinterProfile",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_list(self, **kwargs):  # noqa: E501
+        """printer_profiles_list  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_list(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param name: name
+        :type name: str
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param user: user
+        :type user: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PaginatedPrinterProfileList
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_list_with_http_info(**kwargs)  # noqa: E501
+
+    def printer_profiles_list_with_http_info(self, **kwargs):  # noqa: E501
+        """printer_profiles_list  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_list_with_http_info(async_req=True)
+        >>> result = thread.get()
+
+        :param limit: Number of results to return per page.
+        :type limit: int
+        :param name: name
+        :type name: str
+        :param offset: The initial index from which to return the results.
+        :type offset: int
+        :param user: user
+        :type user: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PaginatedPrinterProfileList, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'limit',
+            'name',
+            'offset',
+            'user'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_list" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
+            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
+        if 'name' in local_var_params and local_var_params['name'] is not None:  # noqa: E501
+            query_params.append(('name', local_var_params['name']))  # noqa: E501
+        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
+            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if 'user' in local_var_params and local_var_params['user'] is not None:  # noqa: E501
+            query_params.append(('user', local_var_params['user']))  # noqa: E501
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PaginatedPrinterProfileList",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_partial_update(self, id, **kwargs):  # noqa: E501
+        """printer_profiles_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_partial_update(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param patched_printer_profile_request:
+        :type patched_printer_profile_request: PatchedPrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrinterProfile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+
+    def printer_profiles_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
+        """printer_profiles_partial_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_partial_update_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param patched_printer_profile_request:
+        :type patched_printer_profile_request: PatchedPrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'patched_printer_profile_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_partial_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_partial_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'patched_printer_profile_request' in local_var_params:
+            body_params = local_var_params['patched_printer_profile_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrinterProfile",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/{id}/', 'PATCH',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_retrieve(self, id, **kwargs):  # noqa: E501
+        """printer_profiles_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_retrieve(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrinterProfile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_retrieve_with_http_info(id, **kwargs)  # noqa: E501
+
+    def printer_profiles_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
+        """printer_profiles_retrieve  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_retrieve_with_http_info(id, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_retrieve" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_retrieve`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrinterProfile",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/{id}/', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_update(self, id, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_update(id, printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrinterProfile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_update_with_http_info(id, printer_profile_request, **kwargs)  # noqa: E501
+
+    def printer_profiles_update_with_http_info(self, id, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_update  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_update_with_http_info(id, printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param id: A unique integer value identifying this printer profile. (required)
+        :type id: int
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'id',
+            'printer_profile_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_update" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'id' is set
+        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
+                                                        local_var_params['id'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_update`")  # noqa: E501
+        # verify the required parameter 'printer_profile_request' is set
+        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_update`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'id' in local_var_params:
+            path_params['id'] = local_var_params['id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'printer_profile_request' in local_var_params:
+            body_params = local_var_params['printer_profile_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            200: "PrinterProfile",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/{id}/', 'PUT',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))
+
+    def printer_profiles_update_or_create(self, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_update_or_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_update_or_create(printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: PrinterProfile
+        """
+        kwargs['_return_http_data_only'] = True
+        return self.printer_profiles_update_or_create_with_http_info(printer_profile_request, **kwargs)  # noqa: E501
+
+    def printer_profiles_update_or_create_with_http_info(self, printer_profile_request, **kwargs):  # noqa: E501
+        """printer_profiles_update_or_create  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.printer_profiles_update_or_create_with_http_info(printer_profile_request, async_req=True)
+        >>> result = thread.get()
+
+        :param printer_profile_request: (required)
+        :type printer_profile_request: PrinterProfileRequest
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _return_http_data_only: response data without head status code
+                                       and headers
+        :type _return_http_data_only: bool, optional
+        :param _preload_content: if False, the urllib3.HTTPResponse object will
+                                 be returned without reading/decoding response
+                                 data. Default is True.
+        :type _preload_content: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        local_var_params = locals()
+
+        all_params = [
+            'printer_profile_request'
+        ]
+        all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth'
+            ]
+        )
+
+        for key, val in six.iteritems(local_var_params['kwargs']):
+            if key not in all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method printer_profiles_update_or_create" % key
+                )
+            local_var_params[key] = val
+        del local_var_params['kwargs']
+        # verify the required parameter 'printer_profile_request' is set
+        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
+                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
+            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_update_or_create`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'printer_profile_request' in local_var_params:
+            body_params = local_var_params['printer_profile_request']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
+        
+        response_types_map = {
+            400: "PrinterProfile",
+            202: "PrinterProfile",
+            201: "PrinterProfile",
+        }
+
+        return self.api_client.call_api(
+            '/api/printer-profiles/update_or_create/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_types_map=response_types_map,
+            auth_settings=auth_settings,
+            async_req=local_var_params.get('async_req'),
+            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=local_var_params.get('_preload_content', True),
+            _request_timeout=local_var_params.get('_request_timeout'),
+            collection_formats=collection_formats,
+            _request_auth=local_var_params.get('_request_auth'))

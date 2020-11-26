@@ -3,6 +3,8 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**id** | **int** |  | [optional] [readonly] 
+**user** | **int** |  | [optional] [readonly] 
 **axes_e_inverted** | **bool** |  | 
 **axes_e_speed** | **int** |  | 
 **axes_x_speed** | **int** |  | 
@@ -16,6 +18,7 @@ Name | Type | Description | Notes
 **extruder_shared_nozzle** | **bool** |  | 
 **heated_bed** | **bool** |  | 
 **heated_chamber** | **bool** |  | 
+**model** | **str** |  | [optional] 
 **name** | **str** |  | 
 **volume_custom_box** | **bool** |  | 
 **volume_depth** | **float** |  | 
@@ -23,10 +26,7 @@ Name | Type | Description | Notes
 **volume_height** | **float** |  | 
 **volume_origin** | **str** |  | 
 **volume_width** | **float** |  | 
-**id** | **int** |  | [optional] 
-**user** | **int** |  | [optional] 
-**model** | **str** |  | [optional] 
-**url** | **str** |  | [optional] 
+**url** | **str** |  | [optional] [readonly] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
