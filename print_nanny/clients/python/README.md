@@ -106,6 +106,7 @@ Class | Method | HTTP request | Description
 *EventsApi* | [**predict_events_create**](docs/EventsApi.md#predict_events_create) | **POST** /api/predict-events/ | 
 *EventsApi* | [**predict_events_list**](docs/EventsApi.md#predict_events_list) | **GET** /api/predict-events/ | 
 *EventsApi* | [**predict_events_retrieve**](docs/EventsApi.md#predict_events_retrieve) | **GET** /api/predict-events/{id}/ | 
+*EventsApi* | [**tracking_events_list**](docs/EventsApi.md#tracking_events_list) | **GET** /api/tracking-events/ | 
 *RemoteControlApi* | [**gcode_files_create**](docs/RemoteControlApi.md#gcode_files_create) | **POST** /api/gcode-files/ | 
 *RemoteControlApi* | [**gcode_files_list**](docs/RemoteControlApi.md#gcode_files_list) | **GET** /api/gcode-files/ | 
 *RemoteControlApi* | [**gcode_files_partial_update**](docs/RemoteControlApi.md#gcode_files_partial_update) | **PATCH** /api/gcode-files/{id}/ | 
@@ -135,6 +136,7 @@ Class | Method | HTTP request | Description
 
  - [AuthToken](docs/AuthToken.md)
  - [AuthTokenRequest](docs/AuthTokenRequest.md)
+ - [EventTypeEnum](docs/EventTypeEnum.md)
  - [GcodeFile](docs/GcodeFile.md)
  - [GcodeFileRequest](docs/GcodeFileRequest.md)
  - [LastStatusEnum](docs/LastStatusEnum.md)

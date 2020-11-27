@@ -5,7 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **int** |  | [optional] [readonly] 
 **dt** | **datetime** |  | 
-**event_type** | **str** |  | 
+**event_type** | [**EventTypeEnum**](EventTypeEnum.md) |  | 
 **event_data** | **dict(str, object)** |  | 
 **user** | **int** |  | [optional] [readonly] 
 **plugin_version** | **str** |  | 

@@ -5,6 +5,7 @@ README.md
 docs/AuthToken.md
 docs/AuthTokenApi.md
 docs/AuthTokenRequest.md
+docs/EventTypeEnum.md
 docs/EventsApi.md
 docs/GcodeFile.md
 docs/GcodeFileRequest.md
@@ -49,6 +50,7 @@ print_nanny_client/exceptions.py
 print_nanny_client/models/__init__.py
 print_nanny_client/models/auth_token.py
 print_nanny_client/models/auth_token_request.py
+print_nanny_client/models/event_type_enum.py
 print_nanny_client/models/gcode_file.py
 print_nanny_client/models/gcode_file_request.py
 print_nanny_client/models/last_status_enum.py

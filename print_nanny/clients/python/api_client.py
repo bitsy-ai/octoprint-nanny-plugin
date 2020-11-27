@@ -496,22 +496,20 @@ class ApiClient(object):
                     continue
                 file_names = v if type(v) is list else [v]
                 for n in file_names:
-                    if isinstance(n, io.BytesIO) or isinstance(n, io.BufferedReader):
-                        f = n
+                    if type(n) is io.BytesIO:
                         filename = os.path.basename(f.name)
                         filedata = f.read()
                         mimetype = (mimetypes.guess_type(filename)[0] or
                                     'application/octet-stream')
                         params.append(
                             tuple([k, tuple([filename, filedata, mimetype])]))
-                    else:
-                        with open(n, 'rb') as f:
-                            filename = os.path.basename(f.name)
-                            filedata = f.read()
-                            mimetype = (mimetypes.guess_type(filename)[0] or
-                                        'application/octet-stream')
-                            params.append(
-                                tuple([k, tuple([filename, filedata, mimetype])]))
+                    with open(n, 'rb') as f:
+                        filename = os.path.basename(f.name)
+                        filedata = f.read()
+                        mimetype = (mimetypes.guess_type(filename)[0] or
+                                    'application/octet-stream')
+                        params.append(
+                            tuple([k, tuple([filename, filedata, mimetype])]))
 
         return params
 

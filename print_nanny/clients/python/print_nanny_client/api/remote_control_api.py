@@ -63,7 +63,7 @@ class RemoteControlApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GcodeFile
+        :rtype: PrintJob
         """
         kwargs['_return_http_data_only'] = True
         return self.gcode_files_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
@@ -103,7 +103,7 @@ class RemoteControlApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GcodeFile, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
         """
 
         local_var_params = locals()
@@ -180,7 +180,8 @@ class RemoteControlApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            200: "GcodeFile",
+            400: "PrintJob",
+            201: "PrintJob",
         }
 
         return self.api_client.call_api(
@@ -955,7 +956,7 @@ class RemoteControlApi(object):
         
         response_types_map = {
             400: "GcodeFile",
-            202: "GcodeFile",
+            200: "GcodeFile",
             201: "GcodeFile",
         }
 
@@ -1093,7 +1094,8 @@ class RemoteControlApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            200: "PrintJob",
+            201: "PrintJob",
+            400: "PrintJob",
         }
 
         return self.api_client.call_api(
@@ -1373,6 +1375,7 @@ class RemoteControlApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
+            400: "PrintJob",
             200: "PrintJob",
         }
 
@@ -1654,6 +1657,7 @@ class RemoteControlApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
+            400: "PrintJob",
             200: "PrintJob",
         }
 
@@ -1698,7 +1702,7 @@ class RemoteControlApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: PrinterProfile
+        :rtype: PrintJob
         """
         kwargs['_return_http_data_only'] = True
         return self.printer_profiles_create_with_http_info(printer_profile_request, **kwargs)  # noqa: E501
@@ -1734,7 +1738,7 @@ class RemoteControlApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(PrinterProfile, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(PrintJob, status_code(int), headers(HTTPHeaderDict))
         """
 
         local_var_params = locals()
@@ -1791,7 +1795,8 @@ class RemoteControlApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            200: "PrinterProfile",
+            400: "PrintJob",
+            201: "PrintJob",
         }
 
         return self.api_client.call_api(
@@ -2504,7 +2509,7 @@ class RemoteControlApi(object):
         
         response_types_map = {
             400: "PrinterProfile",
-            202: "PrinterProfile",
+            200: "PrinterProfile",
             201: "PrinterProfile",
         }
 

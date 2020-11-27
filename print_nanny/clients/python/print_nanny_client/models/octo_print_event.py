@@ -34,7 +34,7 @@ class OctoPrintEvent(object):
     openapi_types = {
         'id': 'int',
         'dt': 'datetime',
-        'event_type': 'str',
+        'event_type': 'EventTypeEnum',
         'event_data': 'dict(str, object)',
         'user': 'int',
         'plugin_version': 'str',
@@ -135,7 +135,7 @@ class OctoPrintEvent(object):
 
 
         :return: The event_type of this OctoPrintEvent.  # noqa: E501
-        :rtype: str
+        :rtype: EventTypeEnum
         """
         return self._event_type
 
@@ -145,13 +145,10 @@ class OctoPrintEvent(object):
 
 
         :param event_type: The event_type of this OctoPrintEvent.  # noqa: E501
-        :type event_type: str
+        :type event_type: EventTypeEnum
         """
         if self.local_vars_configuration.client_side_validation and event_type is None:  # noqa: E501
             raise ValueError("Invalid value for `event_type`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                event_type is not None and len(event_type) > 30):
-            raise ValueError("Invalid value for `event_type`, length must be less than or equal to `30`")  # noqa: E501
 
         self._event_type = event_type
 

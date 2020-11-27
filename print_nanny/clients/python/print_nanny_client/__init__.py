@@ -34,6 +34,7 @@ from print_nanny_client.exceptions import ApiException
 # import models into sdk package
 from print_nanny_client.models.auth_token import AuthToken
 from print_nanny_client.models.auth_token_request import AuthTokenRequest
+from print_nanny_client.models.event_type_enum import EventTypeEnum
 from print_nanny_client.models.gcode_file import GcodeFile
 from print_nanny_client.models.gcode_file_request import GcodeFileRequest
 from print_nanny_client.models.last_status_enum import LastStatusEnum
