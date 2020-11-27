@@ -45,6 +45,12 @@ class TestEventsApi(unittest.TestCase):
         """
         pass
 
+    def test_octoprint_events_tracking_retrieve(self):
+        """Test case for octoprint_events_tracking_retrieve
+
+        """
+        pass
+
     def test_predict_event_files_create(self):
         """Test case for predict_event_files_create
 

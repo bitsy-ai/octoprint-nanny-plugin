@@ -1,61 +1,61 @@
 import asyncio
-from datetime import datetime
-import logging
-import queue
-import glob
-import threading
-import os
-import io
-from urllib.parse import urlparse
 import base64
-import json
+import glob
 import hashlib
+import io
+import json
+import logging
+import os
+import platform
+import queue
+import re
+import threading
+from datetime import datetime
+from urllib.parse import urlparse
 
-import flask
-import octoprint.plugin
-import pytz
 
-from octoprint.events import eventManager, Events
-import octoprint.util
-from bravado.client import SwaggerClient
-from bravado.requests_client import RequestsClient
-import requests
-from PIL import Image
 import aiohttp.client_exceptions
 import bravado.exception
-
+import flask
+import octoprint.plugin
+import octoprint.util
 import print_nanny_client
-
-from print_nanny_client import ApiClient
-from print_nanny_client.api.remote_control_api import RemoteControlApi
+import pytz
+import uuid
+import requests
+from bravado.client import SwaggerClient
+from bravado.requests_client import RequestsClient
+from octoprint.events import Events, eventManager
+from PIL import Image
+from print_nanny_client import ApiClient as AsyncApiClient
 from print_nanny_client.api.events_api import EventsApi
+from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.users_api import UsersApi
-
-
-from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.print_job_request import PrintJobRequest
-from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
+from print_nanny_client.models.octo_print_event_request import \
+	OctoPrintEventRequest
 from print_nanny_client.models.predict_event_request import PredictEventRequest
+from print_nanny_client.models.print_job_request import PrintJobRequest
+from print_nanny_client.models.printer_profile_request import \
+	PrinterProfileRequest
 
-
+from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
 from .predictor import ThreadLocalPredictor
-from .errors import WebcamSettingsHTTPException, SnapshotHTTPException
 from .utils.encoder import NumpyEncoder
 
 logger = logging.getLogger('octoprint.plugins.print_nanny')
 
 
 CLIENT_EXCEPTIONS = (print_nanny_client.exceptions.ApiException, aiohttp.client_exceptions.ClientError)
-class AsyncApiClient(ApiClient):
+# class AsyncApiClient(ApiClient):
 
-    async def __aenter__(self):
-        return self
+#     async def __aenter__(self):
+#         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.close()
+#     async def __aexit__(self, exc_type, exc_value, traceback):
+#         await self.close()
 
-    async def close(self):
-        await self.rest_client.close()
+#     async def close(self):
+#         await self.rest_client.close()
 
 class BitsyNannyPlugin(
         octoprint.plugin.SettingsPlugin,
@@ -92,6 +92,8 @@ class BitsyNannyPlugin(
         self._active = False
         self._predict_queue = queue.Queue()
 
+        self._tracking_events = None
+
         # @todo compare single-threaded perf against multiprocessing.Pool, Queue, Manager
         self._predictor = ThreadLocalPredictor()
         self._predict_thread = threading.Thread(target=self._predict_worker)
@@ -101,21 +103,19 @@ class BitsyNannyPlugin(
             self.PREDICT_START: self._handle_predict,
             self.PREDICT_DONE: self._handle_predict_upload,
             Events.PRINT_STARTED: self._handle_print_start,
-            Events.PRINT_FAILED: self._handle_print_job_status,
-            Events.PRINT_DONE: self._handle_print_job_status,
-            Events.PRINT_CANCELLING: self._handle_print_job_status,
-            Events.PRINT_CANCELLED: self._handle_print_job_status,
-            Events.PRINT_PAUSED: self._handle_print_job_status,
+            Events.PRINT_FAILED: self._stop,
+            Events.PRINT_DONE: self._stop,
+            Events.PRINT_CANCELLING: self._stop,
+            Events.PRINT_CANCELLED: self._stop,
+            Events.PRINT_PAUSED: self._pause,
+            Events.PRINT_RESUMED: self._resume,
             Events.UPLOAD: self._handle_file_upload,
-
-        # self._event_bus.subscribe(Events.MOVIE_DONE, self.on_movie_done)
-        # self._event_bus.subscribe(Events.PLUGIN_OCTOLAPSE_MOVIE_DONE, self.on_movie_done)
         }
 
         self._api_objects = {}
         self._api_thread = threading.Thread(target=self._start_api_loop)
         self._api_thread.daemon = True
-        self._api_thread.start() 
+        self._api_thread.start()
 
 
     def _start_api_loop(self):
@@ -131,7 +131,10 @@ class BitsyNannyPlugin(
             'temperature':  self._printer.get_current_temperatures(),
             'dt': datetime.now(pytz.timezone('America/Los_Angeles')),
             'plugin_version': self._plugin_version,
-            'octoprint_version': octoprint.util.version.get_octoprint_version_string()
+            'octoprint_version': octoprint.util.version.get_octoprint_version_string(),
+            'platform': platform.platform(),
+            'mac_address': ':'.join(re.findall('..', '%012x'.format(uuid.getnode()))),
+            'api_objects': self._api_objects
         }
 
     def _start(self):
@@ -162,12 +165,12 @@ class BitsyNannyPlugin(
             await asyncio.sleep(30)
             return await self._drain(tries=tries-1)
 
-
     def _stop(self):
         self._active = False
 
     def _reset(self):
         self._api_objects = {}
+    
 
     def _handle_predict(self, url=None, **kwargs):
         if url is None:
@@ -237,42 +240,6 @@ class BitsyNannyPlugin(
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_file_upload API call failed {e}')
 
-    
-
-    async def _handle_print_job_status(self, event_type, event_data):
-
-        print_job = self._api_objects.get('print_job')
-        logger.info(f'_handle_print_job_status called for {event_type} in job {print_job}')
-        status = event_type.replace('Print', '').upper()
-
-        async with AsyncApiClient(self._api_config) as api_client:
-            # printer profile
-
-            if print_job is not None:
-                status_enum = print_nanny_client.model.last_status_enum.LastStatusEnum(status)
-                api_instance = RemoteControlApi(api_client=api_client)
-                try:
-                    request = print_nanny_client.model.patched_print_job_request.PatchedPrintJobRequest(
-                        last_status=status_enum
-                    )
-                    print_job = await api_instance.print_jobs_partial_update(
-                        print_job.id,
-                        patched_print_job_request=request
-                    )
-                    logger.info(f'Updated print_job.status {print_job.last_status}')
-                    self._api_objects['print_job'] = print_job
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_print_job_status API called failed {e}')
-        
-        if status == 'CANCELLING' or status == 'CANCELLED':
-            return
-        elif status == 'FAILED' or status == 'DONE' or status == 'CANCELLED':
-            self._stop()
-        elif status == 'PAUSED':
-            self._pause()
-        elif status == 'RESUMED':
-            self._resume()
-
     async def _handle_print_start(self, event_type, event_data):
 
         self._start()
@@ -340,7 +307,7 @@ class BitsyNannyPlugin(
 
             # print job
             api_instance = RemoteControlApi(api_client=api_client)
-            request = print_nanny_client.model.print_job_request.PrintJobRequest(                
+            request = print_nanny_client.models.print_job_request.PrintJobRequest(                
                 gcode_file=gcode_file_id,
                 gcode_file_hash=file_hash,
                 dt=event_data['dt'],
@@ -350,7 +317,7 @@ class BitsyNannyPlugin(
             try:
                 print_job = await api_instance.print_jobs_create(request)
                 self._api_objects['print_job'] = print_job
-                logger.info(f'Created print_job {print_job.id}')
+                logger.info(f'Created print_job {print_job}')
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_print_start API call failed {e}')
 
@@ -380,43 +347,49 @@ class BitsyNannyPlugin(
                 dt=event_data.get('dt'),
                 plugin_version=event_data.get('plugin_version'),
                 octoprint_version=event_data.get('octoprint_version'),
-                event_data=json.loads(json.dumps(event_data, cls=NumpyEncoder)),
+                event_data=json.dumps(event_data, cls=NumpyEncoder),
                 files = predict_event_files.id,
-                predict_data=json.loads(json.dumps(prediction, cls=NumpyEncoder)),
+                predict_data=json.dumps(prediction, cls=NumpyEncoder),
                 print_job=self._api_objects.get('print_job').id
             )
             try:
-                api_instance = PredictEventsApi(api_client=api_client)
+                api_instance = EventsApi(api_client=api_client)
 
                 predict_event = await api_instance.predict_events_create(request)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_predict_upload API call failed failed {e}')
 
+    async def _get_tracking_events(self):
+        if not self._tracking_events:
+            async with AsyncApiClient(self._api_config) as api_client:
+                api_client.client_side_validation = False
+                self._tracking_events = await EventsApi(api_client).octoprint_events_tracking_retrieve()
+                logging.info(f'Tracking octoprint events {self._tracking_events}')
+        return self._tracking_events
+
     async def _handle_octoprint_event(self, event_type, event_data, **kwargs):
-        # predict events serialize differently
         logger.debug(f'_handle_octoprint_event processing {event_type}')
+        # handled by _handle_predict_event
+
         if event_type == self.PREDICT_DONE:
-
+            return            
+        elif event_type not in await self._get_tracking_events():
             return
-        if event_data is not None:
-            event_data.update(self._get_metadata())
-        else:
-            event_data = self._get_metadata()
 
-        if self._api_objects.get('print_job') is not None:
-            print_job_id = self._api_objects.get('print_job').id
+        metadata = {'metadata': self._get_metadata()}
+        if event_data is not None:
+            event_data.update(metadata)
         else:
-            print_job_id = None
-            
+            event_data = metadata
+
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             request = OctoPrintEventRequest(
-                dt=event_data['dt'],
+                dt=event_data['metadata']['dt'],
                 event_type=event_type,
                 event_data=event_data,
                 plugin_version=self._plugin_version,
-                octoprint_version=event_data['octoprint_version'],
-                print_job=print_job_id
+                octoprint_version=event_data['metadata']['octoprint_version'],
             )
             try:
                 event = await api_instance.octoprint_events_create(request)
@@ -495,7 +468,6 @@ class BitsyNannyPlugin(
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
-        self._drain()
         self._stop()
         return flask.json.jsonify({'ok': 1})
 

@@ -100,13 +100,13 @@ Class | Method | HTTP request | Description
 *EventsApi* | [**octoprint_events_create**](docs/EventsApi.md#octoprint_events_create) | **POST** /api/octoprint-events/ | 
 *EventsApi* | [**octoprint_events_list**](docs/EventsApi.md#octoprint_events_list) | **GET** /api/octoprint-events/ | 
 *EventsApi* | [**octoprint_events_retrieve**](docs/EventsApi.md#octoprint_events_retrieve) | **GET** /api/octoprint-events/{id}/ | 
+*EventsApi* | [**octoprint_events_tracking_retrieve**](docs/EventsApi.md#octoprint_events_tracking_retrieve) | **GET** /api/octoprint-events/tracking/ | 
 *EventsApi* | [**predict_event_files_create**](docs/EventsApi.md#predict_event_files_create) | **POST** /api/predict-event-files/ | 
 *EventsApi* | [**predict_event_files_list**](docs/EventsApi.md#predict_event_files_list) | **GET** /api/predict-event-files/ | 
 *EventsApi* | [**predict_event_files_retrieve**](docs/EventsApi.md#predict_event_files_retrieve) | **GET** /api/predict-event-files/{id}/ | 
 *EventsApi* | [**predict_events_create**](docs/EventsApi.md#predict_events_create) | **POST** /api/predict-events/ | 
 *EventsApi* | [**predict_events_list**](docs/EventsApi.md#predict_events_list) | **GET** /api/predict-events/ | 
 *EventsApi* | [**predict_events_retrieve**](docs/EventsApi.md#predict_events_retrieve) | **GET** /api/predict-events/{id}/ | 
-*EventsApi* | [**tracking_events_list**](docs/EventsApi.md#tracking_events_list) | **GET** /api/tracking-events/ | 
 *RemoteControlApi* | [**gcode_files_create**](docs/RemoteControlApi.md#gcode_files_create) | **POST** /api/gcode-files/ | 
 *RemoteControlApi* | [**gcode_files_list**](docs/RemoteControlApi.md#gcode_files_list) | **GET** /api/gcode-files/ | 
 *RemoteControlApi* | [**gcode_files_partial_update**](docs/RemoteControlApi.md#gcode_files_partial_update) | **PATCH** /api/gcode-files/{id}/ | 

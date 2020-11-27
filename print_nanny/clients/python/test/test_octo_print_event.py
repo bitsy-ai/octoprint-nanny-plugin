@@ -37,7 +37,7 @@ class TestOctoPrintEvent(unittest.TestCase):
             return OctoPrintEvent(
                 id = 56, 
                 dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                event_type = '', 
+                event_type = 'ClientAuthed', 
                 event_data = {
                     'key' : null
                     }, 
@@ -50,7 +50,7 @@ class TestOctoPrintEvent(unittest.TestCase):
         else :
             return OctoPrintEvent(
                 dt = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
-                event_type = '',
+                event_type = 'ClientAuthed',
                 event_data = {
                     'key' : null
                     },
