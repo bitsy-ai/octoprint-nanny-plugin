@@ -35,16 +35,16 @@ plugin_license = "MIT"
 
 # Any additional requirements besides OctoPrint should be listed here
 
+import os
 arch = os.uname().machine
 
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
 if arch == 'armv7l':
 	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/2.4.0-rc1/tensorflow-2.4.0rc1-cp37-none-linux_armv7l.whl'
 	
-elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-au/tensorflow-arm-bin/releases/download/2.4.0-rc1/tensorflow-2.4.0rc1-cp37-none-linux_aarch64.whl'
-	
+elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-au/tensorflow-arm-bin/releases/download/2.4.0-rc1/tensorflow-2.4.0rc1-cp37-none-linux_aarch64.whl'	
 elif arch == 'x86_64':
-	tensorflow = "tensorflow==2.4.0rc1",
+	tensorflow = "tensorflow==2.4.0rc1"
 else:
 	raise Exception(f'OctoPrint Nanny does not support {arch} architechture. Please open a Github issue.')
 

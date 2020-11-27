@@ -2,3 +2,10 @@
 library: asyncio
 packageName: print_nanny_client
 packageVersion: '0.1.0'
+templateDir: /local/clients/templates
+
+files:
+  api_client.mustache:
+    templateType: SupportingFiles
+    destinationFilename: print_nanny_client/api_client.py
+
