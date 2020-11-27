@@ -158,6 +158,7 @@ class BitsyNannyPlugin(
     def _stop(self, *args, **kwargs):
         self._active = False
 
+
     def _reset(self, *args, **kwargs):
         self._api_objects = {}
     
@@ -223,7 +224,6 @@ class BitsyNannyPlugin(
                     name=event_data['name'],
                     file_hash=file_hash,
                     file=gcode_f,
-                    _check_return_type=False
                 )
                 logger.info(f'Upserted gcode_file {gcode_file}')
                 return gcode_file
@@ -273,28 +273,29 @@ class BitsyNannyPlugin(
             # gcode file
             gcode_file_path = self._file_manager.path_on_disk(octoprint.filemanager.FileDestinations.LOCAL, event_data['path'])
             logging.info(f'Hashing contents of gcode file {gcode_file_path}')
-            gcode_f = open(gcode_file_path, 'rb')
-            file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-            gcode_f.seek(0)
-            logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
-
-
-
-            api_instance = RemoteControlApi(api_client=api_client)
             try:
-                gcode_file = await api_instance.gcode_files_update_or_create(
-                    name=event_data['name'],
-                    file_hash=file_hash,
-                    file=gcode_f
-                )
-                self._api_objects['gcode_file'] = gcode_file
-                logger.info(f'Synced gcode_file {gcode_file.id}')
-                gcode_file_id = gcode_file.id
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_print_start API call failed {e}')
+                gcode_f = open(gcode_file_path, 'rb')
+                file_hash = hashlib.md5(gcode_f.read()).hexdigest()
+                gcode_f.seek(0)
+                logging.info(f'Retrieving GcodeFile object with file_hash={gcode_file_path}')
+
+                api_instance = RemoteControlApi(api_client=api_client)
+                try:
+                    gcode_file = await api_instance.gcode_files_update_or_create(
+                        name=event_data['name'],
+                        file_hash=file_hash,
+                        file=gcode_f
+                    )
+                    self._api_objects['gcode_file'] = gcode_file
+                    logger.info(f'Synced gcode_file {gcode_file.id}')
+                    gcode_file_id = gcode_file.id
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f'_handle_print_start API call failed {e}')
+                    gcode_file_id = None
+            except FileNotFoundError as e:
+                logging.warning(f'Gcode already transferred to SD card. No gcode file will be associated with this print.')
                 gcode_file_id = None
-
-
+                file_hash = None
             # print job
             api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.models.print_job_request.PrintJobRequest(                
@@ -400,27 +401,20 @@ class BitsyNannyPlugin(
                 continue
             handler_fn = self._queue_event_handlers.get(event['event_type'])
 
-            if handler_fn:
-                logger.debug(f'Calling handler_fn {handler_fn} in _upload_worker for {event_type}')
-                
-                if asyncio.iscoroutinefunction(handler_fn):
-                    try:
+            try:
+                if handler_fn:
+                    logger.debug(f'Calling handler_fn {handler_fn} in _upload_worker for {event_type}')
+
+                    if asyncio.iscoroutinefunction(handler_fn):
                         await handler_fn(**event)
-                    except CLIENT_EXCEPTIONS as e:
-                        logger.error(f'_handle_fn {handler_fn} failed with error {e}')
-                    logger.debug(f'Calling _handle_octoprint_event {handler_fn} in _upload_worker for {event_type}')
+                    else:
+                        handler_fn(**event)
+                    await self._handle_octoprint_event(**event)
+    
                 else:
-                    handler_fn(**event)
-                try:
                     await self._handle_octoprint_event(**event)
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
-            else:
-                try:
-                    await self._handle_octoprint_event(**event)
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
-                    
+            except Exception as e:
+                logger.error(e)     
             self._upload_queue.task_done()
 
     def _predict_worker(self):
@@ -436,8 +430,8 @@ class BitsyNannyPlugin(
             handler_fn = self._queue_event_handlers[msg['event_type']]
             try:
                 handler_fn(**msg)
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_fn {handler_fn} failed with error {e}')
+            except Exception as e:
+                logger.error(e)
             self._predict_queue.task_done()
 
     ##
