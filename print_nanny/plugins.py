@@ -127,13 +127,13 @@ class BitsyNannyPlugin(
             'api_objects': { k:None if v is None else v.id for k,v in self._api_objects.items() }
         }
 
-    def _start(self):
+    def _start(self, *args, **kwargs):
         self._reset()
         self._active = True
         self._queue_predict()
 
     
-    def _queue_predict(self):
+    def _queue_predict(self, *args, **kwargs):
         self._predict_queue.put({
             'event_type': self.PREDICT_START, 
             'url': self._settings.global_get(['webcam', 'snapshot'])
@@ -143,22 +143,22 @@ class BitsyNannyPlugin(
         self._event_loop.call_soon_threadsafe(self._upload_queue.put_nowait, data)
 
     
-    def _resume(self):
+    def _resume(self, *args, **kwargs):
         self._active = True
     
-    def _pause(self):
+    def _pause(self, *args, **kwargs):
         self._active = False
 
-    async def _drain(self, tries=3):
+    async def _drain(self, tries=3, *args, **kwargs):
         if self._predict_queue.qsize() > 0 or self._upload_queue.qsize() > 0 and tries > 0:
             logger.warning(f'Waiting 30s for predict_queue: {self._predict_queue.qsize()} upload_queue {self._upload_queue.qsize()} to drain from queue')
             await asyncio.sleep(30)
             return await self._drain(tries=tries-1)
 
-    def _stop(self):
+    def _stop(self, *args, **kwargs):
         self._active = False
 
-    def _reset(self):
+    def _reset(self, *args, **kwargs):
         self._api_objects = {}
     
 
