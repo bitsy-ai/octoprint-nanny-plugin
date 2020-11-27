@@ -225,7 +225,7 @@ class BitsyNannyPlugin(
                     file=gcode_f,
                     _check_return_type=False
                 )
-                logging.info(f'Upserted gcode_file {gcode_file}')
+                logger.info(f'Upserted gcode_file {gcode_file}')
                 return gcode_file
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_file_upload API call failed {e}')
@@ -403,12 +403,14 @@ class BitsyNannyPlugin(
             if handler_fn:
                 logger.debug(f'Calling handler_fn {handler_fn} in _upload_worker for {event_type}')
                 
-                try:
-                    await handler_fn(**event)
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_fn {handler_fn} failed with error {e}')
-                logger.debug(f'Calling _handle_octoprint_event {handler_fn} in _upload_worker for {event_type}')
-
+                if asyncio.iscoroutinefunction(handler_fn):
+                    try:
+                        await handler_fn(**event)
+                    except CLIENT_EXCEPTIONS as e:
+                        logger.error(f'_handle_fn {handler_fn} failed with error {e}')
+                    logger.debug(f'Calling _handle_octoprint_event {handler_fn} in _upload_worker for {event_type}')
+                else:
+                    handler_fn(**event)
                 try:
                     await self._handle_octoprint_event(**event)
                 except CLIENT_EXCEPTIONS as e:
