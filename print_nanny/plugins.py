@@ -46,16 +46,6 @@ logger = logging.getLogger('octoprint.plugins.print_nanny')
 
 
 CLIENT_EXCEPTIONS = (print_nanny_client.exceptions.ApiException, aiohttp.client_exceptions.ClientError)
-# class AsyncApiClient(ApiClient):
-
-#     async def __aenter__(self):
-#         return self
-
-#     async def __aexit__(self, exc_type, exc_value, traceback):
-#         await self.close()
-
-#     async def close(self):
-#         await self.rest_client.close()
 
 class BitsyNannyPlugin(
         octoprint.plugin.SettingsPlugin,
@@ -134,7 +124,7 @@ class BitsyNannyPlugin(
             'octoprint_version': octoprint.util.version.get_octoprint_version_string(),
             'platform': platform.platform(),
             'mac_address': ':'.join(re.findall('..', '%012x'.format(uuid.getnode()))),
-            'api_objects': self._api_objects
+            'api_objects': { k:None if v is None else v.id for k,v in self._api_objects.items() }
         }
 
     def _start(self):
@@ -355,7 +345,7 @@ class BitsyNannyPlugin(
             try:
                 api_instance = EventsApi(api_client=api_client)
 
-                predict_event = await api_instance.predict_events_create(request)
+                await api_instance.predict_events_create(request)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f'_handle_predict_upload API call failed failed {e}')
 

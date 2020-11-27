@@ -845,7 +845,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **predict_events_create**
-> PredictEvent predict_events_create(predict_event_request)
+> int predict_events_create(predict_event_request)
 
 
 
@@ -943,7 +943,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PredictEvent**](PredictEvent.md)
+**int**
 
 ### Authorization
 

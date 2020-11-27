@@ -1020,7 +1020,7 @@ class EventsApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: PredictEvent
+        :rtype: int
         """
         kwargs['_return_http_data_only'] = True
         return self.predict_events_create_with_http_info(predict_event_request, **kwargs)  # noqa: E501
@@ -1056,7 +1056,7 @@ class EventsApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(PredictEvent, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(int, status_code(int), headers(HTTPHeaderDict))
         """
 
         local_var_params = locals()
@@ -1113,7 +1113,7 @@ class EventsApi(object):
         auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
         
         response_types_map = {
-            201: "PredictEvent",
+            201: "int",
             400: "PredictEvent",
         }
 
