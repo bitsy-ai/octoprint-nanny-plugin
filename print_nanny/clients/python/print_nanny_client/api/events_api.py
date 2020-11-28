@@ -17,10 +17,7 @@ import re  # noqa: F401
 import six
 
 from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
-)
+from print_nanny_client.exceptions import ApiTypeError, ApiValueError  # noqa: F401
 
 
 class EventsApi(object):
@@ -61,10 +58,14 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: OctoPrintEvent
         """
-        kwargs['_return_http_data_only'] = True
-        return self.octoprint_events_create_with_http_info(octo_print_event_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.octoprint_events_create_with_http_info(
+            octo_print_event_request, **kwargs
+        )  # noqa: E501
 
-    def octoprint_events_create_with_http_info(self, octo_print_event_request, **kwargs):  # noqa: E501
+    def octoprint_events_create_with_http_info(
+        self, octo_print_event_request, **kwargs
+    ):  # noqa: E501
         """octoprint_events_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -100,31 +101,33 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'octo_print_event_request'
-        ]
+        all_params = ["octo_print_event_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method octoprint_events_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'octo_print_event_request' is set
-        if self.api_client.client_side_validation and ('octo_print_event_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['octo_print_event_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `octo_print_event_request` when calling `octoprint_events_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "octo_print_event_request" not in local_var_params
+            or local_var_params["octo_print_event_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `octo_print_event_request` when calling `octoprint_events_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
@@ -138,26 +141,35 @@ class EventsApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'octo_print_event_request' in local_var_params:
-            body_params = local_var_params['octo_print_event_request']
+        if "octo_print_event_request" in local_var_params:
+            body_params = local_var_params["octo_print_event_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             201: "OctoPrintEvent",
             400: "OctoPrintEvent",
         }
 
         return self.api_client.call_api(
-            '/api/octoprint-events/', 'POST',
+            "/api/octoprint-events/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -166,12 +178,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def octoprint_events_list(self, **kwargs):  # noqa: E501
         """octoprint_events_list  # noqa: E501
@@ -201,7 +216,7 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PaginatedOctoPrintEventList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.octoprint_events_list_with_http_info(**kwargs)  # noqa: E501
 
     def octoprint_events_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -242,38 +257,39 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'offset'
-        ]
+        all_params = ["limit", "offset"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method octoprint_events_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
 
         header_params = {}
 
@@ -282,18 +298,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedOctoPrintEventList",
         }
 
         return self.api_client.call_api(
-            '/api/octoprint-events/', 'GET',
+            "/api/octoprint-events/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -302,12 +320,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def octoprint_events_retrieve(self, id, **kwargs):  # noqa: E501
         """octoprint_events_retrieve  # noqa: E501
@@ -335,7 +356,7 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: OctoPrintEvent
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.octoprint_events_retrieve_with_http_info(id, **kwargs)  # noqa: E501
 
     def octoprint_events_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -374,37 +395,38 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method octoprint_events_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `octoprint_events_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `octoprint_events_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -415,18 +437,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "OctoPrintEvent",
         }
 
         return self.api_client.call_api(
-            '/api/octoprint-events/{id}/', 'GET',
+            "/api/octoprint-events/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -435,12 +459,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def octoprint_events_tracking_retrieve(self, **kwargs):  # noqa: E501
         """octoprint_events_tracking_retrieve  # noqa: E501
@@ -466,8 +493,10 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: str
         """
-        kwargs['_return_http_data_only'] = True
-        return self.octoprint_events_tracking_retrieve_with_http_info(**kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.octoprint_events_tracking_retrieve_with_http_info(
+            **kwargs
+        )  # noqa: E501
 
     def octoprint_events_tracking_retrieve_with_http_info(self, **kwargs):  # noqa: E501
         """octoprint_events_tracking_retrieve  # noqa: E501
@@ -503,26 +532,25 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-        ]
+        all_params = []
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method octoprint_events_tracking_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
@@ -537,18 +565,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "str",
         }
 
         return self.api_client.call_api(
-            '/api/octoprint-events/tracking/', 'GET',
+            "/api/octoprint-events/tracking/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -557,14 +587,19 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
-    def predict_event_files_create(self, annotated_image, hash, original_image, **kwargs):  # noqa: E501
+    def predict_event_files_create(
+        self, annotated_image, hash, original_image, **kwargs
+    ):  # noqa: E501
         """predict_event_files_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -594,10 +629,14 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PredictEventFile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.predict_event_files_create_with_http_info(annotated_image, hash, original_image, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.predict_event_files_create_with_http_info(
+            annotated_image, hash, original_image, **kwargs
+        )  # noqa: E501
 
-    def predict_event_files_create_with_http_info(self, annotated_image, hash, original_image, **kwargs):  # noqa: E501
+    def predict_event_files_create_with_http_info(
+        self, annotated_image, hash, original_image, **kwargs
+    ):  # noqa: E501
         """predict_event_files_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -637,45 +676,57 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'annotated_image',
-            'hash',
-            'original_image'
-        ]
+        all_params = ["annotated_image", "hash", "original_image"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_event_files_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'annotated_image' is set
-        if self.api_client.client_side_validation and ('annotated_image' not in local_var_params or  # noqa: E501
-                                                        local_var_params['annotated_image'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `annotated_image` when calling `predict_event_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "annotated_image" not in local_var_params
+            or local_var_params["annotated_image"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `annotated_image` when calling `predict_event_files_create`"
+            )  # noqa: E501
         # verify the required parameter 'hash' is set
-        if self.api_client.client_side_validation and ('hash' not in local_var_params or  # noqa: E501
-                                                        local_var_params['hash'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `hash` when calling `predict_event_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "hash" not in local_var_params
+            or local_var_params["hash"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `hash` when calling `predict_event_files_create`"
+            )  # noqa: E501
         # verify the required parameter 'original_image' is set
-        if self.api_client.client_side_validation and ('original_image' not in local_var_params or  # noqa: E501
-                                                        local_var_params['original_image'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `original_image` when calling `predict_event_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "original_image" not in local_var_params
+            or local_var_params["original_image"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `original_image` when calling `predict_event_files_create`"
+            )  # noqa: E501
 
-        if self.api_client.client_side_validation and ('hash' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['hash']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `hash` when calling `predict_event_files_create`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "hash" in local_var_params
+            and len(local_var_params["hash"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `hash` when calling `predict_event_files_create`, length must be less than or equal to `255`"
+            )  # noqa: E501
         collection_formats = {}
 
         path_params = {}
@@ -686,32 +737,41 @@ class EventsApi(object):
 
         form_params = []
         local_var_files = {}
-        if 'annotated_image' in local_var_params:
-            local_var_files['annotated_image'] = local_var_params['annotated_image']  # noqa: E501
-        if 'hash' in local_var_params:
-            form_params.append(('hash', local_var_params['hash']))  # noqa: E501
-        if 'original_image' in local_var_params:
-            local_var_files['original_image'] = local_var_params['original_image']  # noqa: E501
+        if "annotated_image" in local_var_params:
+            local_var_files["annotated_image"] = local_var_params[
+                "annotated_image"
+            ]  # noqa: E501
+        if "hash" in local_var_params:
+            form_params.append(("hash", local_var_params["hash"]))  # noqa: E501
+        if "original_image" in local_var_params:
+            local_var_files["original_image"] = local_var_params[
+                "original_image"
+            ]  # noqa: E501
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            ["multipart/form-data", "application/x-www-form-urlencoded"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             201: "PredictEventFile",
             400: "PredictEventFile",
         }
 
         return self.api_client.call_api(
-            '/api/predict-event-files/', 'POST',
+            "/api/predict-event-files/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -720,12 +780,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def predict_event_files_list(self, **kwargs):  # noqa: E501
         """predict_event_files_list  # noqa: E501
@@ -755,7 +818,7 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PaginatedPredictEventFileList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.predict_event_files_list_with_http_info(**kwargs)  # noqa: E501
 
     def predict_event_files_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -796,38 +859,39 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'offset'
-        ]
+        all_params = ["limit", "offset"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_event_files_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
 
         header_params = {}
 
@@ -836,18 +900,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedPredictEventFileList",
         }
 
         return self.api_client.call_api(
-            '/api/predict-event-files/', 'GET',
+            "/api/predict-event-files/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -856,12 +922,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def predict_event_files_retrieve(self, id, **kwargs):  # noqa: E501
         """predict_event_files_retrieve  # noqa: E501
@@ -889,8 +958,10 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PredictEventFile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.predict_event_files_retrieve_with_http_info(id, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.predict_event_files_retrieve_with_http_info(
+            id, **kwargs
+        )  # noqa: E501
 
     def predict_event_files_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
         """predict_event_files_retrieve  # noqa: E501
@@ -928,37 +999,38 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_event_files_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `predict_event_files_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `predict_event_files_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -969,18 +1041,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PredictEventFile",
         }
 
         return self.api_client.call_api(
-            '/api/predict-event-files/{id}/', 'GET',
+            "/api/predict-event-files/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -989,12 +1063,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def predict_events_create(self, predict_event_request, **kwargs):  # noqa: E501
         """predict_events_create  # noqa: E501
@@ -1022,10 +1099,14 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: int
         """
-        kwargs['_return_http_data_only'] = True
-        return self.predict_events_create_with_http_info(predict_event_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.predict_events_create_with_http_info(
+            predict_event_request, **kwargs
+        )  # noqa: E501
 
-    def predict_events_create_with_http_info(self, predict_event_request, **kwargs):  # noqa: E501
+    def predict_events_create_with_http_info(
+        self, predict_event_request, **kwargs
+    ):  # noqa: E501
         """predict_events_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -1061,31 +1142,33 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'predict_event_request'
-        ]
+        all_params = ["predict_event_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_events_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'predict_event_request' is set
-        if self.api_client.client_side_validation and ('predict_event_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['predict_event_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `predict_event_request` when calling `predict_events_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "predict_event_request" not in local_var_params
+            or local_var_params["predict_event_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `predict_event_request` when calling `predict_events_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
@@ -1099,26 +1182,35 @@ class EventsApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'predict_event_request' in local_var_params:
-            body_params = local_var_params['predict_event_request']
+        if "predict_event_request" in local_var_params:
+            body_params = local_var_params["predict_event_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             201: "int",
             400: "PredictEvent",
         }
 
         return self.api_client.call_api(
-            '/api/predict-events/', 'POST',
+            "/api/predict-events/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -1127,12 +1219,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def predict_events_list(self, **kwargs):  # noqa: E501
         """predict_events_list  # noqa: E501
@@ -1162,7 +1257,7 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PaginatedPredictEventList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.predict_events_list_with_http_info(**kwargs)  # noqa: E501
 
     def predict_events_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -1203,38 +1298,39 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'offset'
-        ]
+        all_params = ["limit", "offset"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_events_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
 
         header_params = {}
 
@@ -1243,18 +1339,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedPredictEventList",
         }
 
         return self.api_client.call_api(
-            '/api/predict-events/', 'GET',
+            "/api/predict-events/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -1263,12 +1361,15 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def predict_events_retrieve(self, id, **kwargs):  # noqa: E501
         """predict_events_retrieve  # noqa: E501
@@ -1296,7 +1397,7 @@ class EventsApi(object):
                  returns the request thread.
         :rtype: PredictEvent
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.predict_events_retrieve_with_http_info(id, **kwargs)  # noqa: E501
 
     def predict_events_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -1335,37 +1436,38 @@ class EventsApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method predict_events_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `predict_events_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `predict_events_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -1376,18 +1478,20 @@ class EventsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PredictEvent",
         }
 
         return self.api_client.call_api(
-            '/api/predict-events/{id}/', 'GET',
+            "/api/predict-events/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -1396,9 +1500,12 @@ class EventsApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )

@@ -22,113 +22,81 @@ class TestRemoteControlApi(unittest.TestCase):
     """RemoteControlApi unit test stubs"""
 
     def setUp(self):
-        self.api = print_nanny_client.api.remote_control_api.RemoteControlApi()  # noqa: E501
+        self.api = (
+            print_nanny_client.api.remote_control_api.RemoteControlApi()
+        )  # noqa: E501
 
     def tearDown(self):
         pass
 
     def test_gcode_files_create(self):
-        """Test case for gcode_files_create
-
-        """
+        """Test case for gcode_files_create"""
         pass
 
     def test_gcode_files_list(self):
-        """Test case for gcode_files_list
-
-        """
+        """Test case for gcode_files_list"""
         pass
 
     def test_gcode_files_partial_update(self):
-        """Test case for gcode_files_partial_update
-
-        """
+        """Test case for gcode_files_partial_update"""
         pass
 
     def test_gcode_files_retrieve(self):
-        """Test case for gcode_files_retrieve
-
-        """
+        """Test case for gcode_files_retrieve"""
         pass
 
     def test_gcode_files_update(self):
-        """Test case for gcode_files_update
-
-        """
+        """Test case for gcode_files_update"""
         pass
 
     def test_gcode_files_update_or_create(self):
-        """Test case for gcode_files_update_or_create
-
-        """
+        """Test case for gcode_files_update_or_create"""
         pass
 
     def test_print_jobs_create(self):
-        """Test case for print_jobs_create
-
-        """
+        """Test case for print_jobs_create"""
         pass
 
     def test_print_jobs_list(self):
-        """Test case for print_jobs_list
-
-        """
+        """Test case for print_jobs_list"""
         pass
 
     def test_print_jobs_partial_update(self):
-        """Test case for print_jobs_partial_update
-
-        """
+        """Test case for print_jobs_partial_update"""
         pass
 
     def test_print_jobs_retrieve(self):
-        """Test case for print_jobs_retrieve
-
-        """
+        """Test case for print_jobs_retrieve"""
         pass
 
     def test_print_jobs_update(self):
-        """Test case for print_jobs_update
-
-        """
+        """Test case for print_jobs_update"""
         pass
 
     def test_printer_profiles_create(self):
-        """Test case for printer_profiles_create
-
-        """
+        """Test case for printer_profiles_create"""
         pass
 
     def test_printer_profiles_list(self):
-        """Test case for printer_profiles_list
-
-        """
+        """Test case for printer_profiles_list"""
         pass
 
     def test_printer_profiles_partial_update(self):
-        """Test case for printer_profiles_partial_update
-
-        """
+        """Test case for printer_profiles_partial_update"""
         pass
 
     def test_printer_profiles_retrieve(self):
-        """Test case for printer_profiles_retrieve
-
-        """
+        """Test case for printer_profiles_retrieve"""
         pass
 
     def test_printer_profiles_update(self):
-        """Test case for printer_profiles_update
-
-        """
+        """Test case for printer_profiles_update"""
         pass
 
     def test_printer_profiles_update_or_create(self):
-        """Test case for printer_profiles_update_or_create
-
-        """
+        """Test case for printer_profiles_update_or_create"""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

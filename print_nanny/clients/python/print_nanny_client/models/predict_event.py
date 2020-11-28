@@ -32,32 +32,45 @@ class PredictEvent(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'id': 'int',
-        'dt': 'datetime',
-        'event_data': 'dict(str, object)',
-        'predict_data': 'dict(str, object)',
-        'user': 'int',
-        'files': 'int',
-        'print_job': 'int',
-        'plugin_version': 'str',
-        'octoprint_version': 'str',
-        'url': 'str'
+        "id": "int",
+        "dt": "datetime",
+        "event_data": "dict(str, object)",
+        "predict_data": "dict(str, object)",
+        "user": "int",
+        "files": "int",
+        "print_job": "int",
+        "plugin_version": "str",
+        "octoprint_version": "str",
+        "url": "str",
     }
 
     attribute_map = {
-        'id': 'id',
-        'dt': 'dt',
-        'event_data': 'event_data',
-        'predict_data': 'predict_data',
-        'user': 'user',
-        'files': 'files',
-        'print_job': 'print_job',
-        'plugin_version': 'plugin_version',
-        'octoprint_version': 'octoprint_version',
-        'url': 'url'
+        "id": "id",
+        "dt": "dt",
+        "event_data": "event_data",
+        "predict_data": "predict_data",
+        "user": "user",
+        "files": "files",
+        "print_job": "print_job",
+        "plugin_version": "plugin_version",
+        "octoprint_version": "octoprint_version",
+        "url": "url",
     }
 
-    def __init__(self, id=None, dt=None, event_data=None, predict_data=None, user=None, files=None, print_job=None, plugin_version=None, octoprint_version=None, url=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        dt=None,
+        event_data=None,
+        predict_data=None,
+        user=None,
+        files=None,
+        print_job=None,
+        plugin_version=None,
+        octoprint_version=None,
+        url=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """PredictEvent - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -171,8 +184,13 @@ class PredictEvent(object):
         :param predict_data: The predict_data of this PredictEvent.  # noqa: E501
         :type predict_data: dict(str, object)
         """
-        if self.local_vars_configuration.client_side_validation and predict_data is None:  # noqa: E501
-            raise ValueError("Invalid value for `predict_data`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and predict_data is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `predict_data`, must not be `None`"
+            )  # noqa: E501
 
         self._predict_data = predict_data
 
@@ -215,8 +233,12 @@ class PredictEvent(object):
         :param files: The files of this PredictEvent.  # noqa: E501
         :type files: int
         """
-        if self.local_vars_configuration.client_side_validation and files is None:  # noqa: E501
-            raise ValueError("Invalid value for `files`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and files is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `files`, must not be `None`"
+            )  # noqa: E501
 
         self._files = files
 
@@ -238,8 +260,12 @@ class PredictEvent(object):
         :param print_job: The print_job of this PredictEvent.  # noqa: E501
         :type print_job: int
         """
-        if self.local_vars_configuration.client_side_validation and print_job is None:  # noqa: E501
-            raise ValueError("Invalid value for `print_job`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and print_job is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `print_job`, must not be `None`"
+            )  # noqa: E501
 
         self._print_job = print_job
 
@@ -261,11 +287,21 @@ class PredictEvent(object):
         :param plugin_version: The plugin_version of this PredictEvent.  # noqa: E501
         :type plugin_version: str
         """
-        if self.local_vars_configuration.client_side_validation and plugin_version is None:  # noqa: E501
-            raise ValueError("Invalid value for `plugin_version`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                plugin_version is not None and len(plugin_version) > 30):
-            raise ValueError("Invalid value for `plugin_version`, length must be less than or equal to `30`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and plugin_version is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `plugin_version`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and plugin_version is not None
+            and len(plugin_version) > 30
+        ):
+            raise ValueError(
+                "Invalid value for `plugin_version`, length must be less than or equal to `30`"
+            )  # noqa: E501
 
         self._plugin_version = plugin_version
 
@@ -287,11 +323,21 @@ class PredictEvent(object):
         :param octoprint_version: The octoprint_version of this PredictEvent.  # noqa: E501
         :type octoprint_version: str
         """
-        if self.local_vars_configuration.client_side_validation and octoprint_version is None:  # noqa: E501
-            raise ValueError("Invalid value for `octoprint_version`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                octoprint_version is not None and len(octoprint_version) > 30):
-            raise ValueError("Invalid value for `octoprint_version`, length must be less than or equal to `30`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and octoprint_version is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `octoprint_version`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and octoprint_version is not None
+            and len(octoprint_version) > 30
+        ):
+            raise ValueError(
+                "Invalid value for `octoprint_version`, length must be less than or equal to `30`"
+            )  # noqa: E501
 
         self._octoprint_version = octoprint_version
 
@@ -334,15 +380,11 @@ class PredictEvent(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

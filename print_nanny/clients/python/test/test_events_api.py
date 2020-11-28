@@ -28,65 +28,45 @@ class TestEventsApi(unittest.TestCase):
         pass
 
     def test_octoprint_events_create(self):
-        """Test case for octoprint_events_create
-
-        """
+        """Test case for octoprint_events_create"""
         pass
 
     def test_octoprint_events_list(self):
-        """Test case for octoprint_events_list
-
-        """
+        """Test case for octoprint_events_list"""
         pass
 
     def test_octoprint_events_retrieve(self):
-        """Test case for octoprint_events_retrieve
-
-        """
+        """Test case for octoprint_events_retrieve"""
         pass
 
     def test_octoprint_events_tracking_retrieve(self):
-        """Test case for octoprint_events_tracking_retrieve
-
-        """
+        """Test case for octoprint_events_tracking_retrieve"""
         pass
 
     def test_predict_event_files_create(self):
-        """Test case for predict_event_files_create
-
-        """
+        """Test case for predict_event_files_create"""
         pass
 
     def test_predict_event_files_list(self):
-        """Test case for predict_event_files_list
-
-        """
+        """Test case for predict_event_files_list"""
         pass
 
     def test_predict_event_files_retrieve(self):
-        """Test case for predict_event_files_retrieve
-
-        """
+        """Test case for predict_event_files_retrieve"""
         pass
 
     def test_predict_events_create(self):
-        """Test case for predict_events_create
-
-        """
+        """Test case for predict_events_create"""
         pass
 
     def test_predict_events_list(self):
-        """Test case for predict_events_list
-
-        """
+        """Test case for predict_events_list"""
         pass
 
     def test_predict_events_retrieve(self):
-        """Test case for predict_events_retrieve
-
-        """
+        """Test case for predict_events_retrieve"""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

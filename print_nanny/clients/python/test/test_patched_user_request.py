@@ -15,8 +15,11 @@ import unittest
 import datetime
 
 import print_nanny_client
-from print_nanny_client.models.patched_user_request import PatchedUserRequest  # noqa: E501
+from print_nanny_client.models.patched_user_request import (
+    PatchedUserRequest,
+)  # noqa: E501
 from print_nanny_client.rest import ApiException
+
 
 class TestPatchedUserRequest(unittest.TestCase):
     """PatchedUserRequest unit test stubs"""
@@ -29,22 +32,20 @@ class TestPatchedUserRequest(unittest.TestCase):
 
     def make_instance(self, include_optional):
         """Test PatchedUserRequest
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
+        include_option is a boolean, when False only required
+        params are included, when True both required and
+        optional params are included"""
         # model = print_nanny_client.models.patched_user_request.PatchedUserRequest()  # noqa: E501
-        if include_optional :
-            return PatchedUserRequest(
-                email = ''
-            )
-        else :
-            return PatchedUserRequest(
-        )
+        if include_optional:
+            return PatchedUserRequest(email="")
+        else:
+            return PatchedUserRequest()
 
     def testPatchedUserRequest(self):
         """Test PatchedUserRequest"""
         inst_req_only = self.make_instance(include_optional=False)
         inst_req_and_optional = self.make_instance(include_optional=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

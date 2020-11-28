@@ -31,19 +31,13 @@ class PatchedGcodeFileRequest(object):
       attribute_map (dict): The key is attribute name
                             and the value is json key in definition.
     """
-    openapi_types = {
-        'name': 'str',
-        'file': 'file',
-        'file_hash': 'str'
-    }
+    openapi_types = {"name": "str", "file": "file", "file_hash": "str"}
 
-    attribute_map = {
-        'name': 'name',
-        'file': 'file',
-        'file_hash': 'file_hash'
-    }
+    attribute_map = {"name": "name", "file": "file", "file_hash": "file_hash"}
 
-    def __init__(self, name=None, file=None, file_hash=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self, name=None, file=None, file_hash=None, local_vars_configuration=None
+    ):  # noqa: E501
         """PatchedGcodeFileRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -79,9 +73,14 @@ class PatchedGcodeFileRequest(object):
         :param name: The name of this PatchedGcodeFileRequest.  # noqa: E501
         :type name: str
         """
-        if (self.local_vars_configuration.client_side_validation and
-                name is not None and len(name) > 255):
-            raise ValueError("Invalid value for `name`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and name is not None
+            and len(name) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `name`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._name = name
 
@@ -124,9 +123,14 @@ class PatchedGcodeFileRequest(object):
         :param file_hash: The file_hash of this PatchedGcodeFileRequest.  # noqa: E501
         :type file_hash: str
         """
-        if (self.local_vars_configuration.client_side_validation and
-                file_hash is not None and len(file_hash) > 255):
-            raise ValueError("Invalid value for `file_hash`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and file_hash is not None
+            and len(file_hash) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `file_hash`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._file_hash = file_hash
 
@@ -148,15 +152,11 @@ class PatchedGcodeFileRequest(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

@@ -28,11 +28,9 @@ class TestSchemaApi(unittest.TestCase):
         pass
 
     def test_schema_retrieve(self):
-        """Test case for schema_retrieve
-
-        """
+        """Test case for schema_retrieve"""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

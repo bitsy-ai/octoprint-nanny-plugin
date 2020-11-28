@@ -32,54 +32,78 @@ class PrinterProfileRequest(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'axes_e_inverted': 'bool',
-        'axes_e_speed': 'int',
-        'axes_x_speed': 'int',
-        'axes_x_inverted': 'bool',
-        'axes_y_inverted': 'bool',
-        'axes_y_speed': 'int',
-        'axes_z_inverted': 'bool',
-        'axes_z_speed': 'int',
-        'extruder_count': 'int',
-        'extruder_nozzle_diameter': 'float',
-        'extruder_shared_nozzle': 'bool',
-        'heated_bed': 'bool',
-        'heated_chamber': 'bool',
-        'model': 'str',
-        'name': 'str',
-        'volume_custom_box': 'bool',
-        'volume_depth': 'float',
-        'volume_formfactor': 'str',
-        'volume_height': 'float',
-        'volume_origin': 'str',
-        'volume_width': 'float'
+        "axes_e_inverted": "bool",
+        "axes_e_speed": "int",
+        "axes_x_speed": "int",
+        "axes_x_inverted": "bool",
+        "axes_y_inverted": "bool",
+        "axes_y_speed": "int",
+        "axes_z_inverted": "bool",
+        "axes_z_speed": "int",
+        "extruder_count": "int",
+        "extruder_nozzle_diameter": "float",
+        "extruder_shared_nozzle": "bool",
+        "heated_bed": "bool",
+        "heated_chamber": "bool",
+        "model": "str",
+        "name": "str",
+        "volume_custom_box": "bool",
+        "volume_depth": "float",
+        "volume_formfactor": "str",
+        "volume_height": "float",
+        "volume_origin": "str",
+        "volume_width": "float",
     }
 
     attribute_map = {
-        'axes_e_inverted': 'axes_e_inverted',
-        'axes_e_speed': 'axes_e_speed',
-        'axes_x_speed': 'axes_x_speed',
-        'axes_x_inverted': 'axes_x_inverted',
-        'axes_y_inverted': 'axes_y_inverted',
-        'axes_y_speed': 'axes_y_speed',
-        'axes_z_inverted': 'axes_z_inverted',
-        'axes_z_speed': 'axes_z_speed',
-        'extruder_count': 'extruder_count',
-        'extruder_nozzle_diameter': 'extruder_nozzle_diameter',
-        'extruder_shared_nozzle': 'extruder_shared_nozzle',
-        'heated_bed': 'heated_bed',
-        'heated_chamber': 'heated_chamber',
-        'model': 'model',
-        'name': 'name',
-        'volume_custom_box': 'volume_custom_box',
-        'volume_depth': 'volume_depth',
-        'volume_formfactor': 'volume_formfactor',
-        'volume_height': 'volume_height',
-        'volume_origin': 'volume_origin',
-        'volume_width': 'volume_width'
+        "axes_e_inverted": "axes_e_inverted",
+        "axes_e_speed": "axes_e_speed",
+        "axes_x_speed": "axes_x_speed",
+        "axes_x_inverted": "axes_x_inverted",
+        "axes_y_inverted": "axes_y_inverted",
+        "axes_y_speed": "axes_y_speed",
+        "axes_z_inverted": "axes_z_inverted",
+        "axes_z_speed": "axes_z_speed",
+        "extruder_count": "extruder_count",
+        "extruder_nozzle_diameter": "extruder_nozzle_diameter",
+        "extruder_shared_nozzle": "extruder_shared_nozzle",
+        "heated_bed": "heated_bed",
+        "heated_chamber": "heated_chamber",
+        "model": "model",
+        "name": "name",
+        "volume_custom_box": "volume_custom_box",
+        "volume_depth": "volume_depth",
+        "volume_formfactor": "volume_formfactor",
+        "volume_height": "volume_height",
+        "volume_origin": "volume_origin",
+        "volume_width": "volume_width",
     }
 
-    def __init__(self, axes_e_inverted=None, axes_e_speed=None, axes_x_speed=None, axes_x_inverted=None, axes_y_inverted=None, axes_y_speed=None, axes_z_inverted=None, axes_z_speed=None, extruder_count=None, extruder_nozzle_diameter=None, extruder_shared_nozzle=None, heated_bed=None, heated_chamber=None, model=None, name=None, volume_custom_box=None, volume_depth=None, volume_formfactor=None, volume_height=None, volume_origin=None, volume_width=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        axes_e_inverted=None,
+        axes_e_speed=None,
+        axes_x_speed=None,
+        axes_x_inverted=None,
+        axes_y_inverted=None,
+        axes_y_speed=None,
+        axes_z_inverted=None,
+        axes_z_speed=None,
+        extruder_count=None,
+        extruder_nozzle_diameter=None,
+        extruder_shared_nozzle=None,
+        heated_bed=None,
+        heated_chamber=None,
+        model=None,
+        name=None,
+        volume_custom_box=None,
+        volume_depth=None,
+        volume_formfactor=None,
+        volume_height=None,
+        volume_origin=None,
+        volume_width=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """PrinterProfileRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -148,8 +172,13 @@ class PrinterProfileRequest(object):
         :param axes_e_inverted: The axes_e_inverted of this PrinterProfileRequest.  # noqa: E501
         :type axes_e_inverted: bool
         """
-        if self.local_vars_configuration.client_side_validation and axes_e_inverted is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_e_inverted`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_e_inverted is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_e_inverted`, must not be `None`"
+            )  # noqa: E501
 
         self._axes_e_inverted = axes_e_inverted
 
@@ -171,14 +200,29 @@ class PrinterProfileRequest(object):
         :param axes_e_speed: The axes_e_speed of this PrinterProfileRequest.  # noqa: E501
         :type axes_e_speed: int
         """
-        if self.local_vars_configuration.client_side_validation and axes_e_speed is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_e_speed`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_e_speed is not None and axes_e_speed > 2147483647):  # noqa: E501
-            raise ValueError("Invalid value for `axes_e_speed`, must be a value less than or equal to `2147483647`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_e_speed is not None and axes_e_speed < -2147483648):  # noqa: E501
-            raise ValueError("Invalid value for `axes_e_speed`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_e_speed is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_e_speed`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_e_speed is not None
+            and axes_e_speed > 2147483647
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_e_speed`, must be a value less than or equal to `2147483647`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_e_speed is not None
+            and axes_e_speed < -2147483648
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_e_speed`, must be a value greater than or equal to `-2147483648`"
+            )  # noqa: E501
 
         self._axes_e_speed = axes_e_speed
 
@@ -200,14 +244,29 @@ class PrinterProfileRequest(object):
         :param axes_x_speed: The axes_x_speed of this PrinterProfileRequest.  # noqa: E501
         :type axes_x_speed: int
         """
-        if self.local_vars_configuration.client_side_validation and axes_x_speed is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_x_speed`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_x_speed is not None and axes_x_speed > 2147483647):  # noqa: E501
-            raise ValueError("Invalid value for `axes_x_speed`, must be a value less than or equal to `2147483647`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_x_speed is not None and axes_x_speed < -2147483648):  # noqa: E501
-            raise ValueError("Invalid value for `axes_x_speed`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_x_speed is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_x_speed`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_x_speed is not None
+            and axes_x_speed > 2147483647
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_x_speed`, must be a value less than or equal to `2147483647`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_x_speed is not None
+            and axes_x_speed < -2147483648
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_x_speed`, must be a value greater than or equal to `-2147483648`"
+            )  # noqa: E501
 
         self._axes_x_speed = axes_x_speed
 
@@ -229,8 +288,13 @@ class PrinterProfileRequest(object):
         :param axes_x_inverted: The axes_x_inverted of this PrinterProfileRequest.  # noqa: E501
         :type axes_x_inverted: bool
         """
-        if self.local_vars_configuration.client_side_validation and axes_x_inverted is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_x_inverted`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_x_inverted is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_x_inverted`, must not be `None`"
+            )  # noqa: E501
 
         self._axes_x_inverted = axes_x_inverted
 
@@ -252,8 +316,13 @@ class PrinterProfileRequest(object):
         :param axes_y_inverted: The axes_y_inverted of this PrinterProfileRequest.  # noqa: E501
         :type axes_y_inverted: bool
         """
-        if self.local_vars_configuration.client_side_validation and axes_y_inverted is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_y_inverted`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_y_inverted is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_y_inverted`, must not be `None`"
+            )  # noqa: E501
 
         self._axes_y_inverted = axes_y_inverted
 
@@ -275,14 +344,29 @@ class PrinterProfileRequest(object):
         :param axes_y_speed: The axes_y_speed of this PrinterProfileRequest.  # noqa: E501
         :type axes_y_speed: int
         """
-        if self.local_vars_configuration.client_side_validation and axes_y_speed is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_y_speed`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_y_speed is not None and axes_y_speed > 2147483647):  # noqa: E501
-            raise ValueError("Invalid value for `axes_y_speed`, must be a value less than or equal to `2147483647`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_y_speed is not None and axes_y_speed < -2147483648):  # noqa: E501
-            raise ValueError("Invalid value for `axes_y_speed`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_y_speed is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_y_speed`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_y_speed is not None
+            and axes_y_speed > 2147483647
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_y_speed`, must be a value less than or equal to `2147483647`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_y_speed is not None
+            and axes_y_speed < -2147483648
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_y_speed`, must be a value greater than or equal to `-2147483648`"
+            )  # noqa: E501
 
         self._axes_y_speed = axes_y_speed
 
@@ -304,8 +388,13 @@ class PrinterProfileRequest(object):
         :param axes_z_inverted: The axes_z_inverted of this PrinterProfileRequest.  # noqa: E501
         :type axes_z_inverted: bool
         """
-        if self.local_vars_configuration.client_side_validation and axes_z_inverted is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_z_inverted`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_z_inverted is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_z_inverted`, must not be `None`"
+            )  # noqa: E501
 
         self._axes_z_inverted = axes_z_inverted
 
@@ -327,14 +416,29 @@ class PrinterProfileRequest(object):
         :param axes_z_speed: The axes_z_speed of this PrinterProfileRequest.  # noqa: E501
         :type axes_z_speed: int
         """
-        if self.local_vars_configuration.client_side_validation and axes_z_speed is None:  # noqa: E501
-            raise ValueError("Invalid value for `axes_z_speed`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_z_speed is not None and axes_z_speed > 2147483647):  # noqa: E501
-            raise ValueError("Invalid value for `axes_z_speed`, must be a value less than or equal to `2147483647`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                axes_z_speed is not None and axes_z_speed < -2147483648):  # noqa: E501
-            raise ValueError("Invalid value for `axes_z_speed`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_z_speed is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_z_speed`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_z_speed is not None
+            and axes_z_speed > 2147483647
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_z_speed`, must be a value less than or equal to `2147483647`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and axes_z_speed is not None
+            and axes_z_speed < -2147483648
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `axes_z_speed`, must be a value greater than or equal to `-2147483648`"
+            )  # noqa: E501
 
         self._axes_z_speed = axes_z_speed
 
@@ -356,14 +460,29 @@ class PrinterProfileRequest(object):
         :param extruder_count: The extruder_count of this PrinterProfileRequest.  # noqa: E501
         :type extruder_count: int
         """
-        if self.local_vars_configuration.client_side_validation and extruder_count is None:  # noqa: E501
-            raise ValueError("Invalid value for `extruder_count`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                extruder_count is not None and extruder_count > 2147483647):  # noqa: E501
-            raise ValueError("Invalid value for `extruder_count`, must be a value less than or equal to `2147483647`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                extruder_count is not None and extruder_count < -2147483648):  # noqa: E501
-            raise ValueError("Invalid value for `extruder_count`, must be a value greater than or equal to `-2147483648`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and extruder_count is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `extruder_count`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and extruder_count is not None
+            and extruder_count > 2147483647
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `extruder_count`, must be a value less than or equal to `2147483647`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and extruder_count is not None
+            and extruder_count < -2147483648
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `extruder_count`, must be a value greater than or equal to `-2147483648`"
+            )  # noqa: E501
 
         self._extruder_count = extruder_count
 
@@ -385,8 +504,13 @@ class PrinterProfileRequest(object):
         :param extruder_nozzle_diameter: The extruder_nozzle_diameter of this PrinterProfileRequest.  # noqa: E501
         :type extruder_nozzle_diameter: float
         """
-        if self.local_vars_configuration.client_side_validation and extruder_nozzle_diameter is None:  # noqa: E501
-            raise ValueError("Invalid value for `extruder_nozzle_diameter`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and extruder_nozzle_diameter is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `extruder_nozzle_diameter`, must not be `None`"
+            )  # noqa: E501
 
         self._extruder_nozzle_diameter = extruder_nozzle_diameter
 
@@ -408,8 +532,13 @@ class PrinterProfileRequest(object):
         :param extruder_shared_nozzle: The extruder_shared_nozzle of this PrinterProfileRequest.  # noqa: E501
         :type extruder_shared_nozzle: bool
         """
-        if self.local_vars_configuration.client_side_validation and extruder_shared_nozzle is None:  # noqa: E501
-            raise ValueError("Invalid value for `extruder_shared_nozzle`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and extruder_shared_nozzle is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `extruder_shared_nozzle`, must not be `None`"
+            )  # noqa: E501
 
         self._extruder_shared_nozzle = extruder_shared_nozzle
 
@@ -431,8 +560,12 @@ class PrinterProfileRequest(object):
         :param heated_bed: The heated_bed of this PrinterProfileRequest.  # noqa: E501
         :type heated_bed: bool
         """
-        if self.local_vars_configuration.client_side_validation and heated_bed is None:  # noqa: E501
-            raise ValueError("Invalid value for `heated_bed`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and heated_bed is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `heated_bed`, must not be `None`"
+            )  # noqa: E501
 
         self._heated_bed = heated_bed
 
@@ -454,8 +587,13 @@ class PrinterProfileRequest(object):
         :param heated_chamber: The heated_chamber of this PrinterProfileRequest.  # noqa: E501
         :type heated_chamber: bool
         """
-        if self.local_vars_configuration.client_side_validation and heated_chamber is None:  # noqa: E501
-            raise ValueError("Invalid value for `heated_chamber`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and heated_chamber is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `heated_chamber`, must not be `None`"
+            )  # noqa: E501
 
         self._heated_chamber = heated_chamber
 
@@ -477,9 +615,14 @@ class PrinterProfileRequest(object):
         :param model: The model of this PrinterProfileRequest.  # noqa: E501
         :type model: str
         """
-        if (self.local_vars_configuration.client_side_validation and
-                model is not None and len(model) > 255):
-            raise ValueError("Invalid value for `model`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and model is not None
+            and len(model) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `model`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._model = model
 
@@ -501,11 +644,20 @@ class PrinterProfileRequest(object):
         :param name: The name of this PrinterProfileRequest.  # noqa: E501
         :type name: str
         """
-        if self.local_vars_configuration.client_side_validation and name is None:  # noqa: E501
-            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                name is not None and len(name) > 255):
-            raise ValueError("Invalid value for `name`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and name is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `name`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and name is not None
+            and len(name) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `name`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._name = name
 
@@ -527,8 +679,13 @@ class PrinterProfileRequest(object):
         :param volume_custom_box: The volume_custom_box of this PrinterProfileRequest.  # noqa: E501
         :type volume_custom_box: bool
         """
-        if self.local_vars_configuration.client_side_validation and volume_custom_box is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_custom_box`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_custom_box is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_custom_box`, must not be `None`"
+            )  # noqa: E501
 
         self._volume_custom_box = volume_custom_box
 
@@ -550,8 +707,13 @@ class PrinterProfileRequest(object):
         :param volume_depth: The volume_depth of this PrinterProfileRequest.  # noqa: E501
         :type volume_depth: float
         """
-        if self.local_vars_configuration.client_side_validation and volume_depth is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_depth`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_depth is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_depth`, must not be `None`"
+            )  # noqa: E501
 
         self._volume_depth = volume_depth
 
@@ -573,11 +735,21 @@ class PrinterProfileRequest(object):
         :param volume_formfactor: The volume_formfactor of this PrinterProfileRequest.  # noqa: E501
         :type volume_formfactor: str
         """
-        if self.local_vars_configuration.client_side_validation and volume_formfactor is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_formfactor`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                volume_formfactor is not None and len(volume_formfactor) > 255):
-            raise ValueError("Invalid value for `volume_formfactor`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_formfactor is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_formfactor`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_formfactor is not None
+            and len(volume_formfactor) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `volume_formfactor`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._volume_formfactor = volume_formfactor
 
@@ -599,8 +771,13 @@ class PrinterProfileRequest(object):
         :param volume_height: The volume_height of this PrinterProfileRequest.  # noqa: E501
         :type volume_height: float
         """
-        if self.local_vars_configuration.client_side_validation and volume_height is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_height`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_height is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_height`, must not be `None`"
+            )  # noqa: E501
 
         self._volume_height = volume_height
 
@@ -622,11 +799,21 @@ class PrinterProfileRequest(object):
         :param volume_origin: The volume_origin of this PrinterProfileRequest.  # noqa: E501
         :type volume_origin: str
         """
-        if self.local_vars_configuration.client_side_validation and volume_origin is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_origin`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                volume_origin is not None and len(volume_origin) > 255):
-            raise ValueError("Invalid value for `volume_origin`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_origin is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_origin`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_origin is not None
+            and len(volume_origin) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `volume_origin`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._volume_origin = volume_origin
 
@@ -648,8 +835,13 @@ class PrinterProfileRequest(object):
         :param volume_width: The volume_width of this PrinterProfileRequest.  # noqa: E501
         :type volume_width: float
         """
-        if self.local_vars_configuration.client_side_validation and volume_width is None:  # noqa: E501
-            raise ValueError("Invalid value for `volume_width`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and volume_width is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `volume_width`, must not be `None`"
+            )  # noqa: E501
 
         self._volume_width = volume_width
 
@@ -671,15 +863,11 @@ class PrinterProfileRequest(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

@@ -32,24 +32,33 @@ class GcodeFile(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'id': 'int',
-        'user': 'int',
-        'name': 'str',
-        'file': 'str',
-        'file_hash': 'str',
-        'url': 'str'
+        "id": "int",
+        "user": "int",
+        "name": "str",
+        "file": "str",
+        "file_hash": "str",
+        "url": "str",
     }
 
     attribute_map = {
-        'id': 'id',
-        'user': 'user',
-        'name': 'name',
-        'file': 'file',
-        'file_hash': 'file_hash',
-        'url': 'url'
+        "id": "id",
+        "user": "user",
+        "name": "name",
+        "file": "file",
+        "file_hash": "file_hash",
+        "url": "url",
     }
 
-    def __init__(self, id=None, user=None, name=None, file=None, file_hash=None, url=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        user=None,
+        name=None,
+        file=None,
+        file_hash=None,
+        url=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """GcodeFile - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -133,11 +142,20 @@ class GcodeFile(object):
         :param name: The name of this GcodeFile.  # noqa: E501
         :type name: str
         """
-        if self.local_vars_configuration.client_side_validation and name is None:  # noqa: E501
-            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                name is not None and len(name) > 255):
-            raise ValueError("Invalid value for `name`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and name is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `name`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and name is not None
+            and len(name) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `name`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._name = name
 
@@ -159,8 +177,12 @@ class GcodeFile(object):
         :param file: The file of this GcodeFile.  # noqa: E501
         :type file: str
         """
-        if self.local_vars_configuration.client_side_validation and file is None:  # noqa: E501
-            raise ValueError("Invalid value for `file`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and file is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `file`, must not be `None`"
+            )  # noqa: E501
 
         self._file = file
 
@@ -182,11 +204,20 @@ class GcodeFile(object):
         :param file_hash: The file_hash of this GcodeFile.  # noqa: E501
         :type file_hash: str
         """
-        if self.local_vars_configuration.client_side_validation and file_hash is None:  # noqa: E501
-            raise ValueError("Invalid value for `file_hash`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                file_hash is not None and len(file_hash) > 255):
-            raise ValueError("Invalid value for `file_hash`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and file_hash is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `file_hash`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and file_hash is not None
+            and len(file_hash) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `file_hash`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._file_hash = file_hash
 
@@ -229,15 +260,11 @@ class GcodeFile(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

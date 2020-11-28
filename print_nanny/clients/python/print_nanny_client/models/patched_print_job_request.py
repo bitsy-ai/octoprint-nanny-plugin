@@ -32,24 +32,33 @@ class PatchedPrintJobRequest(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'dt': 'datetime',
-        'printer_profile': 'int',
-        'name': 'str',
-        'gcode_file_hash': 'str',
-        'gcode_file': 'int',
-        'last_status': 'LastStatusEnum'
+        "dt": "datetime",
+        "printer_profile": "int",
+        "name": "str",
+        "gcode_file_hash": "str",
+        "gcode_file": "int",
+        "last_status": "LastStatusEnum",
     }
 
     attribute_map = {
-        'dt': 'dt',
-        'printer_profile': 'printer_profile',
-        'name': 'name',
-        'gcode_file_hash': 'gcode_file_hash',
-        'gcode_file': 'gcode_file',
-        'last_status': 'last_status'
+        "dt": "dt",
+        "printer_profile": "printer_profile",
+        "name": "name",
+        "gcode_file_hash": "gcode_file_hash",
+        "gcode_file": "gcode_file",
+        "last_status": "last_status",
     }
 
-    def __init__(self, dt=None, printer_profile=None, name=None, gcode_file_hash=None, gcode_file=None, last_status=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        dt=None,
+        printer_profile=None,
+        name=None,
+        gcode_file_hash=None,
+        gcode_file=None,
+        last_status=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """PatchedPrintJobRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -134,9 +143,14 @@ class PatchedPrintJobRequest(object):
         :param name: The name of this PatchedPrintJobRequest.  # noqa: E501
         :type name: str
         """
-        if (self.local_vars_configuration.client_side_validation and
-                name is not None and len(name) > 255):
-            raise ValueError("Invalid value for `name`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and name is not None
+            and len(name) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `name`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._name = name
 
@@ -158,9 +172,14 @@ class PatchedPrintJobRequest(object):
         :param gcode_file_hash: The gcode_file_hash of this PatchedPrintJobRequest.  # noqa: E501
         :type gcode_file_hash: str
         """
-        if (self.local_vars_configuration.client_side_validation and
-                gcode_file_hash is not None and len(gcode_file_hash) > 255):
-            raise ValueError("Invalid value for `gcode_file_hash`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and gcode_file_hash is not None
+            and len(gcode_file_hash) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `gcode_file_hash`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._gcode_file_hash = gcode_file_hash
 
@@ -224,15 +243,11 @@ class PatchedPrintJobRequest(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 
