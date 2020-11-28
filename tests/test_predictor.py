@@ -26,7 +26,7 @@ def test_area_of_intersection_overlap():
     detection_classes = np.array([4])
 
     percent_area = predictor.percent_intersection(detection_boxes, detection_scores, detection_classes, calibration_box)
-    expected =  1 - ((0.5**2) / (0.6**2))
+    expected =  ((0.5**2) / (0.6**2))
     np.testing.assert_almost_equal(percent_area[0],expected)
 
 

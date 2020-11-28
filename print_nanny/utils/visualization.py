@@ -177,6 +177,7 @@ def draw_bounding_box_on_image(image,
 
         if detection_box_ignored:
             display_str += ' (ignored)'
+
         text_width, text_height = font.getsize(display_str)
         margin = np.ceil(0.05 * text_height)
         draw.rectangle(
@@ -400,29 +401,17 @@ def visualize_boxes_and_labels_on_image_array(
                     box_to_color_map[box] = STANDARD_COLORS[
                         classes[i] % len(STANDARD_COLORS)]
 
+    detection_boundary_mask = np.logical_not(detection_boundary_mask).astype(np.uint8)
     if detection_boundary_mask is not None:
         draw_mask_on_image_array(
             image,
             detection_boundary_mask,
-            color='LightGray',
-            alpha=0.3
+            color='Black',
+            alpha=0.6
         )
     # Draw all boxes onto image.
     for box, color in box_to_color_map.items():
         ymin, xmin, ymax, xmax = box
-        # if instance_masks is not None:
-        #     draw_mask_on_image_array(
-        #         image,
-        #         box_to_instance_masks_map[box],
-        #         color=color
-        #     )
-        # if instance_boundaries is not None:
-        #     draw_mask_on_image_array(
-        #         image,
-        #         box_to_instance_boundaries_map[box],
-        #         color='LightGray',
-        #         alpha=0.3
-        #     )
         draw_bounding_box_on_image_array(
             image,
             ymin,

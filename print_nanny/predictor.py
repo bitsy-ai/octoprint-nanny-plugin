@@ -45,7 +45,7 @@ class ThreadLocalPredictor(threading.local):
     def __init__(self, 
         min_score_thresh=0.50, 
         max_boxes_to_draw=10,
-        min_overlap_area=0.50,
+        min_overlap_area=0.66,
         model_version='tflite-print3d-2020-10-23T18:00:41.136Z',
         model_filename='model.tflite',
         metadata_filename='tflite_metadata.json',
@@ -123,10 +123,10 @@ class ThreadLocalPredictor(threading.local):
         for i, bb2 in enumerate(
             detection_boxes):
 
-            assert bb1[0] < bb1[2]
-            assert bb1[1] < bb1[3]
-            assert bb2[0] < bb2[2]
-            assert bb2[1] < bb2[3]
+            # assert bb1[0] < bb1[2]
+            # assert bb1[1] < bb1[3]
+            # assert bb2[0] < bb2[2]
+            # assert bb2[1] < bb2[3]
 
             # determine the coordinates of the intersection rectangle
             x_left = max(bb1[0], bb2[0])
@@ -149,7 +149,8 @@ class ThreadLocalPredictor(threading.local):
             if (intersection_area / bb2_area) == 1.0:
                 aou[i] = 1.0
                 continue
-            aou[i] = 1 - (intersection_area / bb2_area)
+
+            aou[i] = (intersection_area / bb2_area)
 
         return aou
 
@@ -166,8 +167,7 @@ class ThreadLocalPredictor(threading.local):
             prediction['detection_classes'],
             coords
         )
-        ignored_mask = percent_intersection[percent_intersection <= self.min_overlap_area]
-
+        ignored_mask = percent_intersection <= self.min_overlap_area
 
         viz = visualize_boxes_and_labels_on_image_array(
             image_np,

@@ -360,7 +360,7 @@ class BitsyNannyPlugin(
                 hash=file_hash
             )
             if not self._api_objects.get('print_job'):
-                logger.info('No print_job is active, skipping _handle_predict_upload()')
+                logger.debug('No print_job is active, skipping _handle_predict_upload()')
                 return
             request = PredictEventRequest(
                 dt=event_data.get('dt'),
