@@ -31,6 +31,7 @@ from print_nanny_client.exceptions import ApiValueError
 from print_nanny_client.exceptions import ApiKeyError
 from print_nanny_client.exceptions import ApiAttributeError
 from print_nanny_client.exceptions import ApiException
+
 # import models into sdk package
 from print_nanny_client.models.auth_token import AuthToken
 from print_nanny_client.models.auth_token_request import AuthTokenRequest
@@ -41,15 +42,25 @@ from print_nanny_client.models.last_status_enum import LastStatusEnum
 from print_nanny_client.models.octo_print_event import OctoPrintEvent
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.paginated_gcode_file_list import PaginatedGcodeFileList
-from print_nanny_client.models.paginated_octo_print_event_list import PaginatedOctoPrintEventList
-from print_nanny_client.models.paginated_predict_event_file_list import PaginatedPredictEventFileList
-from print_nanny_client.models.paginated_predict_event_list import PaginatedPredictEventList
+from print_nanny_client.models.paginated_octo_print_event_list import (
+    PaginatedOctoPrintEventList,
+)
+from print_nanny_client.models.paginated_predict_event_file_list import (
+    PaginatedPredictEventFileList,
+)
+from print_nanny_client.models.paginated_predict_event_list import (
+    PaginatedPredictEventList,
+)
 from print_nanny_client.models.paginated_print_job_list import PaginatedPrintJobList
-from print_nanny_client.models.paginated_printer_profile_list import PaginatedPrinterProfileList
+from print_nanny_client.models.paginated_printer_profile_list import (
+    PaginatedPrinterProfileList,
+)
 from print_nanny_client.models.paginated_user_list import PaginatedUserList
 from print_nanny_client.models.patched_gcode_file_request import PatchedGcodeFileRequest
 from print_nanny_client.models.patched_print_job_request import PatchedPrintJobRequest
-from print_nanny_client.models.patched_printer_profile_request import PatchedPrinterProfileRequest
+from print_nanny_client.models.patched_printer_profile_request import (
+    PatchedPrinterProfileRequest,
+)
 from print_nanny_client.models.patched_user_request import PatchedUserRequest
 from print_nanny_client.models.predict_event import PredictEvent
 from print_nanny_client.models.predict_event_file import PredictEventFile
@@ -61,4 +72,3 @@ from print_nanny_client.models.printer_profile import PrinterProfile
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
 from print_nanny_client.models.user import User
 from print_nanny_client.models.user_request import UserRequest
-

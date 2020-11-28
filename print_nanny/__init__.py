@@ -7,14 +7,15 @@ import logging
 from .plugins import BitsyNannyPlugin
 
 
-logger = logging.getLogger('octoprint.plugins.print_nanny')
-     
-        
+logger = logging.getLogger("octoprint.plugins.print_nanny")
+
+
 __plugin_name__ = "Bitsy Print Nanny"
 
-__plugin_pythoncompat__ = ">=3,<4" # only python 3
+__plugin_pythoncompat__ = ">=3,<4"  # only python 3
 
 __plugin_version__ = "0.1.0"
+
 
 def __plugin_load__():
     global __plugin_implementation__
@@ -25,9 +26,7 @@ def __plugin_load__():
     global __plugin_hooks__
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-        #"octoprint.timelapse.capture.post": __plugin_implementation__.on_timelapse_capture,
+        # "octoprint.timelapse.capture.post": __plugin_implementation__.on_timelapse_capture,
         "octoprint.events.register_custom_events": __plugin_implementation__.register_custom_events,
-        #"octoprint.server.http.routes": __plugin_implementation__.register_custom_routes
-
+        # "octoprint.server.http.routes": __plugin_implementation__.register_custom_routes
     }
-

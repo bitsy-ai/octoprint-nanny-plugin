@@ -31,17 +31,13 @@ class AuthTokenRequest(object):
       attribute_map (dict): The key is attribute name
                             and the value is json key in definition.
     """
-    openapi_types = {
-        'username': 'str',
-        'password': 'str'
-    }
+    openapi_types = {"username": "str", "password": "str"}
 
-    attribute_map = {
-        'username': 'username',
-        'password': 'password'
-    }
+    attribute_map = {"username": "username", "password": "password"}
 
-    def __init__(self, username=None, password=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self, username=None, password=None, local_vars_configuration=None
+    ):  # noqa: E501
         """AuthTokenRequest - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -72,8 +68,12 @@ class AuthTokenRequest(object):
         :param username: The username of this AuthTokenRequest.  # noqa: E501
         :type username: str
         """
-        if self.local_vars_configuration.client_side_validation and username is None:  # noqa: E501
-            raise ValueError("Invalid value for `username`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and username is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `username`, must not be `None`"
+            )  # noqa: E501
 
         self._username = username
 
@@ -95,8 +95,12 @@ class AuthTokenRequest(object):
         :param password: The password of this AuthTokenRequest.  # noqa: E501
         :type password: str
         """
-        if self.local_vars_configuration.client_side_validation and password is None:  # noqa: E501
-            raise ValueError("Invalid value for `password`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and password is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `password`, must not be `None`"
+            )  # noqa: E501
 
         self._password = password
 
@@ -118,15 +122,11 @@ class AuthTokenRequest(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

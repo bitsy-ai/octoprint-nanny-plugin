@@ -17,10 +17,7 @@ import re  # noqa: F401
 import six
 
 from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
-)
+from print_nanny_client.exceptions import ApiTypeError, ApiValueError  # noqa: F401
 
 
 class RemoteControlApi(object):
@@ -65,10 +62,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
-        return self.gcode_files_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.gcode_files_create_with_http_info(
+            name, file, file_hash, **kwargs
+        )  # noqa: E501
 
-    def gcode_files_create_with_http_info(self, name, file, file_hash, **kwargs):  # noqa: E501
+    def gcode_files_create_with_http_info(
+        self, name, file, file_hash, **kwargs
+    ):  # noqa: E501
         """gcode_files_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -108,48 +109,64 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'name',
-            'file',
-            'file_hash'
-        ]
+        all_params = ["name", "file", "file_hash"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'name' is set
-        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
-                                                        local_var_params['name'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" not in local_var_params
+            or local_var_params["name"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `name` when calling `gcode_files_create`"
+            )  # noqa: E501
         # verify the required parameter 'file' is set
-        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file" not in local_var_params
+            or local_var_params["file"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file` when calling `gcode_files_create`"
+            )  # noqa: E501
         # verify the required parameter 'file_hash' is set
-        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file_hash'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" not in local_var_params
+            or local_var_params["file_hash"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file_hash` when calling `gcode_files_create`"
+            )  # noqa: E501
 
-        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['name']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_create`, length must be less than or equal to `255`")  # noqa: E501
-        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_create`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" in local_var_params
+            and len(local_var_params["name"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `name` when calling `gcode_files_create`, length must be less than or equal to `255`"
+            )  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" in local_var_params
+            and len(local_var_params["file_hash"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `file_hash` when calling `gcode_files_create`, length must be less than or equal to `255`"
+            )  # noqa: E501
         collection_formats = {}
 
         path_params = {}
@@ -160,32 +177,39 @@ class RemoteControlApi(object):
 
         form_params = []
         local_var_files = {}
-        if 'name' in local_var_params:
-            form_params.append(('name', local_var_params['name']))  # noqa: E501
-        if 'file' in local_var_params:
-            local_var_files['file'] = local_var_params['file']  # noqa: E501
-        if 'file_hash' in local_var_params:
-            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+        if "name" in local_var_params:
+            form_params.append(("name", local_var_params["name"]))  # noqa: E501
+        if "file" in local_var_params:
+            local_var_files["file"] = local_var_params["file"]  # noqa: E501
+        if "file_hash" in local_var_params:
+            form_params.append(
+                ("file_hash", local_var_params["file_hash"])
+            )  # noqa: E501
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            ["multipart/form-data", "application/x-www-form-urlencoded"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "PrintJob",
             201: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/', 'POST',
+            "/api/gcode-files/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -194,12 +218,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def gcode_files_list(self, **kwargs):  # noqa: E501
         """gcode_files_list  # noqa: E501
@@ -229,7 +256,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PaginatedGcodeFileList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.gcode_files_list_with_http_info(**kwargs)  # noqa: E501
 
     def gcode_files_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -270,38 +297,39 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'offset'
-        ]
+        all_params = ["limit", "offset"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
 
         header_params = {}
 
@@ -310,18 +338,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedGcodeFileList",
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/', 'GET',
+            "/api/gcode-files/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -330,12 +360,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def gcode_files_partial_update(self, id, **kwargs):  # noqa: E501
         """gcode_files_partial_update  # noqa: E501
@@ -369,8 +402,10 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: GcodeFile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.gcode_files_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.gcode_files_partial_update_with_http_info(
+            id, **kwargs
+        )  # noqa: E501
 
     def gcode_files_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
         """gcode_files_partial_update  # noqa: E501
@@ -414,46 +449,52 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'name',
-            'file',
-            'file_hash'
-        ]
+        all_params = ["id", "name", "file", "file_hash"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_partial_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_partial_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `gcode_files_partial_update`"
+            )  # noqa: E501
 
-        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['name']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_partial_update`, length must be less than or equal to `255`")  # noqa: E501
-        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_partial_update`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" in local_var_params
+            and len(local_var_params["name"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `name` when calling `gcode_files_partial_update`, length must be less than or equal to `255`"
+            )  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" in local_var_params
+            and len(local_var_params["file_hash"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `file_hash` when calling `gcode_files_partial_update`, length must be less than or equal to `255`"
+            )  # noqa: E501
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -461,31 +502,38 @@ class RemoteControlApi(object):
 
         form_params = []
         local_var_files = {}
-        if 'name' in local_var_params:
-            form_params.append(('name', local_var_params['name']))  # noqa: E501
-        if 'file' in local_var_params:
-            local_var_files['file'] = local_var_params['file']  # noqa: E501
-        if 'file_hash' in local_var_params:
-            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+        if "name" in local_var_params:
+            form_params.append(("name", local_var_params["name"]))  # noqa: E501
+        if "file" in local_var_params:
+            local_var_files["file"] = local_var_params["file"]  # noqa: E501
+        if "file_hash" in local_var_params:
+            form_params.append(
+                ("file_hash", local_var_params["file_hash"])
+            )  # noqa: E501
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            ["multipart/form-data", "application/x-www-form-urlencoded"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "GcodeFile",
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/{id}/', 'PATCH',
+            "/api/gcode-files/{id}/",
+            "PATCH",
             path_params,
             query_params,
             header_params,
@@ -494,12 +542,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def gcode_files_retrieve(self, id, **kwargs):  # noqa: E501
         """gcode_files_retrieve  # noqa: E501
@@ -527,7 +578,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: GcodeFile
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.gcode_files_retrieve_with_http_info(id, **kwargs)  # noqa: E501
 
     def gcode_files_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -566,37 +617,38 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `gcode_files_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -607,18 +659,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "GcodeFile",
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/{id}/', 'GET',
+            "/api/gcode-files/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -627,12 +681,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def gcode_files_update(self, id, name, file, file_hash, **kwargs):  # noqa: E501
         """gcode_files_update  # noqa: E501
@@ -666,10 +723,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: GcodeFile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.gcode_files_update_with_http_info(id, name, file, file_hash, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.gcode_files_update_with_http_info(
+            id, name, file, file_hash, **kwargs
+        )  # noqa: E501
 
-    def gcode_files_update_with_http_info(self, id, name, file, file_hash, **kwargs):  # noqa: E501
+    def gcode_files_update_with_http_info(
+        self, id, name, file, file_hash, **kwargs
+    ):  # noqa: E501
         """gcode_files_update  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -711,58 +772,76 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'name',
-            'file',
-            'file_hash'
-        ]
+        all_params = ["id", "name", "file", "file_hash"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `gcode_files_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `gcode_files_update`"
+            )  # noqa: E501
         # verify the required parameter 'name' is set
-        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
-                                                        local_var_params['name'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" not in local_var_params
+            or local_var_params["name"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `name` when calling `gcode_files_update`"
+            )  # noqa: E501
         # verify the required parameter 'file' is set
-        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file" not in local_var_params
+            or local_var_params["file"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file` when calling `gcode_files_update`"
+            )  # noqa: E501
         # verify the required parameter 'file_hash' is set
-        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file_hash'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" not in local_var_params
+            or local_var_params["file_hash"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file_hash` when calling `gcode_files_update`"
+            )  # noqa: E501
 
-        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['name']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_update`, length must be less than or equal to `255`")  # noqa: E501
-        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_update`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" in local_var_params
+            and len(local_var_params["name"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `name` when calling `gcode_files_update`, length must be less than or equal to `255`"
+            )  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" in local_var_params
+            and len(local_var_params["file_hash"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `file_hash` when calling `gcode_files_update`, length must be less than or equal to `255`"
+            )  # noqa: E501
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -770,31 +849,38 @@ class RemoteControlApi(object):
 
         form_params = []
         local_var_files = {}
-        if 'name' in local_var_params:
-            form_params.append(('name', local_var_params['name']))  # noqa: E501
-        if 'file' in local_var_params:
-            local_var_files['file'] = local_var_params['file']  # noqa: E501
-        if 'file_hash' in local_var_params:
-            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+        if "name" in local_var_params:
+            form_params.append(("name", local_var_params["name"]))  # noqa: E501
+        if "file" in local_var_params:
+            local_var_files["file"] = local_var_params["file"]  # noqa: E501
+        if "file_hash" in local_var_params:
+            form_params.append(
+                ("file_hash", local_var_params["file_hash"])
+            )  # noqa: E501
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            ["multipart/form-data", "application/x-www-form-urlencoded"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "GcodeFile",
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/{id}/', 'PUT',
+            "/api/gcode-files/{id}/",
+            "PUT",
             path_params,
             query_params,
             header_params,
@@ -803,14 +889,19 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
-    def gcode_files_update_or_create(self, name, file, file_hash, **kwargs):  # noqa: E501
+    def gcode_files_update_or_create(
+        self, name, file, file_hash, **kwargs
+    ):  # noqa: E501
         """gcode_files_update_or_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -840,10 +931,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: GcodeFile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.gcode_files_update_or_create_with_http_info(name, file, file_hash, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.gcode_files_update_or_create_with_http_info(
+            name, file, file_hash, **kwargs
+        )  # noqa: E501
 
-    def gcode_files_update_or_create_with_http_info(self, name, file, file_hash, **kwargs):  # noqa: E501
+    def gcode_files_update_or_create_with_http_info(
+        self, name, file, file_hash, **kwargs
+    ):  # noqa: E501
         """gcode_files_update_or_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -883,48 +978,64 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'name',
-            'file',
-            'file_hash'
-        ]
+        all_params = ["name", "file", "file_hash"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method gcode_files_update_or_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'name' is set
-        if self.api_client.client_side_validation and ('name' not in local_var_params or  # noqa: E501
-                                                        local_var_params['name'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `name` when calling `gcode_files_update_or_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" not in local_var_params
+            or local_var_params["name"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `name` when calling `gcode_files_update_or_create`"
+            )  # noqa: E501
         # verify the required parameter 'file' is set
-        if self.api_client.client_side_validation and ('file' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file` when calling `gcode_files_update_or_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file" not in local_var_params
+            or local_var_params["file"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file` when calling `gcode_files_update_or_create`"
+            )  # noqa: E501
         # verify the required parameter 'file_hash' is set
-        if self.api_client.client_side_validation and ('file_hash' not in local_var_params or  # noqa: E501
-                                                        local_var_params['file_hash'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `file_hash` when calling `gcode_files_update_or_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" not in local_var_params
+            or local_var_params["file_hash"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `file_hash` when calling `gcode_files_update_or_create`"
+            )  # noqa: E501
 
-        if self.api_client.client_side_validation and ('name' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['name']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `name` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`")  # noqa: E501
-        if self.api_client.client_side_validation and ('file_hash' in local_var_params and  # noqa: E501
-                                                        len(local_var_params['file_hash']) > 255):  # noqa: E501
-            raise ApiValueError("Invalid value for parameter `file_hash` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "name" in local_var_params
+            and len(local_var_params["name"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `name` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`"
+            )  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "file_hash" in local_var_params
+            and len(local_var_params["file_hash"]) > 255  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Invalid value for parameter `file_hash` when calling `gcode_files_update_or_create`, length must be less than or equal to `255`"
+            )  # noqa: E501
         collection_formats = {}
 
         path_params = {}
@@ -935,25 +1046,31 @@ class RemoteControlApi(object):
 
         form_params = []
         local_var_files = {}
-        if 'name' in local_var_params:
-            form_params.append(('name', local_var_params['name']))  # noqa: E501
-        if 'file' in local_var_params:
-            local_var_files['file'] = local_var_params['file']  # noqa: E501
-        if 'file_hash' in local_var_params:
-            form_params.append(('file_hash', local_var_params['file_hash']))  # noqa: E501
+        if "name" in local_var_params:
+            form_params.append(("name", local_var_params["name"]))  # noqa: E501
+        if "file" in local_var_params:
+            local_var_files["file"] = local_var_params["file"]  # noqa: E501
+        if "file_hash" in local_var_params:
+            form_params.append(
+                ("file_hash", local_var_params["file_hash"])
+            )  # noqa: E501
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['multipart/form-data', 'application/x-www-form-urlencoded'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            ["multipart/form-data", "application/x-www-form-urlencoded"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "GcodeFile",
             200: "GcodeFile",
@@ -961,7 +1078,8 @@ class RemoteControlApi(object):
         }
 
         return self.api_client.call_api(
-            '/api/gcode-files/update_or_create/', 'POST',
+            "/api/gcode-files/update_or_create/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -970,12 +1088,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def print_jobs_create(self, print_job_request, **kwargs):  # noqa: E501
         """print_jobs_create  # noqa: E501
@@ -1003,10 +1124,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
-        return self.print_jobs_create_with_http_info(print_job_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.print_jobs_create_with_http_info(
+            print_job_request, **kwargs
+        )  # noqa: E501
 
-    def print_jobs_create_with_http_info(self, print_job_request, **kwargs):  # noqa: E501
+    def print_jobs_create_with_http_info(
+        self, print_job_request, **kwargs
+    ):  # noqa: E501
         """print_jobs_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -1042,31 +1167,33 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'print_job_request'
-        ]
+        all_params = ["print_job_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method print_jobs_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'print_job_request' is set
-        if self.api_client.client_side_validation and ('print_job_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['print_job_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `print_job_request` when calling `print_jobs_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "print_job_request" not in local_var_params
+            or local_var_params["print_job_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `print_job_request` when calling `print_jobs_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
@@ -1080,26 +1207,35 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'print_job_request' in local_var_params:
-            body_params = local_var_params['print_job_request']
+        if "print_job_request" in local_var_params:
+            body_params = local_var_params["print_job_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             201: "PrintJob",
             400: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/print-jobs/', 'POST',
+            "/api/print-jobs/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -1108,12 +1244,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def print_jobs_list(self, **kwargs):  # noqa: E501
         """print_jobs_list  # noqa: E501
@@ -1143,7 +1282,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PaginatedPrintJobList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.print_jobs_list_with_http_info(**kwargs)  # noqa: E501
 
     def print_jobs_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -1184,38 +1323,39 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'offset'
-        ]
+        all_params = ["limit", "offset"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method print_jobs_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
 
         header_params = {}
 
@@ -1224,18 +1364,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedPrintJobList",
         }
 
         return self.api_client.call_api(
-            '/api/print-jobs/', 'GET',
+            "/api/print-jobs/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -1244,12 +1386,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def print_jobs_partial_update(self, id, **kwargs):  # noqa: E501
         """print_jobs_partial_update  # noqa: E501
@@ -1279,7 +1424,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.print_jobs_partial_update_with_http_info(id, **kwargs)  # noqa: E501
 
     def print_jobs_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -1320,38 +1465,38 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'patched_print_job_request'
-        ]
+        all_params = ["id", "patched_print_job_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method print_jobs_partial_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_partial_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `print_jobs_partial_update`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -1361,26 +1506,35 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'patched_print_job_request' in local_var_params:
-            body_params = local_var_params['patched_print_job_request']
+        if "patched_print_job_request" in local_var_params:
+            body_params = local_var_params["patched_print_job_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "PrintJob",
             200: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/print-jobs/{id}/', 'PATCH',
+            "/api/print-jobs/{id}/",
+            "PATCH",
             path_params,
             query_params,
             header_params,
@@ -1389,12 +1543,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def print_jobs_retrieve(self, id, **kwargs):  # noqa: E501
         """print_jobs_retrieve  # noqa: E501
@@ -1422,7 +1579,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.print_jobs_retrieve_with_http_info(id, **kwargs)  # noqa: E501
 
     def print_jobs_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -1461,37 +1618,38 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method print_jobs_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `print_jobs_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -1502,18 +1660,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/print-jobs/{id}/', 'GET',
+            "/api/print-jobs/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -1522,12 +1682,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def print_jobs_update(self, id, print_job_request, **kwargs):  # noqa: E501
         """print_jobs_update  # noqa: E501
@@ -1557,10 +1720,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
-        return self.print_jobs_update_with_http_info(id, print_job_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.print_jobs_update_with_http_info(
+            id, print_job_request, **kwargs
+        )  # noqa: E501
 
-    def print_jobs_update_with_http_info(self, id, print_job_request, **kwargs):  # noqa: E501
+    def print_jobs_update_with_http_info(
+        self, id, print_job_request, **kwargs
+    ):  # noqa: E501
         """print_jobs_update  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -1598,42 +1765,46 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'print_job_request'
-        ]
+        all_params = ["id", "print_job_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method print_jobs_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `print_jobs_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `print_jobs_update`"
+            )  # noqa: E501
         # verify the required parameter 'print_job_request' is set
-        if self.api_client.client_side_validation and ('print_job_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['print_job_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `print_job_request` when calling `print_jobs_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "print_job_request" not in local_var_params
+            or local_var_params["print_job_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `print_job_request` when calling `print_jobs_update`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -1643,26 +1814,35 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'print_job_request' in local_var_params:
-            body_params = local_var_params['print_job_request']
+        if "print_job_request" in local_var_params:
+            body_params = local_var_params["print_job_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "PrintJob",
             200: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/print-jobs/{id}/', 'PUT',
+            "/api/print-jobs/{id}/",
+            "PUT",
             path_params,
             query_params,
             header_params,
@@ -1671,12 +1851,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def printer_profiles_create(self, printer_profile_request, **kwargs):  # noqa: E501
         """printer_profiles_create  # noqa: E501
@@ -1704,10 +1887,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrintJob
         """
-        kwargs['_return_http_data_only'] = True
-        return self.printer_profiles_create_with_http_info(printer_profile_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.printer_profiles_create_with_http_info(
+            printer_profile_request, **kwargs
+        )  # noqa: E501
 
-    def printer_profiles_create_with_http_info(self, printer_profile_request, **kwargs):  # noqa: E501
+    def printer_profiles_create_with_http_info(
+        self, printer_profile_request, **kwargs
+    ):  # noqa: E501
         """printer_profiles_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -1743,31 +1930,33 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'printer_profile_request'
-        ]
+        all_params = ["printer_profile_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'printer_profile_request' is set
-        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "printer_profile_request" not in local_var_params
+            or local_var_params["printer_profile_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `printer_profile_request` when calling `printer_profiles_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
@@ -1781,26 +1970,35 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'printer_profile_request' in local_var_params:
-            body_params = local_var_params['printer_profile_request']
+        if "printer_profile_request" in local_var_params:
+            body_params = local_var_params["printer_profile_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "PrintJob",
             201: "PrintJob",
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/', 'POST',
+            "/api/printer-profiles/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -1809,12 +2007,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def printer_profiles_list(self, **kwargs):  # noqa: E501
         """printer_profiles_list  # noqa: E501
@@ -1848,7 +2049,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PaginatedPrinterProfileList
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.printer_profiles_list_with_http_info(**kwargs)  # noqa: E501
 
     def printer_profiles_list_with_http_info(self, **kwargs):  # noqa: E501
@@ -1893,44 +2094,47 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'limit',
-            'name',
-            'offset',
-            'user'
-        ]
+        all_params = ["limit", "name", "offset", "user"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_list" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'limit' in local_var_params and local_var_params['limit'] is not None:  # noqa: E501
-            query_params.append(('limit', local_var_params['limit']))  # noqa: E501
-        if 'name' in local_var_params and local_var_params['name'] is not None:  # noqa: E501
-            query_params.append(('name', local_var_params['name']))  # noqa: E501
-        if 'offset' in local_var_params and local_var_params['offset'] is not None:  # noqa: E501
-            query_params.append(('offset', local_var_params['offset']))  # noqa: E501
-        if 'user' in local_var_params and local_var_params['user'] is not None:  # noqa: E501
-            query_params.append(('user', local_var_params['user']))  # noqa: E501
+        if (
+            "limit" in local_var_params and local_var_params["limit"] is not None
+        ):  # noqa: E501
+            query_params.append(("limit", local_var_params["limit"]))  # noqa: E501
+        if (
+            "name" in local_var_params and local_var_params["name"] is not None
+        ):  # noqa: E501
+            query_params.append(("name", local_var_params["name"]))  # noqa: E501
+        if (
+            "offset" in local_var_params and local_var_params["offset"] is not None
+        ):  # noqa: E501
+            query_params.append(("offset", local_var_params["offset"]))  # noqa: E501
+        if (
+            "user" in local_var_params and local_var_params["user"] is not None
+        ):  # noqa: E501
+            query_params.append(("user", local_var_params["user"]))  # noqa: E501
 
         header_params = {}
 
@@ -1939,18 +2143,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PaginatedPrinterProfileList",
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/', 'GET',
+            "/api/printer-profiles/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -1959,12 +2165,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def printer_profiles_partial_update(self, id, **kwargs):  # noqa: E501
         """printer_profiles_partial_update  # noqa: E501
@@ -1994,10 +2203,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrinterProfile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.printer_profiles_partial_update_with_http_info(id, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.printer_profiles_partial_update_with_http_info(
+            id, **kwargs
+        )  # noqa: E501
 
-    def printer_profiles_partial_update_with_http_info(self, id, **kwargs):  # noqa: E501
+    def printer_profiles_partial_update_with_http_info(
+        self, id, **kwargs
+    ):  # noqa: E501
         """printer_profiles_partial_update  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -2035,38 +2248,38 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'patched_printer_profile_request'
-        ]
+        all_params = ["id", "patched_printer_profile_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_partial_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_partial_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `printer_profiles_partial_update`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -2076,25 +2289,34 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'patched_printer_profile_request' in local_var_params:
-            body_params = local_var_params['patched_printer_profile_request']
+        if "patched_printer_profile_request" in local_var_params:
+            body_params = local_var_params["patched_printer_profile_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PrinterProfile",
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/{id}/', 'PATCH',
+            "/api/printer-profiles/{id}/",
+            "PATCH",
             path_params,
             query_params,
             header_params,
@@ -2103,12 +2325,15 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
     def printer_profiles_retrieve(self, id, **kwargs):  # noqa: E501
         """printer_profiles_retrieve  # noqa: E501
@@ -2136,7 +2361,7 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrinterProfile
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.printer_profiles_retrieve_with_http_info(id, **kwargs)  # noqa: E501
 
     def printer_profiles_retrieve_with_http_info(self, id, **kwargs):  # noqa: E501
@@ -2175,37 +2400,38 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id'
-        ]
+        all_params = ["id"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_retrieve`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `printer_profiles_retrieve`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -2216,18 +2442,20 @@ class RemoteControlApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PrinterProfile",
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/{id}/', 'GET',
+            "/api/printer-profiles/{id}/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -2236,14 +2464,19 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
-    def printer_profiles_update(self, id, printer_profile_request, **kwargs):  # noqa: E501
+    def printer_profiles_update(
+        self, id, printer_profile_request, **kwargs
+    ):  # noqa: E501
         """printer_profiles_update  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -2271,10 +2504,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrinterProfile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.printer_profiles_update_with_http_info(id, printer_profile_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.printer_profiles_update_with_http_info(
+            id, printer_profile_request, **kwargs
+        )  # noqa: E501
 
-    def printer_profiles_update_with_http_info(self, id, printer_profile_request, **kwargs):  # noqa: E501
+    def printer_profiles_update_with_http_info(
+        self, id, printer_profile_request, **kwargs
+    ):  # noqa: E501
         """printer_profiles_update  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -2312,42 +2549,46 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'id',
-            'printer_profile_request'
-        ]
+        all_params = ["id", "printer_profile_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_update" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'id' is set
-        if self.api_client.client_side_validation and ('id' not in local_var_params or  # noqa: E501
-                                                        local_var_params['id'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `id` when calling `printer_profiles_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "id" not in local_var_params or local_var_params["id"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `id` when calling `printer_profiles_update`"
+            )  # noqa: E501
         # verify the required parameter 'printer_profile_request' is set
-        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_update`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "printer_profile_request" not in local_var_params
+            or local_var_params["printer_profile_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `printer_profile_request` when calling `printer_profiles_update`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in local_var_params:
-            path_params['id'] = local_var_params['id']  # noqa: E501
+        if "id" in local_var_params:
+            path_params["id"] = local_var_params["id"]  # noqa: E501
 
         query_params = []
 
@@ -2357,25 +2598,34 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'printer_profile_request' in local_var_params:
-            body_params = local_var_params['printer_profile_request']
+        if "printer_profile_request" in local_var_params:
+            body_params = local_var_params["printer_profile_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "PrinterProfile",
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/{id}/', 'PUT',
+            "/api/printer-profiles/{id}/",
+            "PUT",
             path_params,
             query_params,
             header_params,
@@ -2384,14 +2634,19 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
 
-    def printer_profiles_update_or_create(self, printer_profile_request, **kwargs):  # noqa: E501
+    def printer_profiles_update_or_create(
+        self, printer_profile_request, **kwargs
+    ):  # noqa: E501
         """printer_profiles_update_or_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -2417,10 +2672,14 @@ class RemoteControlApi(object):
                  returns the request thread.
         :rtype: PrinterProfile
         """
-        kwargs['_return_http_data_only'] = True
-        return self.printer_profiles_update_or_create_with_http_info(printer_profile_request, **kwargs)  # noqa: E501
+        kwargs["_return_http_data_only"] = True
+        return self.printer_profiles_update_or_create_with_http_info(
+            printer_profile_request, **kwargs
+        )  # noqa: E501
 
-    def printer_profiles_update_or_create_with_http_info(self, printer_profile_request, **kwargs):  # noqa: E501
+    def printer_profiles_update_or_create_with_http_info(
+        self, printer_profile_request, **kwargs
+    ):  # noqa: E501
         """printer_profiles_update_or_create  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
@@ -2456,31 +2715,33 @@ class RemoteControlApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'printer_profile_request'
-        ]
+        all_params = ["printer_profile_request"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method printer_profiles_update_or_create" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
         # verify the required parameter 'printer_profile_request' is set
-        if self.api_client.client_side_validation and ('printer_profile_request' not in local_var_params or  # noqa: E501
-                                                        local_var_params['printer_profile_request'] is None):  # noqa: E501
-            raise ApiValueError("Missing the required parameter `printer_profile_request` when calling `printer_profiles_update_or_create`")  # noqa: E501
+        if self.api_client.client_side_validation and (
+            "printer_profile_request" not in local_var_params
+            or local_var_params["printer_profile_request"] is None  # noqa: E501
+        ):  # noqa: E501
+            raise ApiValueError(
+                "Missing the required parameter `printer_profile_request` when calling `printer_profiles_update_or_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
@@ -2494,19 +2755,27 @@ class RemoteControlApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'printer_profile_request' in local_var_params:
-            body_params = local_var_params['printer_profile_request']
+        if "printer_profile_request" in local_var_params:
+            body_params = local_var_params["printer_profile_request"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data'])  # noqa: E501
+        header_params[
+            "Content-Type"
+        ] = self.api_client.select_header_content_type(  # noqa: E501
+            [
+                "application/json",
+                "application/x-www-form-urlencoded",
+                "multipart/form-data",
+            ]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             400: "PrinterProfile",
             200: "PrinterProfile",
@@ -2514,7 +2783,8 @@ class RemoteControlApi(object):
         }
 
         return self.api_client.call_api(
-            '/api/printer-profiles/update_or_create/', 'POST',
+            "/api/printer-profiles/update_or_create/",
+            "POST",
             path_params,
             query_params,
             header_params,
@@ -2523,9 +2793,12 @@ class RemoteControlApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )

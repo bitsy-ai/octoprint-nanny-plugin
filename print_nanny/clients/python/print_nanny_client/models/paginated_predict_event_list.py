@@ -32,20 +32,27 @@ class PaginatedPredictEventList(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'count': 'int',
-        'next': 'str',
-        'previous': 'str',
-        'results': 'list[PredictEvent]'
+        "count": "int",
+        "next": "str",
+        "previous": "str",
+        "results": "list[PredictEvent]",
     }
 
     attribute_map = {
-        'count': 'count',
-        'next': 'next',
-        'previous': 'previous',
-        'results': 'results'
+        "count": "count",
+        "next": "next",
+        "previous": "previous",
+        "results": "results",
     }
 
-    def __init__(self, count=None, next=None, previous=None, results=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        count=None,
+        next=None,
+        previous=None,
+        results=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """PaginatedPredictEventList - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -166,15 +173,11 @@ class PaginatedPredictEventList(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

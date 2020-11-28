@@ -35,7 +35,15 @@ class LastStatusEnum(object):
     PAUSED = "PAUSED"
     RESUMED = "RESUMED"
 
-    allowable_values = [STARTED, DONE, FAILED, CANCELLING, CANCELLED, PAUSED, RESUMED]  # noqa: E501
+    allowable_values = [
+        STARTED,
+        DONE,
+        FAILED,
+        CANCELLING,
+        CANCELLED,
+        PAUSED,
+        RESUMED,
+    ]  # noqa: E501
 
     """
     Attributes:
@@ -44,11 +52,9 @@ class LastStatusEnum(object):
       attribute_map (dict): The key is attribute name
                             and the value is json key in definition.
     """
-    openapi_types = {
-    }
+    openapi_types = {}
 
-    attribute_map = {
-    }
+    attribute_map = {}
 
     def __init__(self, local_vars_configuration=None):  # noqa: E501
         """LastStatusEnum - a model defined in OpenAPI"""  # noqa: E501
@@ -75,15 +81,11 @@ class LastStatusEnum(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

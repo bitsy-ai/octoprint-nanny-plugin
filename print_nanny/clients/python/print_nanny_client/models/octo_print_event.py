@@ -32,30 +32,42 @@ class OctoPrintEvent(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'id': 'int',
-        'dt': 'datetime',
-        'event_type': 'EventTypeEnum',
-        'event_data': 'dict(str, object)',
-        'user': 'int',
-        'plugin_version': 'str',
-        'octoprint_version': 'str',
-        'print_job': 'int',
-        'url': 'str'
+        "id": "int",
+        "dt": "datetime",
+        "event_type": "EventTypeEnum",
+        "event_data": "dict(str, object)",
+        "user": "int",
+        "plugin_version": "str",
+        "octoprint_version": "str",
+        "print_job": "int",
+        "url": "str",
     }
 
     attribute_map = {
-        'id': 'id',
-        'dt': 'dt',
-        'event_type': 'event_type',
-        'event_data': 'event_data',
-        'user': 'user',
-        'plugin_version': 'plugin_version',
-        'octoprint_version': 'octoprint_version',
-        'print_job': 'print_job',
-        'url': 'url'
+        "id": "id",
+        "dt": "dt",
+        "event_type": "event_type",
+        "event_data": "event_data",
+        "user": "user",
+        "plugin_version": "plugin_version",
+        "octoprint_version": "octoprint_version",
+        "print_job": "print_job",
+        "url": "url",
     }
 
-    def __init__(self, id=None, dt=None, event_type=None, event_data=None, user=None, plugin_version=None, octoprint_version=None, print_job=None, url=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        dt=None,
+        event_type=None,
+        event_data=None,
+        user=None,
+        plugin_version=None,
+        octoprint_version=None,
+        print_job=None,
+        url=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """OctoPrintEvent - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -124,7 +136,9 @@ class OctoPrintEvent(object):
         :param dt: The dt of this OctoPrintEvent.  # noqa: E501
         :type dt: datetime
         """
-        if self.local_vars_configuration.client_side_validation and dt is None:  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and dt is None
+        ):  # noqa: E501
             raise ValueError("Invalid value for `dt`, must not be `None`")  # noqa: E501
 
         self._dt = dt
@@ -147,8 +161,12 @@ class OctoPrintEvent(object):
         :param event_type: The event_type of this OctoPrintEvent.  # noqa: E501
         :type event_type: EventTypeEnum
         """
-        if self.local_vars_configuration.client_side_validation and event_type is None:  # noqa: E501
-            raise ValueError("Invalid value for `event_type`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and event_type is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `event_type`, must not be `None`"
+            )  # noqa: E501
 
         self._event_type = event_type
 
@@ -170,8 +188,12 @@ class OctoPrintEvent(object):
         :param event_data: The event_data of this OctoPrintEvent.  # noqa: E501
         :type event_data: dict(str, object)
         """
-        if self.local_vars_configuration.client_side_validation and event_data is None:  # noqa: E501
-            raise ValueError("Invalid value for `event_data`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and event_data is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `event_data`, must not be `None`"
+            )  # noqa: E501
 
         self._event_data = event_data
 
@@ -214,11 +236,21 @@ class OctoPrintEvent(object):
         :param plugin_version: The plugin_version of this OctoPrintEvent.  # noqa: E501
         :type plugin_version: str
         """
-        if self.local_vars_configuration.client_side_validation and plugin_version is None:  # noqa: E501
-            raise ValueError("Invalid value for `plugin_version`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                plugin_version is not None and len(plugin_version) > 30):
-            raise ValueError("Invalid value for `plugin_version`, length must be less than or equal to `30`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and plugin_version is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `plugin_version`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and plugin_version is not None
+            and len(plugin_version) > 30
+        ):
+            raise ValueError(
+                "Invalid value for `plugin_version`, length must be less than or equal to `30`"
+            )  # noqa: E501
 
         self._plugin_version = plugin_version
 
@@ -240,11 +272,21 @@ class OctoPrintEvent(object):
         :param octoprint_version: The octoprint_version of this OctoPrintEvent.  # noqa: E501
         :type octoprint_version: str
         """
-        if self.local_vars_configuration.client_side_validation and octoprint_version is None:  # noqa: E501
-            raise ValueError("Invalid value for `octoprint_version`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                octoprint_version is not None and len(octoprint_version) > 30):
-            raise ValueError("Invalid value for `octoprint_version`, length must be less than or equal to `30`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and octoprint_version is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `octoprint_version`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and octoprint_version is not None
+            and len(octoprint_version) > 30
+        ):
+            raise ValueError(
+                "Invalid value for `octoprint_version`, length must be less than or equal to `30`"
+            )  # noqa: E501
 
         self._octoprint_version = octoprint_version
 
@@ -308,15 +350,11 @@ class OctoPrintEvent(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

@@ -28,35 +28,25 @@ class TestUsersApi(unittest.TestCase):
         pass
 
     def test_users_list(self):
-        """Test case for users_list
-
-        """
+        """Test case for users_list"""
         pass
 
     def test_users_me_retrieve(self):
-        """Test case for users_me_retrieve
-
-        """
+        """Test case for users_me_retrieve"""
         pass
 
     def test_users_partial_update(self):
-        """Test case for users_partial_update
-
-        """
+        """Test case for users_partial_update"""
         pass
 
     def test_users_retrieve(self):
-        """Test case for users_retrieve
-
-        """
+        """Test case for users_retrieve"""
         pass
 
     def test_users_update(self):
-        """Test case for users_update
-
-        """
+        """Test case for users_update"""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

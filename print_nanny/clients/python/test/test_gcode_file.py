@@ -18,6 +18,7 @@ import print_nanny_client
 from print_nanny_client.models.gcode_file import GcodeFile  # noqa: E501
 from print_nanny_client.rest import ApiException
 
+
 class TestGcodeFile(unittest.TestCase):
     """GcodeFile unit test stubs"""
 
@@ -29,30 +30,24 @@ class TestGcodeFile(unittest.TestCase):
 
     def make_instance(self, include_optional):
         """Test GcodeFile
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
+        include_option is a boolean, when False only required
+        params are included, when True both required and
+        optional params are included"""
         # model = print_nanny_client.models.gcode_file.GcodeFile()  # noqa: E501
-        if include_optional :
+        if include_optional:
+            return GcodeFile(id=56, user=56, name="", file="", file_hash="", url="")
+        else:
             return GcodeFile(
-                id = 56, 
-                user = 56, 
-                name = '', 
-                file = '', 
-                file_hash = '', 
-                url = ''
+                name="",
+                file="",
+                file_hash="",
             )
-        else :
-            return GcodeFile(
-                name = '',
-                file = '',
-                file_hash = '',
-        )
 
     def testGcodeFile(self):
         """Test GcodeFile"""
         inst_req_only = self.make_instance(include_optional=False)
         inst_req_and_optional = self.make_instance(include_optional=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

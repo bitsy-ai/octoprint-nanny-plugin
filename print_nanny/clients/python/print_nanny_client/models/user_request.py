@@ -31,13 +31,9 @@ class UserRequest(object):
       attribute_map (dict): The key is attribute name
                             and the value is json key in definition.
     """
-    openapi_types = {
-        'email': 'str'
-    }
+    openapi_types = {"email": "str"}
 
-    attribute_map = {
-        'email': 'email'
-    }
+    attribute_map = {"email": "email"}
 
     def __init__(self, email=None, local_vars_configuration=None):  # noqa: E501
         """UserRequest - a model defined in OpenAPI"""  # noqa: E501
@@ -68,11 +64,20 @@ class UserRequest(object):
         :param email: The email of this UserRequest.  # noqa: E501
         :type email: str
         """
-        if self.local_vars_configuration.client_side_validation and email is None:  # noqa: E501
-            raise ValueError("Invalid value for `email`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                email is not None and len(email) > 254):
-            raise ValueError("Invalid value for `email`, length must be less than or equal to `254`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and email is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `email`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and email is not None
+            and len(email) > 254
+        ):
+            raise ValueError(
+                "Invalid value for `email`, length must be less than or equal to `254`"
+            )  # noqa: E501
 
         self._email = email
 
@@ -94,15 +99,11 @@ class UserRequest(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

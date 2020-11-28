@@ -32,22 +32,30 @@ class PredictEventFile(object):
                             and the value is json key in definition.
     """
     openapi_types = {
-        'id': 'int',
-        'annotated_image': 'str',
-        'hash': 'str',
-        'original_image': 'str',
-        'url': 'str'
+        "id": "int",
+        "annotated_image": "str",
+        "hash": "str",
+        "original_image": "str",
+        "url": "str",
     }
 
     attribute_map = {
-        'id': 'id',
-        'annotated_image': 'annotated_image',
-        'hash': 'hash',
-        'original_image': 'original_image',
-        'url': 'url'
+        "id": "id",
+        "annotated_image": "annotated_image",
+        "hash": "hash",
+        "original_image": "original_image",
+        "url": "url",
     }
 
-    def __init__(self, id=None, annotated_image=None, hash=None, original_image=None, url=None, local_vars_configuration=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        annotated_image=None,
+        hash=None,
+        original_image=None,
+        url=None,
+        local_vars_configuration=None,
+    ):  # noqa: E501
         """PredictEventFile - a model defined in OpenAPI"""  # noqa: E501
         if local_vars_configuration is None:
             local_vars_configuration = Configuration()
@@ -107,8 +115,13 @@ class PredictEventFile(object):
         :param annotated_image: The annotated_image of this PredictEventFile.  # noqa: E501
         :type annotated_image: str
         """
-        if self.local_vars_configuration.client_side_validation and annotated_image is None:  # noqa: E501
-            raise ValueError("Invalid value for `annotated_image`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and annotated_image is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `annotated_image`, must not be `None`"
+            )  # noqa: E501
 
         self._annotated_image = annotated_image
 
@@ -130,11 +143,20 @@ class PredictEventFile(object):
         :param hash: The hash of this PredictEventFile.  # noqa: E501
         :type hash: str
         """
-        if self.local_vars_configuration.client_side_validation and hash is None:  # noqa: E501
-            raise ValueError("Invalid value for `hash`, must not be `None`")  # noqa: E501
-        if (self.local_vars_configuration.client_side_validation and
-                hash is not None and len(hash) > 255):
-            raise ValueError("Invalid value for `hash`, length must be less than or equal to `255`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation and hash is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `hash`, must not be `None`"
+            )  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and hash is not None
+            and len(hash) > 255
+        ):
+            raise ValueError(
+                "Invalid value for `hash`, length must be less than or equal to `255`"
+            )  # noqa: E501
 
         self._hash = hash
 
@@ -156,8 +178,13 @@ class PredictEventFile(object):
         :param original_image: The original_image of this PredictEventFile.  # noqa: E501
         :type original_image: str
         """
-        if self.local_vars_configuration.client_side_validation and original_image is None:  # noqa: E501
-            raise ValueError("Invalid value for `original_image`, must not be `None`")  # noqa: E501
+        if (
+            self.local_vars_configuration.client_side_validation
+            and original_image is None
+        ):  # noqa: E501
+            raise ValueError(
+                "Invalid value for `original_image`, must not be `None`"
+            )  # noqa: E501
 
         self._original_image = original_image
 
@@ -200,15 +227,11 @@ class PredictEventFile(object):
             value = getattr(self, attr)
             attr = self.attribute_map.get(attr, attr) if serialize else attr
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: convert(x),
-                    value
-                ))
+                result[attr] = list(map(lambda x: convert(x), value))
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], convert(item[1])),
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(lambda item: (item[0], convert(item[1])), value.items())
+                )
             else:
                 result[attr] = convert(value)
 

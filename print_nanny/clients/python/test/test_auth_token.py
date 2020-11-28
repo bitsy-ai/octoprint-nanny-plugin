@@ -18,6 +18,7 @@ import print_nanny_client
 from print_nanny_client.models.auth_token import AuthToken  # noqa: E501
 from print_nanny_client.rest import ApiException
 
+
 class TestAuthToken(unittest.TestCase):
     """AuthToken unit test stubs"""
 
@@ -29,22 +30,20 @@ class TestAuthToken(unittest.TestCase):
 
     def make_instance(self, include_optional):
         """Test AuthToken
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
+        include_option is a boolean, when False only required
+        params are included, when True both required and
+        optional params are included"""
         # model = print_nanny_client.models.auth_token.AuthToken()  # noqa: E501
-        if include_optional :
-            return AuthToken(
-                token = ''
-            )
-        else :
-            return AuthToken(
-        )
+        if include_optional:
+            return AuthToken(token="")
+        else:
+            return AuthToken()
 
     def testAuthToken(self):
         """Test AuthToken"""
         inst_req_only = self.make_instance(include_optional=False)
         inst_req_and_optional = self.make_instance(include_optional=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -17,10 +17,7 @@ import re  # noqa: F401
 import six
 
 from print_nanny_client.api_client import ApiClient
-from print_nanny_client.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
-)
+from print_nanny_client.exceptions import ApiTypeError, ApiValueError  # noqa: F401
 
 
 class SchemaApi(object):
@@ -62,7 +59,7 @@ class SchemaApi(object):
                  returns the request thread.
         :rtype: dict(str, object)
         """
-        kwargs['_return_http_data_only'] = True
+        kwargs["_return_http_data_only"] = True
         return self.schema_retrieve_with_http_info(**kwargs)  # noqa: E501
 
     def schema_retrieve_with_http_info(self, **kwargs):  # noqa: E501
@@ -102,35 +99,35 @@ class SchemaApi(object):
 
         local_var_params = locals()
 
-        all_params = [
-            'lang'
-        ]
+        all_params = ["lang"]
         all_params.extend(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth'
+                "async_req",
+                "_return_http_data_only",
+                "_preload_content",
+                "_request_timeout",
+                "_request_auth",
             ]
         )
 
-        for key, val in six.iteritems(local_var_params['kwargs']):
+        for key, val in six.iteritems(local_var_params["kwargs"]):
             if key not in all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method schema_retrieve" % key
                 )
             local_var_params[key] = val
-        del local_var_params['kwargs']
+        del local_var_params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'lang' in local_var_params and local_var_params['lang'] is not None:  # noqa: E501
-            query_params.append(('lang', local_var_params['lang']))  # noqa: E501
+        if (
+            "lang" in local_var_params and local_var_params["lang"] is not None
+        ):  # noqa: E501
+            query_params.append(("lang", local_var_params["lang"]))  # noqa: E501
 
         header_params = {}
 
@@ -139,18 +136,20 @@ class SchemaApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/vnd.oai.openapi+json', 'application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/vnd.oai.openapi+json", "application/json"]
+        )  # noqa: E501
 
         # Authentication setting
-        auth_settings = ['cookieAuth', 'tokenAuth']  # noqa: E501
-        
+        auth_settings = ["cookieAuth", "tokenAuth"]  # noqa: E501
+
         response_types_map = {
             200: "dict(str, object)",
         }
 
         return self.api_client.call_api(
-            '/api/schema/', 'GET',
+            "/api/schema/",
+            "GET",
             path_params,
             query_params,
             header_params,
@@ -159,9 +158,12 @@ class SchemaApi(object):
             files=local_var_files,
             response_types_map=response_types_map,
             auth_settings=auth_settings,
-            async_req=local_var_params.get('async_req'),
-            _return_http_data_only=local_var_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=local_var_params.get('_preload_content', True),
-            _request_timeout=local_var_params.get('_request_timeout'),
+            async_req=local_var_params.get("async_req"),
+            _return_http_data_only=local_var_params.get(
+                "_return_http_data_only"
+            ),  # noqa: E501
+            _preload_content=local_var_params.get("_preload_content", True),
+            _request_timeout=local_var_params.get("_request_timeout"),
             collection_formats=collection_formats,
-            _request_auth=local_var_params.get('_request_auth'))
+            _request_auth=local_var_params.get("_request_auth"),
+        )
