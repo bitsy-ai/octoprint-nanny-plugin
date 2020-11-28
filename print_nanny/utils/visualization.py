@@ -121,7 +121,8 @@ def draw_bounding_box_on_image(image,
                                color='red',
                                thickness=4,
                                display_str_list=(),
-                               use_normalized_coordinates=True):
+                               use_normalized_coordinates=True,
+                               detection_box_ignored=None):
     """Adds a bounding box to an image.
 
     Bounding box coordinates can be specified in either absolute (pixel) or
@@ -173,6 +174,9 @@ def draw_bounding_box_on_image(image,
         text_bottom = bottom + total_display_str_height
     # Reverse list and print from bottom to top.
     for display_str in display_str_list[::-1]:
+
+        if detection_box_ignored:
+            display_str += ' (ignored)'
         text_width, text_height = font.getsize(display_str)
         margin = np.ceil(0.05 * text_height)
         draw.rectangle(
@@ -195,7 +199,8 @@ def draw_bounding_box_on_image_array(image,
                                      color='red',
                                      thickness=4,
                                      display_str_list=(),
-                                     use_normalized_coordinates=True):
+                                     use_normalized_coordinates=True,
+                                     detection_box_ignored=None):
     """Adds a bounding box to an image (numpy array).
 
     Bounding box coordinates can be specified in either absolute (pixel) or
@@ -218,7 +223,7 @@ def draw_bounding_box_on_image_array(image,
     image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
     draw_bounding_box_on_image(image_pil, ymin, xmin, ymax, xmax, color,
                                thickness, display_str_list,
-                               use_normalized_coordinates)
+                               use_normalized_coordinates, detection_box_ignored=detection_box_ignored)
     np.copyto(image, np.array(image_pil))
 
 
@@ -289,7 +294,10 @@ def visualize_boxes_and_labels_on_image_array(
         groundtruth_box_visualization_color='black',
         skip_scores=False,
         skip_labels=False,
-        skip_track_ids=False):
+        skip_track_ids=False,
+        detection_boundary_mask=None,
+        detection_box_ignored=None
+    ):
     """Overlay labeled boxes on an image with formatted scores and label names.
 
     This function groups boxes that correspond to the same location
@@ -330,7 +338,7 @@ def visualize_boxes_and_labels_on_image_array(
       skip_scores: whether to skip score when drawing a single detection
       skip_labels: whether to skip label when drawing a single detection
       skip_track_ids: whether to skip track id when drawing a single detection
-
+      calibration: dict of {x0,y0,x1,y1}
     Returns:
       uint8 numpy array with shape (img_height, img_width, 3) with overlaid boxes.
     """
@@ -342,6 +350,7 @@ def visualize_boxes_and_labels_on_image_array(
     box_to_instance_boundaries_map = {}
     box_to_keypoints_map = collections.defaultdict(list)
     box_to_track_ids_map = {}
+    box_to_detection_box_ignored_map = {}
     if not max_boxes_to_draw:
         max_boxes_to_draw = boxes.shape[0]
     for i in range(min(max_boxes_to_draw, boxes.shape[0])):
@@ -355,6 +364,8 @@ def visualize_boxes_and_labels_on_image_array(
                 box_to_keypoints_map[box].extend(keypoints[i])
             if track_ids is not None:
                 box_to_track_ids_map[box] = track_ids[i]
+            if detection_box_ignored is not None:
+                box_to_detection_box_ignored_map[box] = detection_box_ignored[i]
             if scores is None:
                 box_to_color_map[box] = groundtruth_box_visualization_color
             else:
@@ -389,22 +400,29 @@ def visualize_boxes_and_labels_on_image_array(
                     box_to_color_map[box] = STANDARD_COLORS[
                         classes[i] % len(STANDARD_COLORS)]
 
+    if detection_boundary_mask is not None:
+        draw_mask_on_image_array(
+            image,
+            detection_boundary_mask,
+            color='LightGray',
+            alpha=0.3
+        )
     # Draw all boxes onto image.
     for box, color in box_to_color_map.items():
         ymin, xmin, ymax, xmax = box
-        if instance_masks is not None:
-            draw_mask_on_image_array(
-                image,
-                box_to_instance_masks_map[box],
-                color=color
-            )
-        if instance_boundaries is not None:
-            draw_mask_on_image_array(
-                image,
-                box_to_instance_boundaries_map[box],
-                color='red',
-                alpha=1.0
-            )
+        # if instance_masks is not None:
+        #     draw_mask_on_image_array(
+        #         image,
+        #         box_to_instance_masks_map[box],
+        #         color=color
+        #     )
+        # if instance_boundaries is not None:
+        #     draw_mask_on_image_array(
+        #         image,
+        #         box_to_instance_boundaries_map[box],
+        #         color='LightGray',
+        #         alpha=0.3
+        #     )
         draw_bounding_box_on_image_array(
             image,
             ymin,
@@ -414,13 +432,8 @@ def visualize_boxes_and_labels_on_image_array(
             color=color,
             thickness=line_thickness,
             display_str_list=box_to_display_str_map[box],
-            use_normalized_coordinates=use_normalized_coordinates)
-        if keypoints is not None:
-            draw_keypoints_on_image_array(
-                image,
-                box_to_keypoints_map[box],
-                color=color,
-                radius=line_thickness / 2,
-                use_normalized_coordinates=use_normalized_coordinates)
+            use_normalized_coordinates=use_normalized_coordinates,
+            detection_box_ignored=box_to_detection_box_ignored_map[box]
+        )
 
     return image

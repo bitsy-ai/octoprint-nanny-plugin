@@ -3,6 +3,7 @@ import base64
 import io
 import threading
 import json
+import logging
 import numpy as np
 import os
 from PIL import Image as PImage
@@ -21,6 +22,7 @@ except:
     from typing_extensions import TypedDict
     from typing import Optional
 
+logger = logging.getLogger(__name__)
 
 class Prediction(TypedDict):
     num_detections: int
@@ -29,13 +31,21 @@ class Prediction(TypedDict):
     detection_classes: np.ndarray
     viz: Optional[PImage.Image]
 
+class Calibration(TypedDict):
+    x0: np.float32
+    y0: np.float32
+    x1: np.float32
+    y1: np.float32
+
+
 
 class ThreadLocalPredictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), 'data') 
 
     def __init__(self, 
-        min_score_thresh=0.66, 
-        max_boxes_to_draw=10, 
+        min_score_thresh=0.50, 
+        max_boxes_to_draw=10,
+        min_overlap_area=0.50,
         model_version='tflite-print3d-2020-10-23T18:00:41.136Z',
         model_filename='model.tflite',
         metadata_filename='tflite_metadata.json',
@@ -62,6 +72,7 @@ class ThreadLocalPredictor(threading.local):
         self.output_details = self.tflite_interpreter.get_output_details()
         self.min_score_thresh = min_score_thresh
         self.max_boxes_to_draw = max_boxes_to_draw
+        self.min_overlap_area = min_overlap_area
         self.__dict__.update(**kwargs)
 
         with open(self.metadata_path) as f:
@@ -101,10 +112,62 @@ class ThreadLocalPredictor(threading.local):
 
         img = PImage.fromarray(image_np)
         img.save(outfile)
+    
+    def percent_intersection(self, detection_boxes, detection_scores, detection_classes, bb1):
+        ''' 
+            bb1 - boundary box
+            bb2 - detection box
+        '''
+        aou = np.zeros(len(detection_boxes))
 
-    def postprocess(self, image: PImage, prediction: Prediction) -> Prediction:
+        for i, bb2 in enumerate(
+            detection_boxes):
+
+            assert bb1[0] < bb1[2]
+            assert bb1[1] < bb1[3]
+            assert bb2[0] < bb2[2]
+            assert bb2[1] < bb2[3]
+
+            # determine the coordinates of the intersection rectangle
+            x_left = max(bb1[0], bb2[0])
+            y_top = max(bb1[1], bb2[1])
+            x_right = min(bb1[2], bb2[2])
+            y_bottom = min(bb1[3], bb2[3])
+
+            # boxes do not intersect
+            if x_right < x_left or y_bottom < y_top:
+                aou[i] = 0.0
+                continue
+            # The intersection of two axis-aligned bounding boxes is always an
+            # axis-aligned bounding box
+            intersection_area = (x_right - x_left) * (y_bottom - y_top)
+
+            # compute the area of detection box
+            bb2_area = (bb2[2] - bb2[0]) * (bb2[3] - bb2[1])
+  
+
+            if (intersection_area / bb2_area) == 1.0:
+                aou[i] = 1.0
+                continue
+            aou[i] = 1 - (intersection_area / bb2_area)
+
+        return aou
+
+    def postprocess(self, image: PImage, prediction: Prediction, calibration_fn):
 
         image_np = np.asarray(image).copy()
+        height, width, _ = image_np.shape
+        calibration = calibration_fn(int(prediction['num_detections']), height, width)
+        detection_boundary_mask = calibration['mask']
+        coords = calibration['coords']
+        percent_intersection = self.percent_intersection(
+            prediction['detection_boxes'],
+            prediction['detection_scores'],
+            prediction['detection_classes'],
+            coords
+        )
+        ignored_mask = percent_intersection[percent_intersection <= self.min_overlap_area]
+
 
         viz = visualize_boxes_and_labels_on_image_array(
             image_np,
@@ -115,7 +178,9 @@ class ThreadLocalPredictor(threading.local):
             use_normalized_coordinates=True,
             line_thickness=4,
             min_score_thresh=self.min_score_thresh,
-            max_boxes_to_draw=self.max_boxes_to_draw
+            max_boxes_to_draw=self.max_boxes_to_draw,
+            detection_boundary_mask=detection_boundary_mask,
+            detection_box_ignored=ignored_mask
         )
         return viz
 
@@ -127,20 +192,24 @@ class ThreadLocalPredictor(threading.local):
         )
         self.tflite_interpreter.invoke()
 
-        box_data = tf.convert_to_tensor(self.tflite_interpreter.get_tensor(
-            self.output_details[0]['index']))
-        class_data = tf.convert_to_tensor(self.tflite_interpreter.get_tensor(
-            self.output_details[1]['index']))
-        score_data = tf.convert_to_tensor(self.tflite_interpreter.get_tensor(
-            self.output_details[2]['index']))
-        num_detections = tf.convert_to_tensor(self.tflite_interpreter.get_tensor(
-            self.output_details[3]['index']))
+        box_data = self.tflite_interpreter.get_tensor(
+            self.output_details[0]['index'])
 
-        class_data = tf.squeeze(
-            class_data, axis=[0]).numpy().astype(np.int64) + 1
-        box_data = tf.squeeze(box_data, axis=[0]).numpy()
-        score_data = tf.squeeze(score_data, axis=[0]).numpy()
-        num_detections = tf.squeeze(num_detections, axis=[0]).numpy()
+        class_data = self.tflite_interpreter.get_tensor(
+            self.output_details[1]['index'])
+        score_data = self.tflite_interpreter.get_tensor(
+            self.output_details[2]['index'])
+        num_detections = self.tflite_interpreter.get_tensor(
+            self.output_details[3]['index'])
+
+        class_data = np.squeeze(
+            class_data, axis=0).astype(np.int64) + 1
+        box_data = np.squeeze(box_data, axis=0)
+        score_data = np.squeeze(score_data, axis=0)
+        num_detections = np.squeeze(num_detections, axis=0)
+
+        logger.info(num_detections)
+
 
         return Prediction(
             detection_boxes=box_data,

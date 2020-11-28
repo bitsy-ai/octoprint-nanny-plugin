@@ -23,6 +23,7 @@ import print_nanny_client
 import pytz
 import uuid
 import requests
+import numpy as np
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from octoprint.events import Events, eventManager
@@ -39,7 +40,7 @@ from print_nanny_client.models.printer_profile_request import \
 	PrinterProfileRequest
 
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
-from .predictor import ThreadLocalPredictor
+from .predictor import ThreadLocalPredictor, Calibration
 from .utils.encoder import NumpyEncoder
 
 logger = logging.getLogger('octoprint.plugins.print_nanny')
@@ -83,6 +84,7 @@ class BitsyNannyPlugin(
         self._predict_queue = queue.Queue()
 
         self._tracking_events = None
+        self._calibration = None
 
         # @todo compare single-threaded perf against multiprocessing.Pool, Queue, Manager
         self._predictor = ThreadLocalPredictor()
@@ -162,7 +164,32 @@ class BitsyNannyPlugin(
     def _reset(self, *args, **kwargs):
         self._api_objects = {}
     
+    def _get_calibration(self, n, height, width):
+        if self._calibration is None:
+            x0 = self._settings.get(['calibrate_x0'])
+            y0 = self._settings.get(['calibrate_y0'])
+            x1 = self._settings.get(['calibrate_x1'])
+            y1 = self._settings.get(['calibrate_y1'])
+            if x0 is None or y0 is None or x1 is None or y1 is None:
+                logger.warning(f'Invalid calibration values ({x0}, {y0}) ({x1}, {y1})')
+                return None
+            
+            calibration = np.zeros((height, width))
+            for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
+                value = 1 if (h/height >= y0 and h/height <= y1 and
+                    w/width >= x0 and w/width <= x1) else 0
+                calibration[h][w] = value
 
+            calibration = calibration.astype(np.uint8)
+            logger.info(f'Calibration set')
+            self._calibration = {
+                'mask': calibration, 
+                'coords': (x0,y0,x1,y1)
+            }
+            logger.info(f"Calibration set {self._calibration['coords']}")
+
+
+        return self._calibration
     def _handle_predict(self, url=None, **kwargs):
         if url is None:
             raise ValueError('Snapshot url is required')
@@ -171,7 +198,8 @@ class BitsyNannyPlugin(
         image_buffer.name = 'original_image.jpg'
         image = self._predictor.load_image(image_buffer)
         prediction = self._predictor.predict(image)
-        viz_np = self._predictor.postprocess(image, prediction)
+
+        viz_np = self._predictor.postprocess(image, prediction, calibration_fn=self._get_calibration)
 
         ## octoprint event
         viz_image = Image.fromarray(viz_np, 'RGB')
@@ -206,7 +234,7 @@ class BitsyNannyPlugin(
             try:
                 user = await api_instance.users_me_retrieve()
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_test_api_auth API call failed {e}')
+                logger.error(f'_test_api_auth API call failed {e}', exc_info=True)
                 return
         return user
 
@@ -228,7 +256,7 @@ class BitsyNannyPlugin(
                 logger.info(f'Upserted gcode_file {gcode_file}')
                 return gcode_file
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_file_upload API call failed {e}')
+                logger.error(f'_handle_file_upload API call failed {e}', exc_info=True)
 
     async def _handle_print_start(self, event_type, event_data):
 
@@ -266,7 +294,7 @@ class BitsyNannyPlugin(
                 printer_profile_id = printer_profile.id
                 self._api_objects['printer_profile'] = printer_profile
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_print_start API called failed {e}')
+                logger.error(f'_handle_print_start API called failed {e}', exc_info=True)
                 return
 
         
@@ -290,7 +318,7 @@ class BitsyNannyPlugin(
                     logger.info(f'Synced gcode_file {gcode_file.id}')
                     gcode_file_id = gcode_file.id
                 except CLIENT_EXCEPTIONS as e:
-                    logger.error(f'_handle_print_start API call failed {e}')
+                    logger.error(f'_handle_print_start API call failed {e}', exc_info=True)
                     gcode_file_id = None
             except FileNotFoundError as e:
                 logging.warning(f'Gcode already transferred to SD card. No gcode file will be associated with this print.')
@@ -310,7 +338,7 @@ class BitsyNannyPlugin(
                 self._api_objects['print_job'] = print_job
                 logger.info(f'Created print_job {print_job}')
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_print_start API call failed {e}')
+                logger.error(f'_handle_print_start API call failed {e}',exc_info=True)
 
 
 
@@ -348,7 +376,7 @@ class BitsyNannyPlugin(
 
                 await api_instance.predict_events_create(request)
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_predict_upload API call failed failed {e}')
+                logger.error(f'_handle_predict_upload API call failed failed {e}', exc_info=True)
 
     async def _get_tracking_events(self):
         if not self._tracking_events:
@@ -386,7 +414,7 @@ class BitsyNannyPlugin(
                 event = await api_instance.octoprint_events_create(request)
                 return event
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'_handle_octoprint_event API called failed {e}')
+                logger.error(f'_handle_octoprint_event API called failed {e}', exc_info=True)
 
     async def _upload_worker(self):
         '''
@@ -414,7 +442,7 @@ class BitsyNannyPlugin(
                 else:
                     await self._handle_octoprint_event(**event)
             except Exception as e:
-                logger.error(e)     
+                logger.error(e, exc_info=True)     
             self._upload_queue.task_done()
 
     def _predict_worker(self):
@@ -431,7 +459,7 @@ class BitsyNannyPlugin(
             try:
                 handler_fn(**msg)
             except Exception as e:
-                logger.error(e)
+                logger.error(e, exc_info=True)
             self._predict_queue.task_done()
 
     ##
@@ -456,7 +484,7 @@ class BitsyNannyPlugin(
     def stop_predict(self):
         self._stop()
         return flask.json.jsonify({'ok': 1})
-
+    
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
@@ -498,6 +526,10 @@ class BitsyNannyPlugin(
 
     def on_event(self, event_type, event_data):
         IGNORED = [ Events.PLUGIN_PRINT_NANNY_PREDICT_DONE ]
+
+        if event_type == Events.SETTINGS_UPDATED:
+            self._calibration = None
+
         if event_type not in IGNORED:
             self._queue_upload({ 'event_type': event_type, 'event_data': event_data})
             logger.info(f'{event_type} added to upload queue')
@@ -506,6 +538,8 @@ class BitsyNannyPlugin(
         '''
             Called after plugin initialization
         '''
+
+
         if self._settings.get(['auth_token']) is not None:
 
             user = asyncio.run_coroutine_threadsafe(self._test_api_auth(

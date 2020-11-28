@@ -41,8 +41,9 @@ $(function() {
         self.loginStateViewModel = parameters[0];
         self.settingsViewModel = parameters[1];
 
-        self.imageData = ko.observable()
-        self.imageData = ko.observable()
+        self.imageData = ko.observable();
+        self.imageData = ko.observable();
+        self.calibratePos = ko.observable();
 
         self.previewActive = ko.observable(false)
 
@@ -72,7 +73,32 @@ $(function() {
             const calibrateImg = new Image();
             calibrateImg.src = $('#tab_plugin_print_nanny_preview').attr('src')
             document.getElementById('tab_plugin_print_nanny_calibrate').appendChild(calibrateImg);
-            Jcrop.load(calibrateImg).then(img => Jcrop.attach(img));
+            Jcrop.load(calibrateImg).then(img => {
+                const stage = Jcrop.attach(img);
+                stage.listen('crop.change',function(widget,e){
+                    console.log(widget.pos)
+                    const normalized = widget.pos.normalize()
+                    self.calibratePos({
+                        coords: widget.pos,
+                        h: img.height,
+                        w: img.width
+                    });
+                });
+            });
+        }
+
+        saveCalibration = function(){
+            self.settingsViewModel.settings.plugins.print_nanny.calibrated(true)
+            const calibration = self.calibratePos()
+            const s = {
+                calibrated: true,
+                calibrate_x0: calibration.coords.x / calibration.w,
+                calibrate_y0: calibration.coords.y / calibration.h,
+                calibrate_x1: calibration.coords.x2 / calibration.w,
+                calibrate_y1: calibration.coords.y2 / calibration.h
+            }
+            OctoPrint.settings.savePluginSettings('print_nanny', s);
+
         }
     
         startPredict = function(){

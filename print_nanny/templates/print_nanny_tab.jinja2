@@ -25,7 +25,7 @@
 
 <hr/>
 
-<div class="alert alert-warning" role="alert" data-bind="hidden: settingsViewModel.settings.plugins.print_nanny.calibrated">
+<div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
   <h4 class="alert-heading">Warning! Calibration Required</h4>
   <p>Click the <strong>Start Preview</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
 </div>
@@ -44,8 +44,13 @@
 <div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
     <h3>Calibrate 3D Print Volume</h3>
     <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
+    
     <p>
-    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+    <button class="btn btn-primary" type="submit" data-bind="{click: saveCalibration, enable: calibratePos }">
+        Save Calibration
+    </button>
+
+    <button class="btn btn-secondary btn-small" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
         Show Example
     </button>
     </p>
@@ -53,6 +58,5 @@
         <p>In the example below, a box surrounds the Prusa MK3S's print volume.</p>
         <img src="plugin/print_nanny/static/img/example_jcrop.png"/>
     </div>
-
 </div>
 

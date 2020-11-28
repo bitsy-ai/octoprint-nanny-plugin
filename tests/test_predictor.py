@@ -13,16 +13,68 @@ TEST_PARAMS = [
     ) for i in range(0,7)
 ]
 
-@pytest.fixture
-def predictor():
-    return ThreadLocalPredictor()
+def test_area_of_intersection_overlap():
+    predictor = ThreadLocalPredictor()
+    detection_boxes = np.array([
+        [0.3, 0.3, 0.9, 0.9]
+    ])
 
-@pytest.mark.parametrize("infile,outfile", TEST_PARAMS)
-def test_predict_and_write(infile, outfile, predictor, ):
-    image = predictor.load_image(infile)
-    prediction = predictor.predict(image)
+    calibration_box = [0.2, 0.2, 0.8, 0.8]
 
-    assert prediction['num_detections'] > 5
-    prediction = predictor.postprocess(image, prediction)
-    predictor.write_image(outfile, prediction['viz'])
+    detection_scores = np.array([1])
 
+    detection_classes = np.array([4])
+
+    percent_area = predictor.percent_intersection(detection_boxes, detection_scores, detection_classes, calibration_box)
+    expected =  1 - ((0.5**2) / (0.6**2))
+    np.testing.assert_almost_equal(percent_area[0],expected)
+
+
+def test_area_of_intersection_no_overlap_0():
+    predictor = ThreadLocalPredictor()
+    detection_boxes = np.array([
+        [0.3, 0.3, 0.9, 0.9]
+    ])
+
+    calibration_box = [0.1, 0.1, 0.2, 0.2]
+
+    detection_scores = np.array([1])
+
+    detection_classes = np.array([4])
+
+    percent_area = predictor.percent_intersection(detection_boxes, detection_scores, detection_classes, calibration_box)
+    expected = 0.0
+    np.testing.assert_almost_equal(percent_area[0],expected)
+
+def test_area_of_intersection_no_overlap_1():
+    predictor = ThreadLocalPredictor()
+    detection_boxes = np.array([
+        [0.5, 0.2, 0.9, 0.4]
+    ])
+
+    calibration_box = [0.1, 0.7, 0.39, 0.8]
+
+    detection_scores = np.array([1])
+
+    detection_classes = np.array([4])
+
+    percent_area = predictor.percent_intersection(detection_boxes, detection_scores, detection_classes, calibration_box)
+    expected = 0.0
+    np.testing.assert_almost_equal(percent_area[0],expected)
+
+def test_area_of_intersection_prediction_contained_0():
+
+    predictor = ThreadLocalPredictor()
+    detection_boxes = np.array([
+        [0.2, 0.2, 0.8, 0.8]
+    ])
+
+    calibration_box = [0.1, 0.1, 0.9, 0.9]
+
+    detection_scores = np.array([1])
+
+    detection_classes = np.array([4])
+
+    percent_area = predictor.percent_intersection(detection_boxes, detection_scores, detection_classes, calibration_box)
+    expected = 1.0
+    np.testing.assert_almost_equal(percent_area[0],expected)
