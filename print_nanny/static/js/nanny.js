@@ -42,6 +42,11 @@ $(function() {
         self.settingsViewModel = parameters[1];
 
         self.imageData = ko.observable()
+        self.imageData = ko.observable()
+
+        self.previewActive = ko.observable(false)
+
+        self.calibrationActive = ko.observable(false)
 
         self.active = ko.observable(false)
 
@@ -49,9 +54,26 @@ $(function() {
         OctoPrint.socket.onMessage("*", function(message) {
             console.log(message)
             if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
-                self.imageData("data:image/jpeg;base64,"+message.data.payload.image)
+                self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
+                self.previewActive(true);
             }
         });
+
+        toggleAutoStart = function(){
+            const newValue = !self.settingsViewModel.settings.plugins.print_nanny.auto_start()
+            self.settingsViewModel.settings.plugins.print_nanny.auto_start(newValue)
+            OctoPrint.settings.savePluginSettings('print_nanny', {
+                auto_start: newValue
+            })
+        }
+
+        calibrate = function(){
+            self.calibrationActive(true);
+            const calibrateImg = new Image();
+            calibrateImg.src = $('#tab_plugin_print_nanny_preview').attr('src')
+            document.getElementById('tab_plugin_print_nanny_calibrate').appendChild(calibrateImg);
+            Jcrop.load(calibrateImg).then(img => Jcrop.attach(img));
+        }
     
         startPredict = function(){
             const url = OctoPrint.getBlueprintUrl('print_nanny') + 'startPredict'
@@ -73,24 +95,24 @@ $(function() {
             
         }
 
-    stopPredict = function(){
-        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'stopPredict'
+        stopPredict = function(){
+            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'stopPredict'
 
-        OctoPrint.postJson(url, {})
-        .done((res) =>{
-                self.active(false)
-                console.debug('Starting stream', res)
-                // self.alertClass(self.alerts.success.class)
-                // self.alertHeader(self.alerts.success.header)
-                // self.alertText(self.alerts.success.text)
-            })
-        .fail(e => {
-                console.error('Failed to start stream', e)
-                // self.alertClass(self.alerts.error.class)
-                // self.alertHeader(self.alerts.error.header)
-                // self.alertText(self.alerts.error.text)
-        });        
-    }
+            OctoPrint.postJson(url, {})
+            .done((res) =>{
+                    self.active(false)
+                    console.debug('Starting stream', res)
+                    // self.alertClass(self.alerts.success.class)
+                    // self.alertHeader(self.alerts.success.header)
+                    // self.alertText(self.alerts.success.text)
+                })
+            .fail(e => {
+                    console.error('Failed to start stream', e)
+                    // self.alertClass(self.alerts.error.class)
+                    // self.alertHeader(self.alerts.error.header)
+                    // self.alertText(self.alerts.error.text)
+            });        
+        }
 
     }
 

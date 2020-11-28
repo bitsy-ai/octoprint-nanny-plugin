@@ -1,20 +1,58 @@
-<div>
+<link rel="stylesheet" href="https://unpkg.com/jcrop/dist/jcrop.css">
+<script src="https://unpkg.com/jcrop"></script>
+
+
+
+<div class="row-fluid">
+    <div class="span6">
+        <span data-bind="{ click: toggleAutoStart }" title="Start automatically" style="">
+            <i 
+                class="fa fa-lg" 
+                data-bind="css: {'fa-toggle-on': settingsViewModel.settings.plugins.print_nanny.auto_start(), 'fa-toggle-off': !settingsViewModel.settings.plugins.print_nanny.auto_start() } "></i>
+        </span>
+        <span>Start Print Nanny automatically</span>
+    </div>
+
+
+</div>
 
 <h2>Print Nanny Cam</h2>
 
-<p>If a failure is detected, Print Nanny will send an email to <span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span>
+<p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span></strong>
 </p>
 
-<img data-bind="attr: { src: imageData }"/>
+<img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }"/>
 
 <hr/>
 
+<div class="alert alert-warning" role="alert" data-bind="hidden: settingsViewModel.settings.plugins.print_nanny.calibrated">
+  <h4 class="alert-heading">Warning! Calibration Required</h4>
+  <p>Click the <strong>Start Preview</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
+</div>
 <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
     Start Preview
 </button>
 
-<button data-bind="{click: stopPredict }" type="submit" class="btn btn-primary btn-large">
+<button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
     Stop Preview
 </button>
 
+<button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
+    Calibrate
+</button>
+
+<div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
+    <h3>Calibrate 3D Print Volume</h3>
+    <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
+    <p>
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        Show Example
+    </button>
+    </p>
+    <div class="collapse" id="collapseExample">
+        <p>In the example below, a box surrounds the Prusa MK3S's print volume.</p>
+        <img src="plugin/print_nanny/static/img/example_jcrop.png"/>
+    </div>
+
 </div>
+

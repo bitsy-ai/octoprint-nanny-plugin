@@ -536,6 +536,12 @@ class BitsyNannyPlugin(
             user_email=None,
             user_url=None,
             user=None,
+            calibrated=False,
+            calibrate_x0=None,
+            calibrate_y0=None,
+            calibrate_x1=None,
+            calibrate_y1=None,
+            auto_start=True,
             api_host='http://localhost:8000',
             api_url='http://localhost:8000/api/', # 'https://api.print-nanny.com',
             swagger_json='http://localhost:8000/api/swagger.json', # 'https://api.print-nanny.com/swagger.json'
