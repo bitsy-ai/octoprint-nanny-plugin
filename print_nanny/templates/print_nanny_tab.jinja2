@@ -2,16 +2,16 @@
 <script src="https://unpkg.com/jcrop"></script>
 
 
-<div data-bind="hidden: settingsViewModel.settings.plugins.print_nanny.auth_valid" >
+<div data-bind="visible: !settingsViewModel.settings.plugins.print_nanny.auth_valid" >
 
     <div class="row-fluid">
         <div class="span-6">
-            <img class="img-fluid" src="plugin/print_nanny/static/img/logo-square-surprised.png"/>
+            <img class="img-fluid" src="plugin/print_nanny/static/img/logo-square-excited.png"/>
         </div>
 
         <h3>You haven't authenticated yet!</h3>
 
-        <p>To get started, open OctoPrint's <i class="fa fa-wrench"></i>settings and save your auth token. </p>
+        <p>To get started, open OctoPrint's <i class="fa fa-wrench"></i> settings menu and save your Print Nanny auth token. </p>
         <p>
         Looking for help? <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server or email support@print-nanny.com</a>
         </p>
