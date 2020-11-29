@@ -251,7 +251,7 @@ class BitsyNannyPlugin(
                 user = await api_instance.users_me_retrieve()
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f"_test_api_auth API call failed {e}", exc_info=True)
-                return
+                return e
         return user
 
     async def _handle_file_upload(self, event_type, event_data):
@@ -537,19 +537,23 @@ class BitsyNannyPlugin(
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
 
-        user = asyncio.run_coroutine_threadsafe(
+        response = asyncio.run_coroutine_threadsafe(
             self._test_api_auth(auth_token, api_url), self._event_loop
         ).result()
-        self._settings.set(["auth_token"], auth_token)
-        self._settings.set(["api_url"], api_url)
-        self._settings.set(["user_email"], user.email)
-        self._settings.set(["user_url"], user.url)
 
-        self._settings.save()
+        if isinstance(response, print_nanny_client.models.user.User):
+            self._settings.set(["auth_token"], auth_token)
+            self._settings.set(["auth_valid"], True)
+            self._settings.set(["api_url"], api_url)
+            self._settings.set(["user_email"], response.email)
+            self._settings.set(["user_url"], response.url)
+        
+            self._settings.save()
 
-        logger.info(f"Authenticated as {user}")
-        return flask.json.jsonify(user.to_dict())
+            logger.info(f"Authenticated as {response}")
+            return flask.json.jsonify(response.to_dict())
 
+        return flask.json.jsonify(response.body)
     def register_custom_events(self):
         return ["predict_done", "predict_failed", "upload_done", "upload_failed"]
 
@@ -607,6 +611,7 @@ class BitsyNannyPlugin(
     def get_settings_defaults(self):
         return dict(
             auth_token=None,
+            auth_valid=False,
             user_email=None,
             user_url=None,
             user=None,
@@ -661,14 +666,14 @@ class BitsyNannyPlugin(
         # for details.
         return dict(
             nanny=dict(
-                displayName="Bitsy OctoPrint Nanny",
+                displayName="Print Nanny",
                 displayVersion=self._plugin_version,
                 # version check: github repository
                 type="github_release",
                 user="bitsy-ai",
-                repo="octoprint-nanny",
+                repo="octoprint-nanny-plugin",
                 current=self._plugin_version,
                 # update method: pip
-                pip="https://github.com/bitsy-ai/octoprint-nanny/archive/{target_version}.zip",
+                pip="https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/{target_version}.zip",
             )
         )

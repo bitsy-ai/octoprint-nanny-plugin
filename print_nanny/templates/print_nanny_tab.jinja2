@@ -2,65 +2,85 @@
 <script src="https://unpkg.com/jcrop"></script>
 
 
+<div data-bind="visible: !settingsViewModel.settings.plugins.print_nanny.auth_valid" >
 
-<div class="row-fluid">
-    <div class="span6">
-        <span data-bind="{ click: toggleAutoStart }" title="Start automatically" style="">
-            <i 
-                class="fa fa-lg" 
-                data-bind="css: {'fa-toggle-on': settingsViewModel.settings.plugins.print_nanny.auto_start(), 'fa-toggle-off': !settingsViewModel.settings.plugins.print_nanny.auto_start() } "></i>
-        </span>
-        <span>Start Print Nanny automatically</span>
+    <div class="row-fluid">
+        <div class="span-6">
+            <img class="img-fluid" src="plugin/print_nanny/static/img/logo-square-excited.png"/>
+        </div>
+
+        <h3>You haven't authenticated yet!</h3>
+
+        <p>To get started, open OctoPrint's <i class="fa fa-wrench"></i> settings menu and save your Print Nanny auth token. </p>
+        <p>
+        Looking for help? <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server or email support@print-nanny.com</a>
+        </p>
     </div>
 
 
 </div>
 
-<h2>Print Nanny Cam</h2>
-
-<p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span></strong>
-</p>
-
-<img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }"/>
-
-<hr/>
-
-<div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
-  <h4 class="alert-heading">Warning! Calibration Required</h4>
-  <p>Click the <strong>Start Preview</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
-</div>
-<button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
-    Start Preview
-</button>
-
-<button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
-    Stop Preview
-</button>
-
-<button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
-    Calibrate
-</button>
-
-<div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
-    <h3>Calibrate 3D Print Volume</h3>
-    <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
-    
-    <p>
-    <button class="btn btn-primary" type="submit" data-bind="{click: saveCalibration, enable: calibratePos }">
-        Save Calibration
-    </button>
-
-    <button class="btn btn-secondary btn-small" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-        Show Example
-    </button>
-    </p>
-    <div class="collapse" id="collapseExample">
-        <p>In this example, Print Nanny detects my Prusa's LCD case as a "print." While the case <i>technically</i> is a 3D print</i>, monitoring it is just silly! </p>
-        
-        <p>If I select the area sourrunding the 3D print volume, Print Nanny will ignore the LCD screen. </p>
-        
-        <p>You don't need to stress about drawing the perfect box. Print Nanny will still catch fly-away defects (like spaghetti) outside of the selected area. </p>
-        <img src="plugin/print_nanny/static/img/ignore_mask_example.gif"/>
+<div data-bind="visible: settingsViewModel.settings.plugins.print_nanny.auth_valid" >
+    <div class="row-fluid">
+        <div class="span-6">
+            <img class="img-fluid" src="plugin/print_nanny/static/img/print_nanny_logo.png"/>
+        </div>
     </div>
-</div>
 
+    <div class="row-fluid">
+        <h2>Live Monitoring</h2>
+        <div class="span-4 offset 4">
+            <span>Start automatically</span>
+            <span data-bind="{ click: toggleAutoStart }" title="Start monitoring automatically" style="">
+                <i 
+                    class="fa fa-lg" 
+                    data-bind="css: {'fa-toggle-on': settingsViewModel.settings.plugins.print_nanny.auto_start(), 'fa-toggle-off': !settingsViewModel.settings.plugins.print_nanny.auto_start() } "></i>
+            </span>
+        </div>
+        <p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span></strong>
+        </p>
+
+        <img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }"/>
+
+        <hr/>
+
+        <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
+        <h4 class="alert-heading">Warning! Calibration Required</h4>
+        <p>Click the <strong>Start Preview</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
+        </div>
+        <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
+            Start
+        </button>
+
+        <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
+            Stop
+        </button>
+
+        <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
+            Calibrate
+        </button>
+    </div>
+    <div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
+        <h3>Calibrate 3D Print Volume</h3>
+        <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
+        
+        <p>
+        <button class="btn btn-primary" type="submit" data-bind="{click: saveCalibration, enable: calibratePos }">
+            Save Calibration
+        </button>
+
+        <button class="btn btn-secondary btn-small" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+            Show Example
+        </button>
+        </p>
+        <div class="collapse" id="collapseExample">
+            <p>In this example, Print Nanny detects my Prusa's LCD case as a "print." While the case <i>technically</i> is a 3D print</i>, monitoring it is just silly! </p>
+            
+            <p>If I select the area sourrunding the 3D print volume, Print Nanny will ignore the LCD screen. </p>
+            
+            <p>You don't need to stress about drawing the perfect box. Print Nanny will still catch fly-away defects (like spaghetti) outside of the selected area. </p>
+            <img src="plugin/print_nanny/static/img/ignore_mask_example.gif"/>
+        </div>
+    </div>
+
+</div>
