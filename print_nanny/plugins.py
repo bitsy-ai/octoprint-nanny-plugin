@@ -607,6 +607,7 @@ class BitsyNannyPlugin(
     def get_settings_defaults(self):
         return dict(
             auth_token=None,
+            auth_valid=False,
             user_email=None,
             user_url=None,
             user=None,
@@ -661,14 +662,14 @@ class BitsyNannyPlugin(
         # for details.
         return dict(
             nanny=dict(
-                displayName="Bitsy OctoPrint Nanny",
+                displayName="Print Nanny",
                 displayVersion=self._plugin_version,
                 # version check: github repository
                 type="github_release",
                 user="bitsy-ai",
-                repo="octoprint-nanny",
+                repo="octoprint-nanny-plugin",
                 current=self._plugin_version,
                 # update method: pip
-                pip="https://github.com/bitsy-ai/octoprint-nanny/archive/{target_version}.zip",
+                pip="https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/{target_version}.zip",
             )
         )

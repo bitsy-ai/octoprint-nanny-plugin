@@ -170,8 +170,8 @@ $(function() {
     self.alertClass = ko.observable();
     self.alerts = {
         'warning': {
-            header: 'Warning!',
-            text: 'Test connection before saving.',
+            header: 'Hey!',
+            text: 'Test your connection before saving.',
             class: 'alert'
         },
         'error': {
