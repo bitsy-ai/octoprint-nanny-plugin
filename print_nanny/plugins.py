@@ -547,13 +547,14 @@ class BitsyNannyPlugin(
             self._settings.set(["api_url"], api_url)
             self._settings.set(["user_email"], response.email)
             self._settings.set(["user_url"], response.url)
-        
+
             self._settings.save()
 
             logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
 
         return flask.json.jsonify(response.body)
+
     def register_custom_events(self):
         return ["predict_done", "predict_failed", "upload_done", "upload_failed"]
 
