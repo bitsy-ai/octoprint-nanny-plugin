@@ -547,13 +547,14 @@ class BitsyNannyPlugin(
             self._settings.set(["api_url"], api_url)
             self._settings.set(["user_email"], response.email)
             self._settings.set(["user_url"], response.url)
-        
+
             self._settings.save()
 
             logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
 
         return flask.json.jsonify(response.body)
+
     def register_custom_events(self):
         return ["predict_done", "predict_failed", "upload_done", "upload_failed"]
 
@@ -620,7 +621,7 @@ class BitsyNannyPlugin(
             calibrate_y0=None,
             calibrate_x1=None,
             calibrate_y1=None,
-            auto_start=True,
+            auto_start=False,
             api_host="http://localhost:8000",
             api_url="http://localhost:8000/api/",  # 'https://api.print-nanny.com',
             swagger_json="http://localhost:8000/api/swagger.json",  # 'https://api.print-nanny.com/swagger.json'
