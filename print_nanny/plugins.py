@@ -618,8 +618,8 @@ class BitsyNannyPlugin(
 
 	## EnvironmentDetectionPlugin
 
-	def on_environment_detected(self, environment, *args, **kwargs):
-		self._environment = environment
+    def on_environment_detected(self, environment, *args, **kwargs):
+        self._environment = environment
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return dict(
