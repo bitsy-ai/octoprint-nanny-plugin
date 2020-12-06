@@ -28,6 +28,7 @@ from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from octoprint.events import Events, eventManager
 from PIL import Image
+
 from print_nanny_client import ApiClient as AsyncApiClient
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
@@ -60,6 +61,7 @@ class BitsyNannyPlugin(
     octoprint.plugin.BlueprintPlugin,
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
+    octoprint.plugin.EnvironmentDetectionPlugin
 ):
 
     CALIBRATE_START = "calibrate_start"
@@ -113,6 +115,8 @@ class BitsyNannyPlugin(
         self._api_thread.daemon = True
         self._api_thread.start()
 
+        self._environment = {}
+
     def _start_api_loop(self):
         self._event_loop = asyncio.new_event_loop()
         self._upload_queue = asyncio.Queue(loop=self._event_loop)
@@ -120,7 +124,7 @@ class BitsyNannyPlugin(
         self._event_loop.run_until_complete(self._upload_worker())
 
     def _get_metadata(self):
-        return {
+        metadata = {
             "printer_data": self._printer.get_current_data(),
             "printer_profile": self._printer_profile_manager.get_current_or_default(),
             "temperature": self._printer.get_current_temperatures(),
@@ -132,7 +136,9 @@ class BitsyNannyPlugin(
             "api_objects": {
                 k: None if v is None else v.id for k, v in self._api_objects.items()
             },
+            "environment": self._environment
         }
+        return metadata
 
     def _start(self, *args, **kwargs):
         self._reset()
@@ -610,6 +616,10 @@ class BitsyNannyPlugin(
 
     #     ]
 
+	## EnvironmentDetectionPlugin
+
+	def on_environment_detected(self, environment, *args, **kwargs):
+		self._environment = environment
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return dict(
