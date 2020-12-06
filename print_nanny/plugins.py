@@ -50,7 +50,7 @@ CLIENT_EXCEPTIONS = (
     aiohttp.client_exceptions.ClientError,
 )
 
-DEFAULT_API_URL = os.environ.get('PRINT_NANNY_API_URL', 'https://print-nanny.com/api')
+DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api")
 
 
 class BitsyNannyPlugin(
@@ -61,7 +61,7 @@ class BitsyNannyPlugin(
     octoprint.plugin.BlueprintPlugin,
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
-    octoprint.plugin.EnvironmentDetectionPlugin
+    octoprint.plugin.EnvironmentDetectionPlugin,
 ):
 
     CALIBRATE_START = "calibrate_start"
@@ -136,7 +136,7 @@ class BitsyNannyPlugin(
             "api_objects": {
                 k: None if v is None else v.id for k, v in self._api_objects.items()
             },
-            "environment": self._environment
+            "environment": self._environment,
         }
         return metadata
 
@@ -616,10 +616,11 @@ class BitsyNannyPlugin(
 
     #     ]
 
-	## EnvironmentDetectionPlugin
+    ## EnvironmentDetectionPlugin
 
     def on_environment_detected(self, environment, *args, **kwargs):
         self._environment = environment
+
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return dict(
