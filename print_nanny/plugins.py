@@ -49,6 +49,8 @@ CLIENT_EXCEPTIONS = (
     aiohttp.client_exceptions.ClientError,
 )
 
+DEFAULT_API_URL = os.environ.get('PRINT_NANNY_API_URL', 'https://print-nanny.com/api')
+
 
 class BitsyNannyPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -622,12 +624,7 @@ class BitsyNannyPlugin(
             calibrate_x1=None,
             calibrate_y1=None,
             auto_start=False,
-            api_host="http://localhost:8000",
-            api_url="http://localhost:8000/api/",  # 'https://api.print-nanny.com',
-            swagger_json="http://localhost:8000/api/swagger.json",  # 'https://api.print-nanny.com/swagger.json'
-            prometheus_gateway="https://prom.print-nanny.com",
-            # ./mjpg_streamer -i "./input_raspicam.so" -o "./output_file.so -f /tmp/ -s 20 -l mjpg-streamer-latest.jpg"
-            # snapshot='file:///tmp/mjpg-streamer-latest.jpg'
+            api_url=DEFAULT_API_URL,
         )
 
     ## Wizard plugin mixin
