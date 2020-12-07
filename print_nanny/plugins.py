@@ -62,6 +62,7 @@ class BitsyNannyPlugin(
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.EnvironmentDetectionPlugin,
+    octoprint.plugin.ProgressPlugin,
 ):
 
     CALIBRATE_START = "calibrate_start"
@@ -75,6 +76,8 @@ class BitsyNannyPlugin(
     UPLOAD_START = "upload_start"
     UPLOAD_FAILED = "upload_failed"
     UPLOAD_DONE = "upload_done"
+
+    PRINT_PROGRESS = "print_progress"
 
     def __init__(self, *args, **kwargs):
 
@@ -108,6 +111,7 @@ class BitsyNannyPlugin(
             Events.PRINT_PAUSED: self._pause,
             Events.PRINT_RESUMED: self._resume,
             Events.UPLOAD: self._handle_file_upload,
+            self.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
         self._api_objects = {}
@@ -433,10 +437,15 @@ class BitsyNannyPlugin(
 
     async def _handle_octoprint_event(self, event_type, event_data, **kwargs):
         logger.debug(f"_handle_octoprint_event processing {event_type}")
-        # handled by _handle_predict_event
 
+        # handled by _handle_predict_event
         if event_type == self.PREDICT_DONE:
             return
+        # handled by _handle_print_progress_update
+        if event_type == self.PRINT_PROGRESS:
+            return
+
+        # @todo configure opt-in tracking + communicate which features depend on tracked events
         elif event_type not in await self._get_tracking_events():
             return
 
@@ -462,6 +471,24 @@ class BitsyNannyPlugin(
                 logger.error(
                     f"_handle_octoprint_event API called failed {e}", exc_info=True
                 )
+
+    async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
+        print_job = self._api_objects.get("print_job")
+        if print_job is not None:
+            async with AsyncApiClient(api_config) as api_client:
+                request = print_nanny_client.models.print_job_request.PrintJobRequest(
+                    id=print_job.id, progress=event_data["progress"]
+                )
+                api_instance = RemoteControlApi(api_client=api_client)
+                try:
+                    print_job = await api_instance.print_jobs_partial_update(request)
+                    self._api_objects["print_job"] = print_job
+                    logger.info(f"Created print_job {print_job}")
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(
+                        f"_handle_print_progress_upload API call failed {e}",
+                        exc_info=True,
+                    )
 
     async def _upload_worker(self):
         """
@@ -615,6 +642,13 @@ class BitsyNannyPlugin(
     #         #dict(type="wizard", name="Setup Account", template="print_nanny_2_wizard.jinja2"),
 
     #     ]
+
+    ## Progress plugin
+
+    def on_print_progress(self, storage, path, progress):
+        self._queue_upload(
+            {"event_type": self.PRINT_PROGRESS, "event_data": {"progress": progress}}
+        )
 
     ## EnvironmentDetectionPlugin
 
