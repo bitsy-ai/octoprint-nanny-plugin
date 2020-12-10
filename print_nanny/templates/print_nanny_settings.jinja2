@@ -46,14 +46,7 @@
             <div class="control-group">
                 <label class="control-label" for="print_nanny_settings_api_uri">Print Nanny API</label>
                 <div class="controls">
-                    <input id="print_nanny_settings_api_uri" default="https://print-nanny.com/api/" data-bind="textInput: settingsViewModel.settings.plugins.print_nanny.api_uri" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="print_nanny_settings_swagger_json">Swagger Schema Version</label>
-                <div class="controls">
-                    <input id="print_nanny_settings_swagger_json" default="https://print-nanny.com/api/schema" data-bind="textInput: settingsViewModel.settings.plugins.print_nanny.swagger_json" type="text" />
+                    <input id="print_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.print_nanny.api_url" type="text" />
                 </div>
             </div>
 

@@ -197,7 +197,6 @@ $(function() {
         OctoPrint.postJson(url, {
             'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token(),
             'api_url': self.settingsViewModel.settings.plugins.print_nanny.api_url(),
-            'swagger_json': self.settingsViewModel.settings.plugins.print_nanny.swagger_json()
         })
         .done((res) =>{
                 console.debug('Print Nanny verification success')
