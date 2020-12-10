@@ -1,25 +1,27 @@
+
+from time import sleep
 import base64
-import datetime
+from datetime import datetime
 import io
-import threading
 import json
 import logging
+import multiprocessing
 import numpy as np
 import os
-from PIL import Image as PImage
-import tensorflow as tf
-import requests
 import queue
-from time import sleep
+import time
+import threading
 
+from PIL import Image as PImage
+import requests
+import tensorflow as tf
 
 from print_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
 
-# python 3.8
+# python >= 3.8
 try:
     from typing import TypedDict, Optional
-
-# python 3.7
+# python <= 3.7
 except:
     from typing_extensions import TypedDict
     from typing import Optional
@@ -36,27 +38,19 @@ class Prediction(TypedDict):
     detection_classes: np.ndarray
     viz: Optional[PImage.Image]
 
-
-class Calibration(TypedDict):
-    x0: np.float32
-    y0: np.float32
-    x1: np.float32
-    y1: np.float32
-
-
 class ThreadLocalPredictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), "data")
 
     def __init__(
         self,
-        min_score_thresh=0.50,
-        max_boxes_to_draw=10,
-        min_overlap_area=0.66,
-        calibration = None,
-        model_version="tflite-print3d-2020-10-23T18:00:41.136Z",
-        model_filename="model.tflite",
-        metadata_filename="tflite_metadata.json",
-        label_filename="dict.txt",
+        min_score_thresh: float =0.50,
+        max_boxes_to_draw: int =10,
+        min_overlap_area: float =0.66,
+        calibration: Optional[tuple] = None,
+        model_version: str ="tflite-print3d-2020-10-23T18:00:41.136Z",
+        model_filename: str ="model.tflite",
+        metadata_filename: str ="tflite_metadata.json",
+        label_filename: str ="dict.txt",
         *args,
         **kwargs
     ):
@@ -119,8 +113,12 @@ class ThreadLocalPredictor(threading.local):
         img.save(outfile)
 
     def percent_intersection(
-        self, detection_boxes, detection_scores, detection_classes, bb1
-    ):
+        self, 
+        detection_boxes: np.array, 
+        detection_scores: np.array, 
+        detection_classes: np.array, 
+        bb1: tuple
+    ) -> float:
         """
         bb1 - boundary box
         bb2 - detection box
@@ -132,8 +130,7 @@ class ThreadLocalPredictor(threading.local):
             # assert bb1[0] < bb1[2]
             # assert bb1[1] < bb1[3]
             # assert bb2[0] < bb2[2]
-            # assert bfrom datetime import datetime
-b2[1] < bb2[3]
+            # assert bb2[1] < bb2[3]
 
             # determine the coordinates of the intersection rectangle
             x_left = max(bb1[0], bb2[0])
@@ -160,14 +157,14 @@ b2[1] < bb2[3]
 
         return aou
 
-    def postprocess(self, image: PImage, prediction: Prediction):
+    def postprocess(self, image: PImage, prediction: Prediction) -> np.array:
 
         image_np = np.asarray(image).copy()
         height, width, _ = image_np.shape
 
         if self.calibration is not None:
-            detection_boundary_mask = calibration["mask"]
-            coords = calibration["coords"]
+            detection_boundary_mask = self.calibration["mask"]
+            coords = self.calibration["coords"]
             percent_intersection = self.percent_intersection(
                 prediction["detection_boxes"],
                 prediction["detection_scores"],
@@ -231,12 +228,28 @@ b2[1] < bb2[3]
             num_detections=num_detections,
         )
 
-
 class PredictWorker:
+    '''
+        Coordinates frame buffer sampling and prediction work
+        Publishes results to websocket and main octoprint event bus
 
-    PREDICT_DONE = "predict_done"
-
-    def __init__(self, webcam_url, web_queue, websocket_queue, calibration, fps=5):
+        Restart proc on calibration settings change
+    '''
+    def __init__(
+            self, 
+            webcam_url: str, 
+            web_queue: multiprocessing.Queue, 
+            websocket_queue: multiprocessing.Queue, 
+            calibration: tuple, 
+            fps: int = 5
+            ):
+        '''
+            webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
+            web_queue - consumer relay to octoprint's main event bus
+            websocket_queue - consumer relay to websocket upload proc
+            calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
+            fps - wildly approximate buffer sample rate, depends on time.sleep() 
+        '''
 
         self.calibration = calibration
         self._fps = fps
@@ -263,12 +276,12 @@ class PredictWorker:
             try:
                 now = datetime.now()
                 self._task_queue.put_nowait({
-                'ts': now
+                'ts': now,
                 'image_buffer': self._predictor.load_url_buffer(self._webcam_url)
                 })
-            except Queue.Full:
+            except queue.Full:
                 logger.warning(f'Predict queue full, skipping frame @ ts: {now}')
-            time.sleep(self.fps / 1000)
+            time.sleep(self._fps / 1000)
 
     def _consumer(self):
         '''
@@ -287,7 +300,7 @@ class PredictWorker:
             viz_np = self._predictor.postprocess(
                 image, prediction
             )
-            viz_image = Image.fromarray(viz_np, "RGB")
+            viz_image = PImage.fromarray(viz_np, "RGB")
             viz_buffer = io.BytesIO()
             viz_buffer.name = "annotated_image.jpg"
             viz_image.save(viz_buffer, format="JPEG")
@@ -295,10 +308,10 @@ class PredictWorker:
             
             self._web_queue.put(viz_bytes)
             self._websocket_queue.put({
-                'original_image': original_image,
-                'annotated_image': viz_buffer,
+                'original_image': msg['image_buffer'],
+                'annotated_image': viz_bytes,
                 'prediction': prediction
             })
-            self._task_queue.done()
+            self._task_queue.task_done()
 
 
