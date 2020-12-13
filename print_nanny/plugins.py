@@ -12,23 +12,21 @@ import re
 import threading
 from datetime import datetime
 from urllib.parse import urlparse
+from concurrent.futures import ProcessPoolExecutor
 
-
+import multiprocessing
 import aiohttp.client_exceptions
-import bravado.exception
 import flask
 import octoprint.plugin
 import octoprint.util
-import print_nanny_client
 import pytz
 import uuid
 import requests
 import numpy as np
-from bravado.client import SwaggerClient
-from bravado.requests_client import RequestsClient
 from octoprint.events import Events, eventManager
 from PIL import Image
 
+import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
@@ -39,7 +37,8 @@ from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
 
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
-from .predictor import ThreadLocalPredictor, Calibration
+from .predictor import PredictWorker
+from .websocket import WebSocketWorker
 from .utils.encoder import NumpyEncoder
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
@@ -65,10 +64,6 @@ class BitsyNannyPlugin(
     octoprint.plugin.ProgressPlugin,
 ):
 
-    CALIBRATE_START = "calibrate_start"
-    CALIBRATE_DONE = "calibrate_done"
-    CALIBRATE_FAILED = "calibrate_failed"
-
     PREDICT_START = "predict_start"
     PREDICT_DONE = "predict_done"
     PREDICT_FAILED = "predict_failed"
@@ -88,21 +83,25 @@ class BitsyNannyPlugin(
         self._octolapse_data = None
         self._octolapse_snapshot_path = None
 
-        # Threads
-        self._active = False
-        self._predict_queue = queue.Queue()
+        # Dedicated processes for predictor and websocket stream
+        self._predict_ui_results = multiprocessing.Queue()
+        self._predict_ws_results = multiprocessing.Queue()
+        self._predict_proc = None
+        self._ws_proc = None
 
+        # REST API calls (async event loop)
+        self._upload_queue = asyncio.Queue(loop=self._event_loop)  # not thread-safe
+        self._api_objects = {}
+        self._api_thread = threading.Thread(target=self._start_api_loop)
+        self._api_thread.daemon = True
+        self._api_thread.start()
+
+        # User interactive
         self._tracking_events = None
         self._calibration = None
 
-        # @todo compare single-threaded perf against multiprocessing.Pool, Queue, Manager
-        self._predictor = ThreadLocalPredictor()
-        self._predict_thread = threading.Thread(target=self._predict_worker)
-        self._predict_thread.daemon = True
-        self._predict_thread.start()
+        # octoprint event handlers
         self._queue_event_handlers = {
-            self.PREDICT_START: self._handle_predict,
-            self.PREDICT_DONE: self._handle_predict_upload,
             Events.PRINT_STARTED: self._handle_print_start,
             Events.PRINT_FAILED: self._stop,
             Events.PRINT_DONE: self._stop,
@@ -114,18 +113,42 @@ class BitsyNannyPlugin(
             self.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
-        self._api_objects = {}
-        self._api_thread = threading.Thread(target=self._start_api_loop)
-        self._api_thread.daemon = True
-        self._api_thread.start()
-
+        self._log_path = self.settings.get_plugin_logfile_path()
         self._environment = {}
 
     def _start_api_loop(self):
         self._event_loop = asyncio.new_event_loop()
         self._upload_queue = asyncio.Queue(loop=self._event_loop)
-        # consumer = asyncio.ensure_future(self._upload_worker())
         self._event_loop.run_until_complete(self._upload_worker())
+
+    def _start_worker_procs(self):
+
+        if self._predict_proc is None:
+            webcam_url = self._settings.global_get(["webcam", "snapshot"])
+            self._predict_proc = multiprocessing.Process(
+                target=PredictWorker,
+                args=(
+                    webcam_url,
+                    self._predict_ui_results,
+                    self._predict_ws_results,
+                    self._calibration,
+                ),
+                daemon=True,
+            )
+            self._predict_proc.start()
+
+        if self._ws_proc is None:
+            api_token = self._settings.get(["auth_token"])
+            api_url = self._settings.get(["api_url"])
+            self._ws_proc = multiprocessing.Process()
+
+    # def _start_predict_loop(self):
+    #     self._predict_event_loop = asyncio.new_event_loop()
+    #     self._predict_event_loop.run_in_executor(
+    #         ProcessPoolExecutor(max_workers=1),
+    #         self._predict_worker
+    #     )
+    #     self._predict_event_loop.run_forever()
 
     def _get_metadata(self):
         metadata = {
@@ -190,27 +213,10 @@ class BitsyNannyPlugin(
             y0 = self._settings.get(["calibrate_y0"])
             x1 = self._settings.get(["calibrate_x1"])
             y1 = self._settings.get(["calibrate_y1"])
-            if x0 is None or y0 is None or x1 is None or y1 is None:
-                logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
-                return None
 
-            calibration = np.zeros((height, width))
-            for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
-                value = (
-                    1
-                    if (
-                        h / height >= y0
-                        and h / height <= y1
-                        and w / width >= x0
-                        and w / width <= x1
-                    )
-                    else 0
-                )
-                calibration[h][w] = value
-
-            calibration = calibration.astype(np.uint8)
-            logger.info(f"Calibration set")
-            self._calibration = {"mask": calibration, "coords": (x0, y0, x1, y1)}
+            self._calibration = PredictWorker.get_calibration(
+                x0, y0, x1, y2, height, width
+            )
             logger.info(f"Calibration set {self._calibration['coords']}")
 
         return self._calibration
@@ -475,13 +481,17 @@ class BitsyNannyPlugin(
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         print_job = self._api_objects.get("print_job")
         if print_job is not None:
-            async with AsyncApiClient(api_config) as api_client:
-                request = print_nanny_client.models.print_job_request.PrintJobRequest(
-                    id=print_job.id, progress=event_data["progress"]
+            async with AsyncApiClient(self._api_config) as api_client:
+                request = (
+                    print_nanny_client.models.print_job_request.PatchedPrintJobRequest(
+                        progress=event_data["progress"]
+                    )
                 )
                 api_instance = RemoteControlApi(api_client=api_client)
                 try:
-                    print_job = await api_instance.print_jobs_partial_update(request)
+                    print_job = await api_instance.print_jobs_partial_update(
+                        print_job.id, patched_print_job_request=request
+                    )
                     self._api_objects["print_job"] = print_job
                     logger.info(f"Created print_job {print_job}")
                 except CLIENT_EXCEPTIONS as e:
@@ -608,7 +618,7 @@ class BitsyNannyPlugin(
         if event_type == Events.SETTINGS_UPDATED:
             self._calibration = None
 
-        if event_type not in IGNORED:
+        if self._tracking_events is None or event_type in self._tracking_events:
             self._queue_upload({"event_type": event_type, "event_data": event_data})
             logger.info(f"{event_type} added to upload queue")
 

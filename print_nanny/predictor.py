@@ -1,4 +1,3 @@
-
 from time import sleep
 import base64
 from datetime import datetime
@@ -11,6 +10,8 @@ import os
 import queue
 import time
 import threading
+import pytz
+
 
 from PIL import Image as PImage
 import requests
@@ -28,8 +29,11 @@ except:
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
 handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s  - %(name)s - %(levelname)s - %(message)s [%(process)d - %(threadName)s]")
+formatter = logging.Formatter(
+    "%(asctime)s  - %(name)s - %(levelname)s - %(message)s [%(process)d - %(threadName)s]"
+)
 handler.setFormatter(formatter)
+
 
 class Prediction(TypedDict):
     num_detections: int
@@ -38,21 +42,22 @@ class Prediction(TypedDict):
     detection_classes: np.ndarray
     viz: Optional[PImage.Image]
 
+
 class ThreadLocalPredictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), "data")
 
     def __init__(
         self,
-        min_score_thresh: float =0.50,
-        max_boxes_to_draw: int =10,
-        min_overlap_area: float =0.66,
+        min_score_thresh: float = 0.50,
+        max_boxes_to_draw: int = 10,
+        min_overlap_area: float = 0.66,
         calibration: Optional[tuple] = None,
-        model_version: str ="tflite-print3d-2020-10-23T18:00:41.136Z",
-        model_filename: str ="model.tflite",
-        metadata_filename: str ="tflite_metadata.json",
-        label_filename: str ="dict.txt",
+        model_version: str = "tflite-print3d-2020-10-23T18:00:41.136Z",
+        model_filename: str = "model.tflite",
+        metadata_filename: str = "tflite_metadata.json",
+        label_filename: str = "dict.txt",
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         self.model_version = model_version
@@ -86,7 +91,7 @@ class ThreadLocalPredictor(threading.local):
             print(self.category_index)
         self.input_shape = self.metadata["inputShape"]
 
-        self.calibration = self.calibration
+        self.calibration = calibration
 
     def load_url_buffer(self, url: str):
         res = requests.get(url)
@@ -113,11 +118,11 @@ class ThreadLocalPredictor(threading.local):
         img.save(outfile)
 
     def percent_intersection(
-        self, 
-        detection_boxes: np.array, 
-        detection_scores: np.array, 
-        detection_classes: np.array, 
-        bb1: tuple
+        self,
+        detection_boxes: np.array,
+        detection_scores: np.array,
+        detection_classes: np.array,
+        bb1: tuple,
     ) -> float:
         """
         bb1 - boundary box
@@ -197,7 +202,7 @@ class ThreadLocalPredictor(threading.local):
                 line_thickness=4,
                 min_score_thresh=self.min_score_thresh,
                 max_boxes_to_draw=self.max_boxes_to_draw,
-            )   
+            )
         return viz
 
     def predict(self, image: PImage) -> Prediction:
@@ -228,90 +233,127 @@ class ThreadLocalPredictor(threading.local):
             num_detections=num_detections,
         )
 
-class PredictWorker:
-    '''
-        Coordinates frame buffer sampling and prediction work
-        Publishes results to websocket and main octoprint event bus
 
-        Restart proc on calibration settings change
-    '''
+class PredictWorker:
+    """
+    Coordinates frame buffer sampling and prediction work
+    Publishes results to websocket and main octoprint event bus
+
+    Restart proc on calibration settings change
+    """
+
     def __init__(
-            self, 
-            webcam_url: str, 
-            web_queue: multiprocessing.Queue, 
-            websocket_queue: multiprocessing.Queue, 
-            calibration: tuple, 
-            fps: int = 5
-            ):
-        '''
-            webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
-            web_queue - consumer relay to octoprint's main event bus
-            websocket_queue - consumer relay to websocket upload proc
-            calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
-            fps - wildly approximate buffer sample rate, depends on time.sleep() 
-        '''
+        self,
+        webcam_url: str,
+        web_queue: multiprocessing.Queue,
+        websocket_queue: multiprocessing.Queue,
+        calibration: tuple,
+        fps: int = 5,
+    ):
+        """
+        webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
+        web_queue - consumer relay to octoprint's main event bus
+        websocket_queue - consumer relay to websocket upload proc
+        calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
+        fps - wildly approximate buffer sample rate, depends on time.sleep()
+        """
 
         self.calibration = calibration
         self._fps = fps
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue(maxsize=20)
-        
+
         self._web_queue = web_queue
         self._websocket_queue = websocket_queue
 
         self._predictor = ThreadLocalPredictor(calibration=calibration)
 
-        self._producer_thread = threading.Thread(target=self._producer, daemon=True, name='producer')
+        self._producer_thread = threading.Thread(
+            target=self._producer, daemon=True, name="producer"
+        )
         self._producer_thread.start()
 
-        self._consumer_thread = threading.Thread(target=self._consumer, daemon=True, name='consumer')
+        self._consumer_thread = threading.Thread(
+            target=self._consumer, daemon=True, name="consumer"
+        )
         self._consumer_thread.start()
 
+    @staticmethod
+    def get_calibration(x0, y0, x1, y1, height, width):
+        if x0 is None or y0 is None or x1 is None or y1 is None:
+            logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
+            return None
+
+        calibration = np.zeros((height, width))
+        for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
+            value = (
+                1
+                if (
+                    h / height >= y0
+                    and h / height <= y1
+                    and w / width >= x0
+                    and w / width <= x1
+                )
+                else 0
+            )
+            calibration[h][w] = value
+
+        calibration = calibration.astype(np.uint8)
+        logger.info(f"Calibration set")
+
+        return {"mask": calibration, "coords": (x0, y0, x1, y1)}
+
     def _producer(self):
-        '''
-            Samples frame buffer from webcam stream
-        '''
-        logger.info('Started PredictWorker.producer thread')
+        """
+        Samples frame buffer from webcam stream
+        """
+        logger.info("Started PredictWorker.producer thread")
         while True:
             try:
-                now = datetime.now()
-                self._task_queue.put_nowait({
-                'ts': now,
-                'image_buffer': self._predictor.load_url_buffer(self._webcam_url)
-                })
+                now = datetime.now(pytz.timezone("America/Los_Angeles"))
+                msg = self._image_msg(now)
+                self._task_queue.put_nowait(msg)
             except queue.Full:
-                logger.warning(f'Predict queue full, skipping frame @ ts: {now}')
+                logger.warning(f"Predict queue full, skipping frame @ ts: {now}")
             time.sleep(self._fps / 1000)
 
+    def _image_msg(self, ts):
+        return {
+            "ts": ts,
+            "original_image": self._predictor.load_url_buffer(self._webcam_url),
+        }
+
+    def _predict_msg(self, msg):
+        msg["original_image"].name = "original_image.jpg"
+        image = self._predictor.load_image(msg["original_image"])
+        prediction = self._predictor.predict(image)
+
+        viz_np = self._predictor.postprocess(image, prediction)
+        viz_image = PImage.fromarray(viz_np, "RGB")
+        viz_buffer = io.BytesIO()
+        viz_buffer.name = "annotated_image.jpg"
+        viz_image.save(viz_buffer, format="JPEG")
+        viz_bytes = viz_buffer.getvalue()
+
+        self._web_queue.put(viz_bytes)
+
+        msg.update(
+            {
+                "annotated_image": viz_buffer,
+                "predict_data": prediction,
+                "msg": "predict",
+            }
+        )
+        return msg
+
     def _consumer(self):
-        '''
-            Calculates prediction and publishes result to subscriber queues
-        '''
-        logger.info('Started PredictWorker.consumer thread')
+        """
+        Calculates prediction and publishes result to subscriber queues
+        """
+        logger.info("Started PredictWorker.consumer thread")
 
         while True:
-            
             msg = self._task_queue.get(block=True)
-
-            msg['image_buffer'].name = "original_image.jpg"
-            image = self._predictor.load_image(msg['image_buffer'])
-            prediction = self._predictor.predict(image)
-
-            viz_np = self._predictor.postprocess(
-                image, prediction
-            )
-            viz_image = PImage.fromarray(viz_np, "RGB")
-            viz_buffer = io.BytesIO()
-            viz_buffer.name = "annotated_image.jpg"
-            viz_image.save(viz_buffer, format="JPEG")
-            viz_bytes = viz_buffer.getvalue()
-            
-            self._web_queue.put(viz_bytes)
-            self._websocket_queue.put({
-                'original_image': msg['image_buffer'],
-                'annotated_image': viz_bytes,
-                'prediction': prediction
-            })
+            msg = self._predict_msg(msg)
+            self._websocket_queue.put(msg)
             self._task_queue.task_done()
-
-

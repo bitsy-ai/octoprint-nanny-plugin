@@ -56,8 +56,18 @@ plugin_requires = [
 	"typing_extensions ; python_version < '3.8'",
 	"pytz",
 	"aiohttp",
-	"print-nanny-client"
+	"print-nanny-client",
+	"websockets"
 ]
+
+extra_requires = {
+	"dev": [
+		"pytest",
+		"pytest-cov",
+		"pytest-mock",
+		"pytest-asyncio"
+	]
+}
 
 
 ### --------------------------------------------------------------------------------------------------------------------
@@ -116,7 +126,8 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
 	requires=plugin_requires,
 	additional_packages=plugin_additional_packages,
 	ignored_packages=plugin_ignored_packages,
-	additional_data=plugin_additional_data
+	additional_data=plugin_additional_data,
+	extra_requires=extra_requires
 )
 
 if len(additional_setup_parameters):
