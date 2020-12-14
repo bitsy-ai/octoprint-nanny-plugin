@@ -27,12 +27,8 @@ except:
     from typing_extensions import TypedDict
     from typing import Optional
 
-logger = logging.getLogger("octoprint.plugins.print_nanny")
-handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    "%(asctime)s  - %(name)s - %(levelname)s - %(message)s [%(process)d - %(threadName)s]"
-)
-handler.setFormatter(formatter)
+# @ todo configure logger from ~/.octoprint/logging.yaml
+logger = logging.getLogger("octoprint.plugins.print_nanny.predictor")
 
 
 class Prediction(TypedDict):
@@ -92,12 +88,6 @@ class ThreadLocalPredictor(threading.local):
         self.input_shape = self.metadata["inputShape"]
 
         self.calibration = calibration
-
-    def load_url_buffer(self, url: str):
-        res = requests.get(url)
-        res.raise_for_status()
-        assert res.headers["content-type"] == "image/jpeg"
-        return io.BytesIO(res.content)
 
     def load_image(self, bytes):
         return PImage.open(bytes)
@@ -224,8 +214,6 @@ class ThreadLocalPredictor(threading.local):
         score_data = np.squeeze(score_data, axis=0)
         num_detections = np.squeeze(num_detections, axis=0)
 
-        logger.info(num_detections)
-
         return Prediction(
             detection_boxes=box_data,
             detection_classes=class_data,
@@ -261,12 +249,10 @@ class PredictWorker:
         self.calibration = calibration
         self._fps = fps
         self._webcam_url = webcam_url
-        self._task_queue = queue.Queue(maxsize=20)
+        self._task_queue = queue.Queue()
 
         self._web_queue = web_queue
         self._websocket_queue = websocket_queue
-
-        self._predictor = ThreadLocalPredictor(calibration=calibration)
 
         self._producer_thread = threading.Thread(
             target=self._producer, daemon=True, name="producer"
@@ -277,6 +263,13 @@ class PredictWorker:
             target=self._consumer, daemon=True, name="consumer"
         )
         self._consumer_thread.start()
+        self._consumer_thread.join()
+
+    def load_url_buffer(self, url: str):
+        res = requests.get(url)
+        res.raise_for_status()
+        assert res.headers["content-type"] == "image/jpeg"
+        return io.BytesIO(res.content)
 
     @staticmethod
     def get_calibration(x0, y0, x1, y1, height, width):
@@ -320,7 +313,7 @@ class PredictWorker:
     def _image_msg(self, ts):
         return {
             "ts": ts,
-            "original_image": self._predictor.load_url_buffer(self._webcam_url),
+            "original_image": self.load_url_buffer(self._webcam_url),
         }
 
     def _predict_msg(self, msg):
@@ -335,13 +328,13 @@ class PredictWorker:
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
 
-        self._web_queue.put(viz_bytes)
+        self._web_queue.put_nowait(viz_bytes)
 
         msg.update(
             {
                 "annotated_image": viz_buffer,
                 "predict_data": prediction,
-                "msg": "predict",
+                "event_type": "predict",
             }
         )
         return msg
@@ -351,9 +344,9 @@ class PredictWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started PredictWorker.consumer thread")
+        self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
         while True:
             msg = self._task_queue.get(block=True)
             msg = self._predict_msg(msg)
-            self._websocket_queue.put(msg)
-            self._task_queue.task_done()
+            self._websocket_queue.put_nowait(msg)

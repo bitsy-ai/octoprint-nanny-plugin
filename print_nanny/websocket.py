@@ -12,7 +12,8 @@ import os
 
 from .utils.encoder import NumpyEncoder
 
-logger = logging.getLogger("octoprint.plugins.print_nanny")
+# @ todo configure logger from ~/.octoprint/logging.yaml
+logger = logging.getLogger("octoprint.plugins.print_nanny.websocket")
 
 
 class PrintNannyAuthMissing(Exception):
@@ -27,22 +28,13 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, api_url, api_token, producer, print_job_id):
+    def __init__(self, url, api_token, producer, print_job_id=None):
 
         if not type(producer) is multiprocessing.queues.Queue:
             raise ValueError("producer should be an instance of multiprocessing.Queue")
-        parsed_url = urllib.parse.urlparse(api_url)
-
-        if parsed_url.scheme == "http":
-            scheme = "ws"
-        elif parsed_url.scheme == "https":
-            scheme = "wss"
-        else:
-            raise ValueError(f"Could not parse protocol scheme from {api_url}")
 
         self._print_job_id = print_job_id
-
-        self._url = f"{scheme}://{parsed_url.netloc}{parsed_url.path}{print_job_id}"
+        self._url = url
         self._api_token = api_token
         self._producer = producer
 
@@ -50,19 +42,6 @@ class WebSocketWorker:
         asyncio.run(self.relay())
 
     def encode(self, msg):
-        encoded = {}
-
-        # for k, v in msg.items():
-        #     if k == "original_image":
-        #         file_hash = hashlib.md5(v.read()).hexdigest()
-        #         v.seek(0)
-        #         encoded[k] = v.read()
-        #         encoded["file_hash"] = file_hash
-        #     elif k == "annotated_image":
-        #         #v.seek(0)
-        #         encoded[k] = v
-        #     else:
-        #         encoded[k] = v
         return json.dumps(msg, cls=NumpyEncoder)
 
     async def ping(self, msg=None):
@@ -70,7 +49,7 @@ class WebSocketWorker:
             self._url, extra_headers=self._extra_headers
         ) as websocket:
             if msg is None:
-                msg = {"msg": "ping"}
+                msg = {"event_type": "ping"}
             msg = self.encode(msg)
             await websocket.send(msg)
             return await websocket.recv()
@@ -80,9 +59,12 @@ class WebSocketWorker:
             self._url, extra_headers=self._extra_headers
         ) as websocket:
             if msg is None:
-                msg = {"msg": "ping"}
+                msg = {"event_type": "ping"}
             msg = self.encode(msg)
             await websocket.send(msg)
+
+    def _update_settings(self, msg):
+        pass
 
     async def relay(self):
         logging.info(f"Initializing websocket {self._url}")
@@ -94,10 +76,20 @@ class WebSocketWorker:
             while True:
                 try:
                     msg = self._producer.get_nowait()
-                    encoded_msg = self.encode(msg)
-                    await websocket.send(encoded_msg)
+
+                    event_type = msg.get("event_type")
+
+                    if event_type == "predict":
+                        if self._print_job_id is None:
+                            logger.debug("No print job is active, discarding msg")
+                            continue
+                        msg["print_job_id"] = self._print_job_id
+                        encoded_msg = self.encode(msg)
+                        await websocket.send(encoded_msg)
+                    elif event_type == "settings":
+                        self._update_settings(msg)
+                    elif event_type == "print_job":
+                        self._print_job_id = msg.get("print_job_id")
 
                 except queue.Empty:
-                    logger.warning(
-                        f"Websocket relay is dry. If this happens often, try a more frequent sample/predict rate"
-                    )
+                    pass
