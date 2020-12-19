@@ -255,15 +255,18 @@ class PredictWorker:
         self._websocket_queue = websocket_queue
 
         self._producer_thread = threading.Thread(
-            target=self._producer, daemon=True, name="producer"
+            target=self._producer, name="producer"
         )
+        self._producer_thread.daemon = True
         self._producer_thread.start()
 
         self._consumer_thread = threading.Thread(
-            target=self._consumer, daemon=True, name="consumer"
+            target=self._consumer, name="consumer"
         )
+        self._consumer_thread.daemon = True
         self._consumer_thread.start()
-        self._consumer_thread.join()
+        # self._consumer_thread.join()
+        # self._producer_thread.join()
 
     def load_url_buffer(self, url: str):
         res = requests.get(url)

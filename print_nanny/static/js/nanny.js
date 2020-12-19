@@ -42,7 +42,6 @@ $(function() {
         self.settingsViewModel = parameters[1];
 
         self.imageData = ko.observable();
-        self.imageData = ko.observable();
         self.calibratePos = ko.observable();
 
         self.previewActive = ko.observable(false)
@@ -55,8 +54,9 @@ $(function() {
         OctoPrint.socket.onMessage("*", function(message) {
             console.log(message)
             if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
+
+
                 self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
-                self.previewActive(true);
             }
         });
 
@@ -98,6 +98,7 @@ $(function() {
                 calibrate_y1: calibration.coords.y2 / calibration.h
             }
             OctoPrint.settings.savePluginSettings('print_nanny', s);
+            self.calibrationActive(false);
 
         }
     
@@ -107,7 +108,7 @@ $(function() {
             OctoPrint.postJson(url, {})
             .done((res) =>{
                     console.debug('Starting stream', res)
-                    self.active(true)
+                    self.previewActive(true);
                     // self.alertClass(self.alerts.success.class)
                     // self.alertHeader(self.alerts.success.header)
                     // self.alertText(self.alerts.success.text)
@@ -126,8 +127,8 @@ $(function() {
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
-                    self.active(false)
-                    console.debug('Starting stream', res)
+                self.previewActive(false);
+                console.debug('Starting stream', res)
                     // self.alertClass(self.alerts.success.class)
                     // self.alertHeader(self.alerts.success.header)
                     // self.alertText(self.alerts.success.text)
@@ -138,6 +139,22 @@ $(function() {
                     // self.alertHeader(self.alerts.error.header)
                     // self.alertText(self.alerts.error.text)
             });        
+        }
+
+        isPreviewActive = function(){
+            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'previewActive'
+
+            OctoPrint.postJson(url, {})
+            .done((res) =>{
+                self.previewActive(res.active);
+
+                })
+            .fail(e => {
+                    console.error('Failed to start stream', e)
+                    // self.alertClass(self.alerts.error.class)
+                    // self.alertHeader(self.alerts.error.header)
+                    // self.alertText(self.alerts.error.text)
+            }); 
         }
 
     }

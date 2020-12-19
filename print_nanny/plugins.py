@@ -89,21 +89,17 @@ class BitsyNannyPlugin(
         self._octolapse_snapshot_path = None
 
         # Dedicated processes for predictor and websocket stream
-        self._predict_ui_results = multiprocessing.Queue()
-        self._predict_ws_results = multiprocessing.Queue()
+        self._predict_ui_results = None
+        self._predict_ws_results = None
         self._predict_proc = None
         self._ws_proc = None
+        self._relay_thread = None
 
         # REST API calls (async event loop)
         self._api_objects = {}
         self._api_thread = threading.Thread(target=self._start_api_loop)
         self._api_thread.daemon = True
         self._api_thread.start()
-
-        # UI streaming loop
-        self._relay_thread = threading.Thread(target=self._relay_worker)
-        self._relay_thread.daemon = True
-        self._relay_thread.start()
 
         # User interactive
         self._tracking_events = None
@@ -116,15 +112,15 @@ class BitsyNannyPlugin(
             Events.PRINT_DONE: self._stop,
             Events.PRINT_CANCELLING: self._stop,
             Events.PRINT_CANCELLED: self._stop,
-            Events.PRINT_PAUSED: self._pause,
-            Events.PRINT_RESUMED: self._resume,
+            Events.PRINT_PAUSED: self._stop,
+            Events.PRINT_RESUMED: self._stop,
             Events.UPLOAD: self._handle_file_upload,
             self.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
         self._log_path = None
         self._environment = {}
-        self._procs = []
+        self._workers = []
         self._active = False
 
     def _relay_worker(self):
@@ -132,8 +128,9 @@ class BitsyNannyPlugin(
         Child process to -> Octoprint event bus relay
         """
         logger.info("Started event relay worker")
-        while True:
+        while self._active:
             viz_bytes = self._predict_ui_results.get(block=True)
+            logger.info(f"Sending {Events.PLUGIN_PRINT_NANNY_PREDICT_DONE}")
             self._event_bus.fire(
                 Events.PLUGIN_PRINT_NANNY_PREDICT_DONE,
                 payload={"image": base64.b64encode(viz_bytes)},
@@ -145,12 +142,26 @@ class BitsyNannyPlugin(
         self._event_loop.run_until_complete(self._upload_worker())
 
     def on_shutdown(self):
-        for proc in self._procs:
-            logging.warning(f"Shutting down {proc}")
-            proc.join(timeout=10)
+        for worker in self._workers:
+            logging.warning(f"Shutting down {worker}")
+            worker.join(timeout=10)
 
-    async def _start_worker_procs(self, retries=3):
+    async def _start_workers(self, retries=3):
+
         self._active = True
+
+        if self._predict_ui_results is None:
+            self._predict_ui_results = multiprocessing.Queue()
+        
+        if self._predict_ws_results is None:
+            self._predict_ws_results = multiprocessing.Queue()
+        # UI streaming loop
+        if self._relay_thread is None:
+            self._relay_thread = threading.Thread(target=self._relay_worker)
+            self._relay_thread.daemon = True
+            self._relay_thread.start()
+            self._workers.append(self._relay_thread)
+
         if self._predict_proc is None:
             webcam_url = self._settings.global_get(["webcam", "snapshot"])
             self._predict_proc = multiprocessing.Process(
@@ -164,7 +175,7 @@ class BitsyNannyPlugin(
             )
             self._predict_proc.daemon = True
             logger.info("Starting PredictWorker process")
-            self._procs.append(self._predict_proc)
+            self._workers.append(self._predict_proc)
             self._predict_proc.start()
 
         if self._ws_proc is None:
@@ -177,7 +188,7 @@ class BitsyNannyPlugin(
                 args=(ws_url, api_token, self._predict_ws_results, print_job_id),
             )
             self._ws_proc.daemon = True
-            self._procs.append(self._ws_proc)
+            self._workers.append(self._ws_proc)
             self._ws_proc.start()
 
     def _get_metadata(self):
@@ -208,7 +219,19 @@ class BitsyNannyPlugin(
 
     def _stop(self, *args, **kwargs):
         self._active = False
+        for worker in self._workers:
+            logging.warning(f"Shutting down {worker}")
+            worker.join(timeout=1)
+            if isinstance(worker, multiprocessing.Process):
+                worker.close()
 
+        self._workers = []
+        self._predict_proc = None
+        self._ws_proc = None
+        self._relay_thread = None
+        self._predict_ui_results = None
+        self._predict_ws_results = None
+    
     def _reset(self, *args, **kwargs):
         self._api_objects = {}
 
@@ -342,7 +365,7 @@ class BitsyNannyPlugin(
             except CLIENT_EXCEPTIONS as e:
                 logger.error(f"_handle_print_start API call failed {e}", exc_info=True)
 
-            await self._start_worker_procs()
+            await self._start_workers()
 
     async def _handle_predict_upload(
         self, event_type, event_data, annotated_image, prediction, original_image
@@ -490,25 +513,6 @@ class BitsyNannyPlugin(
                 logger.error(e, exc_info=True)
             self._upload_queue.task_done()
 
-    def _predict_worker(self):
-        """
-        sync
-        """
-        logger.info("Started _predict_worker thread")
-        while True:
-            msg = self._predict_queue.get(block=True)
-            if not msg.get("event_type"):
-                logger.warning(
-                    "Ignoring enqueued msg without type declared {msg}".format(msg=msg)
-                )
-                continue
-            handler_fn = self._queue_event_handlers[msg["event_type"]]
-            try:
-                handler_fn(**msg)
-            except Exception as e:
-                logger.error(e, exc_info=True)
-            self._predict_queue.task_done()
-
     ##
     ## Octoprint api routes + handlers
     ##
@@ -526,8 +530,9 @@ class BitsyNannyPlugin(
         if not self._active:
             logger.info("POST /startPredict is starting predict worker")
             response = asyncio.run_coroutine_threadsafe(
-                self._start_worker_procs(), self._event_loop
+                self._start_workers(), self._event_loop
             ).result()
+            self._active = True
         return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
@@ -572,9 +577,6 @@ class BitsyNannyPlugin(
 
     def on_event(self, event_type, event_data):
         IGNORED = [Events.PLUGIN_PRINT_NANNY_PREDICT_DONE]
-
-        if event_type == Events.SETTINGS_UPDATED:
-            self._calibration = None
 
         if self._tracking_events is None or event_type in self._tracking_events:
             self._queue_upload({"event_type": event_type, "event_data": event_data})

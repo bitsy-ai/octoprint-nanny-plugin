@@ -16,9 +16,19 @@ from .utils.encoder import NumpyEncoder
 logger = logging.getLogger("octoprint.plugins.print_nanny.websocket")
 
 
-class PrintNannyAuthMissing(Exception):
-    pass
+class WorkerManager:
 
+    def __init__(self):
+        pass
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def update_settings(self):
+        pass
 
 class WebSocketWorker:
     """
@@ -39,7 +49,7 @@ class WebSocketWorker:
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
-        asyncio.run(self.relay())
+        asyncio.run(self.run())
 
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
@@ -62,13 +72,17 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             msg = self.encode(msg)
             await websocket.send(msg)
+    
+    async def run(self, backoff=1):
+        try:
+            return await self.relay_loop()
+        except Exception as e:
+            logger.error(f'Error connecting to websocket. Retrying in {backoff} seconds. Exception: \n {e}')
+            await asyncio.sleep(backoff)
+            return await self.run(backoff=backoff*2)
 
-    def _update_settings(self, msg):
-        pass
-
-    async def relay(self):
+    async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
-
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
         ) as websocket:
@@ -90,6 +104,5 @@ class WebSocketWorker:
                         self._update_settings(msg)
                     elif event_type == "print_job":
                         self._print_job_id = msg.get("print_job_id")
-
                 except queue.Empty:
                     pass

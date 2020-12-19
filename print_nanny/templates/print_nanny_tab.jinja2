@@ -40,7 +40,7 @@
         <p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span></strong>
         </p>
 
-        <img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }"/>
+        <img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }, visible: previewActive"/>
 
         <hr/>
 
@@ -49,15 +49,15 @@
         <p>Click the <strong>Start</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
         </div>
         <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
-            Start
+            Start Monitoring
         </button>
 
         <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
-            Stop
+            Stop Monitoring
         </button>
 
         <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
-            Calibrate
+            Show Calibration
         </button>
     </div>
     <div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
