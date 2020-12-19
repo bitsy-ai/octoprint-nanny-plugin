@@ -57,7 +57,8 @@ plugin_requires = [
 	"pytz",
 	"aiohttp",
 	"print-nanny-client",
-	"websockets"
+	"websockets",
+	"backoff==1.10.0"
 ]
 
 extra_requires = {

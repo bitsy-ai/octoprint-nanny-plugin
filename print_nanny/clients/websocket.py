@@ -17,6 +17,9 @@ logger = logging.getLogger("octoprint.plugins.print_nanny.websocket")
 
 
 class WorkerManager:
+    """
+    Manages PredictWorker and WebsocketWorker processes
+    """
 
     def __init__(self):
         pass
@@ -29,6 +32,7 @@ class WorkerManager:
 
     def update_settings(self):
         pass
+
 
 class WebSocketWorker:
     """
@@ -72,14 +76,16 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             msg = self.encode(msg)
             await websocket.send(msg)
-    
+
     async def run(self, backoff=1):
         try:
             return await self.relay_loop()
         except Exception as e:
-            logger.error(f'Error connecting to websocket. Retrying in {backoff} seconds. Exception: \n {e}')
+            logger.error(
+                f"Error connecting to websocket. Retrying in {backoff} seconds. Exception: \n {e}"
+            )
             await asyncio.sleep(backoff)
-            return await self.run(backoff=backoff*2)
+            return await self.run(backoff=backoff * 2)
 
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")

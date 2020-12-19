@@ -29,18 +29,10 @@ from PIL import Image
 import multiprocessing_logging
 
 import print_nanny_client
-from print_nanny_client import ApiClient as AsyncApiClient
-from print_nanny_client.api.events_api import EventsApi
-from print_nanny_client.api.remote_control_api import RemoteControlApi
-from print_nanny_client.api.users_api import UsersApi
-from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.models.predict_event_request import PredictEventRequest
-from print_nanny_client.models.print_job_request import PrintJobRequest
-from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
 
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
 from .predictor import PredictWorker
-from .websocket import WebSocketWorker
+from .websocket import WebSocketWorker, RestAPIClient, WorkerManager
 from .utils.encoder import NumpyEncoder
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
@@ -79,14 +71,15 @@ class BitsyNannyPlugin(
     PRINT_PROGRESS = "print_progress"
 
     def __init__(self, *args, **kwargs):
+
+        # log multiplexing for multiprocessing.Process
         multiprocessing_logging.install_mp_handler()
 
-        # swagger api
-        self.swagger_client = None
+        # wraps auto-generated swagger api
+        self.rest_client = RestAPIClient()
 
-        # Octolapse plugin
-        self._octolapse_data = None
-        self._octolapse_snapshot_path = None
+        # manages worker processes and relay queues
+        self._worker_manager = WorkerManager()
 
         # Dedicated processes for predictor and websocket stream
         self._predict_ui_results = None
@@ -152,7 +145,7 @@ class BitsyNannyPlugin(
 
         if self._predict_ui_results is None:
             self._predict_ui_results = multiprocessing.Queue()
-        
+
         if self._predict_ws_results is None:
             self._predict_ws_results = multiprocessing.Queue()
         # UI streaming loop
@@ -205,6 +198,7 @@ class BitsyNannyPlugin(
                 k: None if v is None else v.id for k, v in self._api_objects.items()
             },
             "environment": self._environment,
+            "plugin_version": self._plugin_version,
         }
         return metadata
 
@@ -231,192 +225,67 @@ class BitsyNannyPlugin(
         self._relay_thread = None
         self._predict_ui_results = None
         self._predict_ws_results = None
-    
+
     def _reset(self, *args, **kwargs):
         self._api_objects = {}
 
     async def _test_api_auth(self, auth_token, api_url):
-        parsed_uri = urlparse(api_url)
-        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-        api_config = print_nanny_client.Configuration(host=host)
-        api_config.access_token = auth_token
-        async with AsyncApiClient(api_config) as api_client:
-            api_instance = UsersApi(api_client=api_client)
-            try:
-                user = await api_instance.users_me_retrieve()
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f"_test_api_auth API call failed {e}", exc_info=True)
-                return e
-        return user
+        rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
+        try:
+            user = rest_client.get_user()
+            self.rest_client = rest_client
+            return user
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(f"_test_api_auth API call failed {e}", exc_info=True)
+            return
 
     async def _handle_file_upload(self, event_type, event_data):
+        try:
 
-        gcode_file_path = self._file_manager.path_on_disk(
-            octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
-        )
-        gcode_f = open(gcode_file_path, "rb")
-        file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-        gcode_f.seek(0)
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = RemoteControlApi(api_client=api_client)
-
-            try:
-                gcode_file = await api_instance.gcode_files_update_or_create(
-                    name=event_data["name"],
-                    file_hash=file_hash,
-                    file=gcode_f,
-                )
-                logger.info(f"Upserted gcode_file {gcode_file}")
-                return gcode_file
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f"_handle_file_upload API call failed {e}", exc_info=True)
+            await self.rest_client.create_gcode_file(event_data, gcode_file_path)
+            return gcode_file
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(f"_handle_file_upload API call failed {e}", exc_info=True)
 
     async def _handle_print_start(self, event_type, event_data):
 
         event_data.update(self._get_metadata())
-        async with AsyncApiClient(self._api_config) as api_client:
-            # printer profile
-            api_instance = RemoteControlApi(api_client=api_client)
-            request = PrinterProfileRequest(
-                axes_e_inverted=event_data["printer_profile"]["axes"]["e"]["inverted"],
-                axes_x_inverted=event_data["printer_profile"]["axes"]["x"]["inverted"],
-                axes_y_inverted=event_data["printer_profile"]["axes"]["y"]["inverted"],
-                axes_z_inverted=event_data["printer_profile"]["axes"]["z"]["inverted"],
-                axes_e_speed=event_data["printer_profile"]["axes"]["e"]["speed"],
-                axes_x_speed=event_data["printer_profile"]["axes"]["x"]["speed"],
-                axes_y_speed=event_data["printer_profile"]["axes"]["y"]["speed"],
-                axes_z_speed=event_data["printer_profile"]["axes"]["z"]["speed"],
-                extruder_count=event_data["printer_profile"]["extruder"]["count"],
-                extruder_nozzle_diameter=event_data["printer_profile"]["extruder"][
-                    "nozzleDiameter"
-                ],
-                extruder_shared_nozzle=event_data["printer_profile"]["extruder"][
-                    "sharedNozzle"
-                ],
-                name=event_data["printer_profile"]["name"],
-                model=event_data["printer_profile"]["model"],
-                heated_bed=event_data["printer_profile"]["heatedBed"],
-                heated_chamber=event_data["printer_profile"]["heatedChamber"],
-                volume_custom_box=event_data["printer_profile"]["volume"]["custom_box"],
-                volume_depth=event_data["printer_profile"]["volume"]["depth"],
-                volume_formfactor=event_data["printer_profile"]["volume"]["formFactor"],
-                volume_height=event_data["printer_profile"]["volume"]["height"],
-                volume_origin=event_data["printer_profile"]["volume"]["origin"],
-                volume_width=event_data["printer_profile"]["volume"]["width"],
-            )
-            try:
-                printer_profile = await api_instance.printer_profiles_update_or_create(
-                    request
-                )
-                logger.info(f"Synced printer_profile {printer_profile.id}")
-                printer_profile_id = printer_profile.id
-                self._api_objects["printer_profile"] = printer_profile
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(
-                    f"_handle_print_start API called failed {e}", exc_info=True
-                )
-                return
 
-            # gcode file
+        try:
+            printer_profile = await self.rest_client.update_or_create_printer_profile(
+                event_data
+            )
+
+            self._api_objects["printer_profile"] = printer_profile
+
             gcode_file_path = self._file_manager.path_on_disk(
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
-            logging.info(f"Hashing contents of gcode file {gcode_file_path}")
-            try:
-                gcode_f = open(gcode_file_path, "rb")
-                file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-                gcode_f.seek(0)
-                logging.info(
-                    f"Retrieving GcodeFile object with file_hash={gcode_file_path}"
-                )
-
-                api_instance = RemoteControlApi(api_client=api_client)
-                try:
-                    gcode_file = await api_instance.gcode_files_update_or_create(
-                        name=event_data["name"], file_hash=file_hash, file=gcode_f
-                    )
-                    self._api_objects["gcode_file"] = gcode_file
-                    logger.info(f"Synced gcode_file {gcode_file.id}")
-                    gcode_file_id = gcode_file.id
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(
-                        f"_handle_print_start API call failed {e}", exc_info=True
-                    )
-                    gcode_file_id = None
-            except FileNotFoundError as e:
-                logging.warning(
-                    f"Gcode already transferred to SD card. No gcode file will be associated with this print."
-                )
-                gcode_file_id = None
-                file_hash = None
-            # print job
-            api_instance = RemoteControlApi(api_client=api_client)
-            request = print_nanny_client.models.print_job_request.PrintJobRequest(
-                gcode_file=gcode_file_id,
-                gcode_file_hash=file_hash,
-                dt=event_data["dt"],
-                name=event_data["name"],
-                printer_profile=printer_profile_id,
+            gcode_file = await self.rest_client.update_or_create_gcode_file(
+                event_data, gcode_file_path
             )
-            try:
-                print_job = await api_instance.print_jobs_create(request)
-                self._api_objects["print_job"] = print_job
-                logger.info(f"Created print_job {print_job}")
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f"_handle_print_start API call failed {e}", exc_info=True)
 
-            await self._start_workers()
+            # self._api_objects["gcode_file"] = gcode_file
 
-    async def _handle_predict_upload(
-        self, event_type, event_data, annotated_image, prediction, original_image
-    ):
-        file_hash = hashlib.md5(original_image.read()).hexdigest()
-
-        # reset stream position to prepare for upload
-        original_image.seek(0)
-        annotated_image.seek(0)
-        event_data.update(self._get_metadata())
-
-        async with AsyncApiClient(self._api_config) as api_client:
-
-            api_instance = EventsApi(api_client=api_client)
-
-            predict_event_files = await api_instance.predict_event_files_create(
-                original_image=original_image,
-                annotated_image=annotated_image,
-                hash=file_hash,
+            print_job = await self.rest_client.create_print_job(
+                event_data, gcode_file.id, printer_profile.id
             )
-            if not self._api_objects.get("print_job"):
-                logger.debug(
-                    "No print_job is active, skipping _handle_predict_upload()"
-                )
-                return
-            request = PredictEventRequest(
-                dt=event_data.get("dt"),
-                plugin_version=event_data.get("plugin_version"),
-                octoprint_version=event_data.get("octoprint_version"),
-                event_data=json.dumps(event_data, cls=NumpyEncoder),
-                files=predict_event_files.id,
-                predict_data=json.dumps(prediction, cls=NumpyEncoder),
-                print_job=self._api_objects.get("print_job").id,
-            )
-            try:
-                api_instance = EventsApi(api_client=api_client)
 
-                await api_instance.predict_events_create(request)
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(
-                    f"_handle_predict_upload API call failed failed {e}", exc_info=True
-                )
+            self._api_objects["print_job"] = printer_profile
+
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(f"_handle_print_start API called failed {e}", exc_info=True)
+            return
+
+        await self._start_workers()
 
     async def _get_tracking_events(self):
+        """
+        @todo make tracking events opt-in
+        https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/10
+        """
         if not self._tracking_events:
-            async with AsyncApiClient(self._api_config) as api_client:
-                api_client.client_side_validation = False
-                self._tracking_events = await EventsApi(
-                    api_client
-                ).octoprint_events_tracking_retrieve()
-                logging.info(f"Tracking octoprint events {self._tracking_events}")
+            self._tracking_events = self.rest_client.get_tracking_events()
         return self._tracking_events
 
     async def _handle_octoprint_event(self, event_type, event_data, **kwargs):
@@ -429,7 +298,6 @@ class BitsyNannyPlugin(
         if event_type == self.PRINT_PROGRESS:
             return
 
-        # @todo configure opt-in tracking + communicate which features depend on tracked events
         elif event_type not in await self._get_tracking_events():
             return
 
@@ -439,44 +307,23 @@ class BitsyNannyPlugin(
         else:
             event_data = metadata
 
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = EventsApi(api_client=api_client)
-            request = OctoPrintEventRequest(
-                dt=event_data["metadata"]["dt"],
-                event_type=event_type,
-                event_data=event_data,
-                plugin_version=self._plugin_version,
-                octoprint_version=event_data["metadata"]["octoprint_version"],
+        try:
+            event = await self.rest_client.create_octoprint_event(
+                event_type, event_data
             )
-            try:
-                event = await api_instance.octoprint_events_create(request)
-                return event
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(
-                    f"_handle_octoprint_event API called failed {e}", exc_info=True
-                )
+            return event
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         print_job = self._api_objects.get("print_job")
         if print_job is not None:
-            async with AsyncApiClient(self._api_config) as api_client:
-                request = (
-                    print_nanny_client.models.print_job_request.PatchedPrintJobRequest(
-                        progress=event_data["progress"]
-                    )
+            try:
+                await self.rest_client.update_print_progress(print_job.id, event_data)
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(
+                    f"_handle_print_progress_upload() exception {e}", exc_info=True
                 )
-                api_instance = RemoteControlApi(api_client=api_client)
-                try:
-                    print_job = await api_instance.print_jobs_partial_update(
-                        print_job.id, patched_print_job_request=request
-                    )
-                    self._api_objects["print_job"] = print_job
-                    logger.info(f"Created print_job {print_job}")
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(
-                        f"_handle_print_progress_upload API call failed {e}",
-                        exc_info=True,
-                    )
 
     async def _upload_worker(self):
         """
@@ -566,15 +413,6 @@ class BitsyNannyPlugin(
     def register_custom_events(self):
         return ["predict_done", "predict_failed", "upload_done", "upload_failed"]
 
-    @property
-    def _api_config(self):
-        parsed_uri = urlparse(self._settings.get(["api_url"]))
-        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-        config = print_nanny_client.Configuration(host=host)
-
-        config.access_token = self._settings.get(["auth_token"])
-        return config
-
     def on_event(self, event_type, event_data):
         IGNORED = [Events.PLUGIN_PRINT_NANNY_PREDICT_DONE]
 
@@ -588,20 +426,25 @@ class BitsyNannyPlugin(
         """
 
         self._log_path = self._settings.get_plugin_logfile_path()
+
         if self._settings.get(["auth_token"]) is not None:
 
-            user = asyncio.run_coroutine_threadsafe(
-                self._test_api_auth(
-                    auth_token=self._settings.get(["auth_token"]),
-                    api_url=self._settings.get(["api_url"]),
-                ),
-                self._event_loop,
-            ).result()
-            logger.info(f"Authenticated as {user}")
+            user = self.rest_client.get_user(self._settings.get(["auth_token"]))
+
+            # user = asyncio.run_coroutine_threadsafe(
+            #     self._test_api_auth(
+            #         auth_token=self._settings.get(["auth_token"]),
+            #         api_url=self._settings.get(["api_url"]),
+            #     ),
+            #     self._event_loop,
+            # ).result()
 
             if user is not None:
+                logger.info(f"Authenticated as {user}")
                 self._settings.set(["user_email"], user.email)
                 self._settings.set(["user_url"], user.url)
+            else:
+                logger.warning(f"Invalid auth")
 
     ## Progress plugin
 
