@@ -2,36 +2,20 @@ import aiohttp
 import asyncio
 import hashlib
 import json
-import multiprocessing
 import logging
 import queue
 import websockets
 import urllib
 import asyncio
 import os
+import aioprocessing
+import multiprocessing
 
-from .utils.encoder import NumpyEncoder
+
+from print_nanny.utils.encoder import NumpyEncoder
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.print_nanny.websocket")
-
-
-class WorkerManager:
-    """
-    Manages PredictWorker and WebsocketWorker processes
-    """
-
-    def __init__(self):
-        pass
-
-    def start(self):
-        pass
-
-    def stop(self):
-        pass
-
-    def update_settings(self):
-        pass
 
 
 class WebSocketWorker:
@@ -44,8 +28,10 @@ class WebSocketWorker:
 
     def __init__(self, url, api_token, producer, print_job_id=None):
 
-        if not type(producer) is multiprocessing.queues.Queue:
-            raise ValueError("producer should be an instance of multiprocessing.Queue")
+        if not isinstance(producer, multiprocessing.managers.BaseProxy):
+            raise ValueError(
+                "producer should be an instance of aioprocessing.managers.AioQueueProxy"
+            )
 
         self._print_job_id = print_job_id
         self._url = url

@@ -1,21 +1,21 @@
 import pytest
-import multiprocessing
+import aioprocessing
 import queue
 import urllib
 from datetime import datetime
-from print_nanny.websocket import WebSocketWorker
+from print_nanny.clients.websocket import WebSocketWorker
 from print_nanny.predictor import PredictWorker
 import pytz
 
 
 @pytest.fixture
 def ws_client(mocker):
-    mocker.patch("print_nanny.websocket.asyncio")
-
+    mocker.patch("print_nanny.clients.websocket.asyncio")
+    m = aioprocessing.AioManager()
     return WebSocketWorker(
-        "http://localhost:8000/ws/predict/",
+        "ws://localhost:8000/ws/predict/",
         "3a833ac48104772a349254690cae747e826886f1",
-        multiprocessing.Queue(),
+        m.Queue(),
         1,
     )
 
@@ -23,33 +23,18 @@ def ws_client(mocker):
 @pytest.fixture
 def predict_worker(mocker):
     mocker.patch("print_nanny.predictor.threading")
+    m = aioprocessing.AioManager()
 
     return PredictWorker(
         "http://localhost:8080/?action=snapshot",
-        multiprocessing.Queue(),
-        multiprocessing.Queue(),
-        calibration=None,
+        None,
+        m.Queue(),
+        m.Queue(),
     )
-
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
         WebSocketWorker("http://foo.com/ws/", "api_team", queue.Queue(), 1)
-
-
-def test_ws_url_scheme_parse(mocker):
-    mocker.patch("print_nanny.websocket.asyncio")
-    ws_client = WebSocketWorker(
-        "http://localhost:8000/ws/", "token", multiprocessing.Queue(), 1
-    )
-
-    wss_client = WebSocketWorker(
-        "https://localhost:8000/ws/", "token", multiprocessing.Queue(), 1
-    )
-
-    assert ws_client._url == "ws://localhost:8000/ws/1"
-    assert wss_client._url == "wss://localhost:8000/ws/1"
-    assert ws_client._extra_headers == (("Authorization", f"Bearer token"),)
 
 
 @pytest.mark.webapp

@@ -1,9 +1,10 @@
 import aiohttp
 import logging
-from urllib import urlparse
-
+import urllib
 import hashlib
 import backoff
+
+from octoprint.events import Events
 
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
@@ -16,6 +17,11 @@ from print_nanny_client.models.printer_profile_request import PrinterProfileRequ
 
 
 logger = logging.getLogger("octoprint.plugins.print_nanny.rest_clientt")
+
+CLIENT_EXCEPTIONS = (
+    print_nanny_client.exceptions.ApiException,
+    aiohttp.client_exceptions.ClientError,
+)
 
 
 class RestAPIClient:
@@ -30,7 +36,7 @@ class RestAPIClient:
 
     @property
     def _api_config(self):
-        parsed_uri = urlparse(self.api_url)
+        parsed_uri = urllib.parse(self.api_url)
         host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
         config = print_nanny_client.Configuration(host=host)
 
@@ -38,7 +44,7 @@ class RestAPIClient:
         return config
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def get_tracking_events(self):
+    async def get_tracking_events(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
             tracking_events = await EventsApi(
@@ -48,14 +54,14 @@ class RestAPIClient:
             return tracking_events
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def get_user(self):
+    async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = UsersApi(api_client=api_client)
             user = await api_instance.users_me_retrieve()
             return user
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def create_octoprint_event(self, event_type, event_data):
+    async def create_octoprint_event(self, event_type, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             request = OctoPrintEventRequest(
@@ -68,7 +74,7 @@ class RestAPIClient:
             return await api_instance.octoprint_events_create(request)
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def update_print_progress(print_job_id, event_data):
+    async def update_print_progress(self, print_job_id, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
             request = (
                 print_nanny_client.models.print_job_request.PatchedPrintJobRequest(
@@ -82,7 +88,7 @@ class RestAPIClient:
             return print_job
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def update_or_create_gcode_file(self, event_data, gcode_file_path):
+    async def update_or_create_gcode_file(self, event_data, gcode_file_path):
         gcode_f = open(gcode_file_path, "rb")
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
         gcode_f.seek(0)
@@ -98,7 +104,7 @@ class RestAPIClient:
             return gcode_file
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def create_print_job(self, event_data, gcode_file_id, printer_profile_id):
+    async def create_print_job(self, event_data, gcode_file_id, printer_profile_id):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.models.print_job_request.PrintJobRequest(
@@ -111,7 +117,7 @@ class RestAPIClient:
             return print_job
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
-    def update_or_create_printer_profile(self, event_data):
+    async def update_or_create_printer_profile(self, event_data):
 
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile

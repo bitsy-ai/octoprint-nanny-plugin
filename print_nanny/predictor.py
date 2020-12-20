@@ -233,15 +233,15 @@ class PredictWorker:
     def __init__(
         self,
         webcam_url: str,
-        web_queue: multiprocessing.Queue,
-        websocket_queue: multiprocessing.Queue,
         calibration: tuple,
+        octoprint_ws_queue: multiprocessing.Queue,
+        pn_ws_queue: multiprocessing.Queue,
         fps: int = 5,
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
-        web_queue - consumer relay to octoprint's main event bus
-        websocket_queue - consumer relay to websocket upload proc
+        octoprint_ws_queue - consumer relay to octoprint's main event bus
+        pn_ws_queue - consumer relay to websocket upload proc
         calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
         fps - wildly approximate buffer sample rate, depends on time.sleep()
         """
@@ -251,8 +251,8 @@ class PredictWorker:
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
 
-        self._web_queue = web_queue
-        self._websocket_queue = websocket_queue
+        self._octoprint_ws_queue = octoprint_ws_queue
+        self._pn_ws_queue = pn_ws_queue
 
         self._producer_thread = threading.Thread(target=self._producer, name="producer")
         self._producer_thread.daemon = True
@@ -261,6 +261,8 @@ class PredictWorker:
         self._consumer_thread = threading.Thread(target=self._consumer, name="consumer")
         self._consumer_thread.daemon = True
         self._consumer_thread.start()
+        
+        self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
     def load_url_buffer(self, url: str):
         res = requests.get(url)
@@ -325,7 +327,7 @@ class PredictWorker:
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
 
-        self._web_queue.put_nowait(viz_bytes)
+        self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         msg.update(
             {
@@ -341,9 +343,8 @@ class PredictWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started PredictWorker.consumer thread")
-        self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
         while True:
             msg = self._task_queue.get(block=True)
             msg = self._predict_msg(msg)
-            self._websocket_queue.put_nowait(msg)
+            self._pn_ws_queue.put_nowait(msg)

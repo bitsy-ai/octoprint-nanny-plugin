@@ -40,9 +40,9 @@ arch = os.uname().machine
 
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
 if arch == 'armv7l':
-	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_armv7l.whl'
+	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_armv7l.whl'
 	
-elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-au/tensorflow-arm-bin/releases/download/2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_aarch64.whl'	
+elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_aarch64.whl'	
 elif arch == 'x86_64':
 	tensorflow = "tensorflow==2.4.0rc4"
 else:
@@ -58,7 +58,8 @@ plugin_requires = [
 	"aiohttp",
 	"print-nanny-client",
 	"websockets",
-	"backoff==1.10.0"
+	"backoff==1.10.0",
+	"aioprocessing==1.1.0"
 ]
 
 extra_requires = {
