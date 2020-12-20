@@ -55,7 +55,7 @@ class RestAPIClient:
             logging.info(f"Tracking octoprint events {self._tracking_events}")
             return tracking_events
 
-    @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
+    # @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = UsersApi(api_client=api_client)

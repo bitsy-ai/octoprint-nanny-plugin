@@ -44,15 +44,13 @@ class WorkerManager:
 
         self.active = False
 
-        self.tracking_queue = (
-            self.manager.Queue()
-        )  # holds octoprint events to be uploaded via rest client
-        self.octo_ws_queue = (
-            self.manager.Queue()
-        )  # streamed to octoprint front-end over websocket
-        self.pn_ws_queue = (
-            self.manager.Queue()
-        )  # streamed to print nanny asgi over websocket
+        # holds octoprint events to be uploaded via rest client
+
+        self.tracking_queue = self.manager.Queue()
+        # streamed to octoprint front-end over websocket
+        self.octo_ws_queue = self.manager.Queue()
+        # streamed to print nanny asgi over websocket
+        self.pn_ws_queue = self.manager.Queue()
 
         self._tracking_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
@@ -66,13 +64,13 @@ class WorkerManager:
         }
 
         # daemonized threads for rest api and octoprint websocket relay
-        # self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
-        # self.rest_api_thread.daemon = True
-        # self.rest_api_thread.start()
+        self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
+        self.rest_api_thread.daemon = True
+        self.rest_api_thread.start()
 
-        # self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
-        # self.octo_ws_thread.daemon = True
-        # self.octo_ws_thread.start()
+        self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
+        self.octo_ws_thread.daemon = True
+        self.octo_ws_thread.start()
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -100,14 +98,15 @@ class WorkerManager:
 
     def _rest_api_worker(self):
         loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self._tracking_queue_loop())
+        self.loop = loop
+        self.loop.call_soon(self._tracking_queue_loop)
+        return self.loop.run_forever()
 
     async def _tracking_queue_loop(self):
         logger.info("Started _rest_client_worker")
 
         while True:
-            event = await self.tracking_queue.get()
+            event = await self.tracking_queue.coro_get()
             if event.get("event_type") is None:
                 logger.warning(
                     "Ignoring enqueued msg without type declared {event}".format(

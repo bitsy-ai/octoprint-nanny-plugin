@@ -37,7 +37,9 @@ multiprocessing_logging.install_mp_handler()
 
 
 DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api")
-DEFAULT_WS_URL = os.environ.get("PRINT_NANNY_WS_URL", "ws://print-nanny.com/ws/predict/")
+DEFAULT_WS_URL = os.environ.get(
+    "PRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/predict"
+)
 
 
 class BitsyNannyPlugin(
@@ -80,8 +82,10 @@ class BitsyNannyPlugin(
 
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
+        logger.info("Initialized rest_client")
         try:
             user = await rest_client.get_user()
+            logger.info(f"Authenticated as user {user}")
             self.rest_client = rest_client
             return user
         except CLIENT_EXCEPTIONS as e:
@@ -125,12 +129,12 @@ class BitsyNannyPlugin(
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
 
-        
-        loop = asyncio.get_running_loop()
-        logger.info('Testing auth_token in event')
+        logger.info("Testing auth_token in event")
         response = asyncio.run_coroutine_threadsafe(
-            self._test_api_auth(auth_token, api_url), loop
-        ).result(3)
+            self._test_api_auth(auth_token, api_url), self._worker_manager.loop
+        )
+        logger.info(f"Created run_coroutine")
+        response = response.result()
 
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
