@@ -59,7 +59,8 @@ plugin_requires = [
 	"print-nanny-client",
 	"websockets",
 	"backoff==1.10.0",
-	"aioprocessing==1.1.0"
+	"aioprocessing==1.1.0",
+	"multiprocessing-logging==0.3.1"
 ]
 
 extra_requires = {

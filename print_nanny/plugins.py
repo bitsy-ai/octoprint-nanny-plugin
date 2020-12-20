@@ -11,8 +11,7 @@ import queue
 import re
 import threading
 from datetime import datetime
-from urllib.parse import urlparse
-from concurrent.futures import ProcessPoolExecutor
+
 import time
 
 import multiprocessing
@@ -25,22 +24,20 @@ import uuid
 import requests
 import numpy as np
 from octoprint.events import Events, eventManager
-from PIL import Image
 import multiprocessing_logging
 
 import print_nanny_client
 
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
-from .predictor import PredictWorker
 from print_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
-
-from .utils.encoder import NumpyEncoder
+from print_nanny.manager import WorkerManager
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
+multiprocessing_logging.install_mp_handler()
 
 
 DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api")
-DEFAULT_WS_URL = os.environ.get("PRINT_NANNY_WS_URL", "ws://localhost:8000/ws/predict/")
+DEFAULT_WS_URL = os.environ.get("PRINT_NANNY_WS_URL", "ws://print-nanny.com/ws/predict/")
 
 
 class BitsyNannyPlugin(
@@ -65,7 +62,6 @@ class BitsyNannyPlugin(
     def __init__(self, *args, **kwargs):
 
         # log multiplexing for multiprocessing.Process
-        multiprocessing_logging.install_mp_handler()
 
         # wraps auto-generated swagger api
         self.rest_client = RestAPIClient()
@@ -79,13 +75,13 @@ class BitsyNannyPlugin(
 
         self._worker_manager = WorkerManager(plugin=self)
 
-    def on_shutdown(self):
-        self._worker_manager.shutdown()
+    # def on_shutdown(self):
+    #     self._worker_manager.shutdown()
 
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
         try:
-            user = rest_client.get_user()
+            user = await rest_client.get_user()
             self.rest_client = rest_client
             return user
         except CLIENT_EXCEPTIONS as e:
@@ -129,10 +125,12 @@ class BitsyNannyPlugin(
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
 
-        loop = asyncio.get_event_loop()
+        
+        loop = asyncio.get_running_loop()
+        logger.info('Testing auth_token in event')
         response = asyncio.run_coroutine_threadsafe(
             self._test_api_auth(auth_token, api_url), loop
-        ).result()
+        ).result(3)
 
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
@@ -149,11 +147,11 @@ class BitsyNannyPlugin(
         return flask.json.jsonify(response.body)
 
     def register_custom_events(self):
-        return ["predict_done", "predict_failed"]
+        return ["predict_done"]
 
     def on_event(self, event_type, event_data):
         if self._tracking_events is None or event_type in self._tracking_events:
-            self._worker_manager.tracking_queue.put(
+            self._worker_manager.tracking_queue.put_nowait(
                 {"event_type": event_type, "event_data": event_data}
             )
 
@@ -236,7 +234,6 @@ class BitsyNannyPlugin(
             css=["css/nanny.css"],
             less=["less/nanny.less"],
             img=["img/wizard_example.jpg"],
-            vendor=["vendor/swagger-client@3.12.0.browser.min.js"],
         )
 
     ##~~ Softwareupdate hook

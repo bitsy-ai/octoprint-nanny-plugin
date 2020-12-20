@@ -23,6 +23,8 @@ CLIENT_EXCEPTIONS = (
     aiohttp.client_exceptions.ClientError,
 )
 
+# @todo add max limit to backoff
+
 
 class RestAPIClient:
     """
@@ -36,7 +38,7 @@ class RestAPIClient:
 
     @property
     def _api_config(self):
-        parsed_uri = urllib.parse(self.api_url)
+        parsed_uri = urllib.parse.urlparse(self.api_url)
         host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
         config = print_nanny_client.Configuration(host=host)
 

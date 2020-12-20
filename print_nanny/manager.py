@@ -19,7 +19,7 @@ from print_nanny.clients.websocket import WebSocketWorker
 from print_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from print_nanny.predictor import PredictWorker
 
-import print_nanny_client.exceptions.ApiException
+import print_nanny_client
 
 logger = logging.getLogger("octoprint.plugins.print_nanny.manager")
 
@@ -34,7 +34,7 @@ class WorkerManager:
     def __init__(self, plugin):
 
         self.plugin = plugin
-        self.manager = aioprocessing.managers.AioManager()
+        self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
 
         # proxy objects
@@ -66,13 +66,13 @@ class WorkerManager:
         }
 
         # daemonized threads for rest api and octoprint websocket relay
-        self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
-        self.rest_api_thread.daemon = True
-        self.rest_api_thread.start()
+        # self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
+        # self.rest_api_thread.daemon = True
+        # self.rest_api_thread.start()
 
-        self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
-        self.octo_ws_thread.daemon = True
-        self.octo_ws_thread.start()
+        # self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
+        # self.octo_ws_thread.daemon = True
+        # self.octo_ws_thread.start()
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -98,7 +98,12 @@ class WorkerManager:
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
 
-    async def _rest_api_worker(self):
+    def _rest_api_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(self._tracking_queue_loop())
+
+    async def _tracking_queue_loop(self):
         logger.info("Started _rest_client_worker")
 
         while True:

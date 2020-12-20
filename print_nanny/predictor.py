@@ -261,7 +261,7 @@ class PredictWorker:
         self._consumer_thread = threading.Thread(target=self._consumer, name="consumer")
         self._consumer_thread.daemon = True
         self._consumer_thread.start()
-        
+
         self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
     def load_url_buffer(self, url: str):
