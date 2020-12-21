@@ -44,6 +44,8 @@ $(function() {
         self.imageData = ko.observable();
         self.calibratePos = ko.observable();
 
+
+        self.webcamUrl = ko.observable()
         self.previewActive = ko.observable(false)
 
         self.calibrationActive = ko.observable(false)
@@ -95,7 +97,9 @@ $(function() {
                 calibrate_x0: calibration.coords.x / calibration.w,
                 calibrate_y0: calibration.coords.y / calibration.h,
                 calibrate_x1: calibration.coords.x2 / calibration.w,
-                calibrate_y1: calibration.coords.y2 / calibration.h
+                calibrate_y1: calibration.coords.y2 / calibration.h,
+                calibrate_h: calibration.h,
+                calibrate_w: calibration.w
             }
             OctoPrint.settings.savePluginSettings('print_nanny', s);
             self.calibrationActive(false);

@@ -31,7 +31,7 @@ class RestAPIClient:
     webapp rest API calls and retry behavior
     """
 
-    def __init__(self, auth_token=None, api_url=None):
+    def __init__(self, auth_token, api_url):
 
         self.api_url = api_url
         self.auth_token = auth_token
@@ -52,7 +52,7 @@ class RestAPIClient:
             tracking_events = await EventsApi(
                 api_client
             ).octoprint_events_tracking_retrieve()
-            logging.info(f"Tracking octoprint events {self._tracking_events}")
+            logging.info(f"Tracking octoprint events {tracking_events}")
             return tracking_events
 
     # @backoff.on_exception(backoff.expo, aiohttp.ClientConnectionError, logger=logger)
@@ -70,7 +70,7 @@ class RestAPIClient:
                 dt=event_data["metadata"]["dt"],
                 event_type=event_type,
                 event_data=event_data,
-                plugin_version=event_type["plugin_version"],
+                plugin_version=event_data["metadata"]["plugin_version"],
                 octoprint_version=event_data["metadata"]["octoprint_version"],
             )
             return await api_instance.octoprint_events_create(request)

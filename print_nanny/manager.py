@@ -4,6 +4,7 @@ import base64
 import re
 from datetime import datetime
 import platform
+import uuid
 import pytz
 
 import logging
@@ -46,11 +47,11 @@ class WorkerManager:
 
         # holds octoprint events to be uploaded via rest client
 
-        self.tracking_queue = self.manager.Queue()
+        self.tracking_queue = self.manager.AioQueue()
         # streamed to octoprint front-end over websocket
-        self.octo_ws_queue = self.manager.Queue()
+        self.octo_ws_queue = self.manager.AioQueue()
         # streamed to print nanny asgi over websocket
-        self.pn_ws_queue = self.manager.Queue()
+        self.pn_ws_queue = self.manager.AioQueue()
 
         self._tracking_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
@@ -63,14 +64,33 @@ class WorkerManager:
             Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
+        self._environment = {}
+
         # daemonized threads for rest api and octoprint websocket relay
         self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
         self.rest_api_thread.daemon = True
-        self.rest_api_thread.start()
 
         self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
         self.octo_ws_thread.daemon = True
+
+        self.tracking_events = None
+
+    @property
+    def rest_client(self):
+
+        api_token = self.plugin._settings.get(["auth_token"])
+        api_url = self.plugin._settings.get(["api_url"])
+            
+        logger.debug(f'RestAPIClient init with api_token={api_token} api_url={api_url}')
+        return RestAPIClient(
+            auth_token=api_token,
+            api_url=api_url
+        )
+
+    def on_settings_initialized(self):
+        self.rest_api_thread.start()
         self.octo_ws_thread.start()
+
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -98,21 +118,37 @@ class WorkerManager:
 
     def _rest_api_worker(self):
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         self.loop = loop
-        self.loop.call_soon(self._tracking_queue_loop)
-        return self.loop.run_forever()
+
+        return self.loop.run_until_complete(asyncio.ensure_future(self._tracking_queue_loop()))
 
     async def _tracking_queue_loop(self):
         logger.info("Started _rest_client_worker")
 
+        api_token = None
+
         while True:
+            if api_token is None:
+                api_token = self.plugin._settings.get(["auth_token"])
+                await asyncio.sleep(30)
+                continue
+            
+            if self.tracking_events is None:
+                self.tracking_events = await self.rest_client.get_tracking_events()
+
+
             event = await self.tracking_queue.coro_get()
-            if event.get("event_type") is None:
+            event_type = event.get("event_type")
+            if event_type is None:
                 logger.warning(
                     "Ignoring enqueued msg without type declared {event}".format(
                         event_type=event
                     )
                 )
+                continue
+            
+            if event_type not in self.tracking_events:
                 continue
 
             handler_fn = self._tracking_event_handlers.get(event["event_type"])
@@ -156,9 +192,9 @@ class WorkerManager:
         ws_url = self.plugin._settings.get(["ws_url"])
         api_url = self.plugin._settings.get(["api_url"])
 
-        self.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
+        self.plugin.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
 
-        self.pn_ws_proc = aioprocessing.Process(
+        self.pn_ws_proc = aioprocessing.AioProcess(
             target=WebSocketWorker,
             args=(ws_url, auth_token, self.pn_ws_queue, self.shared.print_job_id),
             daemon=True,
@@ -188,10 +224,10 @@ class WorkerManager:
             "platform": platform.platform(),
             "mac_address": ":".join(re.findall("..", "%012x".format(uuid.getnode()))),
             "api_objects": {
-                k: None if v is None else v.id for k, v in self._api_objects.items()
+                'printer_profile_id': self.shared.printer_profile_id,
+                'print_job_id': self.shared.print_job_id
             },
             "environment": self._environment,
-            "plugin_version": self._plugin_version,
         }
         return metadata
 
@@ -200,7 +236,7 @@ class WorkerManager:
         event_data.update(self._get_metadata())
 
         try:
-            printer_profile = await self.rest_client.update_or_create_printer_profile(
+            printer_profile = await self.plugin.rest_client.update_or_create_printer_profile(
                 event_data
             )
 
@@ -209,11 +245,11 @@ class WorkerManager:
             gcode_file_path = self.plugin._file_manager.path_on_disk(
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
-            gcode_file = await self.rest_client.update_or_create_gcode_file(
+            gcode_file = await self.plugin.rest_client.update_or_create_gcode_file(
                 event_data, gcode_file_path
             )
 
-            print_job = await self.rest_client.create_print_job(
+            print_job = await self.plugin.rest_client.create_print_job(
                 event_data, gcode_file.id, printer_profile.id
             )
 

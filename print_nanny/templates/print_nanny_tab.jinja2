@@ -44,6 +44,13 @@
 
         <hr/>
 
+        <div data-bind="visible: !settingsViewModel.settings.webcam.snapshot" >
+                <div class="alert alert-error" role="alert">
+                <h4 class="alert-heading">Error! Webcam not detected</h4>
+                <p>You can configure this in Octoprint Settings > Webcam & Timelapse > Snapshot URL</p>
+            </div>
+        <div>
+
         <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
         <h4 class="alert-heading">Warning! Calibration Required</h4>
         <p>Click the <strong>Start</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>

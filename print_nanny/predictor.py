@@ -272,11 +272,11 @@ class PredictWorker:
 
     @staticmethod
     def get_calibration(x0, y0, x1, y1, height, width):
-        if x0 is None or y0 is None or x1 is None or y1 is None:
+        if x0 is None or y0 is None or x1 is None or y1 is None or height is None or width is None:
             logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
             return None
 
-        calibration = np.zeros((height, width))
+        mask = np.zeros((height, width))
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
             value = (
                 1
@@ -288,12 +288,12 @@ class PredictWorker:
                 )
                 else 0
             )
-            calibration[h][w] = value
+            mask[h][w] = value
 
-        calibration = calibration.astype(np.uint8)
+        mask = mask.astype(np.uint8)
         logger.info(f"Calibration set")
 
-        return {"mask": calibration, "coords": (x0, y0, x1, y1)}
+        return {"mask": mask, "coords": (x0, y0, x1, y1)}
 
     def _producer(self):
         """

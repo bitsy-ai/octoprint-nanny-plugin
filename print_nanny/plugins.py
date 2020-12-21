@@ -31,6 +31,7 @@ import print_nanny_client
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
 from print_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from print_nanny.manager import WorkerManager
+from print_nanny.predictor import ThreadLocalPredictor
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
 multiprocessing_logging.install_mp_handler()
@@ -65,11 +66,7 @@ class BitsyNannyPlugin(
 
         # log multiplexing for multiprocessing.Process
 
-        # wraps auto-generated swagger api
-        self.rest_client = RestAPIClient()
-
         # User interactive
-        self._tracking_events = None
         self._calibration = None
 
         self._log_path = None
@@ -91,15 +88,6 @@ class BitsyNannyPlugin(
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_test_api_auth API call failed {e}", exc_info=True)
             return
-
-    async def _get_tracking_events(self):
-        """
-        @todo make tracking events opt-in
-        https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/10
-        """
-        if not self._tracking_events:
-            self._tracking_events = self.rest_client.get_tracking_events()
-        return self._tracking_events
 
     ##
     ## Octoprint api routes + handlers
@@ -154,10 +142,9 @@ class BitsyNannyPlugin(
         return ["predict_done"]
 
     def on_event(self, event_type, event_data):
-        if self._tracking_events is None or event_type in self._tracking_events:
-            self._worker_manager.tracking_queue.put_nowait(
+        self._worker_manager.tracking_queue.put_nowait(
                 {"event_type": event_type, "event_data": event_data}
-            )
+        )
 
     def on_settings_initialized(self):
         """
@@ -165,20 +152,23 @@ class BitsyNannyPlugin(
         """
 
         self._log_path = self._settings.get_plugin_logfile_path()
+        self._worker_manager.on_settings_initialized()
+
         if self._settings.get(["auth_token"]) is not None:
-            loop = asyncio.get_event_loop()
             user = asyncio.run_coroutine_threadsafe(
                 self._test_api_auth(
                     auth_token=self._settings.get(["auth_token"]),
                     api_url=self._settings.get(["api_url"]),
                 ),
-                loop,
+                self._worker_manager.loop,
             ).result()
 
             if user is not None:
                 logger.info(f"Authenticated as {user}")
                 self._settings.set(["user_email"], user.email)
                 self._settings.set(["user_url"], user.url)
+                self._settings.set(["auth_valid"], True)
+
             else:
                 logger.warning(f"Invalid auth")
 
@@ -192,7 +182,7 @@ class BitsyNannyPlugin(
     ## EnvironmentDetectionPlugin
 
     def on_environment_detected(self, environment, *args, **kwargs):
-        self._environment = environment
+        self._worker_manager._environment = environment
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
@@ -207,11 +197,49 @@ class BitsyNannyPlugin(
             calibrate_y0=None,
             calibrate_x1=None,
             calibrate_y1=None,
+            calibrate_h=None,
+            calibrate_w=None,
             auto_start=False,
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
         )
 
+    def on_settings_save(self, data):
+        
+        prev_calibration =  (
+            self._settings.get(['calibrate_x0']),
+            self._settings.get(['calibrate_y0']),
+            self._settings.get(['calibrate_x1']),
+            self._settings.get(['calibrate_y1']),
+            self._settings.get(['calibrate_h']),
+            self._settings.get(['calibrate_w'])
+        )
+        prev_auth_token = self._settings.get(["auth_token"])
+        prev_api_url = self._settings.get(["api_token"])
+        super().on_settings_save(data)
+
+        new_calibration =  (
+            self._settings.get(['calibrate_x0']),
+            self._settings.get(['calibrate_y0']),
+            self._settings.get(['calibrate_x1']),
+            self._settings.get(['calibrate_y1']),
+            self._settings.get(['calibrate_h']),
+            self._settings.get(['calibrate_w'])
+        )
+        new_auth_token = self._settings.get(["auth_token"])
+        new_api_url = self._settings.get(["api_url"])
+
+        if prev_calibration != new_calibration:
+
+            calibration = ThreadLocalPredictor.get_calibration(
+                self._settings.get(['calibrate_x0']),
+                self._settings.get(['calibrate_y0']),
+                self._settings.get(['calibrate_x1']),
+                self._settings.get(['calibrate_y1']),
+                self._settings.get(['calibrate_h']),
+                self._settings.get(['calibrate_w'])
+            )
+            self._worker_manager.shared.calibration = calibration
     ## Wizard plugin mixin
 
     def get_wizard_version(self):
