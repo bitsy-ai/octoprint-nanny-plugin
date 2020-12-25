@@ -10,7 +10,7 @@ from .plugins import BitsyNannyPlugin
 logger = logging.getLogger("octoprint.plugins.print_nanny")
 
 
-__plugin_name__ = "Bitsy Print Nanny"
+__plugin_name__ = "Print Nanny"
 
 __plugin_pythoncompat__ = ">=3,<4"  # only python 3
 

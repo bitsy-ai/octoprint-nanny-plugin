@@ -534,14 +534,18 @@ def visualize_boxes_and_labels_on_image_array(
                         classes[i] % len(STANDARD_COLORS)
                     ]
 
-    detection_boundary_mask = np.logical_not(detection_boundary_mask).astype(np.uint8)
     if detection_boundary_mask is not None:
+        detection_boundary_mask = np.logical_not(detection_boundary_mask).astype(
+            np.uint8
+        )
+
         draw_mask_on_image_array(
             image, detection_boundary_mask, color="Black", alpha=0.6
         )
     # Draw all boxes onto image.
     for box, color in box_to_color_map.items():
         ymin, xmin, ymax, xmax = box
+
         draw_bounding_box_on_image_array(
             image,
             ymin,
@@ -552,7 +556,7 @@ def visualize_boxes_and_labels_on_image_array(
             thickness=line_thickness,
             display_str_list=box_to_display_str_map[box],
             use_normalized_coordinates=use_normalized_coordinates,
-            detection_box_ignored=box_to_detection_box_ignored_map[box],
+            detection_box_ignored=box_to_detection_box_ignored_map.get(box),
         )
 
     return image

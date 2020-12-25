@@ -2,7 +2,7 @@
 <script src="https://unpkg.com/jcrop"></script>
 
 
-<div data-bind="visible: !settingsViewModel.settings.plugins.print_nanny.auth_valid" >
+<div data-bind="hidden: settingsViewModel.settings.plugins.print_nanny.auth_valid" >
 
     <div class="row-fluid">
         <div class="span-6">
@@ -31,7 +31,7 @@
         <h2>Live Monitoring</h2>
         <div class="span-4 offset 4">
             <span>Start automatically</span>
-            <span data-bind="{ click: toggleAutoStart }" title="Start monitoring automatically" style="">
+            <span data-bind="click: toggleAutoStart " title="Start monitoring automatically">
                 <i 
                     class="fa fa-lg" 
                     data-bind="css: {'fa-toggle-on': settingsViewModel.settings.plugins.print_nanny.auto_start(), 'fa-toggle-off': !settingsViewModel.settings.plugins.print_nanny.auto_start() } "></i>
@@ -40,27 +40,28 @@
         <p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.print_nanny.user_email"></span></strong>
         </p>
 
-        <img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }"/>
+        <img id="tab_plugin_print_nanny_preview" data-bind="attr: { src: imageData }, visible: previewActive"/>
 
         <hr/>
 
-        <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
-        <h4 class="alert-heading">Warning! Calibration Required</h4>
-        <p>Click the <strong>Start Preview</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
-        </div>
-        <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
-            Start
-        </button>
+            <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
+            <h4 class="alert-heading">Warning! Calibration Required</h4>
+            <p>Click the <strong>Start</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
+            </div>
 
-        <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
-            Stop
-        </button>
+            <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
+                Start Monitoring
+            </button>
 
-        <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
-            Calibrate
-        </button>
+            <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
+                Stop Monitoring
+            </button>
+
+            <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
+                Show Calibration
+            </button>
     </div>
-    <div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
+    <div id="tab_plugin_print_nanny_calibrate" data-bind="{visible: calibrationActive}">
         <h3>Calibrate 3D Print Volume</h3>
         <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
         

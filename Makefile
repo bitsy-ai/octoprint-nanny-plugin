@@ -7,3 +7,6 @@ clean-settings:
 
 lint:
 	black print_nanny tests
+
+dev-install:
+	pip install -e .[dev]

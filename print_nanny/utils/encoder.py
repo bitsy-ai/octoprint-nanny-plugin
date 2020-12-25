@@ -1,6 +1,8 @@
 import json
 import numpy as np
 import datetime
+from io import BytesIO
+import base64
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -11,6 +13,10 @@ class NumpyEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
-        if isinstance(obj, (datetime.date, datetime.datetime)):
+        elif isinstance(obj, (datetime.date, datetime.datetime)):
             return obj.isoformat()
+        elif isinstance(obj, BytesIO):
+            obj.seek(0)
+            obj = obj.read()
+            return base64.b64encode(obj).decode()
         return json.JSONEncoder.default(self, obj)
