@@ -80,18 +80,13 @@ class WebSocketWorker:
         ) as websocket:
             logger.info(f"Websocket connected {websocket}")
             while True:
-                logger.info('Waiting for websocket message')
                 msg = await self._producer.coro_get()
 
                 event_type = msg.get("event_type")
-                logger.info(f'Received for websocket message {event_type}')
-
                 if event_type == "predict":
-                    if self._print_job_id is None:
-                        logger.info("No print job is active, discarding msg")
-                        continue
-                    msg["print_job_id"] = self._print_job_id
-                    encoded_msg = self.encode(msg)
+                    if self._print_job_id is not None:
+                        msg["print_job_id"] = self._print_job_id
+                    encoded_msg = self.encode(msg=msg)
                     await websocket.send(encoded_msg)
                 else:
-                    logger.warning(f'Invalid event_type {event_type}, msg ignored')
+                    logger.warning(f"Invalid event_type {event_type}, msg ignored")

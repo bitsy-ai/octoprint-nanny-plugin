@@ -87,7 +87,6 @@ class ThreadLocalPredictor(threading.local):
             self.category_index = {
                 i: {"name": v, "id": i} for i, v in enumerate(self.category_index)
             }
-            print(self.category_index)
         self.input_shape = self.metadata["inputShape"]
 
         self.calibration = calibration
@@ -259,7 +258,9 @@ class PredictWorker:
 
         self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
-        self._producer_thread = threading.Thread(target=self._producer_worker, name="producer")
+        self._producer_thread = threading.Thread(
+            target=self._producer_worker, name="producer"
+        )
         self._producer_thread.daemon = True
         self._producer_thread.start()
         self._producer_thread.join()
@@ -271,7 +272,14 @@ class PredictWorker:
 
     @staticmethod
     def get_calibration(x0, y0, x1, y1, height, width):
-        if x0 is None or y0 is None or x1 is None or y1 is None or height is None or width is None:
+        if (
+            x0 is None
+            or y0 is None
+            or x1 is None
+            or y1 is None
+            or height is None
+            or width is None
+        ):
             logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
             return None
 
@@ -308,7 +316,7 @@ class PredictWorker:
         }
 
     def _predict_msg(self, msg):
-        #msg["original_image"].name = "original_image.jpg"
+        # msg["original_image"].name = "original_image.jpg"
         image = self._predictor.load_image(msg["original_image"])
         prediction = self._predictor.predict(image)
 
@@ -318,7 +326,7 @@ class PredictWorker:
         viz_buffer.name = "annotated_image.jpg"
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
-        
+
         # send annotated image bytes to octoprint ws
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
@@ -343,5 +351,7 @@ class PredictWorker:
                 while True:
                     now = datetime.now(pytz.timezone("America/Los_Angeles"))
                     msg = await self._image_msg(now, session)
-                    msg = await loop.run_in_executor(pool, lambda :self._predict_msg(msg))
+                    msg = await loop.run_in_executor(
+                        pool, lambda: self._predict_msg(msg)
+                    )
                     self._pn_ws_queue.put_nowait(msg)

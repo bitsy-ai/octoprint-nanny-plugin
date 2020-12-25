@@ -54,13 +54,6 @@ class BitsyNannyPlugin(
     octoprint.plugin.ProgressPlugin,
     octoprint.plugin.ShutdownPlugin,
 ):
-
-    PREDICT_START = "predict_start"
-    PREDICT_DONE = "predict_done"
-    PREDICT_FAILED = "predict_failed"
-
-    PRINT_PROGRESS = "print_progress"
-
     def __init__(self, *args, **kwargs):
 
         # log multiplexing for multiprocessing.Process
@@ -73,6 +66,7 @@ class BitsyNannyPlugin(
         self._environment = {}
 
         self._worker_manager = WorkerManager(plugin=self)
+
     # def on_shutdown(self):
     #     self._worker_manager.shutdown()
 
@@ -143,7 +137,7 @@ class BitsyNannyPlugin(
 
     def on_event(self, event_type, event_data):
         self._worker_manager.tracking_queue.put_nowait(
-                {"event_type": event_type, "event_data": event_data}
+            {"event_type": event_type, "event_data": event_data}
         )
 
     def on_settings_initialized(self):
@@ -205,26 +199,26 @@ class BitsyNannyPlugin(
         )
 
     def on_settings_save(self, data):
-        
-        prev_calibration =  (
-            self._settings.get(['calibrate_x0']),
-            self._settings.get(['calibrate_y0']),
-            self._settings.get(['calibrate_x1']),
-            self._settings.get(['calibrate_y1']),
-            self._settings.get(['calibrate_h']),
-            self._settings.get(['calibrate_w'])
+
+        prev_calibration = (
+            self._settings.get(["calibrate_x0"]),
+            self._settings.get(["calibrate_y0"]),
+            self._settings.get(["calibrate_x1"]),
+            self._settings.get(["calibrate_y1"]),
+            self._settings.get(["calibrate_h"]),
+            self._settings.get(["calibrate_w"]),
         )
         prev_auth_token = self._settings.get(["auth_token"])
         prev_api_url = self._settings.get(["api_token"])
         super().on_settings_save(data)
 
-        new_calibration =  (
-            self._settings.get(['calibrate_x0']),
-            self._settings.get(['calibrate_y0']),
-            self._settings.get(['calibrate_x1']),
-            self._settings.get(['calibrate_y1']),
-            self._settings.get(['calibrate_h']),
-            self._settings.get(['calibrate_w'])
+        new_calibration = (
+            self._settings.get(["calibrate_x0"]),
+            self._settings.get(["calibrate_y0"]),
+            self._settings.get(["calibrate_x1"]),
+            self._settings.get(["calibrate_y1"]),
+            self._settings.get(["calibrate_h"]),
+            self._settings.get(["calibrate_w"]),
         )
         new_auth_token = self._settings.get(["auth_token"])
         new_api_url = self._settings.get(["api_url"])
@@ -232,14 +226,15 @@ class BitsyNannyPlugin(
         if prev_calibration != new_calibration:
 
             calibration = ThreadLocalPredictor.get_calibration(
-                self._settings.get(['calibrate_x0']),
-                self._settings.get(['calibrate_y0']),
-                self._settings.get(['calibrate_x1']),
-                self._settings.get(['calibrate_y1']),
-                self._settings.get(['calibrate_h']),
-                self._settings.get(['calibrate_w'])
+                self._settings.get(["calibrate_x0"]),
+                self._settings.get(["calibrate_y0"]),
+                self._settings.get(["calibrate_x1"]),
+                self._settings.get(["calibrate_y1"]),
+                self._settings.get(["calibrate_h"]),
+                self._settings.get(["calibrate_w"]),
             )
             self._worker_manager.shared.calibration = calibration
+
     ## Wizard plugin mixin
 
     def get_wizard_version(self):

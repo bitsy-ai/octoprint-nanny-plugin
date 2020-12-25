@@ -83,22 +83,16 @@ class WorkerManager:
 
         api_token = self.plugin._settings.get(["auth_token"])
         api_url = self.plugin._settings.get(["api_url"])
-            
-        logger.debug(f'RestAPIClient init with api_token={api_token} api_url={api_url}')
-        return RestAPIClient(
-            auth_token=api_token,
-            api_url=api_url
-        )
+
+        logger.debug(f"RestAPIClient init with api_token={api_token} api_url={api_url}")
+        return RestAPIClient(auth_token=api_token, api_url=api_url)
 
     def on_settings_initialized(self):
-        
+
         self.rest_api_thread.start()
         self.octo_ws_thread.start()
         while self.loop is None:
             sleep(1)
-
-
-
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -129,7 +123,9 @@ class WorkerManager:
         asyncio.set_event_loop(loop)
         self.loop = loop
 
-        return self.loop.run_until_complete(asyncio.ensure_future(self._tracking_queue_loop()))
+        return self.loop.run_until_complete(
+            asyncio.ensure_future(self._tracking_queue_loop())
+        )
 
     async def _tracking_queue_loop(self):
         logger.info("Started _rest_client_worker")
@@ -137,12 +133,12 @@ class WorkerManager:
         api_token = None
 
         while True:
-            
+
             if api_token is None:
                 api_token = self.plugin._settings.get(["auth_token"])
                 await asyncio.sleep(30)
                 continue
-            
+
             if self.tracking_events is None:
                 try:
                     self.tracking_events = await self.rest_client.get_tracking_events()
@@ -160,9 +156,14 @@ class WorkerManager:
                     )
                 )
                 continue
-            
+
+            # ignore events originating from print_nanny plugin
+            if event_type == Events.PLUGIN_PRINT_NANNY_PREDICT_DONE:
+                continue
+
+            # ignore untracked events
             if event_type not in self.tracking_events:
-                logger.warning(f'Discarding {event_type}')
+                logger.warning(f"Discarding {event_type}")
                 continue
 
             handler_fn = self._tracking_event_handlers.get(event["event_type"])
@@ -178,12 +179,12 @@ class WorkerManager:
         """
         joins and terminates prediction and pn websocket processes
         """
-        
+
         self.active = False
 
-        logger.info('Terminating predict process')
+        logger.info("Terminating predict process")
         self.predict_proc.terminate()
-        logger.info('Terminating websocket process')
+        logger.info("Terminating websocket process")
         self.pn_ws_proc.terminate()
 
     def start(self):
@@ -242,8 +243,8 @@ class WorkerManager:
             "platform": platform.platform(),
             "mac_address": ":".join(re.findall("..", "%012x".format(uuid.getnode()))),
             "api_objects": {
-                'printer_profile_id': self.shared.printer_profile_id,
-                'print_job_id': self.shared.print_job_id
+                "printer_profile_id": self.shared.printer_profile_id,
+                "print_job_id": self.shared.print_job_id,
             },
             "environment": self._environment,
         }
@@ -254,8 +255,10 @@ class WorkerManager:
         event_data.update(self._get_metadata())
 
         try:
-            printer_profile = await self.plugin.rest_client.update_or_create_printer_profile(
-                event_data
+            printer_profile = (
+                await self.plugin.rest_client.update_or_create_printer_profile(
+                    event_data
+                )
             )
 
             self.shared.printer_profile_id = printer_profile.id
