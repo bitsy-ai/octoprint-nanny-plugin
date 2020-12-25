@@ -1,6 +1,7 @@
 from time import sleep
 import base64
 from datetime import datetime
+import concurrent
 import io
 import json
 import logging
@@ -11,6 +12,8 @@ import queue
 import time
 import threading
 import pytz
+import aiohttp
+import asyncio
 
 
 from PIL import Image as PImage
@@ -234,8 +237,8 @@ class PredictWorker:
         self,
         webcam_url: str,
         calibration: tuple,
-        octoprint_ws_queue: multiprocessing.Queue,
-        pn_ws_queue: multiprocessing.Queue,
+        octoprint_ws_queue,
+        pn_ws_queue,
         fps: int = 5,
     ):
         """
@@ -254,21 +257,17 @@ class PredictWorker:
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
 
-        self._producer_thread = threading.Thread(target=self._producer, name="producer")
-        self._producer_thread.daemon = True
-        self._producer_thread.start()
-
-        self._consumer_thread = threading.Thread(target=self._consumer, name="consumer")
-        self._consumer_thread.daemon = True
-        self._consumer_thread.start()
-
         self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
-    def load_url_buffer(self, url: str):
-        res = requests.get(url)
-        res.raise_for_status()
+        self._producer_thread = threading.Thread(target=self._producer_worker, name="producer")
+        self._producer_thread.daemon = True
+        self._producer_thread.start()
+        self._producer_thread.join()
+
+    async def load_url_buffer(self, session):
+        res = await session.get(self._webcam_url)
         assert res.headers["content-type"] == "image/jpeg"
-        return io.BytesIO(res.content)
+        return io.BytesIO(await res.read())
 
     @staticmethod
     def get_calibration(x0, y0, x1, y1, height, width):
@@ -295,28 +294,21 @@ class PredictWorker:
 
         return {"mask": mask, "coords": (x0, y0, x1, y1)}
 
-    def _producer(self):
-        """
-        Samples frame buffer from webcam stream
-        """
-        logger.info("Started PredictWorker.producer thread")
-        while True:
-            try:
-                now = datetime.now(pytz.timezone("America/Los_Angeles"))
-                msg = self._image_msg(now)
-                self._task_queue.put_nowait(msg)
-            except queue.Full:
-                logger.warning(f"Predict queue full, skipping frame @ ts: {now}")
-            time.sleep(self._fps / 1000)
+    def _producer_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(asyncio.ensure_future(self._producer()))
+        loop.close()
 
-    def _image_msg(self, ts):
+    async def _image_msg(self, ts, session):
+        original_image = await self.load_url_buffer(session)
         return {
             "ts": ts,
-            "original_image": self.load_url_buffer(self._webcam_url),
+            "original_image": original_image,
         }
 
     def _predict_msg(self, msg):
-        msg["original_image"].name = "original_image.jpg"
+        #msg["original_image"].name = "original_image.jpg"
         image = self._predictor.load_image(msg["original_image"])
         prediction = self._predictor.predict(image)
 
@@ -326,7 +318,8 @@ class PredictWorker:
         viz_buffer.name = "annotated_image.jpg"
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
-
+        
+        # send annotated image bytes to octoprint ws
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         msg.update(
@@ -338,13 +331,17 @@ class PredictWorker:
         )
         return msg
 
-    def _consumer(self):
+    async def _producer(self):
         """
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started PredictWorker.consumer thread")
 
-        while True:
-            msg = self._task_queue.get(block=True)
-            msg = self._predict_msg(msg)
-            self._pn_ws_queue.put_nowait(msg)
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            async with aiohttp.ClientSession() as session:
+                while True:
+                    now = datetime.now(pytz.timezone("America/Los_Angeles"))
+                    msg = await self._image_msg(now, session)
+                    msg = await loop.run_in_executor(pool, lambda :self._predict_msg(msg))
+                    self._pn_ws_queue.put_nowait(msg)

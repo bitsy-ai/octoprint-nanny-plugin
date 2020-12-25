@@ -45,7 +45,6 @@ $(function() {
         self.calibratePos = ko.observable();
 
 
-        self.webcamUrl = ko.observable()
         self.previewActive = ko.observable(false)
 
         self.calibrationActive = ko.observable(false)

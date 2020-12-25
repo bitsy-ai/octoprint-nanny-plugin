@@ -1,6 +1,7 @@
 import pytest
 import aioprocessing
 import queue
+import aiohttp
 import urllib
 from datetime import datetime
 from print_nanny.clients.websocket import WebSocketWorker
@@ -46,7 +47,9 @@ async def test_ws_ping(ws_client):
 @pytest.mark.webapp
 @pytest.mark.asyncio
 async def test_ws_predict_e2e(ws_client, mocker, predict_worker):
-    msg = predict_worker._image_msg(datetime.now(pytz.timezone("America/Los_Angeles")))
-    predict_msg = predict_worker._predict_msg(msg)
+    async with aiohttp.ClientSession() as session:
+        msg = await predict_worker._image_msg(datetime.now(pytz.timezone("America/Los_Angeles")), session)
 
-    await ws_client.send(predict_msg)
+        predict_msg = predict_worker._predict_msg(msg)
+
+    res = await ws_client.send(predict_msg)

@@ -6,11 +6,13 @@ from datetime import datetime
 import platform
 import uuid
 import pytz
+from time import sleep
 
 import logging
 
 import aiohttp
 
+import multiprocessing
 import octoprint.filemanager
 from octoprint.events import Events
 
@@ -73,6 +75,7 @@ class WorkerManager:
         self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
         self.octo_ws_thread.daemon = True
 
+        self.loop = None
         self.tracking_events = None
 
     @property
@@ -90,6 +93,10 @@ class WorkerManager:
     def on_settings_initialized(self):
         self.rest_api_thread.start()
         self.octo_ws_thread.start()
+        while self.loop is None:
+            sleep(1)
+
+
 
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
@@ -129,13 +136,18 @@ class WorkerManager:
         api_token = None
 
         while True:
+            
             if api_token is None:
                 api_token = self.plugin._settings.get(["auth_token"])
                 await asyncio.sleep(30)
                 continue
             
             if self.tracking_events is None:
-                self.tracking_events = await self.rest_client.get_tracking_events()
+                try:
+                    self.tracking_events = await self.rest_client.get_tracking_events()
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(e)
+                    await asyncio.sleep(30)
 
 
             event = await self.tracking_queue.coro_get()
@@ -149,6 +161,7 @@ class WorkerManager:
                 continue
             
             if event_type not in self.tracking_events:
+                logger.warning(f'Discarding {event_type}')
                 continue
 
             handler_fn = self._tracking_event_handlers.get(event["event_type"])
@@ -164,9 +177,12 @@ class WorkerManager:
         """
         joins and terminates prediction and pn websocket processes
         """
+        
         self.active = False
 
+        logger.info('Terminating predict process')
         self.predict_proc.terminate()
+        logger.info('Terminating websocket process')
         self.pn_ws_proc.terminate()
 
     def start(self):
@@ -176,7 +192,7 @@ class WorkerManager:
         self.active = True
         webcam_url = self.plugin._settings.global_get(["webcam", "snapshot"])
 
-        self.predict_proc = aioprocessing.AioProcess(
+        self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
             args=(
                 webcam_url,
@@ -194,7 +210,7 @@ class WorkerManager:
 
         self.plugin.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
 
-        self.pn_ws_proc = aioprocessing.AioProcess(
+        self.pn_ws_proc = multiprocessing.Process(
             target=WebSocketWorker,
             args=(ws_url, auth_token, self.pn_ws_queue, self.shared.print_job_id),
             daemon=True,
@@ -206,12 +222,13 @@ class WorkerManager:
         Child process to -> Octoprint event bus relay
         """
         logger.info("Started _octo_ws_queue_worker")
-        while self.active:
-            viz_bytes = self.octo_ws_queue.get(block=True)
-            self.plugin._event_bus.fire(
-                Events.PLUGIN_PRINT_NANNY_PREDICT_DONE,
-                payload={"image": base64.b64encode(viz_bytes)},
-            )
+        while True:
+            if self.active:
+                viz_bytes = self.octo_ws_queue.get(block=True)
+                self.plugin._event_bus.fire(
+                    Events.PLUGIN_PRINT_NANNY_PREDICT_DONE,
+                    payload={"image": base64.b64encode(viz_bytes)},
+                )
 
     def _get_metadata(self):
         metadata = {

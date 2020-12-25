@@ -34,12 +34,11 @@ from print_nanny.manager import WorkerManager
 from print_nanny.predictor import ThreadLocalPredictor
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
-multiprocessing_logging.install_mp_handler()
 
 
-DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api")
+DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api/")
 DEFAULT_WS_URL = os.environ.get(
-    "PRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/predict"
+    "PRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/predict/"
 )
 
 
@@ -65,6 +64,7 @@ class BitsyNannyPlugin(
     def __init__(self, *args, **kwargs):
 
         # log multiplexing for multiprocessing.Process
+        multiprocessing_logging.install_mp_handler()
 
         # User interactive
         self._calibration = None

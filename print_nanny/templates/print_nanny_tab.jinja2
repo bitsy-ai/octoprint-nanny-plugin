@@ -31,7 +31,7 @@
         <h2>Live Monitoring</h2>
         <div class="span-4 offset 4">
             <span>Start automatically</span>
-            <span data-bind="{ click: toggleAutoStart }" title="Start monitoring automatically" style="">
+            <span data-bind="click: toggleAutoStart " title="Start monitoring automatically">
                 <i 
                     class="fa fa-lg" 
                     data-bind="css: {'fa-toggle-on': settingsViewModel.settings.plugins.print_nanny.auto_start(), 'fa-toggle-off': !settingsViewModel.settings.plugins.print_nanny.auto_start() } "></i>
@@ -44,30 +44,24 @@
 
         <hr/>
 
-        <div data-bind="visible: !settingsViewModel.settings.webcam.snapshot" >
-                <div class="alert alert-error" role="alert">
-                <h4 class="alert-heading">Error! Webcam not detected</h4>
-                <p>You can configure this in Octoprint Settings > Webcam & Timelapse > Snapshot URL</p>
+            <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
+            <h4 class="alert-heading">Warning! Calibration Required</h4>
+            <p>Click the <strong>Start</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
             </div>
-        <div>
 
-        <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.print_nanny.calibrated() == false">
-        <h4 class="alert-heading">Warning! Calibration Required</h4>
-        <p>Click the <strong>Start</strong> button below, then click the <strong>Calibrate</strong> button to get started.</p>
-        </div>
-        <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
-            Start Monitoring
-        </button>
+            <button data-bind="{click: startPredict }" type="submit" class="btn btn-primary btn-large">
+                Start Monitoring
+            </button>
 
-        <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
-            Stop Monitoring
-        </button>
+            <button data-bind="{click: stopPredict, enable: previewActive }" type="submit" class="btn btn-danger btn-large">
+                Stop Monitoring
+            </button>
 
-        <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
-            Show Calibration
-        </button>
+            <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
+                Show Calibration
+            </button>
     </div>
-    <div id="tab_plugin_print_nanny_calibrate" data-bind="visible: calibrationActive">
+    <div id="tab_plugin_print_nanny_calibrate" data-bind="{visible: calibrationActive}">
         <h3>Calibrate 3D Print Volume</h3>
         <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
         

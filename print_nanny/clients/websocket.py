@@ -26,7 +26,7 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, url, api_token, producer, print_job_id=None):
+    def __init__(self, url, api_token, producer, print_job_id):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -66,7 +66,7 @@ class WebSocketWorker:
     async def run(self, backoff=1):
         try:
             return await self.relay_loop()
-        except Exception as e:
+        except websockets.exceptions.WebSocketException as e:
             logger.error(
                 f"Error connecting to websocket. Retrying in {backoff} seconds. Exception: \n {e}"
             )
@@ -80,21 +80,18 @@ class WebSocketWorker:
         ) as websocket:
             logger.info(f"Websocket connected {websocket}")
             while True:
-                try:
-                    msg = self._producer.get_nowait()
+                logger.info('Waiting for websocket message')
+                msg = await self._producer.coro_get()
 
-                    event_type = msg.get("event_type")
+                event_type = msg.get("event_type")
+                logger.info(f'Received for websocket message {event_type}')
 
-                    if event_type == "predict":
-                        if self._print_job_id is None:
-                            logger.debug("No print job is active, discarding msg")
-                            continue
-                        msg["print_job_id"] = self._print_job_id
-                        encoded_msg = self.encode(msg)
-                        await websocket.send(encoded_msg)
-                    elif event_type == "settings":
-                        self._update_settings(msg)
-                    elif event_type == "print_job":
-                        self._print_job_id = msg.get("print_job_id")
-                except queue.Empty:
-                    pass
+                if event_type == "predict":
+                    if self._print_job_id is None:
+                        logger.info("No print job is active, discarding msg")
+                        continue
+                    msg["print_job_id"] = self._print_job_id
+                    encoded_msg = self.encode(msg)
+                    await websocket.send(encoded_msg)
+                else:
+                    logger.warning(f'Invalid event_type {event_type}, msg ignored')
