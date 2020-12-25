@@ -73,7 +73,6 @@ class BitsyNannyPlugin(
         self._environment = {}
 
         self._worker_manager = WorkerManager(plugin=self)
-
     # def on_shutdown(self):
     #     self._worker_manager.shutdown()
 
@@ -86,7 +85,8 @@ class BitsyNannyPlugin(
             self.rest_client = rest_client
             return user
         except CLIENT_EXCEPTIONS as e:
-            logger.error(f"_test_api_auth API call failed {e}", exc_info=True)
+            logger.error(f"_test_api_auth API call failed")
+            self._settings.set(["auth_valid"], False)
             return
 
     ##
@@ -136,7 +136,7 @@ class BitsyNannyPlugin(
             logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
 
-        return flask.json.jsonify(response.body)
+        return flask.json.jsonify(response)
 
     def register_custom_events(self):
         return ["predict_done"]

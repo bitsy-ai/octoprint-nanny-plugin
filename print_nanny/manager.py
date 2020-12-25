@@ -91,6 +91,7 @@ class WorkerManager:
         )
 
     def on_settings_initialized(self):
+        
         self.rest_api_thread.start()
         self.octo_ws_thread.start()
         while self.loop is None:
@@ -148,7 +149,7 @@ class WorkerManager:
                 except CLIENT_EXCEPTIONS as e:
                     logger.error(e)
                     await asyncio.sleep(30)
-
+                continue
 
             event = await self.tracking_queue.coro_get()
             event_type = event.get("event_type")
