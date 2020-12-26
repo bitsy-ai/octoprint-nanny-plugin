@@ -1,18 +1,18 @@
 ---
 layout: plugin
 
-id: nanny
-title: Bitsy Octoprint Nanny
-description: Get notified when defects are detected in your print.
+id: octoprint_nanny
+title: OctoPrint Nanny
+description: Get notified of print defects and safety hazards
 author: Leigh Johnson
-license: MIT
+license: GNU AFFERO GENERAL PUBLIC LICENSE
 
 # TODO
 date: today's date in format YYYY-MM-DD, e.g. 2015-04-21
 
-homepage: https://github.com/bitsy-ai/octoprint-nanny
-source: https://github.com/bitsy-ai/octoprint-nanny
-archive: https://github.com/bitsy-ai/octoprint-nanny/archive/master.zip
+homepage: https://print-nanny.com
+source: https://github.com/bitsy-ai/octoprint-nanny-plugin
+archive: https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/master.zip
 
 # TODO
 # Set this to true if your plugin uses the dependency_links setup parameter to include
@@ -21,11 +21,16 @@ archive: https://github.com/bitsy-ai/octoprint-nanny/archive/master.zip
 
 # TODO
 tags:
-- a list
-- of tags
-- that apply
-- to your plugin
-- (take a look at the existing plugins for what makes sense here)
+- ai
+- automation
+- quality control
+- remote
+- monitor
+- monitoring
+- alert
+- alerting
+- workflow
+- automation
 
 # TODO
 screenshots:
