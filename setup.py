@@ -5,7 +5,7 @@ import os
 ### Do not forget to adjust the following variables to your own plugin.
 
 # The plugin's identifier, has to be unique
-plugin_identifier = "print_nanny"
+plugin_identifier = "octoprint_nanny"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
 plugin_package = "octoprint_nanny"
@@ -31,7 +31,7 @@ plugin_author_email = "leigh@bitsy.ai"
 plugin_url = "https://github.com/bitsy-ai/octoprint-nanny-plugin"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
-plugin_license = "MIT"
+plugin_license = "AGPL"
 
 # Any additional requirements besides OctoPrint should be listed here
 
