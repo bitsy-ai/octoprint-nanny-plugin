@@ -131,7 +131,12 @@ class BitsyNannyPlugin(
         elif isinstance(response, Exception):
             e = str(response)
             logger.error(e)
-            return flask.json.jsonify({'msg': 'Error communicating with Print Nanny API', 'error': e}), 500
+            return (
+                flask.json.jsonify(
+                    {"msg": "Error communicating with Print Nanny API", "error": e}
+                ),
+                500,
+            )
 
     def register_custom_events(self):
         return ["predict_done"]
