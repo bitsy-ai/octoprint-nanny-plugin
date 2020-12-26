@@ -56,7 +56,9 @@ $(function() {
             console.log(message)
             if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
 
-
+                if (self.previewActive() == false) {
+                    self.previewActive(true);
+                }
                 self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
             }
         });
@@ -219,12 +221,14 @@ $(function() {
             'api_url': self.settingsViewModel.settings.plugins.print_nanny.api_url(),
         })
         .done((res) =>{
-                console.debug('Print Nanny verification success')
+                console.log(res)
                 self.alertClass(self.alerts.success.class)
                 self.alertHeader(self.alerts.success.header)
                 self.alertText(self.alerts.success.text)
             })
         .fail(e => {
+                console.error(e)
+
                 console.error('Print Nanny token verification failed', e)
                 self.alertClass(self.alerts.error.class)
                 self.alertHeader(self.alerts.error.header)

@@ -81,7 +81,7 @@ class BitsyNannyPlugin(
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_test_api_auth API call failed")
             self._settings.set(["auth_valid"], False)
-            return
+            return e
 
     ##
     ## Octoprint api routes + handlers
@@ -95,9 +95,9 @@ class BitsyNannyPlugin(
             raise WebcamSettingsHTTPException()
         url = self._settings.global_get(["webcam", "snapshot"])
         res = requests.get(url)
-        res.raise_for_status()
 
-        self._worker_manager.start()
+        if res.status_code == 200:
+            self._worker_manager.start()
 
         return flask.json.jsonify({"ok": 1})
 
@@ -129,8 +129,10 @@ class BitsyNannyPlugin(
 
             logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
-
-        return flask.json.jsonify(response)
+        elif isinstance(response, Exception):
+            e = str(response)
+            logger.error(e)
+            return flask.json.jsonify({'msg': 'Error communicating with Print Nanny API', 'error': e}), 500
 
     def register_custom_events(self):
         return ["predict_done"]

@@ -57,7 +57,7 @@
                 Stop Monitoring
             </button>
 
-            <button data-bind="{click: calibrate, enable: previewActive }" type="submit" class="btn btn-warning btn-large">
+            <button data-bind="{click: calibrate, enable: previewActive() && !calibrationActive() }" type="submit" class="btn btn-warning btn-large">
                 Show Calibration
             </button>
     </div>
@@ -75,11 +75,10 @@
         </button>
         </p>
         <div class="collapse" id="collapseExample">
-            <p>In this example, Print Nanny detects my Prusa's LCD case as a "print." While the case <i>technically</i> is a 3D print</i>, monitoring it is just silly! </p>
+            <p>In this example, Print Nanny detects the Prusa's LCD case is a 3D-printed object. While the case <i>technically</i> is a 3D print</i>, monitoring a completed print would be silly!</p>
             
-            <p>If I select the area sourrunding the 3D print volume, Print Nanny will ignore the LCD screen. </p>
+            <p>Select your print volume's approximate area to exclude objects outside of the print bed. </p>
             
-            <p>You don't need to stress about drawing the perfect box. Print Nanny will still catch fly-away defects (like spaghetti) outside of the selected area. </p>
             <img src="plugin/print_nanny/static/img/ignore_mask_example.gif"/>
         </div>
     </div>

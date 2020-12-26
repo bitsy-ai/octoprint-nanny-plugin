@@ -21,4 +21,4 @@ nginx:
 mjpg-streamer:
 
 	cd ~/projects/mjpg-streamer/mjpg-streamer-experimental && \
-	./mjpg_streamer -i "./input_raspicam.so -fps 10" -o "./output_http.so -p 8081 -w /www"
+	./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so -p 8081 -w /www"
