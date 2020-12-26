@@ -8,11 +8,11 @@ import os
 plugin_identifier = "print_nanny"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "print_nanny"
+plugin_package = "octoprint_print_nanny"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
-plugin_name = "Print Nanny"
+plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
 plugin_version = "0.1.0"
@@ -40,11 +40,11 @@ arch = os.uname().machine
 
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
 if arch == 'armv7l':
-	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_armv7l.whl'
+	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl'
 	
-elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0-rc4/tensorflow-2.4.0rc4-cp37-none-linux_aarch64.whl'	
+elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl'	
 elif arch == 'x86_64':
-	tensorflow = "tensorflow==2.4.0rc4"
+	tensorflow = "tensorflow==2.4.0"
 else:
 	raise Exception(f'OctoPrint Nanny does not support {arch} architechture. Please open a Github issue.')
 
@@ -68,7 +68,8 @@ extra_requires = {
 		"pytest",
 		"pytest-cov",
 		"pytest-mock",
-		"pytest-asyncio"
+		"pytest-asyncio",
+		"twine"
 	]
 }
 
