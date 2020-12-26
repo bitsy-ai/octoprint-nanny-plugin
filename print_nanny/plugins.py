@@ -98,8 +98,7 @@ class BitsyNannyPlugin(
 
         if res.status_code == 200:
             self._worker_manager.start()
-
-        return flask.json.jsonify({"ok": 1})
+            return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
