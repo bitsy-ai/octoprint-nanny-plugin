@@ -33,7 +33,7 @@ from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.predictor import ThreadLocalPredictor
 
-logger = logging.getLogger("octoprint.plugins.print_nanny")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
 DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api/")

@@ -31,7 +31,7 @@ except:
     from typing import Optional
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
-logger = logging.getLogger("octoprint.plugins.print_nanny.predictor")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
 
 class Prediction(TypedDict):
