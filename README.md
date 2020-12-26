@@ -1,4 +1,4 @@
-![Print Nanny Logo](/docs/images/logo.png)
+![Print Nanny Logo](https://github.com/bitsy-ai/octoprint-nanny-plugin/raw/main/docs/images/logo.jpg)
 
 OctoPrint monitoring & alerting AI.
 
