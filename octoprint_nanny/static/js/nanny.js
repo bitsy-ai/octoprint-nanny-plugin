@@ -64,8 +64,8 @@ $(function() {
         });
 
         toggleAutoStart = function(){
-            const newValue = !self.settingsViewModel.settings.plugins.print_nanny.auto_start()
-            self.settingsViewModel.settings.plugins.print_nanny.auto_start(newValue)
+            const newValue = !self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start()
+            self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start(newValue)
             OctoPrint.settings.savePluginSettings('print_nanny', {
                 auto_start: newValue
             })
@@ -91,7 +91,7 @@ $(function() {
         }
 
         saveCalibration = function(){
-            self.settingsViewModel.settings.plugins.print_nanny.calibrated(true)
+            self.settingsViewModel.settings.plugins.octoprint_nanny.calibrated(true)
             const calibration = self.calibratePos()
             const s = {
                 calibrated: true,
@@ -211,14 +211,14 @@ $(function() {
     self.alertText = ko.observable(self.alerts.warning.text)
 
     testAuthTokenInput = function(){
-        if (self.settingsViewModel.settings.plugins.print_nanny.auth_token() == undefined){
+        if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined){
             return
         }
         const url = OctoPrint.getBlueprintUrl('print_nanny') + 'testAuthToken'
         console.debug('Attempting to verify Print Nanny Auth token...')
         OctoPrint.postJson(url, {
-            'auth_token': self.settingsViewModel.settings.plugins.print_nanny.auth_token(),
-            'api_url': self.settingsViewModel.settings.plugins.print_nanny.api_url(),
+            'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
+            'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
         })
         .done((res) =>{
                 console.log(res)

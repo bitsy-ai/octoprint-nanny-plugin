@@ -24,7 +24,7 @@ from octoprint_nanny.predictor import PredictWorker
 
 import print_nanny_client
 
-logger = logging.getLogger("octoprint.plugins.print_nanny.manager")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
 Events.PRINT_PROGRESS = "print_progress"
 

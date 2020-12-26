@@ -7,7 +7,7 @@ import logging
 from .plugins import BitsyNannyPlugin
 
 
-logger = logging.getLogger("octoprint.plugins.print_nanny")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
 __plugin_name__ = "Print Nanny"
