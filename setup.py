@@ -8,11 +8,11 @@ import os
 plugin_identifier = "print_nanny"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "print_nanny"
+plugin_package = "octoprint_nanny"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
-plugin_name = "Bitsy Print Nanny"
+plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
 plugin_version = "0.1.0"
@@ -40,11 +40,11 @@ arch = os.uname().machine
 
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
 if arch == 'armv7l':
-	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/2.4.0-rc1/tensorflow-2.4.0rc1-cp37-none-linux_armv7l.whl'
+	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl'
 	
-elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-au/tensorflow-arm-bin/releases/download/2.4.0-rc1/tensorflow-2.4.0rc1-cp37-none-linux_aarch64.whl'	
+elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl'	
 elif arch == 'x86_64':
-	tensorflow = "tensorflow==2.4.0rc1"
+	tensorflow = "tensorflow==2.4.0"
 else:
 	raise Exception(f'OctoPrint Nanny does not support {arch} architechture. Please open a Github issue.')
 
@@ -55,8 +55,23 @@ plugin_requires = [
 	"bravado",
 	"typing_extensions ; python_version < '3.8'",
 	"pytz",
-	"aiohttp"
+	"aiohttp",
+	"print-nanny-client",
+	"websockets",
+	"backoff==1.10.0",
+	"aioprocessing==1.1.0",
+	"multiprocessing-logging==0.3.1"
 ]
+
+extra_requires = {
+	"dev": [
+		"pytest",
+		"pytest-cov",
+		"pytest-mock",
+		"pytest-asyncio",
+		"twine"
+	]
+}
 
 
 ### --------------------------------------------------------------------------------------------------------------------
@@ -115,7 +130,8 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
 	requires=plugin_requires,
 	additional_packages=plugin_additional_packages,
 	ignored_packages=plugin_ignored_packages,
-	additional_data=plugin_additional_data
+	additional_data=plugin_additional_data,
+	extra_requires=extra_requires
 )
 
 if len(additional_setup_parameters):
