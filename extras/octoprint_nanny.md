@@ -7,8 +7,7 @@ description: Get notified of print defects and safety hazards
 author: Leigh Johnson
 license: GNU AFFERO GENERAL PUBLIC LICENSE
 
-# TODO
-date: today's date in format YYYY-MM-DD, e.g. 2015-04-21
+date: 2020-12-25
 
 homepage: https://print-nanny.com
 source: https://github.com/bitsy-ai/octoprint-nanny-plugin
@@ -34,16 +33,24 @@ tags:
 
 # TODO
 screenshots:
-- url: url of a screenshot, /assets/img/...
-  alt: alt-text of a screenshot
-  caption: caption of a screenshot
-- url: url of another screenshot, /assets/img/...
-  alt: alt-text of another screenshot
-  caption: caption of another screenshot
-- ...
+- url: /assets/img/plugins/octoprint_nanny/logo.jpg
+  alt: Print Nanny Logo
+  caption: Print Nanny
+- url: /assets/img/octoprint_nanny/screenshot_1.png
+  alt: OctoPrint UI plugin tab
+  caption: Print Nanny monitors your 3D prints in real-time.
+- url: /assets/img/octoprint_nanny/screenshot_2.png
+  alt: Control your printer and queue remotely
+  caption: Control your printer and queue remotely
+- url: /assets/img/octoprint_nanny/screenshot_3.png
+  alt: No-code workflows
+  caption: Build custom automation - no coding required
+- url: /assets/img/octoprint_nanny/screenshot_4.png
+  alt: Percentage completed and low quality alerts
+  caption: Percentage completed and low quality alerts
 
 # TODO
-featuredimage: url of a featured image for your plugin, /assets/img/...
+featuredimage: /assets/img/octoprint_nanny/screenshot_2.png
 
 # TODO
 # You only need the following if your plugin requires specific OctoPrint versions or
@@ -63,7 +70,7 @@ compatibility:
   # OctoPrint versions being supported.
 
   octoprint:
-  - 1.2.0
+  - 1.5.0
 
   # List of compatible operating systems
   #
@@ -84,9 +91,6 @@ compatibility:
 
   os:
   - linux
-  - windows
-  - macos
-  - freebsd
   
   # Compatible Python version
   #
@@ -97,9 +101,57 @@ compatibility:
   # If your plugin only supports Python 2 (worst case, not recommended for newly developed plugins since Python 2
   # is EOL), leave at ">=2.7,<3"
   
-  python: ">=2.7,<3"
+  python: ">=3,<4"
 
 ---
 
-**TODO**: Longer description of your plugin, configuration examples etc. This part will be visible on the page at
-http://plugins.octoprint.org/plugin/nanny/
+![Print Nanny Logo](/assets/img/plugins/octoprint_nanny/logo.jpg)
+
+
+# What is Print Nanny?
+
+* Full **remote control** from anywhere, plus automatic **defect** and **safety hazard** detection.
+* **Push notifications** to SMS, Email, Slack, Discord, and more! 
+* Build **custom workflows** to handle shipping, filament resupply, or update product availability in your online store.
+* Send print-on-demand orders to job queue.
+* Smart slicer recommendations - perfect for beginners.
+* Developer API & Webhooks for advanced automation.
+
+Learn more about Print Nanny: https://www.print-nanny.com/
+
+![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_2.jpg)
+
+
+**Note:** currently in closed Beta. Please [request an invite](https://www.print-nanny.com/request-invite/) if you're interested in a preview of Print Nanny.
+
+### Setup
+
+1. [Create an account](https://www.print-nanny.com/request-invite/)
+2. Install the OctoPrint Nanny plugin using the Plugin Manager or [clone the Github repo](https://github.com/bitsy-ai/octoprint-nanny-plugin).
+3. Copy your Print Nanny authentication token.
+
+![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_4.jpg)
+
+4. Open OctoPrint's settings and paste your token. Don't forget to test your connection and save!
+
+
+![Settings Example](/assets/img/plugins/octoprint_nanny/screenshot_5.jpg)
+
+
+4. That's it! Print Nanny will automatically discover new printers, save your profiles, and generate detailed reports about your print jobs.
+
+**Note:** Print Nanny requires a **webcam** to function!
+
+You'll receive email notifications by default. Additional setup may be required for other notification sources and custom workflows.
+
+![Workflows Example](/assets/img/plugins/octoprint_nanny/screenshot_3.jpg)
+
+
+### Stay tuned!
+
+This document will be updated when Print Nanny v1.0.0 is released. By requesting a Beta invitation, you are opting in to receive email updates about new features and development.
+
+* [Join Discord](https://discord.gg/YK7qnv5KjB)
+
+
+![Plugin tab live stream](/assets/img/plugins/octoprint_nanny/screenshot_1.jpg)
