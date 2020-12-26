@@ -7,7 +7,7 @@ OctoPrint monitoring & alerting AI.
 Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
-    https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/master.zip
+    https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/main.zip
 
 ## Configuration
 
