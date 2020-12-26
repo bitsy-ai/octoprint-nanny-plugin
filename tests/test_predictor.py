@@ -3,7 +3,7 @@ import os
 from PIL import Image as PImage
 import numpy as np
 
-from print_nanny.predictor import ThreadLocalPredictor, Prediction
+from octoprint_nanny.predictor import ThreadLocalPredictor, Prediction
 
 TEST_PARAMS = [
     (f"data/images/{i}.pre.jpg", f"data/images/{i}.post.jpg") for i in range(0, 7)

@@ -18,9 +18,9 @@ from octoprint.events import Events
 
 import threading
 
-from print_nanny.clients.websocket import WebSocketWorker
-from print_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
-from print_nanny.predictor import PredictWorker
+from octoprint_nanny.clients.websocket import WebSocketWorker
+from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.predictor import PredictWorker
 
 import print_nanny_client
 
@@ -157,7 +157,7 @@ class WorkerManager:
                 )
                 continue
 
-            # ignore events originating from print_nanny plugin
+            # ignore events originating from octoprint_nanny plugin
             if event_type == Events.PLUGIN_PRINT_NANNY_PREDICT_DONE:
                 continue
 

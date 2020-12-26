@@ -4,8 +4,8 @@ import queue
 import aiohttp
 import urllib
 from datetime import datetime
-from print_nanny.clients.websocket import WebSocketWorker
-from print_nanny.predictor import PredictWorker
+from octoprint_nanny.clients.websocket import WebSocketWorker
+from octoprint_nanny.predictor import PredictWorker
 import pytz
 
 

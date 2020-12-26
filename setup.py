@@ -8,7 +8,7 @@ import os
 plugin_identifier = "print_nanny"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "octoprint_print_nanny"
+plugin_package = "octoprint_nanny"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module

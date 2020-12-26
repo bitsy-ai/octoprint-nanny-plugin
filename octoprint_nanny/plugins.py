@@ -29,9 +29,9 @@ import multiprocessing_logging
 import print_nanny_client
 
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
-from print_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
-from print_nanny.manager import WorkerManager
-from print_nanny.predictor import ThreadLocalPredictor
+from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.manager import WorkerManager
+from octoprint_nanny.predictor import ThreadLocalPredictor
 
 logger = logging.getLogger("octoprint.plugins.print_nanny")
 

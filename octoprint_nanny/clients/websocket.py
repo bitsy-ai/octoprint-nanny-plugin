@@ -12,7 +12,7 @@ import aioprocessing
 import multiprocessing
 
 
-from print_nanny.utils.encoder import NumpyEncoder
+from octoprint_nanny.utils.encoder import NumpyEncoder
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.print_nanny.websocket")
