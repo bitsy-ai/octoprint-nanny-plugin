@@ -1,4 +1,4 @@
-![Print Nanny Logo](/docs/images/logo.png)
+![Print Nanny Logo](docs/images/logo.png)
 
 OctoPrint monitoring & alerting AI.
 
