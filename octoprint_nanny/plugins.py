@@ -36,9 +36,9 @@ from octoprint_nanny.predictor import ThreadLocalPredictor
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
-DEFAULT_API_URL = os.environ.get("PRINT_NANNY_API_URL", "https://print-nanny.com/api/")
+DEFAULT_API_URL = os.environ.get("octoprint_nanny_API_URL", "https://print-nanny.com/api/")
 DEFAULT_WS_URL = os.environ.get(
-    "PRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/predict/"
+    "octoprint_nanny_WS_URL", "wss://print-nanny.com/ws/predict/"
 )
 
 

@@ -1,6 +1,6 @@
 <!-- hero -->
 <div class="row-fluid">
-    <a href="https://print-nanny.com"><img src="/plugin/print_nanny/static/img/print_nanny_logo.png"/></a>
+    <a href="https://print-nanny.com"><img src="/plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
     <h3>Real-time defect and safety monitoring ✨</h3>
     <p>Automated quality assurance alerts for anyone tired of babysitting their 3D printer.</p>
 
@@ -15,15 +15,15 @@
 
 
   <div class="tab-content">
-    <div id="print_nanny_settings_basic" class="tab-pane active">
+    <div id="octoprint_nanny_settings_basic" class="tab-pane active">
         <fieldset>
             <legend>Connect Account</legend>
 
             <div class="control-group">
-                <label class="control-label" for="print_nanny_settings_auth_token">Authentication Token</label>
+                <label class="control-label" for="octoprint_nanny_settings_auth_token">Authentication Token</label>
                 <div class="controls">
                     <input 
-                        id="print_nanny_settings_auth_token" 
+                        id="octoprint_nanny_settings_auth_token" 
                         class="input-xxlarge"
                         data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
                 </div>
@@ -39,21 +39,21 @@
             </div>
         </fieldset>
     </div>
-    <div id="print_nanny_settings_advanced" class="tab-pane">
+    <div id="octoprint_nanny_settings_advanced" class="tab-pane">
         <fieldset>
             <legend>Warning! Developer settings </legend>
             <p> The following settings are used for development and self-hosted versions of Print Nanny. </p>
             <div class="control-group">
-                <label class="control-label" for="print_nanny_settings_api_uri">API URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_api_uri">API URL</label>
                 <div class="controls">
-                    <input id="print_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
+                    <input id="octoprint_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="print_nanny_settings_api_uri">Websocket URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_api_uri">Websocket URL</label>
                 <div class="controls">
-                    <input id="print_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
+                    <input id="octoprint_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
                 </div>
             </div>
 

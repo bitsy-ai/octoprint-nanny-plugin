@@ -11,7 +11,7 @@ import pytz
 
 @pytest.fixture
 def ws_client(mocker):
-    mocker.patch("print_nanny.clients.websocket.asyncio")
+    mocker.patch("octoprint_nanny.clients.websocket.asyncio")
     m = aioprocessing.AioManager()
     return WebSocketWorker(
         "ws://localhost:8000/ws/predict/",
@@ -23,7 +23,7 @@ def ws_client(mocker):
 
 @pytest.fixture
 def predict_worker(mocker):
-    mocker.patch("print_nanny.predictor.threading")
+    mocker.patch("octoprint_nanny.predictor.threading")
     m = aioprocessing.AioManager()
 
     return PredictWorker(
