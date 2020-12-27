@@ -21,7 +21,7 @@
 //         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
 //         dependencies: [ "loginStateViewModel", "settingsViewModel"],
 //         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-//         elements: [ '#wizard_plugin_print_nanny_2', '#settings_plugin_print_nanny' ]
+//         elements: [ '#wizard_plugin_octoprint_nanny_2', '#settings_plugin_octoprint_nanny' ]
 
 //     });
 // });
@@ -54,7 +54,7 @@ $(function() {
 
         OctoPrint.socket.onMessage("*", function(message) {
             console.log(message)
-            if (message && message.data && message.data.type == 'plugin_print_nanny_predict_done'){
+            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_done'){
 
                 if (self.previewActive() == false) {
                     self.previewActive(true);
@@ -66,7 +66,7 @@ $(function() {
         toggleAutoStart = function(){
             const newValue = !self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start()
             self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start(newValue)
-            OctoPrint.settings.savePluginSettings('print_nanny', {
+            OctoPrint.settings.savePluginSettings('octoprint_nanny', {
                 auto_start: newValue
             })
         }
@@ -74,8 +74,8 @@ $(function() {
         calibrate = function(){
             self.calibrationActive(true);
             const calibrateImg = new Image();
-            calibrateImg.src = $('#tab_plugin_print_nanny_preview').attr('src')
-            document.getElementById('tab_plugin_print_nanny_calibrate').appendChild(calibrateImg);
+            calibrateImg.src = $('#tab_plugin_octoprint_nanny_preview').attr('src')
+            document.getElementById('tab_plugin_octoprint_nanny_calibrate').appendChild(calibrateImg);
             Jcrop.load(calibrateImg).then(img => {
                 const stage = Jcrop.attach(img);
                 stage.listen('crop.change',function(widget,e){
@@ -102,13 +102,13 @@ $(function() {
                 calibrate_h: calibration.h,
                 calibrate_w: calibration.w
             }
-            OctoPrint.settings.savePluginSettings('print_nanny', s);
+            OctoPrint.settings.savePluginSettings('octoprint_nanny', s);
             self.calibrationActive(false);
 
         }
     
         startPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'startPredict'
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'startPredict'
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
@@ -128,7 +128,7 @@ $(function() {
         }
 
         stopPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'stopPredict'
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopPredict'
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
@@ -147,7 +147,7 @@ $(function() {
         }
 
         isPreviewActive = function(){
-            const url = OctoPrint.getBlueprintUrl('print_nanny') + 'previewActive'
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'previewActive'
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
@@ -169,7 +169,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#tab_plugin_print_nanny' ]
+        elements: [ '#tab_plugin_octoprint_nanny' ]
 
     });
 });
@@ -214,7 +214,7 @@ $(function() {
         if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined){
             return
         }
-        const url = OctoPrint.getBlueprintUrl('print_nanny') + 'testAuthToken'
+        const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testAuthToken'
         console.debug('Attempting to verify Print Nanny Auth token...')
         OctoPrint.postJson(url, {
             'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
@@ -242,7 +242,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#settings_plugin_print_nanny', '#wizard_plugin_print_nanny']
+        elements: [ '#settings_plugin_octoprint_nanny', '#wizard_plugin_octoprint_nanny']
 
     });
 });

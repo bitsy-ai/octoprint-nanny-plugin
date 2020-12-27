@@ -2,6 +2,13 @@
 
 .PHONY: clean-settings
 
+clean-build: ## remove build artifacts
+	rm -fr build/
+	rm -fr dist/
+	rm -fr .eggs/
+	find . -name '*.egg-info' -exec rm -fr {} +
+	find . -name '*.egg' -exec rm -f {} +
+
 clean-settings:
 	yq -M 'del(.octoprint_nanny)' ~/.octoprint/config.yaml >  ~/.octoprint/config.yaml
 
@@ -32,7 +39,7 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-clean: clean-dist clean-pyc
+clean: clean-dist clean-pyc clean-build
 
 sdist: ## builds source package
 	python3 setup.py sdist && ls -l dist
