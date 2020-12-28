@@ -10,6 +10,7 @@ import platform
 import queue
 import re
 import threading
+import platform
 from datetime import datetime
 
 import time
@@ -23,8 +24,10 @@ import pytz
 import uuid
 import requests
 import numpy as np
-from octoprint.events import Events, eventManager
 import multiprocessing_logging
+
+from octoprint.events import Events, eventManager
+from octoprint.server import printerProfileManager
 
 import print_nanny_client
 
@@ -36,7 +39,9 @@ from octoprint_nanny.predictor import ThreadLocalPredictor
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
-DEFAULT_API_URL = os.environ.get("octoprint_nanny_API_URL", "https://print-nanny.com/api/")
+DEFAULT_API_URL = os.environ.get(
+    "octoprint_nanny_API_URL", "https://print-nanny.com/api/"
+)
 DEFAULT_WS_URL = os.environ.get(
     "octoprint_nanny_WS_URL", "wss://print-nanny.com/ws/predict/"
 )
@@ -83,6 +88,147 @@ class BitsyNannyPlugin(
             self._settings.set(["auth_valid"], False)
             return e
 
+    def _cpuinfo(self) -> dict:
+        """
+        Dict from /proc/cpu
+        {'processor': '3', 'model name': 'ARMv7 Processor rev 3 (v7l)', 'BogoMIPS': '270.00',
+        'Features': 'half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm crc32', 'CPU implementer': '0x41',
+        'CPU architecture': '7', 'CPU variant': '0x0', 'CPU part': '0xd08', 'CPU revision': '3', 'Hardware': 'BCM2711',
+        'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
+        """
+        return {
+            x.split(":")[0].strip(): x.split(":")[1].strip()
+            for x in open("/proc/cpuinfo").read().split("\n")
+            if len(x.split(":")) > 1
+        }
+
+    def _meminfo(self) -> dict:
+        """
+        Dict from /proc/meminfo
+
+            {'MemTotal': '3867172 kB', 'MemFree': '1241596 kB', 'MemAvailable': '3019808 kB', 'Buffers': '131336 kB', 'Cached': '1641988 kB',
+            'SwapCached': '1372 kB', 'Active': '1015728 kB', 'Inactive': '1469520 kB', 'Active(anon)': '564560 kB', 'Inactive(anon)': '65344 kB', '
+            Active(file)': '451168 kB', 'Inactive(file)': '1404176 kB', 'Unevictable': '16 kB', 'Mlocked': '16 kB', 'HighTotal': '3211264 kB',
+            'HighFree': '841456 kB', 'LowTotal': '655908 kB', 'LowFree': '400140 kB', 'SwapTotal': '102396 kB', 'SwapFree': '91388 kB',
+            'Dirty': '20 kB', 'Writeback': '0 kB', 'AnonPages': '710936 kB', 'Mapped': '239040 kB', 'Shmem': '3028 kB', 'KReclaimable': '82948 kB',
+            'Slab': '105028 kB', 'SReclaimable': '82948 kB', 'SUnreclaim': '22080 kB', 'KernelStack': '2400 kB', 'PageTables': '8696 kB', 'NFS_Unstable': '0 kB',
+            'Bounce': '0 kB', 'WritebackTmp': '0 kB', 'CommitLimit': '2035980 kB', 'Committed_AS': '1755048 kB', 'VmallocTotal': '245760 kB', 'VmallocUsed': '5732 kB',
+            'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
+        """
+        return {
+            x.split(":")[0].strip(): x.split(":")[1].strip()
+            for x in open("/proc/meminfo").read().split("\n")
+            if len(x.split(":")) > 1
+        }
+
+    def _get_device_info(self):
+        cpuinfo = self._cpuinfo()
+
+        # @todo warn if neon acceleration is not supported
+        cpu_flags = cpuinfo.get("Features", "").split()
+
+        # processors are zero indexed
+        cores = int(cpuinfo.get("processor")) + 1
+        # covnert kB string like '3867172 kB' to bytes
+        ram = self._meminfo().get("MemTotal").split()[0] * 1000
+
+        python_version = self.environment.get("python", {}).get("version")
+        pip_version = self.environment.get("python", {}).get("pip")
+        virtualenv = self._environment.get("python", {}).get("virtualenv")
+
+        return {
+            "model": cpuinfo.get("Model"),
+            "platform": platform.platform(),
+            "cpu_flags": cpu_flags,
+            "hardware": cpuinfo.get("Hardware"),
+            "revision": cpuinfo.get("Revision"),
+            "serial": cpuinfo.get("Serial"),
+            "cores": cores,
+            "ram": ram,
+            "python_version": python_version,
+            "pip_version": pip_version,
+            "virtualenv": virtualenv,
+            "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
+            "plugin_version": self.plugin._plugin_version,
+        }
+
+    async def _sync_printer_profiles(self):
+        printer_profiles = printerProfileManager.get_all()
+
+        # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
+        id_map = {"octoprint": {}, "octoprint_nanny": {}}
+
+        for profile in printer_profiles:
+            created_profile = await self.rest_client.update_or_create_printer_profile(
+                profile
+            )
+            id_map["octoprint"][created_profile.octoprint_id] = id_map[
+                "octoprint_nanny"
+            ][created_profile.id]
+            id_map["octoprint_nanny"][created_profile.id] = id_map["octoprint"][
+                created_profile.octoprint_id
+            ]
+
+        logger.info(f"Synced {len(printer_profiles)}")
+
+        filename = os.path.join(
+            self.get_plugin_data_folder(), "printer_profile_id_map.json"
+        )
+        with io.open(filename, "w+", encoding="utf-8") as f:
+            json.dump(id_map, f)
+        logger.info(
+            f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
+        )
+
+    async def _register_device(self):
+        # device registration
+        self._event_bus.fire(
+            Events.plugin_octoprint_nanny_DEVICE_REGISTER_START,
+            payload={"msg": "Registering your device... (this may take a minute)"},
+        )
+        device_info = self._get_device_info()
+        device = await self.rest_client.create_octoprint_device(**device_info)
+        self._event_bus.fire(
+            Events.plugin_octoprint_nanny_DEVICE_REGISTER_DONE,
+            payload={
+                "msg": f"Success! Device can now be managed remotely: {device.url}"
+            },
+        )
+        logger.info(
+            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint}"
+        )
+
+        pubkey_filename = os.path.join(self.get_plugin_data_folder(), "id_rsa.pub")
+        privkey_filename = os.path.join(self.get_plugin_data_folder(), "id_rsa")
+
+        async with aiohttp.ClientSession() as session:
+            pubkey = await session.get(device.public_key)
+            privkey = await session.get(device.private_key)
+
+        with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
+            f.write(pubkey)
+        with io.open(privkey_filename, "w+", encoding="utf-8") as f:
+            f.write(privkey)
+        logger.info(
+            f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
+        )
+        self._event_bus.fire(
+            Events.plugin_octoprint_nanny_DEVICE_REGISTER_DONE,
+            payload={f'msg": "Success! Provisioned new key pair {device.fingerprint}'},
+        )
+
+        # initial sync (just printer profiles for now)
+        # @todo enqueue files sync
+        self._event_bus.fire(
+            Events.plugin_octoprint_nanny_PRINTER_PROFILE_SYNC_START,
+            payload={"msg": "Syncing printer profiles... (this may take a minute)"},
+        )
+        await _sync_printer_profiles()
+        self._event_bus.fire(
+            Events.plugin_octoprint_nanny_PRINTER_PROFILE_SYNC_DONE,
+            payload={"msg": "Syncing printer profiles... (this may take a minute)"},
+        )
+
     ##
     ## Octoprint api routes + handlers
     ##
@@ -104,6 +250,17 @@ class BitsyNannyPlugin(
     def stop_predict(self):
         self._worker_manager.stop()
         return flask.json.jsonify({"ok": 1})
+
+    @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
+    def register_device(self):
+
+        device = asyncio.run_coroutine_threadsafe(
+            self._register_device(), self._worker_manager.loop
+        ).result()
+
+        self._settings.set(["device_url"], device.url)
+
+        return flask.jsonify({"device_url": device.url})
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
@@ -139,7 +296,15 @@ class BitsyNannyPlugin(
             )
 
     def register_custom_events(self):
-        return ["predict_done"]
+        return [
+            "predict_done",
+            "device_register_start",
+            "device_register_done",
+            "device_register_failed",
+            "printer_profile_sync_start",
+            "printer_profile_sync_done",
+            "printer_profile_sync_failed",
+        ]
 
     def on_event(self, event_type, event_data):
         self._worker_manager.tracking_queue.put_nowait(
@@ -191,6 +356,7 @@ class BitsyNannyPlugin(
             auth_valid=False,
             user_email=None,
             user_url=None,
+            device_url=None,
             user=None,
             calibrated=False,
             calibrate_x0=None,

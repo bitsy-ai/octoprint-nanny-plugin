@@ -241,7 +241,6 @@ class WorkerManager:
             "plugin_version": self.plugin._plugin_version,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "platform": platform.platform(),
-            "mac_address": ":".join(re.findall("..", "%012x".format(uuid.getnode()))),
             "api_objects": {
                 "printer_profile_id": self.shared.printer_profile_id,
                 "print_job_id": self.shared.print_job_id,
