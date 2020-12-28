@@ -158,7 +158,7 @@ class WorkerManager:
                 continue
 
             # ignore events originating from octoprint_nanny plugin
-            if event_type == Events.plugin_octoprint_nanny_PREDICT_DONE:
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
                 continue
 
             # ignore untracked events
@@ -228,7 +228,7 @@ class WorkerManager:
             if self.active:
                 viz_bytes = self.octo_ws_queue.get(block=True)
                 self.plugin._event_bus.fire(
-                    Events.plugin_octoprint_nanny_PREDICT_DONE,
+                    Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_bytes)},
                 )
 

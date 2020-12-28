@@ -9,7 +9,7 @@ from octoprint.events import Events
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
 
-from print_nanny_client.api.devices import DevicesApi
+from print_nanny_client.api.devices_api import DevicesApi
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.users_api import UsersApi
@@ -57,7 +57,8 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
             request = OctoPrintDeviceRequest(**kwargs)
-            octoprint_device = await DevicesApi.octoprint_devices_create(request)
+            api_instance = DevicesApi(api_client=api_client)
+            octoprint_device = await api_instance.octoprint_devices_create(request)
             return octoprint_device
 
     @backoff.on_exception(
@@ -70,7 +71,8 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
             request = OctoPrintDeviceRequest(**kwargs)
-            octoprint_device = await DevicesApi.octoprint_devices_partial_update(
+            api_instance = DevicesApi(api_client=api_client)
+            octoprint_device = await api_instance.octoprint_devices_partial_update(
                 octoprint_device_id, request
             )
             return octoprint_device
@@ -262,7 +264,7 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
-            request = self._printer_profile_request(data)
+            request = self._printer_profile_request(event_data)
             printer_profile = await api_instance.printer_profiles_update_or_create(
                 request
             )

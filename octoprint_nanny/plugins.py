@@ -43,11 +43,11 @@ DEFAULT_API_URL = os.environ.get(
     "octoprint_nanny_API_URL", "https://print-nanny.com/api/"
 )
 DEFAULT_WS_URL = os.environ.get(
-    "octoprint_nanny_WS_URL", "wss://print-nanny.com/ws/predict/"
+    "octoprint_nanny_WS_URL", "wss://print-nanny.com/ws/annotated-image/"
 )
 
 
-class BitsyNannyPlugin(
+class OctoPrintNannyPlugin(
     octoprint.plugin.SettingsPlugin,
     octoprint.plugin.AssetPlugin,
     octoprint.plugin.TemplatePlugin,
@@ -129,11 +129,11 @@ class BitsyNannyPlugin(
 
         # processors are zero indexed
         cores = int(cpuinfo.get("processor")) + 1
-        # covnert kB string like '3867172 kB' to bytes
-        ram = self._meminfo().get("MemTotal").split()[0] * 1000
+        # covnert kB string like '3867172 kB' to int
+        ram = int(self._meminfo().get("MemTotal").split()[0])
 
-        python_version = self.environment.get("python", {}).get("version")
-        pip_version = self.environment.get("python", {}).get("pip")
+        python_version = self._environment.get("python", {}).get("version")
+        pip_version = self._environment.get("python", {}).get("pip")
         virtualenv = self._environment.get("python", {}).get("virtualenv")
 
         return {
@@ -143,13 +143,15 @@ class BitsyNannyPlugin(
             "hardware": cpuinfo.get("Hardware"),
             "revision": cpuinfo.get("Revision"),
             "serial": cpuinfo.get("Serial"),
+            "fingerprint": "",  # replaced by keypair during server-side provisioning
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
             "pip_version": pip_version,
             "virtualenv": virtualenv,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
-            "plugin_version": self.plugin._plugin_version,
+            "plugin_version": self._plugin_version,
+            "print_nanny_client_version": print_nanny_client.__version__,
         }
 
     async def _sync_printer_profiles(self):
@@ -180,20 +182,33 @@ class BitsyNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
-    async def _register_device(self):
+    async def _register_device(self, device_name):
+
         # device registration
         self._event_bus.fire(
-            Events.plugin_octoprint_nanny_DEVICE_REGISTER_START,
-            payload={"msg": "Registering your device... (this may take a minute)"},
+            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_START,
+            payload={"msg": "Requesting new identity from provision service"},
         )
         device_info = self._get_device_info()
-        device = await self.rest_client.create_octoprint_device(**device_info)
-        self._event_bus.fire(
-            Events.plugin_octoprint_nanny_DEVICE_REGISTER_DONE,
-            payload={
-                "msg": f"Success! Device can now be managed remotely: {device.url}"
-            },
-        )
+        try:
+            device = await self.rest_client.create_octoprint_device(
+                name=device_name, **device_info
+            )
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
+                payload={
+                    "msg": f"Success! Device can now be managed remotely: {device.url}"
+                },
+            )
+
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(e)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
+                payload={"msg": str(e.body)},
+            )
+            return
+
         logger.info(
             f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint}"
         )
@@ -212,22 +227,38 @@ class BitsyNannyPlugin(
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
+        self._settings.set(["device_url"], device.url)
+        self._settings.set(["device_id"], device.id)
+        self._settings.set(["device_fingerprint"], device.fingerprint)
+        self._settings.set(["device_registered"], True)
+        self._settings.save()
+
         self._event_bus.fire(
-            Events.plugin_octoprint_nanny_DEVICE_REGISTER_DONE,
-            payload={f'msg": "Success! Provisioned new key pair {device.fingerprint}'},
+            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
+            payload={f'msg": "Success! Provisioned new key: {device.fingerprint}'},
         )
 
         # initial sync (just printer profiles for now)
         # @todo enqueue files sync
         self._event_bus.fire(
-            Events.plugin_octoprint_nanny_PRINTER_PROFILE_SYNC_START,
-            payload={"msg": "Syncing printer profiles... (this may take a minute)"},
+            Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_START,
+            payload={"msg": "Syncing printer profiles..."},
         )
-        await _sync_printer_profiles()
-        self._event_bus.fire(
-            Events.plugin_octoprint_nanny_PRINTER_PROFILE_SYNC_DONE,
-            payload={"msg": "Syncing printer profiles... (this may take a minute)"},
-        )
+        try:
+            await self._sync_printer_profiles()
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
+                payload={
+                    "msg": "Sucess! Printer profiles synced to https://print-nanny.com/dashboard/printer-profiles"
+                },
+            )
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(e)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
+                payload={"msg": str(e.body)},
+            )
+            return
 
     ##
     ## Octoprint api routes + handlers
@@ -253,14 +284,13 @@ class BitsyNannyPlugin(
 
     @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
     def register_device(self):
+        device_name = flask.request.json.get("device_name")
 
         device = asyncio.run_coroutine_threadsafe(
-            self._register_device(), self._worker_manager.loop
+            self._register_device(device_name), self._worker_manager.loop
         ).result()
 
-        self._settings.set(["device_url"], device.url)
-
-        return flask.jsonify({"device_url": device.url})
+        return flask.jsonify(device)
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
@@ -347,6 +377,7 @@ class BitsyNannyPlugin(
     ## EnvironmentDetectionPlugin
 
     def on_environment_detected(self, environment, *args, **kwargs):
+        self._environment = environment
         self._worker_manager._environment = environment
 
     ## SettingsPlugin mixin
@@ -354,9 +385,14 @@ class BitsyNannyPlugin(
         return dict(
             auth_token=None,
             auth_valid=False,
+            device_registered=False,
             user_email=None,
+            user_id=None,
             user_url=None,
             device_url=None,
+            device_fingerprint=None,
+            device_id=None,
+            device_name=None,
             user=None,
             calibrated=False,
             calibrate_x0=None,
@@ -416,10 +452,18 @@ class BitsyNannyPlugin(
 
         return any(
             [
-                self._settings.get(["auth_token"]) is None,
                 self._settings.get(["api_url"]) is None,
+                self._settings.get(["auth_token"]) is None,
+                self._settings.get(["auth_valid"]) is False,
+                self._settings.get(["device_fingerprint"]) is None,
+                self._settings.get(["device_id"]) is None,
+                self._settings.get(["device_name"]) is None,
+                self._settings.get(["device_registered"]) is False,
+                self._settings.get(["device_url"]) is None,
                 self._settings.get(["user_email"]) is None,
+                self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
+                self._settings.get(["ws_url"]) is None,
             ]
         )
 

@@ -9,8 +9,8 @@
 
 <form class="form">
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#print_nanny_settings_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#print_nanny_settings_advanced" data-toggle="tab">{{ _('Advanced Setting') }}</a></li>
+        <li class="active"><a href="#octoprint_nanny_settings_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
+        <li><a href="#octoprint_nanny_settings_advanced" data-toggle="tab">{{ _('Advanced Setting') }}</a></li>
     </ul>
 
 
@@ -31,11 +31,11 @@
             <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
                 Test Connection
             </button>
-            <div class="alert alert-block" data-bind="css: alertClass">
+            <div class="alert alert-block" data-bind="css: authAlertClass">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
-                <h4><span data-bind="text: alertHeader"></span></h4> 
-                <span data-bind="text: alertText"></span>
+                <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                <span data-bind="text: authAlertText"></span>
             </div>
         </fieldset>
     </div>
@@ -44,28 +44,28 @@
             <legend>Warning! Developer settings </legend>
             <p> The following settings are used for development and self-hosted versions of Print Nanny. </p>
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_uri">API URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_api_url">API URL</label>
                 <div class="controls">
-                    <input id="octoprint_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
+                    <input id="octoprint_nanny_settings_api_url" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_uri">Websocket URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_api_url">Websocket URL</label>
                 <div class="controls">
-                    <input id="octoprint_nanny_settings_api_uri" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
+                    <input id="octoprint_nanny_settings_api_url" data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
                 </div>
             </div>
 
             <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
                 Test Connection
             </button>
-            <div class="alert alert-block" data-bind="css: alertClass">
+            <div class="alert alert-block" data-bind="css: authAlertClass">
                 <p>
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
             
-                    <h4><span data-bind="text: alertHeader"></span></h4> 
-                    <span data-bind="text: alertText"></span>
+                    <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                    <span data-bind="text: authAlertText"></span>
                 </p>
             </div>
         </fieldset>
