@@ -202,6 +202,7 @@ $(function() {
         }
     };
 
+    self.imageData = ko.observable();
     self.deviceRegisterProgressPercent = ko.observable();
     self.deviceRegisterProgress = 0;
     self.deviceRegisterProgressCompleted = 4;
@@ -328,6 +329,25 @@ $(function() {
 
             }); 
 
+        }
+    
+    testSnapshotUrl = function(){
+        const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testSnapshotUrl'
+        OctoPrint.postJson(url, {
+            'snapshot_url': self.settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url(),
+        })
+        .done((res) =>{
+            console.log(res);
+            self.imageData("data:image/jpeg;base64," + res.image);
+
+            OctoPrint.settings.savePluginSettings('octoprint_nanny', {
+                'snapshot_url': self.settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url(),
+                });
+
+            })
+            .fail(e => {
+                console.error(e);
+            });
         }
     }
 

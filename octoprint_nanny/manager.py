@@ -192,7 +192,7 @@ class WorkerManager:
         starts prediction and pn websocket processes
         """
         self.active = True
-        webcam_url = self.plugin._settings.global_get(["webcam", "snapshot"])
+        webcam_url = self.plugin._settings.get(["snapshot_url"])
 
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,

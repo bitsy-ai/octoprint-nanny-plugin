@@ -20,7 +20,6 @@ import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
-import pytz
 import uuid
 import requests
 import numpy as np
@@ -267,6 +266,11 @@ class OctoPrintNannyPlugin(
 
         return printers
 
+    async def _test_snapshot_url(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as res:
+                return await res.read()
+
     ##
     ## Octoprint api routes + handlers
     ##
@@ -301,6 +305,15 @@ class OctoPrintNannyPlugin(
             raise result
 
         return flask.jsonify(result)
+
+    @octoprint.plugin.BlueprintPlugin.route("/testSnapshotUrl", methods=["POST"])
+    def test_snapshot_url(self):
+        snapshot_url = flask.request.json.get("snapshot_url")
+
+        image = asyncio.run_coroutine_threadsafe(
+            self._test_snapshot_url(snapshot_url), self._worker_manager.loop
+        ).result()
+        return flask.jsonify({"image": base64.b64encode(image)})
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):

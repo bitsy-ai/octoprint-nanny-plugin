@@ -18,13 +18,13 @@
           <p><a href="https://discord.gg/YK7qnv5KjB">Join the Discord server </a> or email support@print-nanny.com to report issues.</p>
 
           <h3>1. Login</h3>
-            <p>Request <a href="https://print-nanny.com/request-invite/">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
+            <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
             <p>
-                <a href="https://print-nanny.com/request-invite/" class="btn btn-primary btn-large">
+                <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-primary">
                 Request Account
                 </a>
 
-                <a href="https://print-nanny.com/signin" class="btn btn-secondary btn-large">
+                <a target="_blank" href="https://print-nanny.com/signin" class="btn btn-secondary btn-large">
                 Signin
                 </a>
             </p>
@@ -86,7 +86,7 @@
             </ul>
         
         <hr>
-         <h3>3. Webcam Test</h3>
+         <h3>4. Test Webcam</h3>
          <p>Enter your webcam's <strong>snapshot url</strong> below. </p>
          <div class="control-group">
             <label class="control-label" for="octoprint_nanny_settings_snapshot_url"><strong>Snapshot URL</strong></label>
@@ -98,9 +98,12 @@
             </div>
         </div>
         <button data-bind="{click: testSnapshotUrl }" type="submit" class="btn btn-primary btn-large">
-            Start Registration
+            Capture Snapshot
         </button>
+        <p>If the image below is broken after you click the Capture Snapshot button, double-check your snapshot url.</p>
+        <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }, visible: imageData() !== undefined"/>
 
+        <hr>
       </fieldset>
       </div>
     <div id="octoprint_nanny_wizard_advanced" class="tab-pane">
