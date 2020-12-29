@@ -279,9 +279,7 @@ class OctoPrintNannyPlugin(
     def start_predict(self):
 
         # settings test#
-        if self._settings.global_get(["webcam", "snapshot"]) is None:
-            raise WebcamSettingsHTTPException()
-        url = self._settings.global_get(["webcam", "snapshot"])
+        url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
 
         if res.status_code == 200:
@@ -468,6 +466,19 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["calibrate_w"]),
             )
             self._worker_manager.shared.calibration = calibration
+
+    ## Template plugin
+
+    def get_template_vars(self):
+        return {
+            # @ todo is there a covenience method to get all plugin settings?
+            # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=settings%20get#octoprint.plugin.PluginSettings.get
+            "settings": {
+                key: self._settings.get([key])
+                for key in self.get_settings_defaults().keys()
+            },
+            "active": self._worker_manager.active,
+        }
 
     ## Wizard plugin mixin
 

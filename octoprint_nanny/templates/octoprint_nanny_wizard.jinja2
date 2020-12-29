@@ -1,9 +1,9 @@
-
-<a href="https://print-nanny.com"><img src="/plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
-<h3>Real-time defect and safety monitoring ✨</h3>
-<p>Automated quality assurance alerts for anyone tired of babysitting their 3D printer.</p>
-
-
+<!-- hero -->
+<div class="row-fluid">
+    <a href="https://print-nanny.com"><img src="/plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
+    <h3>Real-time defect and safety monitoring ✨</h3>
+    <p>Automated alerts for anyone tired of babysitting their 3D printer.</p>
+</div>
 <form class="form">
 
     <ul class="nav nav-tabs">
@@ -42,20 +42,39 @@
                       data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
               </div>
           </div>
-          <div class="alert alert-block" data-bind="css: authAlertClass">
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
-          
-              <h4><span data-bind="text: authAlertHeader"></span></h4> 
-              <span data-bind="text: authAlertText"></span>
-          </div>
-          <p>
-          <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
-              Test Connection
-          </button>
-          </p>
-        
+
+          {% if plugin_octoprint_nanny_settings.auth_valid == True %}
+            <div class="alert alert-block" data-bind="css: authAlertClass">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                
+                    <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                    <span data-bind="text: authAlertText"></span>
+            </div>
+            <p>
+                <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-large">
+                        Test Connection
+                </button>
+            </p>
+          {% else %}
+            <div class="alert alert-block" data-bind="css: authAlertClass">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            
+                <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                <span data-bind="text: authAlertText"></span>
+            </div>
+            <p>
+            <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
+                Test Connection
+            </button>
+            </p>
+          {% endif %}
+            
           <hr>
-          <h3>3. Register Device</h3>
+
+        {% if plugin_octoprint_nanny_settings.device_registered == True %}
+          <p>device registered</p>
+        {% else %}
+            <h3>3. Register Device</h3>
             <div class="control-group">
                 <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Choose a nickname for this OctoPrint device:</strong></label>
                 <div class="controls">
@@ -84,7 +103,8 @@
                 <!-- <li class="list-group-item">Example item</li> -->
 
             </ul>
-        
+        {% endif %}
+
         <hr>
          <h3>4. Test Webcam</h3>
          <p>Enter your webcam's <strong>snapshot url</strong> below. </p>

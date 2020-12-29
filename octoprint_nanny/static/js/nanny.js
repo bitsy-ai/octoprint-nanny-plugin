@@ -53,7 +53,6 @@ $(function() {
 
 
         OctoPrint.socket.onMessage("*", function(message) {
-            console.log(message)
             if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_done'){
 
                 if (self.previewActive() == false) {
