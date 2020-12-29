@@ -202,7 +202,9 @@ $(function() {
         }
     };
 
-    self.deviceRegisterProgress = ko.observable('0%');
+    self.deviceRegisterProgressPercent = ko.observable();
+    self.deviceRegisterProgress = 0;
+    self.deviceRegisterProgressCompleted = 4;
 
     self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
     self.authAlertText = ko.observable(self.authAlerts.warning.text)
@@ -226,7 +228,7 @@ $(function() {
         },
         'error': {
             header: 'Error!',
-            text: 'Something went wrong while provisioning this device. \n Email support@print-nanny.com with the message below for assistance.',
+            text: 'Something went wrong while provisioning this device.',
             class: 'alert-error'
         },
         'success': {
@@ -239,16 +241,18 @@ $(function() {
     self.deviceAlertText = ko.observable(self.deviceAlerts.warning1.text);
 
     OctoPrint.socket.onMessage("*", function(message) {
-        console.log(message)
         if (message && message.data && (
             message.data.type == 'plugin_octoprint_nanny_device_register_start' ||
             message.data.type == 'plugin_octoprint_nanny_device_register_done' ||
-            message.data.type == 'plugin_octoprint_nanny_device_register_failed'
+            message.data.type == 'plugin_octoprint_nanny_device_register_failed' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_start' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_done' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_failed'
+
             )){
-            console.log(message)
             $('#octoprint_nanny_register_msg').append(
                 '<li class="list-group-item">' + message.data.payload.msg + '</li>'
-            )
+            );
         } 
     });
     registerDevice = function(){
@@ -257,15 +261,18 @@ $(function() {
             self.deviceAlertHeader(self.deviceAlerts.nameError.header)
             self.deviceAlertText(self.deviceAlerts.nameError.text)
         }
+        self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
+        self.deviceRegisterProgressPercent(self.deviceRegisterProgress +'%');
         const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'registerDevice'
         OctoPrint.postJson(url, {
             'device_name': self.settingsViewModel.settings.plugins.octoprint_nanny.device_name()
         })
         .done((res) =>{
                 console.log(res)
-                self.deviceAlertClass(self.deviceAlerts.success.class)
-                self.deviceAlertHeader(self.deviceAlerts.success.header)
-                self.deviceAlertText(self.deviceAlerts.success.text)
+                self.deviceAlertClass(self.deviceAlerts.success.class);
+                self.deviceAlertHeader(self.deviceAlerts.success.header);
+                self.deviceAlertText(self.deviceAlerts.success.text);
+                self.deviceRegisterProgressPercent('100%');
             })
         .fail(e => {
                 console.error(e)

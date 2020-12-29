@@ -27,7 +27,6 @@ import numpy as np
 import multiprocessing_logging
 
 from octoprint.events import Events, eventManager
-from octoprint.server import printerProfileManager
 
 import print_nanny_client
 
@@ -40,10 +39,13 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
 DEFAULT_API_URL = os.environ.get(
-    "octoprint_nanny_API_URL", "https://print-nanny.com/api/"
+    "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
 )
 DEFAULT_WS_URL = os.environ.get(
-    "octoprint_nanny_WS_URL", "wss://print-nanny.com/ws/annotated-image/"
+    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/annotated-image/"
+)
+DEFAULT_SNAPSHOT_URL = os.environ.get(
+    "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
 
 
@@ -155,21 +157,17 @@ class OctoPrintNannyPlugin(
         }
 
     async def _sync_printer_profiles(self):
-        printer_profiles = printerProfileManager.get_all()
+        printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
         id_map = {"octoprint": {}, "octoprint_nanny": {}}
-
-        for profile in printer_profiles:
+        for profile_id, profile in printer_profiles.items():
+            logger.info("Syncing profile")
             created_profile = await self.rest_client.update_or_create_printer_profile(
-                profile
+                {"printer_profile": profile}
             )
-            id_map["octoprint"][created_profile.octoprint_id] = id_map[
-                "octoprint_nanny"
-            ][created_profile.id]
-            id_map["octoprint_nanny"][created_profile.id] = id_map["octoprint"][
-                created_profile.octoprint_id
-            ]
+            id_map["octoprint"][profile_id] = created_profile.id
+            id_map["octoprint_nanny"][created_profile.id] = profile_id
 
         logger.info(f"Synced {len(printer_profiles)}")
 
@@ -207,36 +205,43 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
                 payload={"msg": str(e.body)},
             )
-            return
+            return e
 
         logger.info(
             f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint}"
         )
 
-        pubkey_filename = os.path.join(self.get_plugin_data_folder(), "id_rsa.pub")
-        privkey_filename = os.path.join(self.get_plugin_data_folder(), "id_rsa")
+        pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
+        privkey_filename = os.path.join(
+            self.get_plugin_data_folder(), "private_key.pem"
+        )
 
         async with aiohttp.ClientSession() as session:
-            pubkey = await session.get(device.public_key)
-            privkey = await session.get(device.private_key)
+            logger.info(f"Downloading newly-provisioned public key {device.public_key}")
+            async with session.get(device.public_key) as res:
+                pubkey = await res.text()
+            logger.info(
+                f"Downloading newly-provisioned private key {device.private_key}"
+            )
+            async with session.get(device.private_key) as res:
+                privkey = await res.text()
 
         with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
             f.write(pubkey)
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
             f.write(privkey)
+
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
+        self._settings.set(["device_private_key"], privkey_filename)
+        self._settings.set(["device_public_key"], privkey_filename)
+
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_registered"], True)
         self._settings.save()
-
-        self._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
-            payload={f'msg": "Success! Provisioned new key: {device.fingerprint}'},
-        )
 
         # initial sync (just printer profiles for now)
         # @todo enqueue files sync
@@ -245,7 +250,7 @@ class OctoPrintNannyPlugin(
             payload={"msg": "Syncing printer profiles..."},
         )
         try:
-            await self._sync_printer_profiles()
+            printers = await self._sync_printer_profiles()
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
@@ -258,7 +263,9 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
                 payload={"msg": str(e.body)},
             )
-            return
+            return e
+
+        return printers
 
     ##
     ## Octoprint api routes + handlers
@@ -286,11 +293,14 @@ class OctoPrintNannyPlugin(
     def register_device(self):
         device_name = flask.request.json.get("device_name")
 
-        device = asyncio.run_coroutine_threadsafe(
+        result = asyncio.run_coroutine_threadsafe(
             self._register_device(device_name), self._worker_manager.loop
         ).result()
 
-        return flask.jsonify(device)
+        if isinstance(result, Exception):
+            raise result
+
+        return flask.jsonify(result)
 
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
@@ -393,6 +403,8 @@ class OctoPrintNannyPlugin(
             device_fingerprint=None,
             device_id=None,
             device_name=None,
+            device_private_key=None,
+            device_public_key=None,
             user=None,
             calibrated=False,
             calibrate_x0=None,
@@ -404,6 +416,7 @@ class OctoPrintNannyPlugin(
             auto_start=False,
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
+            snapshot_url=DEFAULT_SNAPSHOT_URL,
         )
 
     def on_settings_save(self, data):
@@ -455,6 +468,8 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["api_url"]) is None,
                 self._settings.get(["auth_token"]) is None,
                 self._settings.get(["auth_valid"]) is False,
+                self._settings.get(["device_private_key"]) is None,
+                self._settings.get(["device_public_key"]) is None,
                 self._settings.get(["device_fingerprint"]) is None,
                 self._settings.get(["device_id"]) is None,
                 self._settings.get(["device_name"]) is None,
