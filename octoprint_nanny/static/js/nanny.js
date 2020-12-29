@@ -186,7 +186,7 @@ $(function() {
     self.authAlerts = {
         'warning': {
             header: 'Hey!',
-            text: 'Test your connection to proceed 👇',
+            text: 'Test your connection 👇',
             class: 'alert'
         },
         'error': {
@@ -196,7 +196,7 @@ $(function() {
         },
         'success': {
             header: 'Nice!',
-            text: 'Your token is verified. Go to Step 3 🙌',
+            text: 'Your token is verified.',
             class: 'alert-success'
         }
     };
@@ -250,8 +250,8 @@ $(function() {
             message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_failed'
 
             )){
-            $('#octoprint_nanny_register_msg').append(
-                '<li class="list-group-item">' + message.data.payload.msg + '</li>'
+            $('#octoprint_nanny_register_msg').appendChild(
+                message.data.payload.msg + '\n'
             );
         } 
     });
@@ -320,11 +320,10 @@ $(function() {
             })
             .done((res) =>{
                 console.log(res)
-                $('#octoprint_nanny_advanced_save_msg').text("👍👍👍");
+                testAuthTokenInput()
             })
             .fail(e => {
                 console.error(e)
-                $('#octoprint_nanny_advanced_save_msg').text("⚠️⚠️⚠️");
 
             }); 
 
