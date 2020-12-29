@@ -20,7 +20,7 @@
           {% else %}
 
             <div>          
-                <h3>1. Login</h3>
+                <h3>Login</h3>
                 <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
                 <p>
                     <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-large btn-primary">
@@ -32,7 +32,7 @@
                     </a>
                 </p>
             <hr>
-            <h3>2. Link Accounts</h3>
+            <h3>Link Accounts</h3>
 
                 <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
                 and paste it below.</p>
@@ -94,9 +94,9 @@
 
         {% else %}
         <div>            
-            <h3>3. Register Device</h3>
+            <h3>Register Device</h3>
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Choose a nickname for this OctoPrint device:</strong></label>
+                <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Give this OctoPrint device a name:</strong></label>
                 <div class="controls">
                     <input 
                         id="octoprint_nanny_settings_device_name" 
@@ -113,16 +113,11 @@
             </div>
 
             <button 
-                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid() && settingsViewModel.settings.plugins.octoprint_nanny.device_name() }" 
+                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid() == true }" 
                 type="submit" 
                 class="btn btn-primary btn-large">
                 Start Registration
             </button>
-
-            <pre id="octoprint_nanny_register_msg">
-                Device Provision Log
-            </pre>
-
             <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
                 <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
             </div>  
@@ -169,9 +164,9 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_url">Websocket URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_ws_url">Websocket URL</label>
                 <div class="controls">
-                    <input id="octoprint_nanny_settings_api_url" 
+                    <input id="octoprint_nanny_settings_ws_url" 
                     data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
                 </div>
             </div>

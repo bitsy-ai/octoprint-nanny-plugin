@@ -250,9 +250,7 @@ $(function() {
             message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_failed'
 
             )){
-            $('#octoprint_nanny_register_msg').appendChild(
-                message.data.payload.msg + '\n'
-            );
+            console.log(message)
         } 
     });
     registerDevice = function(){
