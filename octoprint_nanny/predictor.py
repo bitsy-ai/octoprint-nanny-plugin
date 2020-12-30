@@ -20,7 +20,9 @@ from PIL import Image as PImage
 import requests
 import tensorflow as tf
 
-from octoprint_nanny.utils.visualization import visualize_boxes_and_labels_on_image_array
+from octoprint_nanny.utils.visualization import (
+    visualize_boxes_and_labels_on_image_array,
+)
 
 # python >= 3.8
 try:

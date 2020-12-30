@@ -158,7 +158,7 @@ class WorkerManager:
                 continue
 
             # ignore events originating from octoprint_nanny plugin
-            if event_type == Events.plugin_octoprint_nanny_PREDICT_DONE:
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
                 continue
 
             # ignore untracked events
@@ -192,7 +192,7 @@ class WorkerManager:
         starts prediction and pn websocket processes
         """
         self.active = True
-        webcam_url = self.plugin._settings.global_get(["webcam", "snapshot"])
+        webcam_url = self.plugin._settings.get(["snapshot_url"])
 
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
@@ -228,7 +228,7 @@ class WorkerManager:
             if self.active:
                 viz_bytes = self.octo_ws_queue.get(block=True)
                 self.plugin._event_bus.fire(
-                    Events.plugin_octoprint_nanny_PREDICT_DONE,
+                    Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_bytes)},
                 )
 
@@ -241,7 +241,6 @@ class WorkerManager:
             "plugin_version": self.plugin._plugin_version,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "platform": platform.platform(),
-            "mac_address": ":".join(re.findall("..", "%012x".format(uuid.getnode()))),
             "api_objects": {
                 "printer_profile_id": self.shared.printer_profile_id,
                 "print_job_id": self.shared.print_job_id,

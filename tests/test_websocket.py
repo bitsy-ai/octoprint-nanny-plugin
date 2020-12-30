@@ -33,6 +33,7 @@ def predict_worker(mocker):
         m.Queue(),
     )
 
+
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
         WebSocketWorker("http://foo.com/ws/", "api_team", queue.Queue(), 1)
@@ -48,7 +49,9 @@ async def test_ws_ping(ws_client):
 @pytest.mark.asyncio
 async def test_ws_predict_e2e(ws_client, mocker, predict_worker):
     async with aiohttp.ClientSession() as session:
-        msg = await predict_worker._image_msg(datetime.now(pytz.timezone("America/Los_Angeles")), session)
+        msg = await predict_worker._image_msg(
+            datetime.now(pytz.timezone("America/Los_Angeles")), session
+        )
 
         predict_msg = predict_worker._predict_msg(msg)
 
