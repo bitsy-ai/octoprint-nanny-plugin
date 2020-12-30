@@ -18,7 +18,7 @@ from print_nanny_client.models.printer_profile_request import PrinterProfileRequ
 from print_nanny_client.models.octo_print_device_request import OctoPrintDeviceRequest
 
 
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.rest_client")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
 CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,

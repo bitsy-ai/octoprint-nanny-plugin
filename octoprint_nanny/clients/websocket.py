@@ -15,7 +15,7 @@ import multiprocessing
 from octoprint_nanny.utils.encoder import NumpyEncoder
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.websocket")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
 
 
 class WebSocketWorker:
