@@ -53,7 +53,6 @@ $(function() {
 
 
         OctoPrint.socket.onMessage("*", function(message) {
-            console.log(message)
             if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_done'){
 
                 if (self.previewActive() == false) {
@@ -114,15 +113,9 @@ $(function() {
             .done((res) =>{
                     console.debug('Starting stream', res)
                     self.previewActive(true);
-                    // self.alertClass(self.alerts.success.class)
-                    // self.alertHeader(self.alerts.success.header)
-                    // self.alertText(self.alerts.success.text)
                 })
             .fail(e => {
                     console.error('Failed to start stream', e)
-                    // self.alertClass(self.alerts.error.class)
-                    // self.alertHeader(self.alerts.error.header)
-                    // self.alertText(self.alerts.error.text)
             });
             
         }
@@ -134,15 +127,15 @@ $(function() {
             .done((res) =>{
                 self.previewActive(false);
                 console.debug('Starting stream', res)
-                    // self.alertClass(self.alerts.success.class)
-                    // self.alertHeader(self.alerts.success.header)
-                    // self.alertText(self.alerts.success.text)
+                    // self.authAlertClass(self.authAlerts.success.class)
+                    // self.authAlertHeader(self.authAlerts.success.header)
+                    // self.authAlertText(self.authAlerts.success.text)
                 })
             .fail(e => {
                     console.error('Failed to start stream', e)
-                    // self.alertClass(self.alerts.error.class)
-                    // self.alertHeader(self.alerts.error.header)
-                    // self.alertText(self.alerts.error.text)
+                    // self.authAlertClass(self.authAlerts.error.class)
+                    // self.authAlertHeader(self.authAlerts.error.header)
+                    // self.authAlertText(self.authAlerts.error.text)
             });        
         }
 
@@ -156,9 +149,9 @@ $(function() {
                 })
             .fail(e => {
                     console.error('Failed to start stream', e)
-                    // self.alertClass(self.alerts.error.class)
-                    // self.alertHeader(self.alerts.error.header)
-                    // self.alertText(self.alerts.error.text)
+                    // self.authAlertClass(self.authAlerts.error.class)
+                    // self.authAlertHeader(self.authAlerts.error.header)
+                    // self.authAlertText(self.authAlerts.error.text)
             }); 
         }
 
@@ -189,11 +182,11 @@ $(function() {
     self.loginStateViewModel = parameters[0];
     self.settingsViewModel = parameters[1];
 
-    self.alertClass = ko.observable();
-    self.alerts = {
+    self.authAlertClass = ko.observable();
+    self.authAlerts = {
         'warning': {
             header: 'Hey!',
-            text: 'Test your connection before saving.',
+            text: 'Test your connection 👇',
             class: 'alert'
         },
         'error': {
@@ -207,9 +200,88 @@ $(function() {
             class: 'alert-success'
         }
     };
-    self.alertHeader = ko.observable(self.alerts.warning.header)
-    self.alertText = ko.observable(self.alerts.warning.text)
 
+    self.imageData = ko.observable();
+    self.deviceRegisterProgressPercent = ko.observable();
+    self.deviceRegisterProgress = 0;
+    self.deviceRegisterProgressCompleted = 4;
+
+    self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
+    self.authAlertText = ko.observable(self.authAlerts.warning.text)
+
+    self.deviceAlertClass = ko.observable();
+    self.deviceAlerts = {
+        'warning1': {
+            header: 'Wait!',
+            text: 'You need to test your auth token before this device can be provisioned. 👆',
+            class: 'alert'
+        },
+        'warning2': {
+            header: 'Wait!',
+            text: 'Your device is not registered yet! \n Choose a name for your device and then click the Start Registration button.',
+            class: 'alert'
+        },
+        'nameError': {
+            header: 'Hey, choose a name!',
+            text: 'Pick a nickname for this device and enter it above.',
+            class: 'alert-error'
+        },
+        'error': {
+            header: 'Error!',
+            text: 'Something went wrong while provisioning this device.',
+            class: 'alert-error'
+        },
+        'success': {
+            header: 'Nice!',
+            text: 'Device provisioning suceeded!',
+            class: 'alert-success'
+        }
+    };
+    self.deviceAlertHeader = ko.observable(self.deviceAlerts.warning1.header);
+    self.deviceAlertText = ko.observable(self.deviceAlerts.warning1.text);
+
+    OctoPrint.socket.onMessage("*", function(message) {
+        if (message && message.data && (
+            message.data.type == 'plugin_octoprint_nanny_device_register_start' ||
+            message.data.type == 'plugin_octoprint_nanny_device_register_done' ||
+            message.data.type == 'plugin_octoprint_nanny_device_register_failed' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_start' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_done' ||
+            message.data.type == 'plugin_octoprint_nanny_device_printer_profile_sync_failed'
+
+            )){
+            console.log(message)
+        } 
+    });
+    registerDevice = function(){
+        if (self.settingsViewModel.settings.plugins.octoprint_nanny.device_name() == undefined){
+            self.deviceAlertClass(self.deviceAlerts.nameError.class)
+            self.deviceAlertHeader(self.deviceAlerts.nameError.header)
+            self.deviceAlertText(self.deviceAlerts.nameError.text)
+        }
+        self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
+        self.deviceRegisterProgressPercent(self.deviceRegisterProgress +'%');
+        const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'registerDevice'
+        OctoPrint.postJson(url, {
+            'device_name': self.settingsViewModel.settings.plugins.octoprint_nanny.device_name()
+        })
+        .done((res) =>{
+                console.log(res)
+                self.deviceAlertClass(self.deviceAlerts.success.class);
+                self.deviceAlertHeader(self.deviceAlerts.success.header);
+                self.deviceAlertText(self.deviceAlerts.success.text);
+                self.deviceRegisterProgressPercent('100%');
+            })
+        .fail(e => {
+                console.error(e)
+
+                console.error('Print Nanny device provisioning failed', e)
+                self.deviceAlertClass(self.deviceAlerts.error.class)
+                self.deviceAlertHeader(self.deviceAlerts.error.header)
+                self.deviceAlertText(self.deviceAlerts.error.text)
+            });
+    }
+    
     testAuthTokenInput = function(){
         if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined){
             return
@@ -222,20 +294,60 @@ $(function() {
         })
         .done((res) =>{
                 console.log(res)
-                self.alertClass(self.alerts.success.class)
-                self.alertHeader(self.alerts.success.header)
-                self.alertText(self.alerts.success.text)
-            })
+                self.authAlertClass(self.authAlerts.success.class)
+                self.authAlertHeader(self.authAlerts.success.header)
+                self.authAlertText(self.authAlerts.success.text)
+                self.deviceAlertText(self.deviceAlerts.warning2.text);
+
+        })
         .fail(e => {
                 console.error(e)
 
                 console.error('Print Nanny token verification failed', e)
-                self.alertClass(self.alerts.error.class)
-                self.alertHeader(self.alerts.error.header)
-                self.alertText(self.alerts.error.text)
+                self.authAlertClass(self.authAlerts.error.class)
+                self.authAlertHeader(self.authAlerts.error.header)
+                self.authAlertText(self.authAlerts.error.text)
+        });
+        }
+
+    saveAdvancedSettings = function(){
+        console.log('Saving settings')
+        OctoPrint.settings.savePluginSettings('octoprint_nanny', {
+            'ws_url': self.settingsViewModel.settings.plugins.octoprint_nanny.ws_url(),
+            'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
+            })
+            .done((res) =>{
+                console.log(res)
+                testAuthTokenInput()
+            })
+            .fail(e => {
+                console.error(e)
+
+            }); 
+
+        }
+    
+    testSnapshotUrl = function(){
+        const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testSnapshotUrl'
+        OctoPrint.postJson(url, {
+            'snapshot_url': self.settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url(),
+        })
+        .done((res) =>{
+            console.log(res);
+            self.imageData("data:image/jpeg;base64," + res.image);
+
+            OctoPrint.settings.savePluginSettings('octoprint_nanny', {
+                'snapshot_url': self.settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url(),
+                });
+
+            })
+            .fail(e => {
+                console.error(e);
             });
         }
     }
+
+
 
     OCTOPRINT_VIEWMODELS.push({
         construct: PrintNannySettingsViewModel,
