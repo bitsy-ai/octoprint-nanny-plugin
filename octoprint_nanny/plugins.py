@@ -144,7 +144,6 @@ class OctoPrintNannyPlugin(
             "hardware": cpuinfo.get("Hardware"),
             "revision": cpuinfo.get("Revision"),
             "serial": cpuinfo.get("Serial"),
-            "fingerprint": "",  # replaced by keypair during server-side provisioning
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
