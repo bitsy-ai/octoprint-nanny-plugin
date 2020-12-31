@@ -53,3 +53,9 @@ dist: clean-dist sdist bdist_wheel
 
 release: dist
 	twine upload dist/*
+
+octoprint-dev:
+	cd ~/projects/OctoPrint && . .venv/bin/activate && OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" OCTOPRINT_NANNY_WS_URL="ws://localhost/ws/predict/" octoprint serve --debug
+
+octoprint-prod:
+	cd ~/projects/OctoPrint && . .venv/bin/activate && octoprint serve
