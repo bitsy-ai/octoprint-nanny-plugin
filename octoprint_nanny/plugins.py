@@ -47,6 +47,8 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
 
+GCP_ROOT_CERTIFICATE_URL = 'https://pki.goog/roots.pem'
+
 
 class OctoPrintNannyPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -213,6 +215,9 @@ class OctoPrintNannyPlugin(
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
         )
+        root_ca_filename os.path.join(
+            self.get_plugin_data_folder(), "gcp_root_ca.pem"
+        )
 
         async with aiohttp.ClientSession() as session:
             logger.info(f"Downloading newly-provisioned public key {device.public_key}")
@@ -223,11 +228,17 @@ class OctoPrintNannyPlugin(
             )
             async with session.get(device.private_key) as res:
                 privkey = await res.text()
+            
+            logger.info(f"Downloading GCP root certificates")
+            async with session.get(GCP_ROOT_CERTIFICATE_URL) as res:
+                root_ca = res.text()
 
         with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
             f.write(pubkey)
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
             f.write(privkey)
+        with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
+            f.write(root_ca)  
 
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
