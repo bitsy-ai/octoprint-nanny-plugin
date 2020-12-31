@@ -345,7 +345,6 @@ class OctoPrintNannyPlugin(
 
             self._settings.save()
 
-            logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
         elif isinstance(response, Exception):
             e = str(response)
@@ -391,7 +390,6 @@ class OctoPrintNannyPlugin(
             ).result()
 
             if user is not None:
-                logger.info(f"Authenticated as {user}")
                 self._settings.set(["user_email"], user.email)
                 self._settings.set(["user_url"], user.url)
                 self._settings.set(["auth_valid"], True)

@@ -136,27 +136,24 @@ class WorkerManager:
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
 
-    # def _rest_api_worker(self):
-    #     loop = asyncio.new_event_loop()
-    #     asyncio.set_event_loop(loop)
-    #     self.loop = loop
-
-    #     return self.loop.run_until_complete(
-    #         asyncio.ensure_future(self._telemetry_queue_loop())
-    #     )
-
     def _mqtt_worker(self):
         while True:
             private_key = self.plugin._settings.get(["device_private_key"])
             device_id = self.plugin._settings.get(["device_id"])
-            ca_certs = self.plugin._settings.get(["ca_certs"])
-            if private_key is None or device_id is None or ca_certs is None:
+            gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
+            if private_key is None or device_id is None or gcp_root_ca is None:
                 sleep(30)
                 continue
             break
         self.mqtt_client = MQTTClient(
-            device_id=device_id, private_key_file=private_key, ca_certs=ca_certs
+            device_id=device_id, private_key_file=private_key, ca_certs=gcp_root_ca
         )
+        logger.info(
+            f"Initialized mqtt client with id {self.mqtt_client.client.client_id}"
+        )
+        ###
+        # MQTT bridge available
+        ###
         return self.mqtt_client.run()
 
     def _telemetry_worker(self):
@@ -179,39 +176,27 @@ class WorkerManager:
         """
         Publishes telemetry events via HTTP
         """
-        logger.info("Started _rest_client_worker")
+        logger.info("Started _telemetry_queue_loop")
 
-        api_token = None
+        api_token = self.plugin._settings.get(["auth_token"])
+
+        backoff = 1
         while True:
 
             if api_token is None:
+                logger.warning(
+                    f"auth_token not saved to plugin settings, waiting {backoff} seconds"
+                )
+                await asyncio.sleep(backoff)
                 api_token = self.plugin._settings.get(["auth_token"])
-                await asyncio.sleep(30)
+                backoff = backoff ** 2
                 continue
 
             if self.telemetry_events is None:
-                try:
-                    self.telemetry_events = (
-                        await self.rest_client.get_telemetry_events()
-                    )
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(e)
-                    await asyncio.sleep(30)
-                continue
+                self.telemetry_events = await self.rest_client.get_telemetry_events()
 
             ###
             # Rest API available
-            ###
-
-            private_key = self.plugin._settings.get(["device_private_key"])
-            device_id = self.plugin._settings.get(["device_id"])
-            ca_certs = self.plugin._settings.get(["ca_certs"])
-            if private_key is None or device_id is None or ca_certs is None:
-                await asyncio.sleep(30)
-                continue
-
-            ###
-            # MQTT bridge available
             ###
 
             event = await self.telemetry_queue.coro_get()

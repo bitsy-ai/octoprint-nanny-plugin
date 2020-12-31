@@ -15,7 +15,9 @@ from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.octo_print_device_key_request import OctoPrintDeviceKeyRequest
+from print_nanny_client.models.octo_print_device_key_request import (
+    OctoPrintDeviceKeyRequest,
+)
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")

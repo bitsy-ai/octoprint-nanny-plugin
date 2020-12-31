@@ -30,5 +30,5 @@ def test_client_id_constructor(mocker, private_key_filename, root_ca_filename):
     client = mqtt.MQTTClient(device_id, private_key_filename, root_ca_filename)
 
     client_id = f"projects/{mqtt.GCP_PROJECT_ID}/locations/{mqtt.GCP_IOT_DEVICE_REGISTRY_REGION}/registries/{mqtt.GCP_IOT_DEVICE_REGISTRY}/devices/{device_id}"
-    
+
     mock_mqtt.Client.assert_called_once_with(client_id=client_id)

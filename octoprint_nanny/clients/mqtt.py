@@ -163,6 +163,7 @@ class MQTTClient:
     def run(self):
         self.active = True
         self.connect()
+        logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
         return self.client.loop_forever()
 
 
