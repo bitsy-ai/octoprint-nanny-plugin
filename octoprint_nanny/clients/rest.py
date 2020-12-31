@@ -15,7 +15,7 @@ from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.octo_print_device_request import OctoPrintDeviceRequest
+from print_nanny_client.models.octo_print_device_key_request import OctoPrintDeviceKeyRequest
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
@@ -54,8 +54,7 @@ class RestAPIClient:
     )
     async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_client.client_side_validation = False
-            request = OctoPrintDeviceRequest(**kwargs)
+            request = OctoPrintDeviceKeyRequest(**kwargs)
             api_instance = RemoteControlApi(api_client=api_client)
             octoprint_device = await api_instance.octoprint_devices_update_or_create(
                 request

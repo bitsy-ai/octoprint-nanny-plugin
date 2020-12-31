@@ -240,6 +240,27 @@ $(function() {
     self.deviceAlertHeader = ko.observable(self.deviceAlerts.warning1.header);
     self.deviceAlertText = ko.observable(self.deviceAlerts.warning1.text);
 
+    self.existingDeviceAlertClass = ko.observable();
+    self.existingDeviceAlerts = {
+        'warning': {
+            header: 'Just FYI',
+            text: 'Print Nanny will provision a new key pair when you re-register your device.',
+            class: 'alert'
+        },
+        'error': {
+            header: 'Error!',
+            text: 'Something went wrong while re-provisioning this device.',
+            class: 'alert-error'
+        },
+        'success': {
+            header: 'Nice!',
+            text: 'Device re-provisioning suceeded!',
+            class: 'alert-success'
+        }
+    };
+    self.existingDeviceAlertHeader = ko.observable(self.existingDeviceAlerts.warning.header);
+    self.existingDeviceAlertText = ko.observable(self.existingDeviceAlerts.warning.text);
+
     OctoPrint.socket.onMessage("*", function(message) {
         if (message && message.data && (
             message.data.type == 'plugin_octoprint_nanny_device_register_start' ||
@@ -270,15 +291,24 @@ $(function() {
                 self.deviceAlertClass(self.deviceAlerts.success.class);
                 self.deviceAlertHeader(self.deviceAlerts.success.header);
                 self.deviceAlertText(self.deviceAlerts.success.text);
+
+                self.existingDeviceAlertClass(self.existingDeviceAlerts.success.class);
+                self.existingDeviceAlertHeader(self.existingDeviceAlerts.success.header);
+                self.existingDeviceAlertText(self.existingDeviceAlerts.success.text);
+
                 self.deviceRegisterProgressPercent('100%');
             })
         .fail(e => {
                 console.error(e)
 
                 console.error('Print Nanny device provisioning failed', e)
-                self.deviceAlertClass(self.deviceAlerts.error.class)
-                self.deviceAlertHeader(self.deviceAlerts.error.header)
-                self.deviceAlertText(self.deviceAlerts.error.text)
+                self.deviceAlertClass(self.deviceAlerts.error.class);
+                self.deviceAlertHeader(self.deviceAlerts.error.header);
+                self.deviceAlertText(self.deviceAlerts.error.text);
+
+                self.existingDeviceAlertClass(self.existingDeviceAlerts.error.class);
+                self.existingDeviceAlertHeader(self.existingDeviceAlerts.error.header);
+                self.existingDeviceAlertText(self.existingDeviceAlerts.error.text);
             });
     }
     

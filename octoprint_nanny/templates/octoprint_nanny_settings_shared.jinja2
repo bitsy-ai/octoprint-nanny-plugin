@@ -68,7 +68,6 @@
                     <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Name</strong></label>
                     <div class="controls">
                         <input 
-                            readonly
                             id="octoprint_nanny_settings_device_name" 
                             class="input-xxlarge"
                             data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" type="text" />
@@ -90,6 +89,21 @@
                             data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_url" type="text" />
                     </div>
                 </div>
+                <div class="alert alert-block" data-bind="css: existingDeviceAlertClass">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                
+                    <h4><span data-bind="text: existingDeviceAlertHeader"></span></h4> 
+                    <span data-bind="text: existingDeviceAlertText"></span>
+                </div>
+                <button 
+                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
+                type="submit" 
+                class="btn btn-primary btn-large">
+                Refresh Registration
+                </button>
+                <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
+                    <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
+                </div> 
             </div>
 
         {% else %}
