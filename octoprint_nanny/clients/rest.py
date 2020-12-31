@@ -52,12 +52,12 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def create_octoprint_device(self, **kwargs):
+    async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
             request = OctoPrintDeviceRequest(**kwargs)
             api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_create(request)
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(request)
             return octoprint_device
 
     @backoff.on_exception(

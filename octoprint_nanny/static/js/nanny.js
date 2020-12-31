@@ -298,6 +298,8 @@ $(function() {
                 self.authAlertHeader(self.authAlerts.success.header)
                 self.authAlertText(self.authAlerts.success.text)
                 self.deviceAlertText(self.deviceAlerts.warning2.text);
+                self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid(true);
+
 
         })
         .fail(e => {

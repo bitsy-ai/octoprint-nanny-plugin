@@ -189,7 +189,7 @@ class OctoPrintNannyPlugin(
         )
         device_info = self._get_device_info()
         try:
-            device = await self.rest_client.create_octoprint_device(
+            device = await self.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
             )
             self._event_bus.fire(
@@ -215,7 +215,7 @@ class OctoPrintNannyPlugin(
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
         )
-        root_ca_filename os.path.join(
+        root_ca_filename = os.path.join(
             self.get_plugin_data_folder(), "gcp_root_ca.pem"
         )
 
@@ -231,7 +231,7 @@ class OctoPrintNannyPlugin(
             
             logger.info(f"Downloading GCP root certificates")
             async with session.get(GCP_ROOT_CERTIFICATE_URL) as res:
-                root_ca = res.text()
+                root_ca = await res.text()
 
         with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
             f.write(pubkey)
@@ -245,6 +245,7 @@ class OctoPrintNannyPlugin(
         )
         self._settings.set(["device_private_key"], privkey_filename)
         self._settings.set(["device_public_key"], privkey_filename)
+        self._settings.set(["gcp_root_ca"], root_ca_filename)
 
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
@@ -438,6 +439,7 @@ class OctoPrintNannyPlugin(
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
             snapshot_url=DEFAULT_SNAPSHOT_URL,
+            gcp_root_ca=None
         )
 
     def on_settings_save(self, data):
@@ -513,6 +515,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
+                self._settings.get(["gcp_root_ca"]) is None,
             ]
         )
 
