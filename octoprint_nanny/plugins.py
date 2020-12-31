@@ -244,7 +244,7 @@ class OctoPrintNannyPlugin(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
         self._settings.set(["device_private_key"], privkey_filename)
-        self._settings.set(["device_public_key"], privkey_filename)
+        self._settings.set(["device_public_key"], pubkey_filename)
         self._settings.set(["gcp_root_ca"], root_ca_filename)
 
         self._settings.set(["device_url"], device.url)

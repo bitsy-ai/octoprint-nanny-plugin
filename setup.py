@@ -62,7 +62,7 @@ plugin_requires = [
 	"aioprocessing==1.1.0",
 	"multiprocessing-logging==0.3.1",
 	"jwt",
-	"paho-mqtt 1.5.1"
+	"paho-mqtt==1.5.1"
 ]
 
 extra_requires = {

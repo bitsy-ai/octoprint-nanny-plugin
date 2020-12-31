@@ -182,19 +182,24 @@ def create_jwt(
     Raises:
         ValueError: If the private_key_file does not contain a known key.
     """
+    _jwt = jwt.JWT()
 
+    exp = jwt.utils.get_int_from_datetime(
+        datetime.utcnow() + timedelta(minutes=jwt_expires_minutes)
+    )
+    iat = jwt.utils.get_int_from_datetime(datetime.utcnow())
     token = {
         # The time that the token was issued at
-        "iat": datetime.utcnow(),
+        "iat": iat,
         # The time the token expires.
-        "exp": datetime.utcnow() + timedelta(minutes=jwt_expires_minutes),
+        "exp": exp,
         # The audience field should always be set to the GCP project id.
         "aud": project_id,
     }
 
     # Read the private key file.
-    with open(private_key_file, "r") as f:
-        private_key = f.read()
+    with open(private_key_file, "rb") as f:
+        signing_key = jwt.jwk_from_pem(f.read())
 
     logger.info(
         "Creating JWT using {} from private key file {}".format(
@@ -202,4 +207,4 @@ def create_jwt(
         )
     )
 
-    return jwt.encode(token, private_key, algorithm=algorithm)
+    return _jwt.encode(token, signing_key, alg=algorithm)
