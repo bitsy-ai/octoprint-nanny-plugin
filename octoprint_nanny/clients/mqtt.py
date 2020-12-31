@@ -3,6 +3,7 @@ import ssl
 import jwt
 import logging
 import os
+import time
 import paho.mqtt.client as mqtt
 
 
@@ -55,12 +56,19 @@ class MQTTClient:
         self.project_id = project_id
         self.mqtt_bridge_hostname = mqtt_bridge_hostname
         self.mqtt_bridge_port = mqtt_bridge_port
+        self.ca_certs = ca_certs
+        self.region = region
+
+        self.tls_version = tls_version
+        self.region = region
+        self.algorithm = algorithm
 
         self.client = mqtt.Client(client_id=client_id)
 
         # register callback functions
         if on_connect:
             self.client.on_connect = on_connect
+
         if on_disconnect:
             self.client.on_disconnect = on_disconnect
         if on_message:
@@ -86,6 +94,8 @@ class MQTTClient:
             username="unused",
             password=create_jwt(project_id, private_key_file, algorithm),
         )
+
+        self.active = False
 
     def connect(self):
         self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
@@ -115,6 +125,40 @@ class MQTTClient:
         """
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
+    def on_disconnect(self, client, userdata, rc):
+        logger.warning('Device disconnected from MQTT bridge')
+        if self.active:
+            j = 10
+            for i in range(j):
+                logger.info("Device attempting to reconnect to MQTT broker (JWT probably expired)")
+                try:
+                    # client.reconnect() not sure if reconnect supports modifying auth, re-instantiate client for now
+                    self.client = MQTTClient(
+                        self.client_id,
+                        self.private_key_file,
+                        algorithm=self.algorithm,
+                        ca_certs=self.ca_certs,
+                        mqtt_bridge_hostname=self.mqtt_bridge_hostname,
+                        mqtt_bridge_port=self.mqtt_bridge_port,
+                        project_id=self.project_id,
+                        region=self.region,
+                        registry_id=self.registry_id,
+                        tls_version=self.tls_version,
+                    )
+                    self.client.connect()
+                    logger.info("Gateway successfully reconnected to MQTT broker")
+                    break
+                except Exception as e:
+                    if i < j:
+                        logger.warn(e)
+                        time.sleep(1)
+                        continue
+                    else:
+                        raise
+    
+    def run(self):
+        self.connect()
+        return self.client.loop_forever()
 
 def create_jwt(
     project_id, private_key_file, algorithm, jwt_expires_minutes=JWT_EXPIRES_MINUTES

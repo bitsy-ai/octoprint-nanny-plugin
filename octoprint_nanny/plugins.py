@@ -357,7 +357,7 @@ class OctoPrintNannyPlugin(
         ]
 
     def on_event(self, event_type, event_data):
-        self._worker_manager.tracking_queue.put_nowait(
+        self._worker_manager.telemetry_queue.put_nowait(
             {"event_type": event_type, "event_data": event_data}
         )
 
@@ -390,7 +390,7 @@ class OctoPrintNannyPlugin(
     ## Progress plugin
 
     def on_print_progress(self, storage, path, progress):
-        self._worker_manager.tracking_queue.put(
+        self._worker_manager.telemetry_queue.put(
             {"event_type": self.PRINT_PROGRESS, "event_data": {"progress": progress}}
         )
 

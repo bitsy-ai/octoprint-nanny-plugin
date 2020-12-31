@@ -82,14 +82,14 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def get_tracking_events(self):
+    async def get_telemetry_events(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
-            tracking_events = await EventsApi(
+            telemetry_events = await EventsApi(
                 api_client
-            ).octoprint_events_tracking_retrieve()
-            logging.info(f"Tracking octoprint events {tracking_events}")
-            return tracking_events
+            ).octoprint_events_telemetry_retrieve()
+            logging.info(f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}")
+            return telemetry_events
 
     @backoff.on_exception(
         backoff.expo,

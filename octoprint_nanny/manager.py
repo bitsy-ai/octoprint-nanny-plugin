@@ -47,15 +47,15 @@ class WorkerManager:
 
         self.active = False
 
-        # holds octoprint events to be uploaded via rest client
-
-        self.tracking_queue = self.manager.AioQueue()
-        # streamed to octoprint front-end over websocket
+        # published to GCP MQTT bridge
+        self.telemetry_queue = self.manager.AioQueue()
+        # images streamed to octoprint front-end over websocket
         self.octo_ws_queue = self.manager.AioQueue()
-        # streamed to print nanny asgi over websocket
+        # images streamed to webapp asgi over websocket
         self.pn_ws_queue = self.manager.AioQueue()
+        
 
-        self._tracking_event_handlers = {
+        self._local_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
             Events.PRINT_FAILED: self.stop,
             Events.PRINT_DONE: self.stop,
@@ -76,7 +76,7 @@ class WorkerManager:
         self.octo_ws_thread.daemon = True
 
         self.loop = None
-        self.tracking_events = None
+        self.telemetry_events = None
 
     @property
     def rest_client(self):
@@ -124,10 +124,74 @@ class WorkerManager:
         self.loop = loop
 
         return self.loop.run_until_complete(
-            asyncio.ensure_future(self._tracking_queue_loop())
+            asyncio.ensure_future(self._telemetry_queue_loop())
         )
 
-    async def _tracking_queue_loop(self):
+    def _mqtt_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self.loop = loop
+
+        return self.loop.run_until_complete(
+            asyncio.ensure_future(self._telemetry_queue_loop_v2())
+        )        
+
+    async def _telemetry_queue_loop_v2(self):
+        '''
+            Publishes telemetry events via MQTT bridge
+        '''
+        logger.info('Started _mqtt_worker')
+
+        device_private_key = None
+        while True:
+            device_private_key = self.plugin._settings.get(["device_private_key"])
+            if device_private_key is None:
+                device_private_key = self.plugin._settings.get(["device_private_key"])
+                await asyncio.sleep(30)
+                continue
+            
+            if self.telemetry_events is None:
+                try:
+                    self.telemetry_events = await self.rest_client.get_telemetry_events()
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(e)
+                    await asyncio.sleep(30)
+                continue
+            
+            event = await self.telemetry_queue.coro_get()
+            event_type = event.get("event_type")
+            if event_type is None:
+                logger.warning(
+                    "Ignoring enqueued msg without type declared {event}".format(
+                        event_type=event
+                    )
+                )
+                continue
+
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
+                # remove image frame data from message
+                # image data is transmitted over a websocket without qos guarantees
+
+                continue
+
+            # ignore untracked events
+            if event_type not in self.telemetry_events:
+                logger.warning(f"Discarding {event_type}")
+                continue
+
+            handler_fn = self._local_event_handlers.get(event["event_type"])
+
+            try:
+                if handler_fn:
+                    await handler_fn(**event)
+                await self._handle_octoprint_event(**event)
+            except CLIENT_EXCEPTIONS as e:
+                logger.error(e, exc_info=True)
+
+    async def _telemetry_queue_loop(self):
+        '''
+            Publishes telemetry events via HTTP
+        '''
         logger.info("Started _rest_client_worker")
 
         api_token = None
@@ -139,15 +203,15 @@ class WorkerManager:
                 await asyncio.sleep(30)
                 continue
 
-            if self.tracking_events is None:
+            if self.telemetry_events is None:
                 try:
-                    self.tracking_events = await self.rest_client.get_tracking_events()
+                    self.telemetry_events = await self.rest_client.get_telemetry_events()
                 except CLIENT_EXCEPTIONS as e:
                     logger.error(e)
                     await asyncio.sleep(30)
                 continue
 
-            event = await self.tracking_queue.coro_get()
+            event = await self.telemetry_queue.coro_get()
             event_type = event.get("event_type")
             if event_type is None:
                 logger.warning(
@@ -162,11 +226,11 @@ class WorkerManager:
                 continue
 
             # ignore untracked events
-            if event_type not in self.tracking_events:
+            if event_type not in self.telemetry_events:
                 logger.warning(f"Discarding {event_type}")
                 continue
 
-            handler_fn = self._tracking_event_handlers.get(event["event_type"])
+            handler_fn = self._local_event_handlers.get(event["event_type"])
 
             try:
                 if handler_fn:
