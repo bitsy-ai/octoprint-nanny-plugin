@@ -315,11 +315,7 @@ class PredictWorker:
 
     async def _image_msg(self, ts, session):
         original_image = await self.load_url_buffer(session)
-        return {
-            "ts": ts,
-            "original_image": original_image,
-            "uuid": uuid1()
-        }
+        return {"ts": ts, "original_image": original_image, "uuid": uuid1().hex}
 
     def _predict_msg(self, msg):
         # msg["original_image"].name = "original_image.jpg"
@@ -346,19 +342,22 @@ class PredictWorker:
 
         # send annotated / original images over websocket
         ws_msg = msg.copy()
-        ws_msg.update({
-            "event_type": "predict",
-            "annotated_image": viz_buffer,
-
-        })
+        ws_msg.update(
+            {
+                "event_type": "predict",
+                "annotated_image": viz_buffer,
+            }
+        )
 
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
-        del mqtt_msg['original_image']
-        mqtt_msg = mqtt_msg.update({
-            "predict_data": prediction,
-            "event_type": "bounding_box_predict",
-        })
+        del mqtt_msg["original_image"]
+        mqtt_msg = mqtt_msg.update(
+            {
+                "predict_data": prediction,
+                "event_type": "bounding_box_predict",
+            }
+        )
 
         return ws_msg, mqtt_msg
 

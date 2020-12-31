@@ -20,6 +20,7 @@ import threading
 
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.predictor import PredictWorker
 
 import print_nanny_client
@@ -53,7 +54,6 @@ class WorkerManager:
         self.octo_ws_queue = self.manager.AioQueue()
         # images streamed to webapp asgi over websocket
         self.pn_ws_queue = self.manager.AioQueue()
-        
 
         self._local_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
@@ -68,12 +68,17 @@ class WorkerManager:
 
         self._environment = {}
 
-        # daemonized threads for rest api and octoprint websocket relay
-        self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
-        self.rest_api_thread.daemon = True
+        # daemonized thread for telemetry event handlers
+        self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
+        self.telemetry_worker_thread.daemon = True
 
+        # daemonized thread for sending annotated image frames to Octoprint's UI
         self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
         self.octo_ws_thread.daemon = True
+
+        # daemonized thread for MQTT worker thread
+        self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
+        self.mqtt_worker_thread.daemon = True
 
         self.loop = None
         self.telemetry_events = None
@@ -89,7 +94,7 @@ class WorkerManager:
 
     def on_settings_initialized(self):
 
-        self.rest_api_thread.start()
+        self.telemetry_worker_thread.start()
         self.octo_ws_thread.start()
         while self.loop is None:
             sleep(1)
@@ -105,6 +110,19 @@ class WorkerManager:
                     f"_handle_print_progress_upload() exception {e}", exc_info=True
                 )
 
+    # async def _handle_octoprint_event(self, event_type, event_data):
+
+    #     metadata = {"metadata": self._get_metadata()}
+    #     if event_data is not None:
+    #         event_data.update(metadata)
+    #     else:
+    #         event_data = metadata
+
+    #     try:
+    #         await self.rest_client.create_octoprint_event(event_type, event_data)
+    #     except CLIENT_EXCEPTIONS as e:
+    #         logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
+
     async def _handle_octoprint_event(self, event_type, event_data):
 
         metadata = {"metadata": self._get_metadata()}
@@ -118,7 +136,30 @@ class WorkerManager:
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
 
-    def _rest_api_worker(self):
+    # def _rest_api_worker(self):
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
+    #     self.loop = loop
+
+    #     return self.loop.run_until_complete(
+    #         asyncio.ensure_future(self._telemetry_queue_loop())
+    #     )
+
+    def _mqtt_worker(self):
+        while True:
+            private_key = self.plugin._settings.get(["device_private_key"])
+            device_id = self.plugin._settings.get(["device_id"])
+            ca_certs = self.plugin._settings.get(["ca_certs"])
+            if private_key is None or device_id is None or ca_certs is None:
+                sleep(30)
+                continue
+            break
+        self.mqtt_client = MQTTClient(
+            device_id=device_id, private_key_file=private_key, ca_certs=ca_certs
+        )
+        return self.mqtt_client.run()
+
+    def _telemetry_worker(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.loop = loop
@@ -127,75 +168,20 @@ class WorkerManager:
             asyncio.ensure_future(self._telemetry_queue_loop())
         )
 
-    def _mqtt_worker(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        self.loop = loop
+    async def _publish_bounding_box_telemetry(self, **kwargs):
 
-        return self.loop.run_until_complete(
-            asyncio.ensure_future(self._telemetry_queue_loop_v2())
-        )        
+        logger.info(f"_publish_bounding_box_telemetry {kwargs}")
 
-    async def _telemetry_queue_loop_v2(self):
-        '''
-            Publishes telemetry events via MQTT bridge
-        '''
-        logger.info('Started _mqtt_worker')
-
-        device_private_key = None
-        while True:
-            device_private_key = self.plugin._settings.get(["device_private_key"])
-            if device_private_key is None:
-                device_private_key = self.plugin._settings.get(["device_private_key"])
-                await asyncio.sleep(30)
-                continue
-            
-            if self.telemetry_events is None:
-                try:
-                    self.telemetry_events = await self.rest_client.get_telemetry_events()
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(e)
-                    await asyncio.sleep(30)
-                continue
-            
-            event = await self.telemetry_queue.coro_get()
-            event_type = event.get("event_type")
-            if event_type is None:
-                logger.warning(
-                    "Ignoring enqueued msg without type declared {event}".format(
-                        event_type=event
-                    )
-                )
-                continue
-
-            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                # remove image frame data from message
-                # image data is transmitted over a websocket without qos guarantees
-
-                continue
-
-            # ignore untracked events
-            if event_type not in self.telemetry_events:
-                logger.warning(f"Discarding {event_type}")
-                continue
-
-            handler_fn = self._local_event_handlers.get(event["event_type"])
-
-            try:
-                if handler_fn:
-                    await handler_fn(**event)
-                await self._handle_octoprint_event(**event)
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(e, exc_info=True)
+    async def _publish_octoprint_event_telemetry(self, **kwargs):
+        logger.info(f"_publish_octoprint_event_telemetry {kwargs}")
 
     async def _telemetry_queue_loop(self):
-        '''
-            Publishes telemetry events via HTTP
-        '''
+        """
+        Publishes telemetry events via HTTP
+        """
         logger.info("Started _rest_client_worker")
 
         api_token = None
-
         while True:
 
             if api_token is None:
@@ -205,11 +191,28 @@ class WorkerManager:
 
             if self.telemetry_events is None:
                 try:
-                    self.telemetry_events = await self.rest_client.get_telemetry_events()
+                    self.telemetry_events = (
+                        await self.rest_client.get_telemetry_events()
+                    )
                 except CLIENT_EXCEPTIONS as e:
                     logger.error(e)
                     await asyncio.sleep(30)
                 continue
+
+            ###
+            # Rest API available
+            ###
+
+            private_key = self.plugin._settings.get(["device_private_key"])
+            device_id = self.plugin._settings.get(["device_id"])
+            ca_certs = self.plugin._settings.get(["ca_certs"])
+            if private_key is None or device_id is None or ca_certs is None:
+                await asyncio.sleep(30)
+                continue
+
+            ###
+            # MQTT bridge available
+            ###
 
             event = await self.telemetry_queue.coro_get()
             event_type = event.get("event_type")
@@ -221,21 +224,23 @@ class WorkerManager:
                 )
                 continue
 
-            # ignore events originating from octoprint_nanny plugin
-            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                continue
-
             # ignore untracked events
             if event_type not in self.telemetry_events:
                 logger.warning(f"Discarding {event_type}")
                 continue
 
-            handler_fn = self._local_event_handlers.get(event["event_type"])
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
+                # publish to bounding-box telemetry topic
+                await self._publish_bounding_box_telemetry(**event)
+            else:
+                # publish to octoprint-events telemetry topic
+                await self._publish_octoprint_event_telemetry(**event)
 
+            # run local handler fn
+            handler_fn = self._local_event_handlers.get(event["event_type"])
             try:
                 if handler_fn:
                     await handler_fn(**event)
-                await self._handle_octoprint_event(**event)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 

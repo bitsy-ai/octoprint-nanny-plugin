@@ -57,7 +57,9 @@ class RestAPIClient:
             api_client.client_side_validation = False
             request = OctoPrintDeviceRequest(**kwargs)
             api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_update_or_create(request)
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(
+                request
+            )
             return octoprint_device
 
     @backoff.on_exception(
@@ -88,7 +90,9 @@ class RestAPIClient:
             telemetry_events = await EventsApi(
                 api_client
             ).octoprint_events_telemetry_retrieve()
-            logging.info(f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}")
+            logger.info(
+                f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}"
+            )
             return telemetry_events
 
     @backoff.on_exception(

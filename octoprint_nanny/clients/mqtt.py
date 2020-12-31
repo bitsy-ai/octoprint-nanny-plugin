@@ -58,6 +58,7 @@ class MQTTClient:
         self.mqtt_bridge_port = mqtt_bridge_port
         self.ca_certs = ca_certs
         self.region = region
+        self.registry_id = registry_id
 
         self.tls_version = tls_version
         self.region = region
@@ -94,6 +95,7 @@ class MQTTClient:
             username="unused",
             password=create_jwt(project_id, private_key_file, algorithm),
         )
+        logger.info(f"Initialized client with JWT expiring in {JWT_EXPIRES_MINUTES}")
 
         self.active = False
 
@@ -126,11 +128,13 @@ class MQTTClient:
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
     def on_disconnect(self, client, userdata, rc):
-        logger.warning('Device disconnected from MQTT bridge')
+        logger.warning("Device disconnected from MQTT bridge")
         if self.active:
             j = 10
             for i in range(j):
-                logger.info("Device attempting to reconnect to MQTT broker (JWT probably expired)")
+                logger.info(
+                    "Device attempting to reconnect to MQTT broker (JWT probably expired)"
+                )
                 try:
                     # client.reconnect() not sure if reconnect supports modifying auth, re-instantiate client for now
                     self.client = MQTTClient(
@@ -155,10 +159,12 @@ class MQTTClient:
                         continue
                     else:
                         raise
-    
+
     def run(self):
+        self.active = True
         self.connect()
         return self.client.loop_forever()
+
 
 def create_jwt(
     project_id, private_key_file, algorithm, jwt_expires_minutes=JWT_EXPIRES_MINUTES

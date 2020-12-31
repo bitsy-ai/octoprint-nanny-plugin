@@ -41,13 +41,13 @@ DEFAULT_API_URL = os.environ.get(
     "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
 )
 DEFAULT_WS_URL = os.environ.get(
-    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/annotated-image/"
+    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/images/"
 )
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
 
-GCP_ROOT_CERTIFICATE_URL = 'https://pki.goog/roots.pem'
+GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
 
 class OctoPrintNannyPlugin(
@@ -228,7 +228,7 @@ class OctoPrintNannyPlugin(
             )
             async with session.get(device.private_key) as res:
                 privkey = await res.text()
-            
+
             logger.info(f"Downloading GCP root certificates")
             async with session.get(GCP_ROOT_CERTIFICATE_URL) as res:
                 root_ca = await res.text()
@@ -238,7 +238,7 @@ class OctoPrintNannyPlugin(
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
             f.write(privkey)
         with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
-            f.write(root_ca)  
+            f.write(root_ca)
 
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
@@ -439,7 +439,7 @@ class OctoPrintNannyPlugin(
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
             snapshot_url=DEFAULT_SNAPSHOT_URL,
-            gcp_root_ca=None
+            gcp_root_ca=None,
         )
 
     def on_settings_save(self, data):
