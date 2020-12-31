@@ -46,7 +46,7 @@ elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-
 elif arch == 'x86_64':
 	tensorflow = "tensorflow==2.4.0"
 else:
-	raise Exception(f'OctoPrint Nanny does not support {arch} architechture. Please open a Github issue.')
+	raise Exception('OctoPrint Nanny does not support {} architechture. Please open a Github issue.'.format(arch))
 
 plugin_requires = [
 	tensorflow,
@@ -90,6 +90,9 @@ plugin_additional_packages = []
 # Any python packages within <plugin_package>.* you do NOT want to install with your plugin
 plugin_ignored_packages = []
 
+# Set the minimum & maximum Python versions here
+plugin_python_requires = ">=3,<4"  # Python 3+
+
 # Additional parameters for the call to setuptools.setup. If your plugin wants to register additional entry points,
 # define dependency links or other things like that, this is the place to go. Will be merged recursively with the
 # default setup parameters as provided by octoprint_setuptools.create_plugin_setup_parameters using
@@ -102,7 +105,8 @@ plugin_ignored_packages = []
 dependency_links = []
 
 additional_setup_parameters = {
-	"dependency_links": dependency_links
+	"dependency_links": dependency_links,
+	"python_requires": plugin_python_requires,
 }
 
 ########################################################################################################################
