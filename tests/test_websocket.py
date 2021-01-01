@@ -14,7 +14,7 @@ def ws_client(mocker):
     mocker.patch("octoprint_nanny.clients.websocket.asyncio")
     m = aioprocessing.AioManager()
     return WebSocketWorker(
-        "ws://localhost:8000/ws/predict/",
+        "ws://localhost:8000/ws/images/",
         "3a833ac48104772a349254690cae747e826886f1",
         m.Queue(),
         1,
@@ -29,6 +29,7 @@ def predict_worker(mocker):
     return PredictWorker(
         "http://localhost:8080/?action=snapshot",
         None,
+        m.Queue(),
         m.Queue(),
         m.Queue(),
     )

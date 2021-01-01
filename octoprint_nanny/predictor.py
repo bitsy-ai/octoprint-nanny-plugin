@@ -14,6 +14,7 @@ import threading
 import pytz
 import aiohttp
 import asyncio
+from uuid import uuid1
 
 
 from PIL import Image as PImage
@@ -240,6 +241,7 @@ class PredictWorker:
         calibration: tuple,
         octoprint_ws_queue,
         pn_ws_queue,
+        pn_mqtt_queue,
         fps: int = 5,
     ):
         """
@@ -257,6 +259,7 @@ class PredictWorker:
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
+        self._pn_mqtt_queue = pn_mqtt_queue
 
         self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
@@ -312,10 +315,7 @@ class PredictWorker:
 
     async def _image_msg(self, ts, session):
         original_image = await self.load_url_buffer(session)
-        return {
-            "ts": ts,
-            "original_image": original_image,
-        }
+        return {"ts": ts, "original_image": original_image, "uuid": uuid1().hex}
 
     def _predict_msg(self, msg):
         # msg["original_image"].name = "original_image.jpg"
@@ -329,17 +329,37 @@ class PredictWorker:
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
 
-        # send annotated image bytes to octoprint ws
+        # send annotated image bytes to octoprint ui ws immediately
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         msg.update(
             {
                 "annotated_image": viz_buffer,
                 "predict_data": prediction,
-                "event_type": "predict",
+                "event_type": "bounding_box_predict",
             }
         )
-        return msg
+
+        # send annotated / original images over websocket
+        ws_msg = msg.copy()
+        ws_msg.update(
+            {
+                "event_type": "predict",
+                "annotated_image": viz_buffer,
+            }
+        )
+
+        mqtt_msg = msg.copy()
+        # publish bounding box prediction to mqtt telemetry topic
+        del mqtt_msg["original_image"]
+        mqtt_msg = mqtt_msg.update(
+            {
+                "predict_data": prediction,
+                "event_type": "bounding_box_predict",
+            }
+        )
+
+        return ws_msg, mqtt_msg
 
     async def _producer(self):
         """
@@ -353,7 +373,8 @@ class PredictWorker:
                 while True:
                     now = datetime.now(pytz.timezone("America/Los_Angeles"))
                     msg = await self._image_msg(now, session)
-                    msg = await loop.run_in_executor(
+                    ws_msg, mqtt_msg = await loop.run_in_executor(
                         pool, lambda: self._predict_msg(msg)
                     )
-                    self._pn_ws_queue.put_nowait(msg)
+                    self._pn_ws_queue.put_nowait(ws_msg)
+                    self._pn_mqtt_queue.put_nowait(mqtt_msg)

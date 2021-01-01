@@ -15,10 +15,12 @@ from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.octo_print_device_request import OctoPrintDeviceRequest
+from print_nanny_client.models.octo_print_device_key_request import (
+    OctoPrintDeviceKeyRequest,
+)
 
 
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.rest_client")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
 CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
@@ -52,12 +54,13 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def create_octoprint_device(self, **kwargs):
+    async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_client.client_side_validation = False
-            request = OctoPrintDeviceRequest(**kwargs)
+            request = OctoPrintDeviceKeyRequest(**kwargs)
             api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_create(request)
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(
+                request
+            )
             return octoprint_device
 
     @backoff.on_exception(
@@ -82,14 +85,16 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def get_tracking_events(self):
+    async def get_telemetry_events(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
-            tracking_events = await EventsApi(
+            telemetry_events = await EventsApi(
                 api_client
-            ).octoprint_events_tracking_retrieve()
-            logging.info(f"Tracking octoprint events {tracking_events}")
-            return tracking_events
+            ).octoprint_events_telemetry_retrieve()
+            logger.info(
+                f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}"
+            )
+            return telemetry_events
 
     @backoff.on_exception(
         backoff.expo,

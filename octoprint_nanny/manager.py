@@ -20,6 +20,7 @@ import threading
 
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.predictor import PredictWorker
 
 import print_nanny_client
@@ -28,11 +29,24 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
 Events.PRINT_PROGRESS = "print_progress"
 
+BACKOFF = 1
+
 
 class WorkerManager:
     """
     Manages PredictWorker, WebsocketWorker, RestWorker processes
     """
+
+    PRINT_JOB_EVENTS = [
+        Events.ERROR,
+        Events.PRINT_CANCELLING,
+        Events.PRINT_CANCELLED,
+        Events.PRINT_DONE,
+        Events.PRINT_FAILED,
+        Events.PRINT_PAUSED,
+        Events.PRINT_RESUMED,
+        Events.PRINT_STARTED,
+    ]
 
     def __init__(self, plugin):
 
@@ -45,17 +59,17 @@ class WorkerManager:
         self.shared.print_job_id = None
         self.shared.calibration = None
 
+        self.mqtt_client = None
         self.active = False
 
-        # holds octoprint events to be uploaded via rest client
-
-        self.tracking_queue = self.manager.AioQueue()
-        # streamed to octoprint front-end over websocket
+        # published to GCP MQTT bridge
+        self.telemetry_queue = self.manager.AioQueue()
+        # images streamed to octoprint front-end over websocket
         self.octo_ws_queue = self.manager.AioQueue()
-        # streamed to print nanny asgi over websocket
+        # images streamed to webapp asgi over websocket
         self.pn_ws_queue = self.manager.AioQueue()
 
-        self._tracking_event_handlers = {
+        self._local_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
             Events.PRINT_FAILED: self.stop,
             Events.PRINT_DONE: self.stop,
@@ -68,15 +82,27 @@ class WorkerManager:
 
         self._environment = {}
 
-        # daemonized threads for rest api and octoprint websocket relay
-        self.rest_api_thread = threading.Thread(target=self._rest_api_worker)
-        self.rest_api_thread.daemon = True
+        # daemonized thread for telemetry event handlers
+        self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
+        self.telemetry_worker_thread.daemon = True
 
+        # daemonized thread for sending annotated image frames to Octoprint's UI
         self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
         self.octo_ws_thread.daemon = True
 
+        # daemonized thread for MQTT worker thread
+        self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
+        self.mqtt_worker_thread.daemon = True
+
         self.loop = None
-        self.tracking_events = None
+        self.telemetry_events = None
+        self._user_id = None
+
+    @property
+    def user_id(self):
+        if self._user_id is None:
+            self._user_id = self.plugin._settings.get(["user_id"])
+        return self._user_id
 
     @property
     def rest_client(self):
@@ -89,8 +115,9 @@ class WorkerManager:
 
     def on_settings_initialized(self):
 
-        self.rest_api_thread.start()
+        self.mqtt_worker_thread.start()
         self.octo_ws_thread.start()
+        self.telemetry_worker_thread.start()
         while self.loop is None:
             sleep(1)
 
@@ -105,49 +132,88 @@ class WorkerManager:
                     f"_handle_print_progress_upload() exception {e}", exc_info=True
                 )
 
-    async def _handle_octoprint_event(self, event_type, event_data):
+    def _mqtt_worker(self):
+        private_key = self.plugin._settings.get(["device_private_key"])
+        device_id = self.plugin._settings.get(["device_cloudiot_name"])
+        gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
+        backoff = 1
+        while True:
+            if private_key is None or device_id is None or gcp_root_ca is None:
+                logger.warning(
+                    f"Waiting {backoff }to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
+                )
+                sleep(backoff)
+                backoff = backoff ** 2
+                continue
+            break
+        self.mqtt_client = MQTTClient(
+            device_id=device_id, private_key_file=private_key, ca_certs=gcp_root_ca
+        )
+        logger.info(f"Initialized mqtt client with id {self.mqtt_client.client_id}")
+        ###
+        # MQTT bridge available
+        ###
+        return self.mqtt_client.run()
 
-        metadata = {"metadata": self._get_metadata()}
-        if event_data is not None:
-            event_data.update(metadata)
-        else:
-            event_data = metadata
-
-        try:
-            await self.rest_client.create_octoprint_event(event_type, event_data)
-        except CLIENT_EXCEPTIONS as e:
-            logger.error(f"_handle_octoprint_event() exception {e}", exc_info=True)
-
-    def _rest_api_worker(self):
+    def _telemetry_worker(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.loop = loop
 
         return self.loop.run_until_complete(
-            asyncio.ensure_future(self._tracking_queue_loop())
+            asyncio.ensure_future(self._telemetry_queue_loop())
         )
 
-    async def _tracking_queue_loop(self):
-        logger.info("Started _rest_client_worker")
+    async def _publish_bounding_box_telemetry(self, event):
+        logger.debug(f"_publish_bounding_box_telemetry {event}")
 
-        api_token = None
+    async def _publish_octoprint_event_telemetry(self, event):
+        event_type = event.get("event_type")
+        logger.debug(f"_publish_octoprint_event_telemetry {event}")
+        event.update(user_id=self.user_id)
+        event.update(self._get_metadata())
+        if event_type in self.PRINT_JOB_EVENTS:
+            event.update(self._get_print_job_metadata)
+        self.mqtt_client.publish_octoprint_event(event)
+
+    async def _telemetry_queue_loop(self):
+        """
+        Publishes telemetry events via HTTP
+        """
+        logger.info("Started _telemetry_queue_loop")
+
+        api_token = self.plugin._settings.get(["auth_token"])
+        global BACKOFF
 
         while True:
 
             if api_token is None:
+                logger.warning(
+                    f"auth_token not saved to plugin settings, waiting {BACKOFF} seconds"
+                )
+                await asyncio.sleep(BACKOFF)
                 api_token = self.plugin._settings.get(["auth_token"])
-                await asyncio.sleep(30)
+                BACKOFF = BACKOFF ** 2
                 continue
 
-            if self.tracking_events is None:
-                try:
-                    self.tracking_events = await self.rest_client.get_tracking_events()
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(e)
-                    await asyncio.sleep(30)
-                continue
+            if self.telemetry_events is None:
+                self.telemetry_events = await self.rest_client.get_telemetry_events()
 
-            event = await self.tracking_queue.coro_get()
+            ###
+            # Rest API available
+            ###
+            if self.mqtt_client is None:
+                logger.warning(
+                    f"Waiting {BACKOFF} seconds for mqtt client to be available"
+                )
+                await asyncio.sleep(BACKOFF)
+                BACKOFF = BACKOFF ** 2
+                continue
+            ###
+            # mqtt client available
+            ##
+
+            event = await self.telemetry_queue.coro_get()
             event_type = event.get("event_type")
             if event_type is None:
                 logger.warning(
@@ -157,21 +223,23 @@ class WorkerManager:
                 )
                 continue
 
-            # ignore events originating from octoprint_nanny plugin
-            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                continue
-
             # ignore untracked events
-            if event_type not in self.tracking_events:
-                logger.warning(f"Discarding {event_type}")
+            if event_type not in self.telemetry_events:
+                logger.warning(f"Discarding {event_type} with payload {event}")
                 continue
 
-            handler_fn = self._tracking_event_handlers.get(event["event_type"])
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
+                # publish to bounding-box telemetry topic
+                await self._publish_bounding_box_telemetry(event)
+            else:
+                # publish to octoprint-events telemetry topic
+                await self._publish_octoprint_event_telemetry(event)
 
+            # run local handler fn
+            handler_fn = self._local_event_handlers.get(event["event_type"])
             try:
                 if handler_fn:
                     await handler_fn(**event)
-                await self._handle_octoprint_event(**event)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 
@@ -232,26 +300,25 @@ class WorkerManager:
                     payload={"image": base64.b64encode(viz_bytes)},
                 )
 
+    def _get_print_job_metadata(self):
+        return dict(
+            printer_data=self.plugin._printer.get_current_data(),
+            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
+            temperatures=self.plugin._printer.get_current_temperatures(),
+            printer_profile_id=self.shared.printer_profile_id,
+            print_job_id=self.shared.print_job_id,
+        )
+
     def _get_metadata(self):
-        metadata = {
-            "printer_data": self.plugin._printer.get_current_data(),
-            "printer_profile": self.plugin._printer_profile_manager.get_current_or_default(),
-            "temperature": self.plugin._printer.get_current_temperatures(),
-            "dt": datetime.now(pytz.timezone("America/Los_Angeles")),
-            "plugin_version": self.plugin._plugin_version,
-            "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
-            "platform": platform.platform(),
-            "api_objects": {
-                "printer_profile_id": self.shared.printer_profile_id,
-                "print_job_id": self.shared.print_job_id,
-            },
-            "environment": self._environment,
-        }
-        return metadata
+        return dict(
+            created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
+            plugin_version=self.plugin._plugin_version,
+            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            platform=platform.platform(),
+            environment=self._environment,
+        )
 
     async def _handle_print_start(self, event_type, event_data):
-
-        event_data.update(self._get_metadata())
 
         try:
             printer_profile = (
