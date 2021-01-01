@@ -186,7 +186,7 @@ class MQTTClient:
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
     def publish_octoprint_event(self, event, retain=False, qos=1):
-        payload = json.dumps(event)
+        payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
             payload, topic=self.mqtt_octoprint_event_topic, retain=retain, qos=qos
         )

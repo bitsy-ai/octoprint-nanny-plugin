@@ -173,7 +173,7 @@ class WorkerManager:
         event.update(user_id=self.user_id)
         event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
-            event_data.update(self._get_print_job_metadata)
+            event.update(self._get_print_job_metadata)
         self.mqtt_client.publish_octoprint_event(event)
 
     async def _telemetry_queue_loop(self):
