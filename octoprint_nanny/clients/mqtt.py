@@ -146,27 +146,29 @@ class MQTTClient:
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
         )
-        # if self.active:
-        #     j = 10
-        #     for i in range(j):
-        #         logger.info(
-        #             "Device attempting to reconnect to MQTT broker (JWT probably expired)"
-        #         )
-        #         try:
-        #             self.client.username_pw_set(
-        #                 username="unused",
-        #                 password=create_jwt(self.project_id, self.private_key_file, self.algorithm)
-        #             )
-        #             self.client.reconnect()
-        #             logger.info("Gateway successfully reconnected to MQTT broker")
-        #             break
-        #         except Exception as e:
-        #             if i < j:
-        #                 logger.warn(e)
-        #                 time.sleep(1)
-        #                 continue
-        #             else:
-        #                 raise
+        if self.active:
+            j = 10
+            for i in range(j):
+                logger.info(
+                    "Device attempting to reconnect to MQTT broker (JWT probably expired)"
+                )
+                try:
+                    self.client.username_pw_set(
+                        username="unused",
+                        password=create_jwt(
+                            self.project_id, self.private_key_file, self.algorithm
+                        ),
+                    )
+                    self.client.reconnect()
+                    logger.info("Gateway successfully reconnected to MQTT broker")
+                    break
+                except Exception as e:
+                    if i < j:
+                        logger.warn(e)
+                        time.sleep(1)
+                        continue
+                    else:
+                        raise
 
     def publish(self, payload, topic=None, retain=False, qos=1):
 

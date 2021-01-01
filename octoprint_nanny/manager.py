@@ -97,6 +97,13 @@ class WorkerManager:
         self.loop = None
         self.telemetry_events = None
         self._user_id = None
+        self._device_id = None
+
+    @property
+    def device_id(self):
+        if self._device_id is None:
+            self._device_id = self.plugin._settings.get(["device_id"])
+        return self._device_id
 
     @property
     def user_id(self):
@@ -170,7 +177,7 @@ class WorkerManager:
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.debug(f"_publish_octoprint_event_telemetry {event}")
-        event.update(user_id=self.user_id)
+        event.update(dict(user_id=self.user_id, device_id=self.device_id))
         event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata)
