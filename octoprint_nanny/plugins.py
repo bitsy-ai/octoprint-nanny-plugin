@@ -295,7 +295,7 @@ class OctoPrintNannyPlugin(
         # settings test#
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
-
+        res.raise_for_status()
         if res.status_code == 200:
             self._worker_manager.start()
             return flask.json.jsonify({"ok": 1})
@@ -345,6 +345,7 @@ class OctoPrintNannyPlugin(
             self._settings.set(["api_url"], api_url)
             self._settings.set(["user_email"], response.email)
             self._settings.set(["user_url"], response.url)
+            self._settings.set(["user_id"], response.id)
 
             self._settings.save()
 

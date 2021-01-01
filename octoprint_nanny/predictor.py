@@ -36,6 +36,9 @@ except:
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
+BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
+ANNOTATED_IMAGE_EVENT = "annotated_image"
+
 
 class Prediction(TypedDict):
     num_detections: int
@@ -241,7 +244,7 @@ class PredictWorker:
         calibration: tuple,
         octoprint_ws_queue,
         pn_ws_queue,
-        pn_mqtt_queue,
+        telemetry_queue,
         fps: int = 5,
     ):
         """
@@ -259,7 +262,7 @@ class PredictWorker:
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
-        self._pn_mqtt_queue = pn_mqtt_queue
+        self._telemetry_queue = telemetry_queue
 
         self._predictor = ThreadLocalPredictor(calibration=self.calibration)
 
@@ -329,22 +332,16 @@ class PredictWorker:
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
 
-        # send annotated image bytes to octoprint ui ws immediately
+        # send annotated image bytes to octoprint ui ws
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
-        msg.update(
-            {
-                "annotated_image": viz_buffer,
-                "predict_data": prediction,
-                "event_type": "bounding_box_predict",
-            }
-        )
-
-        # send annotated / original images over websocket
+        # send annotated image bytes to print nanny ui ws
         ws_msg = msg.copy()
+        # send only annotated image data
+        del ws_msg["original_image"]
         ws_msg.update(
             {
-                "event_type": "predict",
+                "event_type": "annotated_image",
                 "annotated_image": viz_buffer,
             }
         )
@@ -352,7 +349,7 @@ class PredictWorker:
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
         del mqtt_msg["original_image"]
-        mqtt_msg = mqtt_msg.update(
+        mqtt_msg.update(
             {
                 "predict_data": prediction,
                 "event_type": "bounding_box_predict",
@@ -377,4 +374,4 @@ class PredictWorker:
                         pool, lambda: self._predict_msg(msg)
                     )
                     self._pn_ws_queue.put_nowait(ws_msg)
-                    self._pn_mqtt_queue.put_nowait(mqtt_msg)
+                    self._telemetry_queue.put_nowait(mqtt_msg)

@@ -21,7 +21,11 @@ import threading
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
-from octoprint_nanny.predictor import PredictWorker
+from octoprint_nanny.predictor import (
+    PredictWorker,
+    BOUNDING_BOX_PREDICT_EVENT,
+    ANNOTATED_IMAGE_EVENT,
+)
 
 import print_nanny_client
 
@@ -230,16 +234,29 @@ class WorkerManager:
                 )
                 continue
 
-            # ignore untracked events
-            if event_type not in self.telemetry_events:
-                logger.warning(f"Discarding {event_type} with payload {event}")
+            ##
+            # Publish non-octoprint telemetry events
+            ##
+
+            # publish to bounding-box telemetry topic
+            if event_type == BOUNDING_BOX_PREDICT_EVENT:
+                await self._publish_bounding_box_telemetry(event)
                 continue
 
-            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                # publish to bounding-box telemetry topic
-                await self._publish_bounding_box_telemetry(event)
+            ##
+            # Handle OctoPrint telemetry events
+            ##
+
+            # ignore untracked events
+            if event_type not in self.telemetry_events:
+                # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
+                if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
+                    pass
+                else:
+                    logger.warning(f"Discarding {event_type} with payload {event}")
+                continue
+            # publish to octoprint-events telemetry topic
             else:
-                # publish to octoprint-events telemetry topic
                 await self._publish_octoprint_event_telemetry(event)
 
             # run local handler fn
@@ -276,6 +293,7 @@ class WorkerManager:
                 self.shared.calibration,
                 self.octo_ws_queue,
                 self.pn_ws_queue,
+                self.telemetry_queue,
             ),
             daemon=True,
         )

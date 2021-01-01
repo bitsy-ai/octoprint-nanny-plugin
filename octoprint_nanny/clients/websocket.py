@@ -83,7 +83,7 @@ class WebSocketWorker:
                 msg = await self._producer.coro_get()
 
                 event_type = msg.get("event_type")
-                if event_type == "predict":
+                if event_type == "annotated_image":
                     if self._print_job_id is not None:
                         msg["print_job_id"] = self._print_job_id
                     encoded_msg = self.encode(msg=msg)
