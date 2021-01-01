@@ -41,11 +41,13 @@ DEFAULT_API_URL = os.environ.get(
     "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
 )
 DEFAULT_WS_URL = os.environ.get(
-    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/annotated-image/"
+    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/images/"
 )
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
+
+GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
 
 class OctoPrintNannyPlugin(
@@ -187,7 +189,7 @@ class OctoPrintNannyPlugin(
         )
         device_info = self._get_device_info()
         try:
-            device = await self.rest_client.create_octoprint_device(
+            device = await self.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
             )
             self._event_bus.fire(
@@ -213,6 +215,9 @@ class OctoPrintNannyPlugin(
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
         )
+        root_ca_filename = os.path.join(
+            self.get_plugin_data_folder(), "gcp_root_ca.pem"
+        )
 
         async with aiohttp.ClientSession() as session:
             logger.info(f"Downloading newly-provisioned public key {device.public_key}")
@@ -224,21 +229,31 @@ class OctoPrintNannyPlugin(
             async with session.get(device.private_key) as res:
                 privkey = await res.text()
 
+            logger.info(f"Downloading GCP root certificates")
+            async with session.get(GCP_ROOT_CERTIFICATE_URL) as res:
+                root_ca = await res.text()
+
         with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
             f.write(pubkey)
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
             f.write(privkey)
+        with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
+            f.write(root_ca)
 
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
         self._settings.set(["device_private_key"], privkey_filename)
-        self._settings.set(["device_public_key"], privkey_filename)
+        self._settings.set(["device_public_key"], pubkey_filename)
+        self._settings.set(["gcp_root_ca"], root_ca_filename)
 
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
+        self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
+
         self._settings.set(["device_registered"], True)
+
         self._settings.save()
 
         # initial sync (just printer profiles for now)
@@ -333,7 +348,6 @@ class OctoPrintNannyPlugin(
 
             self._settings.save()
 
-            logger.info(f"Authenticated as {response}")
             return flask.json.jsonify(response.to_dict())
         elif isinstance(response, Exception):
             e = str(response)
@@ -357,7 +371,7 @@ class OctoPrintNannyPlugin(
         ]
 
     def on_event(self, event_type, event_data):
-        self._worker_manager.tracking_queue.put_nowait(
+        self._worker_manager.telemetry_queue.put_nowait(
             {"event_type": event_type, "event_data": event_data}
         )
 
@@ -379,7 +393,6 @@ class OctoPrintNannyPlugin(
             ).result()
 
             if user is not None:
-                logger.info(f"Authenticated as {user}")
                 self._settings.set(["user_email"], user.email)
                 self._settings.set(["user_url"], user.url)
                 self._settings.set(["auth_valid"], True)
@@ -390,7 +403,7 @@ class OctoPrintNannyPlugin(
     ## Progress plugin
 
     def on_print_progress(self, storage, path, progress):
-        self._worker_manager.tracking_queue.put(
+        self._worker_manager.telemetry_queue.put(
             {"event_type": self.PRINT_PROGRESS, "event_data": {"progress": progress}}
         )
 
@@ -411,6 +424,7 @@ class OctoPrintNannyPlugin(
             user_url=None,
             device_url=None,
             device_fingerprint=None,
+            device_cloudiot_name=None,
             device_id=None,
             device_name=None,
             device_private_key=None,
@@ -427,6 +441,7 @@ class OctoPrintNannyPlugin(
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
             snapshot_url=DEFAULT_SNAPSHOT_URL,
+            gcp_root_ca=None,
         )
 
     def on_settings_save(self, data):
@@ -498,10 +513,12 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_name"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_url"]) is None,
+                self._settings.get(["device_cloudiot_name"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
+                self._settings.get(["gcp_root_ca"]) is None,
             ]
         )
 
