@@ -102,6 +102,14 @@ class WorkerManager:
         self.telemetry_events = None
         self._user_id = None
         self._device_id = None
+        self._calibration = None
+        self._snapshot_url = None
+
+    @property
+    def snapshot_url(self):
+        if self._snapshot_url is None:
+            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
+        return self._snapshot_url
 
     @property
     def device_id(self):
@@ -114,6 +122,17 @@ class WorkerManager:
         if self._user_id is None:
             self._user_id = self.plugin._settings.get(["user_id"])
         return self._user_id
+
+    @property
+    def calibration(self):
+        if self._calibration is None:
+            self._calibration = PredictWorker.calc_calibration(
+                self.plugin._settings.get(["calibrate_x0"]),
+                self.plugin._settings.get(["calibrate_y0"]),
+                self.plugin._settings.get(["calibrate_x1"]),
+                self.plugin._settings.get(["calibrate_y1"]),
+            )
+        return self._calibration
 
     @property
     def rest_client(self):
@@ -131,6 +150,16 @@ class WorkerManager:
         self.telemetry_worker_thread.start()
         while self.loop is None:
             sleep(1)
+
+    def apply_auth(self):
+        logger.warning("WorkerManager.apply_auth() not implemented yet")
+
+    def apply_calibration(self):
+
+        logger.info("Applying new calibration")
+        self._calibration = None
+        self.stop()
+        self.start()
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -274,23 +303,32 @@ class WorkerManager:
 
         self.active = False
 
-        logger.info("Terminating predict process")
-        self.predict_proc.terminate()
-        logger.info("Terminating websocket process")
-        self.pn_ws_proc.terminate()
+        if self.predict_proc:
+            logger.info("Terminating predict process")
+            self.predict_proc.terminate()
+            self.predict_proc.join(3)
+            self.predict_proc.close()
+
+        if self.pn_ws_proc:
+            logger.info("Terminating websocket process")
+            self.pn_ws_proc.terminate()
+            self.pn_ws_proc.join()
+            self.pn_ws_proc.close()
+
+    def shutdown(self):
+        return self.stop()
 
     def start(self):
         """
         starts prediction and pn websocket processes
         """
         self.active = True
-        webcam_url = self.plugin._settings.get(["snapshot_url"])
 
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
             args=(
-                webcam_url,
-                self.shared.calibration,
+                self.snapshot_url,
+                self.calibration,
                 self.octo_ws_queue,
                 self.pn_ws_queue,
                 self.telemetry_queue,

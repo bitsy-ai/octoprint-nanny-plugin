@@ -15,7 +15,8 @@ import pytz
 import aiohttp
 import asyncio
 from uuid import uuid1
-
+import signal
+import sys
 
 from PIL import Image as PImage
 import requests
@@ -55,8 +56,8 @@ class ThreadLocalPredictor(threading.local):
         self,
         min_score_thresh: float = 0.50,
         max_boxes_to_draw: int = 10,
-        min_overlap_area: float = 0.66,
-        calibration: Optional[tuple] = None,
+        min_overlap_area: float = 0.75,
+        calibration: dict = None,
         model_version: str = "tflite-print3d-2020-10-23T18:00:41.136Z",
         model_filename: str = "model.tflite",
         metadata_filename: str = "tflite_metadata.json",
@@ -241,7 +242,7 @@ class PredictWorker:
     def __init__(
         self,
         webcam_url: str,
-        calibration: tuple,
+        calibration: dict,
         octoprint_ws_queue,
         pn_ws_queue,
         telemetry_queue,
@@ -255,7 +256,7 @@ class PredictWorker:
         fps - wildly approximate buffer sample rate, depends on time.sleep()
         """
 
-        self.calibration = calibration
+        self._calibration = calibration
         self._fps = fps
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
@@ -264,7 +265,11 @@ class PredictWorker:
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
 
-        self._predictor = ThreadLocalPredictor(calibration=self.calibration)
+        self._halt = threading.Event()
+        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
+            signal.signal(signame, self._signal_handler)
+
+        self._predictor = ThreadLocalPredictor(calibration=calibration)
 
         self._producer_thread = threading.Thread(
             target=self._producer_worker, name="producer"
@@ -273,13 +278,17 @@ class PredictWorker:
         self._producer_thread.start()
         self._producer_thread.join()
 
+    def _signal_handler(self, received_signal, _):
+        logger.warning(f"Received signal {received_signal}")
+        self._halt.set()
+
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
         assert res.headers["content-type"] == "image/jpeg"
         return io.BytesIO(await res.read())
 
     @staticmethod
-    def get_calibration(x0, y0, x1, y1, height, width):
+    def calc_calibration(x0, y0, x1, y1, height=480, width=640):
         if (
             x0 is None
             or y0 is None
@@ -348,10 +357,10 @@ class PredictWorker:
 
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
-        del mqtt_msg["original_image"]
         mqtt_msg.update(
             {
                 "predict_data": prediction,
+                "calibration": self._calibration,
                 "event_type": "bounding_box_predict",
             }
         )
@@ -367,7 +376,7 @@ class PredictWorker:
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             async with aiohttp.ClientSession() as session:
-                while True:
+                while not self._halt.is_set():
                     now = datetime.now(pytz.timezone("America/Los_Angeles"))
                     msg = await self._image_msg(now, session)
                     ws_msg, mqtt_msg = await loop.run_in_executor(
@@ -375,3 +384,5 @@ class PredictWorker:
                     )
                     self._pn_ws_queue.put_nowait(ws_msg)
                     self._telemetry_queue.put_nowait(mqtt_msg)
+                logger.warning("Halt event set, process will exit soon")
+                sys.exit(0)
