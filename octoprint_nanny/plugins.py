@@ -250,7 +250,10 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
+        self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
+
         self._settings.set(["device_registered"], True)
+
         self._settings.save()
 
         # initial sync (just printer profiles for now)
@@ -421,6 +424,7 @@ class OctoPrintNannyPlugin(
             user_url=None,
             device_url=None,
             device_fingerprint=None,
+            device_cloudiot_name=None,
             device_id=None,
             device_name=None,
             device_private_key=None,
@@ -509,6 +513,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_name"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_url"]) is None,
+                self._settings.get(["device_cloudiot_name"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
