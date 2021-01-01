@@ -4,7 +4,10 @@ import jwt
 import logging
 import os
 import time
+import json
 import paho.mqtt.client as mqtt
+
+from octoprint_nanny.utils.encoder import NumpyEncoder
 
 
 JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 60)
@@ -12,16 +15,21 @@ GCP_PROJECT_ID = os.environ.get("OCTOPRINT_NANNY_GCP_PROJECT_ID", "print-nanny")
 GCP_MQTT_BRIDGE_HOSTNAME = os.environ.get(
     "OCTOPRINT_NANNY_GCP_MQTT_BRIDGE_HOSTNAME", "mqtt.googleapis.com"
 )
-GCP_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_GCP_MQTT_BRIDGE_PORT", 443)
+GCP_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_GCP_MQTT_BRIDGE_PORT", 8883)
 GCP_IOT_DEVICE_REGISTRY = os.environ.get(
-    "OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY", "devices-us-central1-dev"
+    "OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY", "devices-us-central1-prod"
 )
 GCP_IOT_DEVICE_REGISTRY_REGION = os.environ.get(
     "OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY_REGION", "us-central1"
 )
 
+OCTOPRINT_EVENT_FOLDER = "octoprint-events"
+BOUNDING_BOX_EVENT_FOLDER = "bounding-boxes"
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.mqtt")
+device_logger = logging.getLogger(
+    "octoprint.plugins.octoprint_nanny.clients.mqtt.device"
+)
 
 
 class MQTTClient:
@@ -43,10 +51,9 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=GCP_IOT_DEVICE_REGISTRY_REGION,
         registry_id=GCP_IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLSv1_2,
+        tls_version=ssl.PROTOCOL_TLS,
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
-
         self.device_id = device_id
         client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{device_id}"
 
@@ -65,21 +72,15 @@ class MQTTClient:
         self.algorithm = algorithm
 
         self.client = mqtt.Client(client_id=client_id)
+        logger.info(f"Initializing MQTTClient from {locals()}")
 
         # register callback functions
-        if on_connect:
-            self.client.on_connect = on_connect
-
-        if on_disconnect:
-            self.client.on_disconnect = on_disconnect
-        if on_message:
-            self.client.on_message = on_message
-        if on_publish:
-            self.client.on_publish = on_publish
-        if on_subscribe:
-            self.client.on_subscribe = on_subscribe
-        if on_unsubscribe:
-            self.client.on_unsubscribe = on_unsubscribe
+        self.client.on_connect = self._on_connect
+        self.client.on_disconnect = self._on_disconnect
+        self.client.on_message = self._on_message
+        self.client.on_publish = self._on_publish
+        self.client.on_subscribe = self._on_subscribe
+        self.client.on_unsubscribe = self._on_unsubscribe
 
         # device receives configuration updates on this topic
         self.mqtt_config_topic = f"/devices/{self.device_id}/config"
@@ -87,33 +88,87 @@ class MQTTClient:
         # device receives commands on this topic
         self.mqtt_command_topic = f"/devices/{self.device_id}/commands/#"
 
-        # configure tls
-        self.client.tls_set(ca_certs=ca_certs, tls_version=ssl.PROTOCOL_TLSv1_2)
-        # With Google Cloud IoT Core, the username field is ignored, and the
-        # password field is used to transmit a JWT to authorize the device.
-        self.client.username_pw_set(
-            username="unused",
-            password=create_jwt(project_id, private_key_file, algorithm),
+        # default telemetry topic
+        self.mqtt_default_telemetry_topic = f"/devices/{self.device_id}/events"
+
+        # octoprint event telemetry topic
+        self.mqtt_octoprint_event_topic = os.path.join(
+            self.mqtt_default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
         )
-        logger.info(f"Initialized client with JWT expiring in {JWT_EXPIRES_MINUTES}")
+        # bounding box telemetry topic
+        self.mqtt_bounding_boxes_topic = os.path.join(
+            self.mqtt_default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
+        )
+
+        # configure tls
+        self.client.tls_set(ca_certs=ca_certs, tls_version=tls_version)
 
         self.active = False
 
-    def connect(self):
-        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
+    ###
+    #   callbacks
+    ##
 
-        # subscribe config topic (qos=1 message guaranteed to be transmitted at least once)
+    def _on_message(self, client, userdata, message):
+        logger.debug(
+            f"MQTTClient._on_message called with userdata={userdata} message={message}"
+        )
+
+    def _on_publish(self, client, userdata, mid):
+        logger.debug(
+            f"MQTTClient._on_published called with userdata={userdata} mid={mid}"
+        )
+
+    def _on_subscribe(self, client, userdata, mid, granted_qos):
+        logger.debug(
+            f"MQTTClient._on_subscribe called with userdata={userdata} mid={mid} granted_qos={granted_qos}"
+        )
+
+    def _on_unsubscribe(self, client, userdata, mid):
+        logger.debug(
+            f"MQTTClient.on_unsubscribe called with userdata={userdata} mid={mid}"
+        )
+
+    def _on_log(self, client, userdata, level, buf):
+        getattr(device_logger, level)(buf)
+
+    def _on_connect(self, client, userdata, flags, rc):
         logger.info(
-            f"Subscribing device_id={self.device_id} to topic {self.mqtt_config_topic}"
+            f"MQTTClient._on_connect called with client={client} userdata={userdata} rc={rc}"
         )
         self.client.subscribe(self.mqtt_config_topic, qos=1)
-        # subscribe command topic (qos=2 message delivered exactly once)
         logger.info(
             f"Subscribing device_id={self.device_id} to topic {self.mqtt_command_topic}"
         )
-        self.client.subscribe(self.mqtt_command_topic, qos=2)
+        self.client.subscribe(self.mqtt_command_topic, qos=1)
 
-    def publish(self, topic, payload, retain=False, qos=2):
+    def _on_disconnect(self, client, userdata, rc):
+        logger.warning(
+            f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
+        )
+        # if self.active:
+        #     j = 10
+        #     for i in range(j):
+        #         logger.info(
+        #             "Device attempting to reconnect to MQTT broker (JWT probably expired)"
+        #         )
+        #         try:
+        #             self.client.username_pw_set(
+        #                 username="unused",
+        #                 password=create_jwt(self.project_id, self.private_key_file, self.algorithm)
+        #             )
+        #             self.client.reconnect()
+        #             logger.info("Gateway successfully reconnected to MQTT broker")
+        #             break
+        #         except Exception as e:
+        #             if i < j:
+        #                 logger.warn(e)
+        #                 time.sleep(1)
+        #                 continue
+        #             else:
+        #                 raise
+
+    def publish(self, payload, topic=None, retain=False, qos=1):
 
         """
         topic
@@ -125,44 +180,31 @@ class MQTTClient:
         retain
         if set to True, the message will be set as the "last known good"/retained message for the topic.
         """
+        if topic is None:
+            topic = self.mqtt_default_telemetry_topic
+
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
-    def on_disconnect(self, client, userdata, rc):
-        logger.warning("Device disconnected from MQTT bridge")
-        if self.active:
-            j = 10
-            for i in range(j):
-                logger.info(
-                    "Device attempting to reconnect to MQTT broker (JWT probably expired)"
-                )
-                try:
-                    # client.reconnect() not sure if reconnect supports modifying auth, re-instantiate client for now
-                    self.client = MQTTClient(
-                        self.client_id,
-                        self.private_key_file,
-                        algorithm=self.algorithm,
-                        ca_certs=self.ca_certs,
-                        mqtt_bridge_hostname=self.mqtt_bridge_hostname,
-                        mqtt_bridge_port=self.mqtt_bridge_port,
-                        project_id=self.project_id,
-                        region=self.region,
-                        registry_id=self.registry_id,
-                        tls_version=self.tls_version,
-                    )
-                    self.client.connect()
-                    logger.info("Gateway successfully reconnected to MQTT broker")
-                    break
-                except Exception as e:
-                    if i < j:
-                        logger.warn(e)
-                        time.sleep(1)
-                        continue
-                    else:
-                        raise
+    def publish_octoprint_event(self, event, retain=False, qos=1):
+        payload = json.dumps(event)
+        return self.publish(
+            payload, topic=self.mqtt_octoprint_event_topic, retain=retain, qos=qos
+        )
+
+    def publish_bounding_boxes(self, event, retain=False, qos=1):
+        payload = json.dumps(event, cls=NumpyEncoder)
+        return self.publish(
+            payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
+        )
 
     def run(self):
         self.active = True
-        self.connect()
+        self.client.username_pw_set(
+            username="unused",
+            password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
+        )
+
+        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
         logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
         return self.client.loop_forever()
 
