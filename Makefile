@@ -68,3 +68,6 @@ octoprint-prod:
 
 test:
 	pytest -p no:warnings --log-level=INFO
+
+install-git-hooks:
+	cp -a hooks/. .git/hooks/
