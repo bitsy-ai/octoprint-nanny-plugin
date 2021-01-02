@@ -347,7 +347,7 @@ class PredictWorker:
         # send annotated image bytes to print nanny ui ws
         ws_msg = msg.copy()
         # send only annotated image data
-        del ws_msg["original_image"]
+        #del ws_msg["original_image"]
         ws_msg.update(
             {
                 "event_type": "annotated_image",
@@ -357,10 +357,13 @@ class PredictWorker:
 
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
+        del mqtt_msg["original_image"]
+
+        calibration = self._calibration if self._calibration is None else self._calibration.get('coords')
         mqtt_msg.update(
             {
                 "predict_data": prediction,
-                "calibration": self._calibration,
+                "calibration": calibration,
                 "event_type": "bounding_box_predict",
             }
         )

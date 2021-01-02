@@ -206,6 +206,7 @@ class WorkerManager:
 
     async def _publish_bounding_box_telemetry(self, event):
         logger.debug(f"_publish_bounding_box_telemetry {event}")
+        self.mqtt_client.publish_bounding_boxes(event)
 
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
