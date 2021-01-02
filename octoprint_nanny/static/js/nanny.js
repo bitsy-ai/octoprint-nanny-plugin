@@ -61,7 +61,7 @@ $(function() {
                 self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
             }
             if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline'){
-
+                console.log(message)
                 self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
         });
@@ -125,20 +125,15 @@ $(function() {
 
         stopPredict = function(){
             const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopPredict'
+            self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
+                console.log(res)
                 self.previewActive(false);
-                console.debug('Starting stream', res)
-                    // self.authAlertClass(self.authAlerts.success.class)
-                    // self.authAlertHeader(self.authAlerts.success.header)
-                    // self.authAlertText(self.authAlerts.success.text)
                 })
             .fail(e => {
-                    console.error('Failed to start stream', e)
-                    // self.authAlertClass(self.authAlerts.error.class)
-                    // self.authAlertHeader(self.authAlerts.error.header)
-                    // self.authAlertText(self.authAlerts.error.text)
+                console.error('Failed to stop stream', e)
             });        
         }
 

@@ -241,6 +241,9 @@ class PredictWorker:
 
     def __init__(
         self,
+        device_id: int,
+        device_cloudiot_name: str,
+        user_id: int,
         webcam_url: str,
         calibration: dict,
         octoprint_ws_queue,
@@ -257,6 +260,9 @@ class PredictWorker:
         """
 
         self._calibration = calibration
+        self._device_id = device_id
+        self._device_cloudiot_name = device_cloudiot_name
+        self._user_id = user_id
         self._fps = fps
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
@@ -327,7 +333,14 @@ class PredictWorker:
 
     async def _image_msg(self, ts, session):
         original_image = await self.load_url_buffer(session)
-        return {"ts": ts, "original_image": original_image, "uuid": uuid1().hex}
+        return dict(
+            ts=ts,
+            original_image=original_image,
+            uuid=uuid1().hex,
+            device_id=self._device_id,
+            user_id=self._user_id,
+            device_cloudiot_name=self._device_cloudiot_name,
+        )
 
     def _predict_msg(self, msg):
         # msg["original_image"].name = "original_image.jpg"
@@ -347,7 +360,7 @@ class PredictWorker:
         # send annotated image bytes to print nanny ui ws
         ws_msg = msg.copy()
         # send only annotated image data
-        #del ws_msg["original_image"]
+        # del ws_msg["original_image"]
         ws_msg.update(
             {
                 "event_type": "annotated_image",
@@ -357,9 +370,13 @@ class PredictWorker:
 
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
-        del mqtt_msg["original_image"]
+        # del mqtt_msg["original_image"]
 
-        calibration = self._calibration if self._calibration is None else self._calibration.get('coords')
+        calibration = (
+            self._calibration
+            if self._calibration is None
+            else self._calibration.get("coords")
+        )
         mqtt_msg.update(
             {
                 "predict_data": prediction,

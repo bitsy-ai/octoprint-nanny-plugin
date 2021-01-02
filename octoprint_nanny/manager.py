@@ -328,6 +328,9 @@ class WorkerManager:
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
             args=(
+                self.plugin._settings.get(["device_id"]),
+                self.plugin._settings.get(["device_cloudiot_name"]),
+                self.plugin._settings.get(["user_id"]),
                 self.snapshot_url,
                 self.calibration,
                 self.octo_ws_queue,
