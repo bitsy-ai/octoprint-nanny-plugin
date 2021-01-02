@@ -241,9 +241,6 @@ class PredictWorker:
 
     def __init__(
         self,
-        device_id: int,
-        device_cloudiot_name: str,
-        user_id: int,
         webcam_url: str,
         calibration: dict,
         octoprint_ws_queue,
@@ -260,9 +257,6 @@ class PredictWorker:
         """
 
         self._calibration = calibration
-        self._device_id = device_id
-        self._device_cloudiot_name = device_cloudiot_name
-        self._user_id = user_id
         self._fps = fps
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
@@ -336,10 +330,6 @@ class PredictWorker:
         return dict(
             created_ts=ts,
             original_image=original_image,
-            uuid=uuid1().hex,
-            device_id=self._device_id,
-            user_id=self._user_id,
-            device_cloudiot_name=self._device_cloudiot_name,
         )
 
     def _predict_msg(self, msg):
@@ -379,11 +369,11 @@ class PredictWorker:
         )
         mqtt_msg.update(
             {
-                "object_detect_data": prediction,
                 "calibration": calibration,
                 "event_type": "bounding_box_predict",
             }
         )
+        mqtt_msg.update(prediction)
 
         return ws_msg, mqtt_msg
 

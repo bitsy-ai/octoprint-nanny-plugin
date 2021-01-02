@@ -104,12 +104,22 @@ class WorkerManager:
         self._device_id = None
         self._calibration = None
         self._snapshot_url = None
+        self._device_cloudiot_name = None
 
     @property
     def snapshot_url(self):
         if self._snapshot_url is None:
             self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
         return self._snapshot_url
+
+    @property
+    def device_cloudiot_name(self):
+        if self._device_cloudiot_name is None:
+            self._device_cloudiot_name = self.plugin._settings.get(
+                ["device_cloudiot_name"]
+            )
+
+        return self._device_cloudiot_name
 
     @property
     def device_id(self):
@@ -206,12 +216,19 @@ class WorkerManager:
 
     async def _publish_bounding_box_telemetry(self, event):
         logger.debug(f"_publish_bounding_box_telemetry {event}")
+        event.update(dict(user_id=self.user_id, device_id=self.device_id))
         self.mqtt_client.publish_bounding_boxes(event)
 
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.debug(f"_publish_octoprint_event_telemetry {event}")
-        event.update(dict(user_id=self.user_id, device_id=self.device_id))
+        event.update(
+            dict(
+                user_id=self.user_id,
+                device_id=self.device_id,
+                device_cloudiot_name=self.device_cloudiot_name,
+            )
+        )
         event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata)
@@ -328,9 +345,6 @@ class WorkerManager:
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
             args=(
-                self.plugin._settings.get(["device_id"]),
-                self.plugin._settings.get(["device_cloudiot_name"]),
-                self.plugin._settings.get(["user_id"]),
                 self.snapshot_url,
                 self.calibration,
                 self.octo_ws_queue,

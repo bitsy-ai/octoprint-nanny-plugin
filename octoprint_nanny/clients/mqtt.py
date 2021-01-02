@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 import ssl
 import jwt
+import gzip
 import logging
 import os
 import time
 import json
+import io
 import paho.mqtt.client as mqtt
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -194,7 +196,10 @@ class MQTTClient:
         )
 
     def publish_bounding_boxes(self, event, retain=False, qos=1):
-        payload = json.dumps(event, cls=NumpyEncoder)
+        payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
+        payload = io.BytesIO(payload)
+        compressor = gzip.GzipFile(fileobj=payload, mode="w", compresslevel=1)
+        payload = compressor.read()
         return self.publish(
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
