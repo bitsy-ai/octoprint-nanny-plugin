@@ -259,7 +259,7 @@ class WorkerManager:
             if event_type is None:
                 logger.warning(
                     "Ignoring enqueued msg without type declared {event}".format(
-                        event_type=event
+                        event_type=event_type
                     )
                 )
                 continue

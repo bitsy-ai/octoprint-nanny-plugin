@@ -334,7 +334,7 @@ class PredictWorker:
     async def _image_msg(self, ts, session):
         original_image = await self.load_url_buffer(session)
         return dict(
-            ts=ts,
+            created_ts=ts,
             original_image=original_image,
             uuid=uuid1().hex,
             device_id=self._device_id,
@@ -379,7 +379,7 @@ class PredictWorker:
         )
         mqtt_msg.update(
             {
-                "predict_data": prediction,
+                "object_detect_data": prediction,
                 "calibration": calibration,
                 "event_type": "bounding_box_predict",
             }
@@ -397,7 +397,10 @@ class PredictWorker:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             async with aiohttp.ClientSession() as session:
                 while not self._halt.is_set():
-                    now = datetime.now(pytz.timezone("America/Los_Angeles"))
+                    now = (
+                        datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
+                        * 1000
+                    )
                     msg = await self._image_msg(now, session)
                     ws_msg, mqtt_msg = await loop.run_in_executor(
                         pool, lambda: self._predict_msg(msg)
