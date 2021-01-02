@@ -197,9 +197,10 @@ class MQTTClient:
 
     def publish_bounding_boxes(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
-        payload = io.BytesIO(payload)
-        compressor = gzip.GzipFile(fileobj=payload, mode="w", compresslevel=1)
-        payload = compressor.read()
+        outfile = io.BytesIO()
+        with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+            f.write(payload)
+        payload = outfile.getvalue()
         return self.publish(
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
