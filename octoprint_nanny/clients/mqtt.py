@@ -7,8 +7,6 @@ import time
 import json
 import paho.mqtt.client as mqtt
 
-from print_nanny_client.avro.client_events import ObjectDetectEventSerializer
-
 from octoprint_nanny.utils.encoder import NumpyEncoder
 
 
@@ -107,8 +105,6 @@ class MQTTClient:
 
         self.active = False
 
-        self.object_detect_serializer = ObjectDetectEventSerializer()
-
     ###
     #   callbacks
     ##
@@ -199,7 +195,6 @@ class MQTTClient:
 
     def publish_bounding_boxes(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder)
-        payload = self.object_detect_serializer.encode_bytes(client_events=[event])
         return self.publish(
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
