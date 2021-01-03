@@ -216,12 +216,12 @@ class WorkerManager:
 
     async def _publish_bounding_box_telemetry(self, event):
         logger.debug(f"_publish_bounding_box_telemetry {event}")
-        event.update(dict(user_id=self.user_id, device_id=self.device_id))
+        event.update(dict(user_id=self.user_id, device_id=self.device_id, device_cloudiot_name=self.device_cloudiot_name))
         self.mqtt_client.publish_bounding_boxes(event)
 
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
-        logger.debug(f"_publish_octoprint_event_telemetry {event}")
+        logger.info(f"_publish_octoprint_event_telemetry {event}")
         event.update(
             dict(
                 user_id=self.user_id,
