@@ -41,7 +41,7 @@ $(function() {
         self.loginStateViewModel = parameters[0];
         self.settingsViewModel = parameters[1];
 
-        self.imageData = ko.observable();
+        self.imageData = ko.observable('plugin/octoprint_nanny/static/img/sleeping.png');
         self.calibratePos = ko.observable();
 
 
@@ -60,6 +60,10 @@ $(function() {
                 }
                 self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
             }
+            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline'){
+                console.log(message)
+                self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
+            }
         });
 
         toggleAutoStart = function(){
@@ -74,7 +78,8 @@ $(function() {
             self.calibrationActive(true);
             const calibrateImg = new Image();
             calibrateImg.src = $('#tab_plugin_octoprint_nanny_preview').attr('src')
-            document.getElementById('tab_plugin_octoprint_nanny_calibrate').appendChild(calibrateImg);
+            $('#tab_plugin_octoprint_nanny_calibrate').empty()
+            $('#tab_plugin_octoprint_nanny_calibrate').append(calibrateImg);
             Jcrop.load(calibrateImg).then(img => {
                 const stage = Jcrop.attach(img);
                 stage.listen('crop.change',function(widget,e){
@@ -98,8 +103,6 @@ $(function() {
                 calibrate_y0: calibration.coords.y / calibration.h,
                 calibrate_x1: calibration.coords.x2 / calibration.w,
                 calibrate_y1: calibration.coords.y2 / calibration.h,
-                calibrate_h: calibration.h,
-                calibrate_w: calibration.w
             }
             OctoPrint.settings.savePluginSettings('octoprint_nanny', s);
             self.calibrationActive(false);
@@ -122,20 +125,15 @@ $(function() {
 
         stopPredict = function(){
             const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopPredict'
+            self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
+                console.log(res)
                 self.previewActive(false);
-                console.debug('Starting stream', res)
-                    // self.authAlertClass(self.authAlerts.success.class)
-                    // self.authAlertHeader(self.authAlerts.success.header)
-                    // self.authAlertText(self.authAlerts.success.text)
                 })
             .fail(e => {
-                    console.error('Failed to start stream', e)
-                    // self.authAlertClass(self.authAlerts.error.class)
-                    // self.authAlertHeader(self.authAlerts.error.header)
-                    // self.authAlertText(self.authAlerts.error.text)
+                console.error('Failed to stop stream', e)
             });        
         }
 

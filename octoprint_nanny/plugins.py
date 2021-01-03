@@ -75,8 +75,8 @@ class OctoPrintNannyPlugin(
 
         self._worker_manager = WorkerManager(plugin=self)
 
-    # def on_shutdown(self):
-    #     self._worker_manager.shutdown()
+    def on_shutdown(self):
+        self._worker_manager.shutdown()
 
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
@@ -295,7 +295,7 @@ class OctoPrintNannyPlugin(
         # settings test#
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
-
+        res.raise_for_status()
         if res.status_code == 200:
             self._worker_manager.start()
             return flask.json.jsonify({"ok": 1})
@@ -345,6 +345,7 @@ class OctoPrintNannyPlugin(
             self._settings.set(["api_url"], api_url)
             self._settings.set(["user_email"], response.email)
             self._settings.set(["user_url"], response.url)
+            self._settings.set(["user_id"], response.id)
 
             self._settings.save()
 
@@ -362,6 +363,7 @@ class OctoPrintNannyPlugin(
     def register_custom_events(self):
         return [
             "predict_done",
+            "predict_offline",
             "device_register_start",
             "device_register_done",
             "device_register_failed",
@@ -435,8 +437,6 @@ class OctoPrintNannyPlugin(
             calibrate_y0=None,
             calibrate_x1=None,
             calibrate_y1=None,
-            calibrate_h=None,
-            calibrate_w=None,
             auto_start=False,
             api_url=DEFAULT_API_URL,
             ws_url=DEFAULT_WS_URL,
@@ -451,8 +451,6 @@ class OctoPrintNannyPlugin(
             self._settings.get(["calibrate_y0"]),
             self._settings.get(["calibrate_x1"]),
             self._settings.get(["calibrate_y1"]),
-            self._settings.get(["calibrate_h"]),
-            self._settings.get(["calibrate_w"]),
         )
         prev_auth_token = self._settings.get(["auth_token"])
         prev_api_url = self._settings.get(["api_token"])
@@ -463,23 +461,18 @@ class OctoPrintNannyPlugin(
             self._settings.get(["calibrate_y0"]),
             self._settings.get(["calibrate_x1"]),
             self._settings.get(["calibrate_y1"]),
-            self._settings.get(["calibrate_h"]),
-            self._settings.get(["calibrate_w"]),
         )
         new_auth_token = self._settings.get(["auth_token"])
         new_api_url = self._settings.get(["api_url"])
 
         if prev_calibration != new_calibration:
+            logger.info("Change in calibration detected, applying new settings")
+            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
+            self._worker_manager.apply_calibration()
 
-            calibration = ThreadLocalPredictor.get_calibration(
-                self._settings.get(["calibrate_x0"]),
-                self._settings.get(["calibrate_y0"]),
-                self._settings.get(["calibrate_x1"]),
-                self._settings.get(["calibrate_y1"]),
-                self._settings.get(["calibrate_h"]),
-                self._settings.get(["calibrate_w"]),
-            )
-            self._worker_manager.shared.calibration = calibration
+        if prev_auth_token != new_auth_token:
+            logger.info("Change in auth detected, applying new settings")
+            self._worker_manager.apply_auth()
 
     ## Template plugin
 

@@ -21,7 +21,11 @@ import threading
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
-from octoprint_nanny.predictor import PredictWorker
+from octoprint_nanny.predictor import (
+    PredictWorker,
+    BOUNDING_BOX_PREDICT_EVENT,
+    ANNOTATED_IMAGE_EVENT,
+)
 
 import print_nanny_client
 
@@ -97,12 +101,48 @@ class WorkerManager:
         self.loop = None
         self.telemetry_events = None
         self._user_id = None
+        self._device_id = None
+        self._calibration = None
+        self._snapshot_url = None
+        self._device_cloudiot_name = None
+
+    @property
+    def snapshot_url(self):
+        if self._snapshot_url is None:
+            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
+        return self._snapshot_url
+
+    @property
+    def device_cloudiot_name(self):
+        if self._device_cloudiot_name is None:
+            self._device_cloudiot_name = self.plugin._settings.get(
+                ["device_cloudiot_name"]
+            )
+
+        return self._device_cloudiot_name
+
+    @property
+    def device_id(self):
+        if self._device_id is None:
+            self._device_id = self.plugin._settings.get(["device_id"])
+        return self._device_id
 
     @property
     def user_id(self):
         if self._user_id is None:
             self._user_id = self.plugin._settings.get(["user_id"])
         return self._user_id
+
+    @property
+    def calibration(self):
+        if self._calibration is None:
+            self._calibration = PredictWorker.calc_calibration(
+                self.plugin._settings.get(["calibrate_x0"]),
+                self.plugin._settings.get(["calibrate_y0"]),
+                self.plugin._settings.get(["calibrate_x1"]),
+                self.plugin._settings.get(["calibrate_y1"]),
+            )
+        return self._calibration
 
     @property
     def rest_client(self):
@@ -120,6 +160,16 @@ class WorkerManager:
         self.telemetry_worker_thread.start()
         while self.loop is None:
             sleep(1)
+
+    def apply_auth(self):
+        logger.warning("WorkerManager.apply_auth() not implemented yet")
+
+    def apply_calibration(self):
+
+        logger.info("Applying new calibration")
+        self._calibration = None
+        self.stop()
+        self.start()
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -166,11 +216,25 @@ class WorkerManager:
 
     async def _publish_bounding_box_telemetry(self, event):
         logger.debug(f"_publish_bounding_box_telemetry {event}")
+        event.update(
+            dict(
+                user_id=self.user_id,
+                device_id=self.device_id,
+                device_cloudiot_name=self.device_cloudiot_name,
+            )
+        )
+        self.mqtt_client.publish_bounding_boxes(event)
 
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
-        logger.debug(f"_publish_octoprint_event_telemetry {event}")
-        event.update(user_id=self.user_id)
+        logger.info(f"_publish_octoprint_event_telemetry {event}")
+        event.update(
+            dict(
+                user_id=self.user_id,
+                device_id=self.device_id,
+                device_cloudiot_name=self.device_cloudiot_name,
+            )
+        )
         event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata)
@@ -218,21 +282,34 @@ class WorkerManager:
             if event_type is None:
                 logger.warning(
                     "Ignoring enqueued msg without type declared {event}".format(
-                        event_type=event
+                        event_type=event_type
                     )
                 )
                 continue
 
-            # ignore untracked events
-            if event_type not in self.telemetry_events:
-                logger.warning(f"Discarding {event_type} with payload {event}")
+            ##
+            # Publish non-octoprint telemetry events
+            ##
+
+            # publish to bounding-box telemetry topic
+            if event_type == BOUNDING_BOX_PREDICT_EVENT:
+                await self._publish_bounding_box_telemetry(event)
                 continue
 
-            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                # publish to bounding-box telemetry topic
-                await self._publish_bounding_box_telemetry(event)
+            ##
+            # Handle OctoPrint telemetry events
+            ##
+
+            # ignore untracked events
+            if event_type not in self.telemetry_events:
+                # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
+                if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
+                    pass
+                else:
+                    logger.warning(f"Discarding {event_type} with payload {event}")
+                continue
+            # publish to octoprint-events telemetry topic
             else:
-                # publish to octoprint-events telemetry topic
                 await self._publish_octoprint_event_telemetry(event)
 
             # run local handler fn
@@ -250,25 +327,35 @@ class WorkerManager:
 
         self.active = False
 
-        logger.info("Terminating predict process")
-        self.predict_proc.terminate()
-        logger.info("Terminating websocket process")
-        self.pn_ws_proc.terminate()
+        if self.predict_proc:
+            logger.info("Terminating predict process")
+            self.predict_proc.terminate()
+            self.predict_proc.join(3)
+            self.predict_proc.close()
+
+        if self.pn_ws_proc:
+            logger.info("Terminating websocket process")
+            self.pn_ws_proc.terminate()
+            self.pn_ws_proc.join()
+            self.pn_ws_proc.close()
+
+    def shutdown(self):
+        return self.stop()
 
     def start(self):
         """
         starts prediction and pn websocket processes
         """
         self.active = True
-        webcam_url = self.plugin._settings.get(["snapshot_url"])
 
         self.predict_proc = multiprocessing.Process(
             target=PredictWorker,
             args=(
-                webcam_url,
-                self.shared.calibration,
+                self.snapshot_url,
+                self.calibration,
                 self.octo_ws_queue,
                 self.pn_ws_queue,
+                self.telemetry_queue,
             ),
             daemon=True,
         )

@@ -8,8 +8,11 @@ import websockets
 import urllib
 import asyncio
 import os
+import threading
 import aioprocessing
 import multiprocessing
+import signal
+import sys
 
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -39,7 +42,15 @@ class WebSocketWorker:
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
+        self._halt = threading.Event()
+        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
+            signal.signal(signame, self._signal_handler)
         asyncio.run(self.run())
+
+    def _signal_handler(self, received_signal, _):
+        logger.warning(f"Received signal {received_signal}")
+        self._halt.set()
+        sys.exit(0)
 
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
@@ -79,14 +90,14 @@ class WebSocketWorker:
             self._url, extra_headers=self._extra_headers
         ) as websocket:
             logger.info(f"Websocket connected {websocket}")
-            while True:
+            while not self._halt.is_set():
                 msg = await self._producer.coro_get()
 
                 event_type = msg.get("event_type")
-                if event_type == "predict":
-                    if self._print_job_id is not None:
-                        msg["print_job_id"] = self._print_job_id
+                if event_type == "annotated_image":
                     encoded_msg = self.encode(msg=msg)
                     await websocket.send(encoded_msg)
                 else:
                     logger.warning(f"Invalid event_type {event_type}, msg ignored")
+            logger.warning("Halt event set, process will exit soon")
+            sys.exit(0)

@@ -15,7 +15,8 @@ import pytz
 import aiohttp
 import asyncio
 from uuid import uuid1
-
+import signal
+import sys
 
 from PIL import Image as PImage
 import requests
@@ -36,6 +37,9 @@ except:
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
+BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
+ANNOTATED_IMAGE_EVENT = "annotated_image"
+
 
 class Prediction(TypedDict):
     num_detections: int
@@ -52,8 +56,8 @@ class ThreadLocalPredictor(threading.local):
         self,
         min_score_thresh: float = 0.50,
         max_boxes_to_draw: int = 10,
-        min_overlap_area: float = 0.66,
-        calibration: Optional[tuple] = None,
+        min_overlap_area: float = 0.75,
+        calibration: dict = None,
         model_version: str = "tflite-print3d-2020-10-23T18:00:41.136Z",
         model_filename: str = "model.tflite",
         metadata_filename: str = "tflite_metadata.json",
@@ -238,10 +242,10 @@ class PredictWorker:
     def __init__(
         self,
         webcam_url: str,
-        calibration: tuple,
+        calibration: dict,
         octoprint_ws_queue,
         pn_ws_queue,
-        pn_mqtt_queue,
+        telemetry_queue,
         fps: int = 5,
     ):
         """
@@ -252,16 +256,20 @@ class PredictWorker:
         fps - wildly approximate buffer sample rate, depends on time.sleep()
         """
 
-        self.calibration = calibration
+        self._calibration = calibration
         self._fps = fps
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
-        self._pn_mqtt_queue = pn_mqtt_queue
+        self._telemetry_queue = telemetry_queue
 
-        self._predictor = ThreadLocalPredictor(calibration=self.calibration)
+        self._halt = threading.Event()
+        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
+            signal.signal(signame, self._signal_handler)
+
+        self._predictor = ThreadLocalPredictor(calibration=calibration)
 
         self._producer_thread = threading.Thread(
             target=self._producer_worker, name="producer"
@@ -270,13 +278,17 @@ class PredictWorker:
         self._producer_thread.start()
         self._producer_thread.join()
 
+    def _signal_handler(self, received_signal, _):
+        logger.warning(f"Received signal {received_signal}")
+        self._halt.set()
+
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
         assert res.headers["content-type"] == "image/jpeg"
         return io.BytesIO(await res.read())
 
     @staticmethod
-    def get_calibration(x0, y0, x1, y1, height, width):
+    def calc_calibration(x0, y0, x1, y1, height=480, width=640):
         if (
             x0 is None
             or y0 is None
@@ -315,7 +327,10 @@ class PredictWorker:
 
     async def _image_msg(self, ts, session):
         original_image = await self.load_url_buffer(session)
-        return {"ts": ts, "original_image": original_image, "uuid": uuid1().hex}
+        return dict(
+            ts=ts,
+            original_image=original_image,
+        )
 
     def _predict_msg(self, msg):
         # msg["original_image"].name = "original_image.jpg"
@@ -329,35 +344,36 @@ class PredictWorker:
         viz_image.save(viz_buffer, format="JPEG")
         viz_bytes = viz_buffer.getvalue()
 
-        # send annotated image bytes to octoprint ui ws immediately
+        # send annotated image bytes to octoprint ui ws
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
-        msg.update(
-            {
-                "annotated_image": viz_buffer,
-                "predict_data": prediction,
-                "event_type": "bounding_box_predict",
-            }
-        )
-
-        # send annotated / original images over websocket
+        # send annotated image bytes to print nanny ui ws
         ws_msg = msg.copy()
+        # send only annotated image data
+        # del ws_msg["original_image"]
         ws_msg.update(
             {
-                "event_type": "predict",
+                "event_type": "annotated_image",
                 "annotated_image": viz_buffer,
             }
         )
 
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
-        del mqtt_msg["original_image"]
-        mqtt_msg = mqtt_msg.update(
+        # del mqtt_msg["original_image"]
+
+        calibration = (
+            self._calibration
+            if self._calibration is None
+            else self._calibration.get("coords")
+        )
+        mqtt_msg.update(
             {
-                "predict_data": prediction,
+                "calibration": calibration,
                 "event_type": "bounding_box_predict",
             }
         )
+        mqtt_msg.update(prediction)
 
         return ws_msg, mqtt_msg
 
@@ -370,11 +386,13 @@ class PredictWorker:
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             async with aiohttp.ClientSession() as session:
-                while True:
-                    now = datetime.now(pytz.timezone("America/Los_Angeles"))
+                while not self._halt.is_set():
+                    now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
                     msg = await self._image_msg(now, session)
                     ws_msg, mqtt_msg = await loop.run_in_executor(
                         pool, lambda: self._predict_msg(msg)
                     )
                     self._pn_ws_queue.put_nowait(ws_msg)
-                    self._pn_mqtt_queue.put_nowait(mqtt_msg)
+                    self._telemetry_queue.put_nowait(mqtt_msg)
+                logger.warning("Halt event set, process will exit soon")
+                sys.exit(0)

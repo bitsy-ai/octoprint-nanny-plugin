@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 import ssl
 import jwt
+import gzip
 import logging
 import os
 import time
 import json
+import io
 import paho.mqtt.client as mqtt
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -146,27 +148,29 @@ class MQTTClient:
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
         )
-        # if self.active:
-        #     j = 10
-        #     for i in range(j):
-        #         logger.info(
-        #             "Device attempting to reconnect to MQTT broker (JWT probably expired)"
-        #         )
-        #         try:
-        #             self.client.username_pw_set(
-        #                 username="unused",
-        #                 password=create_jwt(self.project_id, self.private_key_file, self.algorithm)
-        #             )
-        #             self.client.reconnect()
-        #             logger.info("Gateway successfully reconnected to MQTT broker")
-        #             break
-        #         except Exception as e:
-        #             if i < j:
-        #                 logger.warn(e)
-        #                 time.sleep(1)
-        #                 continue
-        #             else:
-        #                 raise
+        if self.active:
+            j = 10
+            for i in range(j):
+                logger.info(
+                    "Device attempting to reconnect to MQTT broker (JWT probably expired)"
+                )
+                try:
+                    self.client.username_pw_set(
+                        username="unused",
+                        password=create_jwt(
+                            self.project_id, self.private_key_file, self.algorithm
+                        ),
+                    )
+                    self.client.reconnect()
+                    logger.info("Gateway successfully reconnected to MQTT broker")
+                    break
+                except Exception as e:
+                    if i < j:
+                        logger.warn(e)
+                        time.sleep(1)
+                        continue
+                    else:
+                        raise
 
     def publish(self, payload, topic=None, retain=False, qos=1):
 
@@ -192,7 +196,11 @@ class MQTTClient:
         )
 
     def publish_bounding_boxes(self, event, retain=False, qos=1):
-        payload = json.dumps(event, cls=NumpyEncoder)
+        payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
+        outfile = io.BytesIO()
+        with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+            f.write(payload)
+        payload = outfile.getvalue()
         return self.publish(
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )

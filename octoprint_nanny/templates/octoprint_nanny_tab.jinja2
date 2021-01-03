@@ -40,7 +40,7 @@
         <p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.user_email"></span></strong>
         </p>
 
-        <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }, visible: previewActive"/>
+        <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }"/>
 
         <hr/>
 
@@ -61,7 +61,7 @@
                 Show Calibration
             </button>
     </div>
-    <div id="tab_plugin_octoprint_nanny_calibrate" data-bind="{visible: calibrationActive}">
+    <div data-bind="{visible: calibrationActive}">
         <h3>Calibrate 3D Print Volume</h3>
         <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
         
@@ -80,6 +80,9 @@
             <p>Select your print volume's approximate area to exclude objects outside of the print bed. </p>
             
             <img src="plugin/octoprint_nanny/static/img/ignore_mask_example.gif"/>
+        </div>
+
+        <div id="tab_plugin_octoprint_nanny_calibrate">
         </div>
     </div>
 
