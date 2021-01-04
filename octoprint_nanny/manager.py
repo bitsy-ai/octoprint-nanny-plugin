@@ -427,11 +427,13 @@ class WorkerManager:
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self, event_type=None, event=None):
         """
         joins and terminates dedicated prediction and pn websocket processes
         """
-
+        logging.info(
+            f"WorkerManager.stop_monitoring called by event_type={event_type} event={event}"
+        )
         self.active = False
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
