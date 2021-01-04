@@ -80,11 +80,12 @@ class RestAPIClient:
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = print_nanny_client.models.octo_print_device_request.OctoPrintDeviceRequest(**kwargs)
+            request = print_nanny_client.models.octo_print_device_request.OctoPrintDeviceRequest(
+                **kwargs
+            )
             api_instance = RemoteControlApi(api_client=api_client)
             octoprint_device = await api_instance.octoprint_devices_update_or_create(
-                device_id,
-                request
+                device_id, request
             )
             return octoprint_device
 

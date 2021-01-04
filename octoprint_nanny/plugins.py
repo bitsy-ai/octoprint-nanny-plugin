@@ -247,6 +247,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_public_key"], pubkey_filename)
         self._settings.set(["gcp_root_ca"], root_ca_filename)
 
+        self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
@@ -433,6 +434,7 @@ class OctoPrintNannyPlugin(
             device_name=None,
             device_private_key=None,
             device_public_key=None,
+            device_serial=None,
             user=None,
             calibrated=False,
             calibrate_x0=None,
@@ -505,6 +507,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_public_key"]) is None,
                 self._settings.get(["device_fingerprint"]) is None,
                 self._settings.get(["device_id"]) is None,
+                self._settings.get(["device_serial"]) is None,
                 self._settings.get(["device_name"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_url"]) is None,

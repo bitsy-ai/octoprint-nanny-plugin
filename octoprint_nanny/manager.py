@@ -83,7 +83,7 @@ class WorkerManager:
             Events.PRINT_CANCELLED: self.stop_monitoring,
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
-            Events.PRINT_PROGRESS: self._handle_print_progress_upload
+            Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
         self._remote_control_event_handlers = {"WakePrintNanny": self.start_monitoring}
@@ -115,6 +115,7 @@ class WorkerManager:
         self._calibration = None
         self._snapshot_url = None
         self._device_cloudiot_name = None
+        self._device_serial = None
 
         self.predict_proc = None
         self.pn_ws_proc = None
@@ -138,6 +139,12 @@ class WorkerManager:
     def device_id(self):
         if self._device_id is None:
             self._device_id = self.plugin._settings.get(["device_id"])
+        return self._device_id
+
+    @property
+    def device_serial(self):
+        if self._device_id is None:
+            self._device_id = self.plugin._settings.get(["device_serial"])
         return self._device_id
 
     @property
@@ -167,13 +174,16 @@ class WorkerManager:
         return RestAPIClient(auth_token=api_token, api_url=api_url)
 
     def _register_plugin_event_handlers(self):
-        '''
-            Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
-        '''
-        self._local_event_handlers.update({
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self._on_monitoring_start,
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self._on_monitoring_stop
-        })
+        """
+        Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
+        """
+        self._local_event_handlers.update(
+            {
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self._on_monitoring_start,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self._on_monitoring_stop,
+            }
+        )
+
     def on_settings_initialized(self):
         # register plugin event handlers
         self._register_plugin_event_handlers()
@@ -207,14 +217,14 @@ class WorkerManager:
 
     async def _on_monitoring_start(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
-            self.device_id,
-            monitoring_acitve=True
+            self.device_id, monitoring_acitve=True
         )
+
     async def _on_monitoring_stop(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
-            self.device_id,
-            monitoring_acitve=False
+            self.device_id, monitoring_acitve=False
         )
+
     def _mqtt_worker(self):
         private_key = self.plugin._settings.get(["device_private_key"])
         device_id = self.plugin._settings.get(["device_cloudiot_name"])
@@ -242,10 +252,10 @@ class WorkerManager:
         return self.mqtt_client.run()
 
     def _telemetry_worker(self):
-        '''
-            Telemetry worker's event loop is exposed as WorkerManager.loop
-            this permits other threads to schedule work in this event loop with asyncio.run_coroutine_threadsafe() 
-        '''
+        """
+        Telemetry worker's event loop is exposed as WorkerManager.loop
+        this permits other threads to schedule work in this event loop with asyncio.run_coroutine_threadsafe()
+        """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.loop = loop
@@ -305,7 +315,7 @@ class WorkerManager:
                 continue
 
             event = await self.remote_control_queue.coro_get()
-            logging.info(f'Received event in _remote_control_receive_loop {event}')
+            logging.info(f"Received event in _remote_control_receive_loop {event}")
             command = event.get("command")
             if command is None:
                 logger.warning("Ignoring received message where command=None")
@@ -444,7 +454,9 @@ class WorkerManager:
         """
         starts prediction and pn websocket processes
         """
-        logging.info(f'WorkerManager.start_monitoring called by event_type={event_type} event={event}')
+        logging.info(
+            f"WorkerManager.start_monitoring called by event_type={event_type} event={event}"
+        )
         self.active = True
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
@@ -463,7 +475,6 @@ class WorkerManager:
                 daemon=True,
             )
             self.predict_proc.start()
-        
 
         auth_token = self.plugin._settings.get(["auth_token"])
         ws_url = self.plugin._settings.get(["ws_url"])
@@ -474,7 +485,13 @@ class WorkerManager:
         if self.pn_ws_proc is None:
             self.pn_ws_proc = multiprocessing.Process(
                 target=WebSocketWorker,
-                args=(ws_url, auth_token, self.pn_ws_queue, self.shared.print_job_id),
+                args=(
+                    ws_url,
+                    auth_token,
+                    self.pn_ws_queue,
+                    self.shared.print_job_id,
+                    self.device_serial,
+                ),
                 daemon=True,
             )
             self.pn_ws_proc.start()

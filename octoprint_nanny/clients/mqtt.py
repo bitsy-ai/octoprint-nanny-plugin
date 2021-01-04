@@ -121,8 +121,8 @@ class MQTTClient:
     ##
 
     def _on_message(self, client, userdata, message):
-        parsed_message = json.loads(message.payload.decode("utf-8"))
         if message.topic == self.remote_control_command_topic:
+            parsed_message = json.loads(message.payload.decode("utf-8"))
             logger.info(
                 f"Received remote control command on topic={message.topic} payload={parsed_message}"
             )
@@ -130,7 +130,7 @@ class MQTTClient:
             # callback to api to indicate command was received
         else:
             logger.info(
-                f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={parsed_message}"
+                f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={message}"
             )
 
     def _on_publish(self, client, userdata, mid):
