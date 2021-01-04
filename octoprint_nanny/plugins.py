@@ -297,12 +297,12 @@ class OctoPrintNannyPlugin(
         res = requests.get(url)
         res.raise_for_status()
         if res.status_code == 200:
-            self._worker_manager.start()
+            self._worker_manager.start_monitoring()
             return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
-        self._worker_manager.stop()
+        self._worker_manager.stop_monitoring()
         return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
@@ -364,6 +364,8 @@ class OctoPrintNannyPlugin(
         return [
             "predict_done",
             "predict_offline",
+            "monitoring_start",
+            "monitoring_stop",
             "device_register_start",
             "device_register_done",
             "device_register_failed",

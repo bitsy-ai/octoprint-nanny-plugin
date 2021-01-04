@@ -61,7 +61,7 @@ octoprint-dev:
 	OCTOPRINT_NANNY_WS_URL="ws://localhost:8000/ws/images/" \
 	OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY="devices-us-central1-dev" \
 	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
-	octoprint serve
+	octoprint serve --debug
 
 octoprint-prod:
 	cd ~/projects/OctoPrint && . .venv/bin/activate && octoprint serve

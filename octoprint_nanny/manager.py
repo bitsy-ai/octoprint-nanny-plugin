@@ -15,7 +15,7 @@ import aiohttp
 import multiprocessing
 import octoprint.filemanager
 from octoprint.events import Events
-
+import inspect
 import threading
 
 from octoprint_nanny.clients.websocket import WebSocketWorker
@@ -66,27 +66,31 @@ class WorkerManager:
         self.mqtt_client = None
         self.active = False
 
-        # published to GCP MQTT bridge
+        # outbound telemetry to GCP MQTT bridge
         self.telemetry_queue = self.manager.AioQueue()
         # images streamed to octoprint front-end over websocket
         self.octo_ws_queue = self.manager.AioQueue()
         # images streamed to webapp asgi over websocket
         self.pn_ws_queue = self.manager.AioQueue()
+        # inbound commands from MQTT
+        self.remote_control_queue = self.manager.AioQueue()
 
         self._local_event_handlers = {
             Events.PRINT_STARTED: self._handle_print_start,
-            Events.PRINT_FAILED: self.stop,
-            Events.PRINT_DONE: self.stop,
-            Events.PRINT_CANCELLING: self.stop,
-            Events.PRINT_CANCELLED: self.stop,
-            Events.PRINT_PAUSED: self.stop,
-            Events.PRINT_RESUMED: self.stop,
-            Events.PRINT_PROGRESS: self._handle_print_progress_upload,
+            Events.PRINT_FAILED: self.stop_monitoring,
+            Events.PRINT_DONE: self.stop_monitoring,
+            Events.PRINT_CANCELLING: self.stop_monitoring,
+            Events.PRINT_CANCELLED: self.stop_monitoring,
+            Events.PRINT_PAUSED: self.stop_monitoring,
+            Events.PRINT_RESUMED: self.stop_monitoring,
+            Events.PRINT_PROGRESS: self._handle_print_progress_upload
         }
+
+        self._remote_control_event_handlers = {"WakePrintNanny": self.start_monitoring}
 
         self._environment = {}
 
-        # daemonized thread for telemetry event handlers
+        # daemonized thread for outbount telemetry event handlers
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
 
@@ -98,6 +102,12 @@ class WorkerManager:
         self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
         self.mqtt_worker_thread.daemon = True
 
+        # daemonized thread for handling inbound commands received via MQTT
+        self.remote_control_worker_thread = threading.Thread(
+            target=self._remote_control_worker
+        )
+        self.remote_control_worker_thread.daemon = True
+
         self.loop = None
         self.telemetry_events = None
         self._user_id = None
@@ -105,6 +115,9 @@ class WorkerManager:
         self._calibration = None
         self._snapshot_url = None
         self._device_cloudiot_name = None
+
+        self.predict_proc = None
+        self.pn_ws_proc = None
 
     @property
     def snapshot_url(self):
@@ -153,11 +166,21 @@ class WorkerManager:
         logger.debug(f"RestAPIClient init with api_token={api_token} api_url={api_url}")
         return RestAPIClient(auth_token=api_token, api_url=api_url)
 
+    def _register_plugin_event_handlers(self):
+        '''
+            Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
+        '''
+        self._local_event_handlers.update({
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self._on_monitoring_start,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self._on_monitoring_stop
+        })
     def on_settings_initialized(self):
-
+        # register plugin event handlers
+        self._register_plugin_event_handlers()
         self.mqtt_worker_thread.start()
         self.octo_ws_thread.start()
         self.telemetry_worker_thread.start()
+        self.remote_control_worker_thread.start()
         while self.loop is None:
             sleep(1)
 
@@ -168,8 +191,8 @@ class WorkerManager:
 
         logger.info("Applying new calibration")
         self._calibration = None
-        self.stop()
-        self.start()
+        self.stop_monitoring()
+        self.start_monitoring()
 
     async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
         if self.shared.print_job_id is not None:
@@ -182,6 +205,16 @@ class WorkerManager:
                     f"_handle_print_progress_upload() exception {e}", exc_info=True
                 )
 
+    async def _on_monitoring_start(self, event_type, event_data):
+        await self.rest_client.update_octoprint_device(
+            self.device_id,
+            monitoring_acitve=True
+        )
+    async def _on_monitoring_stop(self, event_type, event_data):
+        await self.rest_client.update_octoprint_device(
+            self.device_id,
+            monitoring_acitve=False
+        )
     def _mqtt_worker(self):
         private_key = self.plugin._settings.get(["device_private_key"])
         device_id = self.plugin._settings.get(["device_cloudiot_name"])
@@ -197,7 +230,10 @@ class WorkerManager:
                 continue
             break
         self.mqtt_client = MQTTClient(
-            device_id=device_id, private_key_file=private_key, ca_certs=gcp_root_ca
+            device_id=device_id,
+            private_key_file=private_key,
+            ca_certs=gcp_root_ca,
+            remote_control_queue=self.remote_control_queue,
         )
         logger.info(f"Initialized mqtt client with id {self.mqtt_client.client_id}")
         ###
@@ -206,12 +242,24 @@ class WorkerManager:
         return self.mqtt_client.run()
 
     def _telemetry_worker(self):
+        '''
+            Telemetry worker's event loop is exposed as WorkerManager.loop
+            this permits other threads to schedule work in this event loop with asyncio.run_coroutine_threadsafe() 
+        '''
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.loop = loop
 
         return self.loop.run_until_complete(
-            asyncio.ensure_future(self._telemetry_queue_loop())
+            asyncio.ensure_future(self._telemetry_queue_send_loop())
+        )
+
+    def _remote_control_worker(self):
+        self.remote_control_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.remote_control_loop)
+
+        return self.remote_control_loop.run_until_complete(
+            asyncio.ensure_future(self._remote_control_receive_loop())
         )
 
     async def _publish_bounding_box_telemetry(self, event):
@@ -240,11 +288,57 @@ class WorkerManager:
             event.update(self._get_print_job_metadata)
         self.mqtt_client.publish_octoprint_event(event)
 
-    async def _telemetry_queue_loop(self):
+    async def _remote_control_receive_loop(self):
+        logger.info("Started _remote_control_receive_loop")
+        api_token = self.plugin._settings.get(["auth_token"])
+        global BACKOFF
+
+        while True:
+
+            if api_token is None:
+                logger.warning(
+                    f"auth_token not saved to plugin settings, waiting {BACKOFF} seconds"
+                )
+                await asyncio.sleep(BACKOFF)
+                api_token = self.plugin._settings.get(["auth_token"])
+                BACKOFF = BACKOFF ** 2
+                continue
+
+            event = await self.remote_control_queue.coro_get()
+            logging.info(f'Received event in _remote_control_receive_loop {event}')
+            command = event.get("command")
+            if command is None:
+                logger.warning("Ignoring received message where command=None")
+                continue
+
+            command_id = event.get("remote_control_command_id")
+            # set received state
+            await self.rest_client.update_remote_control_command(
+                command_id, received=True
+            )
+
+            handler_fn = self._remote_control_event_handlers.get(command)
+            if handler_fn:
+                try:
+                    if inspect.isawaitable(handler_fn):
+                        await handler_fn(event=event, event_type=command)
+                    else:
+                        handler_fn(event=event, event_type=command)
+                    # set success state
+                    await self.rest_client.update_remote_control_command(
+                        command_id, success=True
+                    )
+                except Exception as e:
+                    logger.error(e)
+                    await self.rest_client.update_remote_control_command(
+                        command_id, success=False
+                    )
+
+    async def _telemetry_queue_send_loop(self):
         """
         Publishes telemetry events via HTTP
         """
-        logger.info("Started _telemetry_queue_loop")
+        logger.info("Started _telemetry_queue_send_loop")
 
         api_token = self.plugin._settings.get(["auth_token"])
         global BACKOFF
@@ -320,46 +414,56 @@ class WorkerManager:
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 
-    def stop(self):
+    def stop_monitoring(self):
         """
-        joins and terminates prediction and pn websocket processes
+        joins and terminates dedicated prediction and pn websocket processes
         """
 
         self.active = False
-
+        self.plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
+        )
         if self.predict_proc:
             logger.info("Terminating predict process")
             self.predict_proc.terminate()
-            self.predict_proc.join(3)
+            self.predict_proc.join(30)
             self.predict_proc.close()
+            self.predict_proc = None
 
         if self.pn_ws_proc:
             logger.info("Terminating websocket process")
             self.pn_ws_proc.terminate()
-            self.pn_ws_proc.join()
+            self.pn_ws_proc.join(30)
             self.pn_ws_proc.close()
+            self.pn_ws_proc = None
 
     def shutdown(self):
-        return self.stop()
+        return self.stop_monitoring()
 
-    def start(self):
+    def start_monitoring(self, event_type=None, event=None):
         """
         starts prediction and pn websocket processes
         """
+        logging.info(f'WorkerManager.start_monitoring called by event_type={event_type} event={event}')
         self.active = True
-
-        self.predict_proc = multiprocessing.Process(
-            target=PredictWorker,
-            args=(
-                self.snapshot_url,
-                self.calibration,
-                self.octo_ws_queue,
-                self.pn_ws_queue,
-                self.telemetry_queue,
-            ),
-            daemon=True,
+        self.plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
         )
-        self.predict_proc.start()
+
+        if self.predict_proc is None:
+            self.predict_proc = multiprocessing.Process(
+                target=PredictWorker,
+                args=(
+                    self.snapshot_url,
+                    self.calibration,
+                    self.octo_ws_queue,
+                    self.pn_ws_queue,
+                    self.telemetry_queue,
+                ),
+                daemon=True,
+            )
+            self.predict_proc.start()
+        
 
         auth_token = self.plugin._settings.get(["auth_token"])
         ws_url = self.plugin._settings.get(["ws_url"])
@@ -367,12 +471,13 @@ class WorkerManager:
 
         self.plugin.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
 
-        self.pn_ws_proc = multiprocessing.Process(
-            target=WebSocketWorker,
-            args=(ws_url, auth_token, self.pn_ws_queue, self.shared.print_job_id),
-            daemon=True,
-        )
-        self.pn_ws_proc.start()
+        if self.pn_ws_proc is None:
+            self.pn_ws_proc = multiprocessing.Process(
+                target=WebSocketWorker,
+                args=(ws_url, auth_token, self.pn_ws_queue, self.shared.print_job_id),
+                daemon=True,
+            )
+            self.pn_ws_proc.start()
 
     def _octo_ws_queue_worker(self):
         """
@@ -433,4 +538,4 @@ class WorkerManager:
             logger.error(f"_handle_print_start API called failed {e}", exc_info=True)
             return
 
-        self.start()
+        self.start_monitoring()
