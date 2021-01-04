@@ -13,6 +13,7 @@ import aioprocessing
 import multiprocessing
 import signal
 import sys
+import os
 
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -29,7 +30,7 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, url, api_token, producer, print_job_id):
+    def __init__(self, base_url, api_token, producer, print_job_id, device_id):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -37,7 +38,9 @@ class WebSocketWorker:
             )
 
         self._print_job_id = print_job_id
-        self._url = url
+        self._device_id = device_id
+        self._base_url = base_url
+        self._url = f"{base_url}{device_id}/video/upload/"
         self._api_token = api_token
         self._producer = producer
 

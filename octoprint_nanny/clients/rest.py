@@ -63,21 +63,48 @@ class RestAPIClient:
             )
             return octoprint_device
 
+    @property
+    def _api_config(self):
+        parsed_uri = urllib.parse.urlparse(self.api_url)
+        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
+        config = print_nanny_client.Configuration(host=host)
+
+        config.access_token = self.auth_token
+        return config
+
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_octoprint_device(self, octoprint_device_id, **kwargs):
+    async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_client.client_side_validation = False
-            request = OctoPrintDeviceRequest(**kwargs)
+            request = print_nanny_client.models.octo_print_device_request.OctoPrintDeviceRequest(
+                **kwargs
+            )
             api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_partial_update(
-                octoprint_device_id, request
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(
+                device_id, request
             )
             return octoprint_device
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def update_remote_control_command(self, command_id, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            request = print_nanny_client.models.PatchedRemoteControlCommandRequest(
+                **kwargs
+            )
+            api_instance = RemoteControlApi(api_client=api_client)
+            command = await api_instance.commands_partial_update(
+                command_id, patched_remote_control_command_request=request
+            )
+            return command
 
     @backoff.on_exception(
         backoff.expo,

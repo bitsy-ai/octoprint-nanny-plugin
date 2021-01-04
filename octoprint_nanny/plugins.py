@@ -247,6 +247,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_public_key"], pubkey_filename)
         self._settings.set(["gcp_root_ca"], root_ca_filename)
 
+        self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_url"], device.url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
@@ -297,12 +298,12 @@ class OctoPrintNannyPlugin(
         res = requests.get(url)
         res.raise_for_status()
         if res.status_code == 200:
-            self._worker_manager.start()
+            self._worker_manager.start_monitoring()
             return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
-        self._worker_manager.stop()
+        self._worker_manager.stop_monitoring()
         return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
@@ -364,6 +365,8 @@ class OctoPrintNannyPlugin(
         return [
             "predict_done",
             "predict_offline",
+            "monitoring_start",
+            "monitoring_stop",
             "device_register_start",
             "device_register_done",
             "device_register_failed",
@@ -431,6 +434,7 @@ class OctoPrintNannyPlugin(
             device_name=None,
             device_private_key=None,
             device_public_key=None,
+            device_serial=None,
             user=None,
             calibrated=False,
             calibrate_x0=None,
@@ -503,6 +507,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_public_key"]) is None,
                 self._settings.get(["device_fingerprint"]) is None,
                 self._settings.get(["device_id"]) is None,
+                self._settings.get(["device_serial"]) is None,
                 self._settings.get(["device_name"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_url"]) is None,

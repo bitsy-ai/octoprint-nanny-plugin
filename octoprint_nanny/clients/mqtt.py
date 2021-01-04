@@ -41,6 +41,7 @@ class MQTTClient:
         private_key_file: str,
         ca_certs,
         algorithm="RS256",
+        remote_control_queue=None,
         mqtt_bridge_hostname=GCP_MQTT_BRIDGE_HOSTNAME,
         mqtt_bridge_port=GCP_MQTT_BRIDGE_PORT,
         on_connect=None,
@@ -73,6 +74,8 @@ class MQTTClient:
         self.region = region
         self.algorithm = algorithm
 
+        self.remote_control_queue = remote_control_queue
+
         self.client = mqtt.Client(client_id=client_id)
         logger.info(f"Initializing MQTTClient from {locals()}")
 
@@ -89,6 +92,12 @@ class MQTTClient:
 
         # device receives commands on this topic
         self.mqtt_command_topic = f"/devices/{self.device_id}/commands/#"
+        # remote_control app commmands are routed to this subfolder
+        self.remote_control_command_topic = (
+            f"/devices/{self.device_id}/commands/remote_control"
+        )
+        # this permits routing on a per-app basis, e.g.
+        # /devices/{self.device_id}/commands/my_app_name
 
         # default telemetry topic
         self.mqtt_default_telemetry_topic = f"/devices/{self.device_id}/events"
@@ -112,9 +121,17 @@ class MQTTClient:
     ##
 
     def _on_message(self, client, userdata, message):
-        logger.debug(
-            f"MQTTClient._on_message called with userdata={userdata} message={message}"
-        )
+        if message.topic == self.remote_control_command_topic:
+            parsed_message = json.loads(message.payload.decode("utf-8"))
+            logger.info(
+                f"Received remote control command on topic={message.topic} payload={parsed_message}"
+            )
+            self.remote_control_queue.put_nowait(parsed_message)
+            # callback to api to indicate command was received
+        else:
+            logger.info(
+                f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={message}"
+            )
 
     def _on_publish(self, client, userdata, mid):
         logger.debug(
