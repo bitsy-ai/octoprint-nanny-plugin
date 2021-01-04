@@ -86,7 +86,10 @@ class WorkerManager:
             Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
-        self._remote_control_event_handlers = {"WakePrintNanny": self.start_monitoring}
+        self._remote_control_event_handlers = {
+            "StartMonitoring": self.start_monitoring,
+            "StopMonitoring": self.stop_monitoring,
+        }
 
         self._environment = {}
 
