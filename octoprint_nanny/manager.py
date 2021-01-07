@@ -86,7 +86,10 @@ class WorkerManager:
             Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
-        self._remote_control_event_handlers = {"WakePrintNanny": self.start_monitoring}
+        self._remote_control_event_handlers = {
+            "StartMonitoring": self.start_monitoring,
+            "StopMonitoring": self.stop_monitoring,
+        }
 
         self._environment = {}
 
@@ -424,11 +427,13 @@ class WorkerManager:
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self, event_type=None, event=None):
         """
         joins and terminates dedicated prediction and pn websocket processes
         """
-
+        logging.info(
+            f"WorkerManager.stop_monitoring called by event_type={event_type} event={event}"
+        )
         self.active = False
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
