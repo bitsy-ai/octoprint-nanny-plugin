@@ -1,0 +1,211 @@
+<!-- hero -->
+<div class="row-fluid">
+    <a href="https://print-nanny.com"><img src="/plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
+    <h3>Real-time defect and safety monitoring ✨</h3>
+    <p>Automated alerts for anyone tired of babysitting their 3D printer.</p>
+    <p><a href="https://discord.gg/YK7qnv5KjB">Join the Discord server </a> or email support@print-nanny.com to report issues.</p>
+
+</div>
+<form class="form">
+
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced Setting') }}</a></li>
+    </ul>
+
+  <div class="tab-content">
+    <div id="{{template_name}}_basic" class="tab-pane active">
+      <fieldset>
+          {% if plugin_octoprint_nanny_settings.auth_valid == True %}
+          {% else %}
+
+            <div>          
+                <h3>Login</h3>
+                <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
+                <p>
+                    <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-large btn-primary">
+                    Request Account
+                    </a>
+
+                    <a target="_blank" href="https://print-nanny.com/signin" class="btn btn-secondary btn-large">
+                    Login
+                    </a>
+                </p>
+            <hr>
+            <h3>Link Accounts</h3>
+
+                <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
+                and paste it below.</p>
+                <div class="control-group">
+                    <label class="control-label" for="octoprint_nanny_settings_auth_token_basic"><strong>Authentication Token</strong></label>
+                    <div class="controls">
+                        <input 
+                            id="octoprint_nanny_settings_auth_token_basic" 
+                            class="input-xxlarge"
+                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
+                    </div>
+                </div>
+                <div class="alert alert-block" data-bind="css: authAlertClass">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                
+                    <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                    <span data-bind="text: authAlertText"></span>
+                </div>
+
+                <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
+                    Test Connection
+                </button>
+            </div>
+
+        {% endif %}
+            
+        <hr>
+
+        {% if plugin_octoprint_nanny_settings.device_registered == True %}
+            <div>        
+                <h3>Device Info</h3>
+                <div class="control-group">
+                    <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Name</strong></label>
+                    <div class="controls">
+                        <input 
+                            id="octoprint_nanny_settings_device_name" 
+                            class="input-xxlarge"
+                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" type="text" />
+                    </div>
+                    <label class="control-label" for="octoprint_nanny_settings_device_fingerprint"><strong>Fingerprint</strong></label>
+                    <div class="controls">
+                        <input 
+                            readonly
+                            id="octoprint_nanny_settings_device_fingerprint" 
+                            class="input-xxlarge"
+                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint" type="text" />
+                    </div>
+                    <label class="control-label" for="octoprint_nanny_settings_device_url"><strong>Dashboard</strong></label>
+                    <div class="controls">
+                        <input 
+                            readonly
+                            id="octoprint_nanny_settings_device_urlt" 
+                            class="input-xxlarge"
+                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_url" type="text" />
+                    </div>
+                </div>
+                <div class="alert alert-block" data-bind="css: existingDeviceAlertClass">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                
+                    <h4><span data-bind="text: existingDeviceAlertHeader"></span></h4> 
+                    <span data-bind="text: existingDeviceAlertText"></span>
+                </div>
+                <button 
+                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
+                type="submit" 
+                class="btn btn-primary btn-large">
+                Refresh Registration
+                </button>
+                <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
+                    <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
+                </div> 
+            </div>
+
+        {% else %}
+        <div>            
+            <h3>Device Registration</h3>
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Give this OctoPrint device a name:</strong></label>
+                <div class="controls">
+                    <input 
+                        id="octoprint_nanny_settings_device_name" 
+                        class="input-xxlarge"
+                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" 
+                        type="text" />
+                </div>
+            </div>
+            <div class="alert alert-block" data-bind="css: deviceAlertClass">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            
+                <h4><span data-bind="text: deviceAlertHeader"></span></h4> 
+                <span data-bind="text: deviceAlertText"></span>
+            </div>
+
+            <button 
+                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
+                type="submit" 
+                class="btn btn-primary btn-large">
+                Start Registration
+            </button>
+            <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
+                <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
+            </div>  
+        </div>
+
+        {% endif %}
+
+        <hr>
+        <div>
+            <h3>Test Webcam</h3>
+            <p>Enter your webcam's <strong>snapshot url</strong> below. </p>
+            <div class="control-group">
+               <label class="control-label" for="octoprint_nanny_settings_snapshot_url"><strong>Snapshot URL</strong></label>
+               <div class="controls">
+                   <input 
+                       id="octoprint_nanny_settings_auth_token" 
+                       class="input-xxlarge"
+                       data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url" type="text" />
+               </div>
+           </div>
+           <button data-bind="{click: testSnapshotUrl }" type="submit" class="btn btn-primary btn-large">
+               Capture Snapshot
+           </button>
+           <p>If the image below is broken after you click the Capture Snapshot button, double-check your snapshot url.</p>
+           <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }, visible: imageData() !== undefined"/>
+   
+           <hr>
+        </div>
+
+      </fieldset>
+      </div>
+    <div id="{{template_name}}_advanced" class="tab-pane">
+        <fieldset>
+            <legend>Warning! Advanced Settings </legend>
+            <p>The following settings are for developers and on-prem installations of Print Nanny.</p>
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_api_url">Print Nanny API</label>
+                <div class="controls">
+                    <input 
+                    class="input-xxlarge" 
+                    id="octoprint_nanny_settings_api_url" 
+                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_ws_url">Websocket URL</label>
+                <div class="controls">
+                    <input id="octoprint_nanny_settings_ws_url" 
+                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_auth_token_advanced"><strong>Authentication Token</strong></label>
+                <div class="controls">
+                    <input 
+                        id="octoprint_nanny_settings_auth_token_advanced" 
+                        class="input-xxlarge"
+                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
+                </div>
+            </div>
+
+            <div class="alert alert-block" data-bind="css: authAlertClass">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            
+                <h4><span data-bind="text: authAlertHeader"></span></h4> 
+                <span data-bind="text: authAlertText"></span>
+            </div>
+            <button data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
+                Save Advanced Settings
+            </button>
+
+        </fieldset>
+    </div>
+
+  </div>
+</form>

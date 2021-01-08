@@ -8,23 +8,25 @@ from octoprint.events import Events
 
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
+
 from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
+from print_nanny_client.models.octo_print_device_key_request import (
+    OctoPrintDeviceKeyRequest,
+)
 
 
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.rest_client")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
 CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = 3
-
-# @todo add max limit to backoff
+MAX_BACKOFF_TIME = 16
 
 
 class RestAPIClient:
@@ -52,14 +54,74 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def get_tracking_events(self):
+    async def update_or_create_octoprint_device(self, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            request = OctoPrintDeviceKeyRequest(**kwargs)
+            api_instance = RemoteControlApi(api_client=api_client)
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(
+                request
+            )
+            return octoprint_device
+
+    @property
+    def _api_config(self):
+        parsed_uri = urllib.parse.urlparse(self.api_url)
+        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
+        config = print_nanny_client.Configuration(host=host)
+
+        config.access_token = self.auth_token
+        return config
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def update_octoprint_device(self, device_id, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            request = print_nanny_client.models.octo_print_device_request.OctoPrintDeviceRequest(
+                **kwargs
+            )
+            api_instance = RemoteControlApi(api_client=api_client)
+            octoprint_device = await api_instance.octoprint_devices_update_or_create(
+                device_id, request
+            )
+            return octoprint_device
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def update_remote_control_command(self, command_id, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            request = print_nanny_client.models.PatchedRemoteControlCommandRequest(
+                **kwargs
+            )
+            api_instance = RemoteControlApi(api_client=api_client)
+            command = await api_instance.commands_partial_update(
+                command_id, patched_remote_control_command_request=request
+            )
+            return command
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def get_telemetry_events(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_client.client_side_validation = False
-            tracking_events = await EventsApi(
+            telemetry_events = await EventsApi(
                 api_client
-            ).octoprint_events_tracking_retrieve()
-            logging.info(f"Tracking octoprint events {tracking_events}")
-            return tracking_events
+            ).octoprint_events_telemetry_retrieve()
+            logger.info(
+                f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}"
+            )
+            return telemetry_events
 
     @backoff.on_exception(
         backoff.expo,
@@ -187,6 +249,53 @@ class RestAPIClient:
                 volume_origin=event_data["printer_profile"]["volume"]["origin"],
                 volume_width=event_data["printer_profile"]["volume"]["width"],
             )
+            printer_profile = await api_instance.printer_profiles_update_or_create(
+                request
+            )
+            return printer_profile
+
+    def _printer_profile_request(self, data):
+        """
+        data: https://docs.octoprint.org/en/master/api/printerprofiles.html
+        """
+        return PrinterProfileRequest(
+            axes_e_inverted=data["printer_profile"]["axes"]["e"]["inverted"],
+            axes_x_inverted=data["printer_profile"]["axes"]["x"]["inverted"],
+            axes_y_inverted=data["printer_profile"]["axes"]["y"]["inverted"],
+            axes_z_inverted=data["printer_profile"]["axes"]["z"]["inverted"],
+            axes_e_speed=data["printer_profile"]["axes"]["e"]["speed"],
+            axes_x_speed=data["printer_profile"]["axes"]["x"]["speed"],
+            axes_y_speed=data["printer_profile"]["axes"]["y"]["speed"],
+            axes_z_speed=data["printer_profile"]["axes"]["z"]["speed"],
+            extruder_count=data["printer_profile"]["extruder"]["count"],
+            extruder_nozzle_diameter=data["printer_profile"]["extruder"][
+                "nozzleDiameter"
+            ],
+            extruder_shared_nozzle=data["printer_profile"]["extruder"]["sharedNozzle"],
+            octoprint_id=data["printer_profile"]["id"],
+            name=data["printer_profile"]["name"],
+            model=data["printer_profile"]["model"],
+            heated_bed=data["printer_profile"]["heatedBed"],
+            heated_chamber=data["printer_profile"]["heatedChamber"],
+            volume_custom_box=data["printer_profile"]["volume"]["custom_box"],
+            volume_depth=data["printer_profile"]["volume"]["depth"],
+            volume_formfactor=data["printer_profile"]["volume"]["formFactor"],
+            volume_height=data["printer_profile"]["volume"]["height"],
+            volume_origin=data["printer_profile"]["volume"]["origin"],
+            volume_width=data["printer_profile"]["volume"]["width"],
+        )
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def update_or_create_printer_profile(self, event_data):
+        async with AsyncApiClient(self._api_config) as api_client:
+            # printer profile
+            api_instance = RemoteControlApi(api_client=api_client)
+            request = self._printer_profile_request(event_data)
             printer_profile = await api_instance.printer_profiles_update_or_create(
                 request
             )

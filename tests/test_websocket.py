@@ -11,10 +11,10 @@ import pytz
 
 @pytest.fixture
 def ws_client(mocker):
-    mocker.patch("print_nanny.clients.websocket.asyncio")
+    mocker.patch("octoprint_nanny.clients.websocket.asyncio")
     m = aioprocessing.AioManager()
     return WebSocketWorker(
-        "ws://localhost:8000/ws/predict/",
+        "ws://localhost:8000/ws/images/",
         "3a833ac48104772a349254690cae747e826886f1",
         m.Queue(),
         1,
@@ -23,7 +23,7 @@ def ws_client(mocker):
 
 @pytest.fixture
 def predict_worker(mocker):
-    mocker.patch("print_nanny.predictor.threading")
+    mocker.patch("octoprint_nanny.predictor.threading")
     m = aioprocessing.AioManager()
 
     return PredictWorker(
@@ -31,7 +31,9 @@ def predict_worker(mocker):
         None,
         m.Queue(),
         m.Queue(),
+        m.Queue(),
     )
+
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
@@ -48,7 +50,9 @@ async def test_ws_ping(ws_client):
 @pytest.mark.asyncio
 async def test_ws_predict_e2e(ws_client, mocker, predict_worker):
     async with aiohttp.ClientSession() as session:
-        msg = await predict_worker._image_msg(datetime.now(pytz.timezone("America/Los_Angeles")), session)
+        msg = await predict_worker._image_msg(
+            datetime.now(pytz.timezone("America/Los_Angeles")), session
+        )
 
         predict_msg = predict_worker._predict_msg(msg)
 

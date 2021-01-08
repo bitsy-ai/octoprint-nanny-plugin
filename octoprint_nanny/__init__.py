@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import logging
 
 
-from .plugins import BitsyNannyPlugin
+from .plugins import OctoPrintNannyPlugin
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -19,7 +19,7 @@ __plugin_version__ = "0.1.0"
 
 def __plugin_load__():
     global __plugin_implementation__
-    __plugin_implementation__ = BitsyNannyPlugin()
+    __plugin_implementation__ = OctoPrintNannyPlugin()
 
     __plugin_implementation__.version = __plugin_version__
 

@@ -8,14 +8,18 @@ import websockets
 import urllib
 import asyncio
 import os
+import threading
 import aioprocessing
 import multiprocessing
+import signal
+import sys
+import os
 
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.websocket")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
 
 
 class WebSocketWorker:
@@ -26,7 +30,7 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, url, api_token, producer, print_job_id):
+    def __init__(self, base_url, api_token, producer, print_job_id, device_id):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -34,12 +38,22 @@ class WebSocketWorker:
             )
 
         self._print_job_id = print_job_id
-        self._url = url
+        self._device_id = device_id
+        self._base_url = base_url
+        self._url = f"{base_url}{device_id}/video/upload/"
         self._api_token = api_token
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
+        self._halt = threading.Event()
+        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
+            signal.signal(signame, self._signal_handler)
         asyncio.run(self.run())
+
+    def _signal_handler(self, received_signal, _):
+        logger.warning(f"Received signal {received_signal}")
+        self._halt.set()
+        sys.exit(0)
 
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
@@ -79,14 +93,14 @@ class WebSocketWorker:
             self._url, extra_headers=self._extra_headers
         ) as websocket:
             logger.info(f"Websocket connected {websocket}")
-            while True:
+            while not self._halt.is_set():
                 msg = await self._producer.coro_get()
 
                 event_type = msg.get("event_type")
-                if event_type == "predict":
-                    if self._print_job_id is not None:
-                        msg["print_job_id"] = self._print_job_id
+                if event_type == "annotated_image":
                     encoded_msg = self.encode(msg=msg)
                     await websocket.send(encoded_msg)
                 else:
                     logger.warning(f"Invalid event_type {event_type}, msg ignored")
+            logger.warning("Halt event set, process will exit soon")
+            sys.exit(0)
