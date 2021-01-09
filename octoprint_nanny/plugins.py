@@ -76,7 +76,9 @@ class OctoPrintNannyPlugin(
 
         self._worker_manager = WorkerManager(plugin=self)
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint-plugin-main",)
+        self._honeycomb_tracer = HoneycombTracer(
+            service_name="octoprint-plugin-main",
+        )
 
     def on_shutdown(self):
         self._worker_manager.shutdown()

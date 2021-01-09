@@ -55,7 +55,7 @@ class WorkerManager:
     ]
 
     def __init__(self, plugin):
-        
+
         self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager_main")
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
@@ -193,7 +193,7 @@ class WorkerManager:
     def reset_backoff(self):
         self.BACKOFF = 2
 
-    @beeline.traced('WorkerManager.on_settings_initialized')
+    @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         # register plugin event handlers
         self._register_plugin_event_handlers()
@@ -207,7 +207,7 @@ class WorkerManager:
     def apply_auth(self):
         logger.warning("WorkerManager.apply_auth() not implemented yet")
 
-    @beeline.traced('WorkerManager.apply_calibration')
+    @beeline.traced("WorkerManager.apply_calibration")
     def apply_calibration(self):
 
         logger.info("Applying new calibration")
@@ -355,9 +355,8 @@ class WorkerManager:
                     await self.rest_client.update_remote_control_command(
                         command_id, success=False
                     )
-            
+
             self._honeycomb_tracer.finish_trace(trace)
-            
 
     async def _telemetry_queue_send_loop(self):
         """
@@ -449,10 +448,10 @@ class WorkerManager:
                     await handler_fn(**event)
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
-            
+
             self._honeycomb_tracer.finish_trace(trace)
 
-    @beeline.traced('WorkerManager.stop_monitoring')
+    @beeline.traced("WorkerManager.stop_monitoring")
     def stop_monitoring(self, event_type=None, event=None):
         """
         joins and terminates dedicated prediction and pn websocket processes
@@ -478,12 +477,12 @@ class WorkerManager:
             self.pn_ws_proc.close()
             self.pn_ws_proc = None
 
-    @beeline.traced('WorkerManager.shutdown')
+    @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
         self.stop_monitoring()
         self._honeycomb_tracer.on_shutdown()
 
-    @beeline.traced('WorkerManager.stop_monitoring')
+    @beeline.traced("WorkerManager.stop_monitoring")
     def start_monitoring(self, event_type=None, event=None):
         """
         starts prediction and pn websocket processes
