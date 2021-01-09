@@ -39,6 +39,7 @@ class WorkerManager:
     Manages PredictWorker, WebsocketWorker, RestWorker processes
     """
 
+    MAX_BACKOFF = 256
     BACKOFF = 2
 
     PRINT_JOB_EVENTS = [
@@ -187,6 +188,9 @@ class WorkerManager:
             }
         )
 
+    def reset_backoff(self):
+        self.BACKOFF = 2
+
     def on_settings_initialized(self):
         # register plugin event handlers
         self._register_plugin_event_handlers()
@@ -235,10 +239,11 @@ class WorkerManager:
         while True:
             if private_key is None or device_id is None or gcp_root_ca is None:
                 logger.warning(
-                    f"Waiting {self.BACKOFF}to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
+                    f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
                 )
                 sleep(self.BACKOFF)
-                self.BACKOFF = self.BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
             break
         self.mqtt_client = MQTTClient(
@@ -311,7 +316,8 @@ class WorkerManager:
                 )
                 await asyncio.sleep(self.BACKOFF)
                 api_token = self.plugin._settings.get(["auth_token"])
-                self.BACKOFF = self.BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
 
             event = await self.remote_control_queue.coro_get()
@@ -361,11 +367,19 @@ class WorkerManager:
                 )
                 await asyncio.sleep(self.BACKOFF)
                 api_token = self.plugin._settings.get(["auth_token"])
-                self.BACKOFF = self.BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
 
             if self.telemetry_events is None:
-                self.telemetry_events = await self.rest_client.get_telemetry_events()
+                try:
+                    self.telemetry_events = (
+                        await self.rest_client.get_telemetry_events()
+                    )
+                except CLIENT_EXCEPTIONS as e:
+                    await asyncio.sleep(self.BACKOFF)
+                    if self.BACKOFF < self.MAX_BACKOFF:
+                        self.BACKOFF = self.BACKOFF ** 2
 
             ###
             # Rest API available
@@ -375,7 +389,8 @@ class WorkerManager:
                     f"Waiting {self.BACKOFF} seconds for mqtt client to be available"
                 )
                 await asyncio.sleep(self.BACKOFF)
-                self.BACKOFF = self.BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
             ###
             # mqtt client available

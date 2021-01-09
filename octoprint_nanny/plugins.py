@@ -14,7 +14,7 @@ import platform
 from datetime import datetime
 
 import time
-
+import beeline
 import multiprocessing
 import aiohttp.client_exceptions
 import flask
@@ -46,6 +46,13 @@ DEFAULT_WS_URL = os.environ.get(
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
+HONEYCOMB_DATASET = os.environ.get(
+    "OCTOPRINT_NANNY_HONEYCOMB_DATASET", "print_nanny_prod"
+)
+HONEYCOMB_API_KEY = os.environ.get(
+    "OCTOPRINT_NANNY_HONEYCOMB_API_KEY", "ef843461ea1d7b2a953fa1b68e9394da"
+)
+HONEYCOMB_DEBUG = os.environ.get("HONEYCOMB_DEBUG", False)
 
 GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
@@ -65,6 +72,12 @@ class OctoPrintNannyPlugin(
     def __init__(self, *args, **kwargs):
 
         # log multiplexing for multiprocessing.Process
+        beeline.init(
+            writekey=HONEYCOMB_API_KEY,
+            dataset=HONEYCOMB_DATASET,
+            service_name="octoprint",
+            debug=HONEYCOMB_DEBUG,
+        )
         multiprocessing_logging.install_mp_handler()
 
         # User interactive
@@ -292,7 +305,8 @@ class OctoPrintNannyPlugin(
     # def register_custom_routes(self):
     @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
     def start_predict(self):
-
+        logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
+        self._worker_manager.reset_backoff()
         # settings test#
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
@@ -303,13 +317,16 @@ class OctoPrintNannyPlugin(
 
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
+        logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
+        self._worker_manager.reset_backoff()
         self._worker_manager.stop_monitoring()
         return flask.json.jsonify({"ok": 1})
 
     @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
     def register_device(self):
         device_name = flask.request.json.get("device_name")
-
+        logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
+        self._worker_manager.reset_backoff()
         result = asyncio.run_coroutine_threadsafe(
             self._register_device(device_name), self._worker_manager.loop
         ).result()
@@ -332,6 +349,9 @@ class OctoPrintNannyPlugin(
     def test_auth_token(self):
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
+
+        logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
+        self._worker_manager.reset_backoff()
 
         logger.info("Testing auth_token in event")
         response = asyncio.run_coroutine_threadsafe(
@@ -397,6 +417,9 @@ class OctoPrintNannyPlugin(
                 self._worker_manager.loop,
             ).result()
 
+            if isinstance(Exception, user):
+                logger.error(user)
+                return
             if user is not None:
                 self._settings.set(["user_email"], user.email)
                 self._settings.set(["user_url"], user.url)
