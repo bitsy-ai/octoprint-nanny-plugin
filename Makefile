@@ -61,6 +61,9 @@ octoprint-dev:
 	OCTOPRINT_NANNY_WS_URL="ws://localhost:8000/ws/" \
 	OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY="devices-us-central1-dev" \
 	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
+	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print-nanny-dev" \
+	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="5e658dc16cff5ce3d576aa9bd5a356a5" \
+	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve
 
 octoprint-prod:

@@ -26,20 +26,22 @@ from octoprint_nanny.predictor import (
     BOUNDING_BOX_PREDICT_EVENT,
     ANNOTATED_IMAGE_EVENT,
 )
-
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import print_nanny_client
+import beeline
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
 Events.PRINT_PROGRESS = "print_progress"
-
-BACKOFF = 1
 
 
 class WorkerManager:
     """
     Manages PredictWorker, WebsocketWorker, RestWorker processes
     """
+
+    MAX_BACKOFF = 256
+    BACKOFF = 2
 
     PRINT_JOB_EVENTS = [
         Events.ERROR,
@@ -54,6 +56,7 @@ class WorkerManager:
 
     def __init__(self, plugin):
 
+        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager_main")
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
@@ -187,6 +190,10 @@ class WorkerManager:
             }
         )
 
+    def reset_backoff(self):
+        self.BACKOFF = 2
+
+    @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         # register plugin event handlers
         self._register_plugin_event_handlers()
@@ -200,6 +207,7 @@ class WorkerManager:
     def apply_auth(self):
         logger.warning("WorkerManager.apply_auth() not implemented yet")
 
+    @beeline.traced("WorkerManager.apply_calibration")
     def apply_calibration(self):
 
         logger.info("Applying new calibration")
@@ -232,14 +240,14 @@ class WorkerManager:
         private_key = self.plugin._settings.get(["device_private_key"])
         device_id = self.plugin._settings.get(["device_cloudiot_name"])
         gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
-        backoff = 1
         while True:
             if private_key is None or device_id is None or gcp_root_ca is None:
                 logger.warning(
-                    f"Waiting {backoff }to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
+                    f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
                 )
-                sleep(backoff)
-                backoff = backoff ** 2
+                sleep(self.BACKOFF)
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
             break
         self.mqtt_client = MQTTClient(
@@ -304,18 +312,19 @@ class WorkerManager:
     async def _remote_control_receive_loop(self):
         logger.info("Started _remote_control_receive_loop")
         api_token = self.plugin._settings.get(["auth_token"])
-        global BACKOFF
-
         while True:
 
             if api_token is None:
                 logger.warning(
-                    f"auth_token not saved to plugin settings, waiting {BACKOFF} seconds"
+                    f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
                 )
-                await asyncio.sleep(BACKOFF)
+                await asyncio.sleep(self.BACKOFF)
                 api_token = self.plugin._settings.get(["auth_token"])
-                BACKOFF = BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
+
+            trace = self._honeycomb_tracer.start_trace()
 
             event = await self.remote_control_queue.coro_get()
             logging.info(f"Received event in _remote_control_receive_loop {event}")
@@ -347,6 +356,8 @@ class WorkerManager:
                         command_id, success=False
                     )
 
+            self._honeycomb_tracer.finish_trace(trace)
+
     async def _telemetry_queue_send_loop(self):
         """
         Publishes telemetry events via HTTP
@@ -354,31 +365,40 @@ class WorkerManager:
         logger.info("Started _telemetry_queue_send_loop")
 
         api_token = self.plugin._settings.get(["auth_token"])
-        global BACKOFF
+        self.BACKOFF
 
         while True:
 
             if api_token is None:
                 logger.warning(
-                    f"auth_token not saved to plugin settings, waiting {BACKOFF} seconds"
+                    f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
                 )
-                await asyncio.sleep(BACKOFF)
+                await asyncio.sleep(self.BACKOFF)
                 api_token = self.plugin._settings.get(["auth_token"])
-                BACKOFF = BACKOFF ** 2
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
 
             if self.telemetry_events is None:
-                self.telemetry_events = await self.rest_client.get_telemetry_events()
+                try:
+                    self.telemetry_events = (
+                        await self.rest_client.get_telemetry_events()
+                    )
+                except CLIENT_EXCEPTIONS as e:
+                    await asyncio.sleep(self.BACKOFF)
+                    if self.BACKOFF < self.MAX_BACKOFF:
+                        self.BACKOFF = self.BACKOFF ** 2
 
             ###
             # Rest API available
             ###
             if self.mqtt_client is None:
                 logger.warning(
-                    f"Waiting {BACKOFF} seconds for mqtt client to be available"
+                    f"Waiting {self.BACKOFF} seconds for mqtt client to be available"
                 )
-                await asyncio.sleep(BACKOFF)
-                BACKOFF = BACKOFF ** 2
+                await asyncio.sleep(self.BACKOFF)
+                if self.BACKOFF < self.MAX_BACKOFF:
+                    self.BACKOFF = self.BACKOFF ** 2
                 continue
             ###
             # mqtt client available
@@ -419,6 +439,8 @@ class WorkerManager:
             else:
                 await self._publish_octoprint_event_telemetry(event)
 
+            trace = self._honeycomb_tracer.start_trace()
+
             # run local handler fn
             handler_fn = self._local_event_handlers.get(event["event_type"])
             try:
@@ -427,6 +449,9 @@ class WorkerManager:
             except CLIENT_EXCEPTIONS as e:
                 logger.error(e, exc_info=True)
 
+            self._honeycomb_tracer.finish_trace(trace)
+
+    @beeline.traced("WorkerManager.stop_monitoring")
     def stop_monitoring(self, event_type=None, event=None):
         """
         joins and terminates dedicated prediction and pn websocket processes
@@ -452,9 +477,12 @@ class WorkerManager:
             self.pn_ws_proc.close()
             self.pn_ws_proc = None
 
+    @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
-        return self.stop_monitoring()
+        self.stop_monitoring()
+        self._honeycomb_tracer.on_shutdown()
 
+    @beeline.traced("WorkerManager.stop_monitoring")
     def start_monitoring(self, event_type=None, event=None):
         """
         starts prediction and pn websocket processes
