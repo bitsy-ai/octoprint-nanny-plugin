@@ -221,7 +221,7 @@ class OctoPrintNannyPlugin(
             return e
 
         logger.info(
-            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint}"
+            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} device={device}"
         )
 
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
