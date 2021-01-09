@@ -11,5 +11,5 @@ or manually using this URL:
 
 ## Getting started
 
-[Request invitation to closed Beta](https://www.print-nanny.com/request-invite/)
-[OctoPrint Plugin setup](https://help.print-nanny.com/installation-setup/)
+* [Request invitation to closed Beta](https://www.print-nanny.com/request-invite/)
+* [OctoPrint Plugin setup](https://help.print-nanny.com/installation-setup/)
