@@ -1,6 +1,9 @@
 # coding=utf-8
 
 import os
+from setuptools.command.install import install     
+import subprocess
+
 ########################################################################################################################
 ### Do not forget to adjust the following variables to your own plugin.
 
@@ -76,6 +79,31 @@ extra_requires = {
 	]
 }
 
+platform_libs = [
+	"libatlas-base-dev"
+]
+
+PLATFORM_INSTALL = [['sudo', 'apt-get', 'update'],
+                       ['sudo', 'apt-get', 'install', '-y'] + platform_libs
+                       ]
+
+class CustomInstall(install):
+
+	def run_command(self, command):
+        print('Running command: {}'.format(command))
+        p = subprocess.Popen(
+            command,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stdout_data, _ = p.communicate()
+        print('Command output: {}'.format(stdout_data))
+        if p.returncode != 0:
+            raise RuntimeError('Command {} failed: exit code:{}'.format(command_list, p.returncode))
+
+    def run(self):
+        for command in PLATFORM_INSTALL:
+            self.run_command(command)                                                              
+        install.run(self)                                                           
+                                                              
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
@@ -138,7 +166,8 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
 	additional_packages=plugin_additional_packages,
 	ignored_packages=plugin_ignored_packages,
 	additional_data=plugin_additional_data,
-	extra_requires=extra_requires
+	extra_requires=extra_requires,
+	cmdclass={'install': CustomInstall}
 )
 
 if len(additional_setup_parameters):
