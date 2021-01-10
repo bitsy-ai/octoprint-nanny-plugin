@@ -1,7 +1,9 @@
 # coding=utf-8
 
 import os
-from setuptools.command.build import build
+from setuptools.command.install import install
+from distutils.command.build import build as _build
+
 import subprocess
 
 ########################################################################################################################
@@ -79,7 +81,7 @@ extra_requires = {
     "dev": ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio", "twine"]
 }
 
-platform_libs = ["libatlas-base-dev"]
+platform_libs = ["libatlas-base-dev", "cmake", "python3-dev"]
 
 PLATFORM_INSTALL = [
     ["sudo", "apt-get", "update"],
@@ -87,7 +89,18 @@ PLATFORM_INSTALL = [
 ]
 
 
-class CustomBuild(install):
+class build(_build):
+    """A build command class that will be invoked during package install.
+    The package built using the current setup.py will be staged and later
+    installed in the worker using `pip install package'. This class will be
+    instantiated during install for this specific scenario and will trigger
+    running the custom commands specified.
+    """
+
+    sub_commands = _build.sub_commands + [("CustomCommands", None)]
+
+
+class CustomCommands(setuptools.Command):
     def run_command(self, command):
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
@@ -108,7 +121,6 @@ class CustomBuild(install):
     def run(self):
         for command in PLATFORM_INSTALL:
             self.run_command(command)
-        build.run(self)
 
 
 ### --------------------------------------------------------------------------------------------------------------------
@@ -176,7 +188,10 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
     ignored_packages=plugin_ignored_packages,
     additional_data=plugin_additional_data,
     extra_requires=extra_requires,
-    cmdclass={"build": CustomBuild},
+    cmdclass={
+        "build": build,
+        "CustomCommands": CustomCommands,
+    },
 )
 
 if len(additional_setup_parameters):
