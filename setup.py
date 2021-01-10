@@ -106,7 +106,7 @@ class CustomInstall(install):
     def run(self):
         for command in PLATFORM_INSTALL:
             self.run_command(command)
-        install.run(self)
+        super().run()
 
 
 ### --------------------------------------------------------------------------------------------------------------------
