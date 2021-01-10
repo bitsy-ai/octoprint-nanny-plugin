@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import os
-from setuptools.command.install import install
+from setuptools.command.build import build
 import subprocess
 
 ########################################################################################################################
@@ -87,9 +87,9 @@ PLATFORM_INSTALL = [
 ]
 
 
-class CustomInstall(install):
+class CustomBuild(install):
     def run_command(self, command):
-        print("Running command: {}".format(command))
+        print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -97,16 +97,18 @@ class CustomInstall(install):
             stderr=subprocess.STDOUT,
         )
         stdout_data, _ = p.communicate()
-        print("Command output: {}".format(stdout_data))
+        print("PLATFORM_INSTALL Command output: {}".format(stdout_data))
         if p.returncode != 0:
             raise RuntimeError(
-                "Command {} failed: exit code:{}".format(command, p.returncode)
+                "PLATFORM_INSTALL Command {} failed: exit code:{}".format(
+                    command, p.returncode
+                )
             )
 
     def run(self):
         for command in PLATFORM_INSTALL:
             self.run_command(command)
-        super().run()
+        build.run(self)
 
 
 ### --------------------------------------------------------------------------------------------------------------------
@@ -174,7 +176,7 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
     ignored_packages=plugin_ignored_packages,
     additional_data=plugin_additional_data,
     extra_requires=extra_requires,
-    cmdclass={"install": CustomInstall},
+    cmdclass={"build": CustomBuild},
 )
 
 if len(additional_setup_parameters):
