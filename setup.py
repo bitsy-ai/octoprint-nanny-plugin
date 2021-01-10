@@ -84,8 +84,8 @@ extra_requires = {
 platform_libs = ["libatlas-base-dev", "cmake", "python3-dev"]
 
 PLATFORM_INSTALL = [
-    ["sudo", "apt-get", "update"],
-    ["sudo", "apt-get", "install", "-y"] + platform_libs,
+    ["apt-get", "update"],
+    ["apt-get", "install", "-y"] + platform_libs,
 ]
 
 
@@ -109,7 +109,7 @@ class CustomCommands(setuptools.Command):
     def finalize_options(self):
         pass
 
-    def run_command(self, command):
+    def run_command(self, command, sudo=False):
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
@@ -119,12 +119,19 @@ class CustomCommands(setuptools.Command):
         )
         stdout_data, _ = p.communicate()
         print("PLATFORM_INSTALL Command output: {}".format(stdout_data))
+
+        # first try command without sudo, which should support most OctoPi installtions
+        # for self-managed installations, sudo is required unless the user has explicitly updated the Pi's sudoers configuration to permit this
         if p.returncode != 0:
-            raise RuntimeError(
-                "PLATFORM_INSTALL Command {} failed: exit code:{}".format(
-                    command, p.returncode
+            if sudo:
+                raise RuntimeError(
+                    "PLATFORM_INSTALL Command {} failed: exit code:{}".format(
+                        command, p.returncode
+                    )
                 )
-            )
+            else:
+                # retry with sudo
+                return self.run_command(command, sudo=True)
 
     def run(self):
         for command in PLATFORM_INSTALL:
