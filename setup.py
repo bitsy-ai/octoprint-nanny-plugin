@@ -3,7 +3,7 @@
 import os
 from setuptools.command.install import install
 from distutils.command.build import build as _build
-
+import sys
 import subprocess
 
 ########################################################################################################################
@@ -20,7 +20,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.2.5"
+plugin_version = "0.2.6"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -40,7 +40,20 @@ plugin_license = "AGPL"
 
 # Any additional requirements besides OctoPrint should be listed here
 
-import os
+
+class Python2NotSupported(Exception):
+    pass
+
+
+class CPUNotSupported(Exception):
+    pass
+
+
+if sys.version_info.major == 2:
+    raise Python2NotSupported(
+        "Sorry, OctoPrint Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
+    )
+    sys.exit(1)
 
 arch = os.uname().machine
 
@@ -52,11 +65,12 @@ elif arch == "aarch64":
 elif arch == "x86_64":
     tensorflow = "tensorflow==2.4.0"
 else:
-    raise Exception(
-        "OctoPrint Nanny does not support {} architechture. Please open a Github issue.".format(
+    raise CPUNotSupported(
+        "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
             arch
         )
     )
+    sys.exit(1)
 
 plugin_requires = [
     tensorflow,
@@ -66,7 +80,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
-    "print-nanny-client>=0.2.5",
+    "print-nanny-client~=0.2.5",
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
@@ -109,6 +123,8 @@ class CustomCommands(setuptools.Command):
         pass
 
     def run_command(self, command, sudo=False):
+        if sudo:
+            command = ["sudo"] + command
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
