@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import os
-from setuptools.command.install import install     
+from setuptools.command.install import install
 import subprocess
 
 ########################################################################################################################
@@ -39,71 +39,75 @@ plugin_license = "AGPL"
 # Any additional requirements besides OctoPrint should be listed here
 
 import os
+
 arch = os.uname().machine
 
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
-if arch == 'armv7l':
-	tensorflow = 'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl'
-	
-elif arch == 'aarch64':'tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl'	
-elif arch == 'x86_64':
-	tensorflow = "tensorflow==2.4.0"
+if arch == "armv7l":
+    tensorflow = "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
+
+elif arch == "aarch64":
+    "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl"
+elif arch == "x86_64":
+    tensorflow = "tensorflow==2.4.0"
 else:
-	raise Exception('OctoPrint Nanny does not support {} architechture. Please open a Github issue.'.format(arch))
+    raise Exception(
+        "OctoPrint Nanny does not support {} architechture. Please open a Github issue.".format(
+            arch
+        )
+    )
 
 plugin_requires = [
-	tensorflow,
-	"numpy",
-	"pillow",
-	"bravado",
-	"typing_extensions ; python_version < '3.8'",
-	"pytz",
-	"aiohttp",
-	"print-nanny-client",
-	"websockets",
-	"backoff==1.10.0",
-	"aioprocessing==1.1.0",
-	"multiprocessing-logging==0.3.1",
-	"jwt",
-	"paho-mqtt==1.5.1",
-	"honeycomb-beeline"
+    tensorflow,
+    "numpy",
+    "pillow",
+    "bravado",
+    "typing_extensions ; python_version < '3.8'",
+    "pytz",
+    "aiohttp",
+    "print-nanny-client",
+    "websockets",
+    "backoff==1.10.0",
+    "aioprocessing==1.1.0",
+    "multiprocessing-logging==0.3.1",
+    "jwt",
+    "paho-mqtt==1.5.1",
+    "honeycomb-beeline",
 ]
 
 extra_requires = {
-	"dev": [
-		"pytest",
-		"pytest-cov",
-		"pytest-mock",
-		"pytest-asyncio",
-		"twine"
-	]
+    "dev": ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio", "twine"]
 }
 
-platform_libs = [
-	"libatlas-base-dev"
+platform_libs = ["libatlas-base-dev"]
+
+PLATFORM_INSTALL = [
+    ["sudo", "apt-get", "update"],
+    ["sudo", "apt-get", "install", "-y"] + platform_libs,
 ]
 
-PLATFORM_INSTALL = [['sudo', 'apt-get', 'update'],
-                       ['sudo', 'apt-get', 'install', '-y'] + platform_libs
-                       ]
 
 class CustomInstall(install):
-
-	def run_command(self, command):
-        print('Running command: {}'.format(command))
+    def run_command(self, command):
+        print("Running command: {}".format(command))
         p = subprocess.Popen(
             command,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
         stdout_data, _ = p.communicate()
-        print('Command output: {}'.format(stdout_data))
+        print("Command output: {}".format(stdout_data))
         if p.returncode != 0:
-            raise RuntimeError('Command {} failed: exit code:{}'.format(command_list, p.returncode))
+            raise RuntimeError(
+                "Command {} failed: exit code:{}".format(command_list, p.returncode)
+            )
 
     def run(self):
         for command in PLATFORM_INSTALL:
-            self.run_command(command)                                                              
-        install.run(self)                                                           
-                                                              
+            self.run_command(command)
+        install.run(self)
+
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
@@ -113,7 +117,7 @@ class CustomInstall(install):
 # already be installed automatically if they exist. Note that if you add something here you'll also need to update
 # MANIFEST.in to match to ensure that python setup.py sdist produces a source distribution that contains all your
 # files. This is sadly due to how python's setup.py works, see also http://stackoverflow.com/a/14159430/2028598
-plugin_additional_data = ['data']
+plugin_additional_data = ["data"]
 
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
 plugin_additional_packages = []
@@ -136,8 +140,8 @@ plugin_python_requires = ">=3,<4"  # Python 3+
 dependency_links = []
 
 additional_setup_parameters = {
-	"dependency_links": dependency_links,
-	"python_requires": plugin_python_requires,
+    "dependency_links": dependency_links,
+    "python_requires": plugin_python_requires,
 }
 
 ########################################################################################################################
@@ -145,33 +149,37 @@ additional_setup_parameters = {
 from setuptools import setup
 
 try:
-	import octoprint_setuptools
+    import octoprint_setuptools
 except:
-	print("Could not import OctoPrint's setuptools, are you sure you are running that under "
-	      "the same python installation that OctoPrint is installed under?")
-	import sys
-	sys.exit(-1)
+    print(
+        "Could not import OctoPrint's setuptools, are you sure you are running that under "
+        "the same python installation that OctoPrint is installed under?"
+    )
+    import sys
+
+    sys.exit(-1)
 
 setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
-	identifier=plugin_identifier,
-	package=plugin_package,
-	name=plugin_name,
-	version=plugin_version,
-	description=plugin_description,
-	author=plugin_author,
-	mail=plugin_author_email,
-	url=plugin_url,
-	license=plugin_license,
-	requires=plugin_requires,
-	additional_packages=plugin_additional_packages,
-	ignored_packages=plugin_ignored_packages,
-	additional_data=plugin_additional_data,
-	extra_requires=extra_requires,
-	cmdclass={'install': CustomInstall}
+    identifier=plugin_identifier,
+    package=plugin_package,
+    name=plugin_name,
+    version=plugin_version,
+    description=plugin_description,
+    author=plugin_author,
+    mail=plugin_author_email,
+    url=plugin_url,
+    license=plugin_license,
+    requires=plugin_requires,
+    additional_packages=plugin_additional_packages,
+    ignored_packages=plugin_ignored_packages,
+    additional_data=plugin_additional_data,
+    extra_requires=extra_requires,
+    cmdclass={"install": CustomInstall},
 )
 
 if len(additional_setup_parameters):
-	from octoprint.util import dict_merge
-	setup_parameters = dict_merge(setup_parameters, additional_setup_parameters)
+    from octoprint.util import dict_merge
+
+    setup_parameters = dict_merge(setup_parameters, additional_setup_parameters)
 
 setup(**setup_parameters)

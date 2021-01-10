@@ -15,7 +15,7 @@ clean-settings:
 	yq -M 'del(.octoprint_nanny)' ~/.octoprint/config.yaml >  ~/.octoprint/config.yaml
 
 lint:
-	black octoprint_nanny tests
+	black setup.py octoprint_nanny tests
 
 dev-install:
 	pip install -e .[dev]
