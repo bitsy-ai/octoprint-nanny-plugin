@@ -100,7 +100,7 @@ class CustomInstall(install):
         print("Command output: {}".format(stdout_data))
         if p.returncode != 0:
             raise RuntimeError(
-                "Command {} failed: exit code:{}".format(command_list, p.returncode)
+                "Command {} failed: exit code:{}".format(command, p.returncode)
             )
 
     def run(self):
