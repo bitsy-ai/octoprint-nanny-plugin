@@ -20,7 +20,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.2.3"
+plugin_version = "0.2.4"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -67,7 +67,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
-    "print-nanny-client>=0.2.3",
+    "print-nanny-client>=0.2.4",
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
@@ -84,8 +84,8 @@ extra_requires = {
 platform_libs = ["libatlas-base-dev", "cmake", "python3-dev"]
 
 PLATFORM_INSTALL = [
-    ["sudo", "apt-get", "update"],
-    ["sudo", "apt-get", "install", "-y"] + platform_libs,
+    ["apt-get", "update"],
+    ["apt-get", "install", "-y"] + platform_libs,
 ]
 
 
@@ -109,7 +109,7 @@ class CustomCommands(setuptools.Command):
     def finalize_options(self):
         pass
 
-    def run_command(self, command):
+    def run_command(self, command, sudo=False):
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
@@ -119,12 +119,19 @@ class CustomCommands(setuptools.Command):
         )
         stdout_data, _ = p.communicate()
         print("PLATFORM_INSTALL Command output: {}".format(stdout_data))
+
+        # first try command without sudo, which should support most OctoPi installtions
+        # for self-managed installations, sudo is required unless the user has explicitly updated the Pi's sudoers configuration to permit this
         if p.returncode != 0:
-            raise RuntimeError(
-                "PLATFORM_INSTALL Command {} failed: exit code:{}".format(
-                    command, p.returncode
+            if sudo:
+                raise RuntimeError(
+                    "PLATFORM_INSTALL Command {} failed: exit code:{}".format(
+                        command, p.returncode
+                    )
                 )
-            )
+            else:
+                # retry with sudo
+                return self.run_command(command, sudo=True)
 
     def run(self):
         for command in PLATFORM_INSTALL:
