@@ -67,7 +67,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
-    "print-nanny-client",
+    "print-nanny-client>=0.2.3",
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
