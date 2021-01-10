@@ -3,7 +3,7 @@
 import os
 from setuptools.command.install import install
 from distutils.command.build import build as _build
-
+import sys
 import subprocess
 
 ########################################################################################################################
@@ -40,7 +40,20 @@ plugin_license = "AGPL"
 
 # Any additional requirements besides OctoPrint should be listed here
 
-import os
+
+class Python2NotSupported(Exception):
+    pass
+
+
+class CPUNotSupported(Exception):
+    pass
+
+
+if sys.version_info.major == 2:
+    raise Python2NotSupported(
+        "Sorry, OctoPrint Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
+    )
+    sys.exit(1)
 
 arch = os.uname().machine
 
@@ -52,11 +65,12 @@ elif arch == "aarch64":
 elif arch == "x86_64":
     tensorflow = "tensorflow==2.4.0"
 else:
-    raise Exception(
+    raise CPUNotSupported(
         "OctoPrint Nanny does not support {} architechture. Please open a Github issue.".format(
             arch
         )
     )
+    sys.exit(1)
 
 plugin_requires = [
     tensorflow,
