@@ -20,7 +20,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.2.4"
+plugin_version = "0.2.5"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -47,9 +47,8 @@ arch = os.uname().machine
 # TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
 if arch == "armv7l":
     tensorflow = "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
-
 elif arch == "aarch64":
-    "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl"
+    tensorflow = "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl"
 elif arch == "x86_64":
     tensorflow = "tensorflow==2.4.0"
 else:
@@ -67,7 +66,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
-    "print-nanny-client>=0.2.4",
+    "print-nanny-client>=0.2.5",
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
