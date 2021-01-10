@@ -109,6 +109,8 @@ class CustomCommands(setuptools.Command):
         pass
 
     def run_command(self, command, sudo=False):
+        if sudo:
+            command = ["sudo"] + command
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
