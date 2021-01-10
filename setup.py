@@ -101,6 +101,14 @@ class build(_build):
 
 
 class CustomCommands(setuptools.Command):
+    """A setuptools Command class able to run arbitrary commands."""
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
     def run_command(self, command):
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
