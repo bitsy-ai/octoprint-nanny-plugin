@@ -66,7 +66,7 @@ elif arch == "x86_64":
     tensorflow = "tensorflow==2.4.0"
 else:
     raise CPUNotSupported(
-        "OctoPrint Nanny does not support {} architechture. Please open a Github issue.".format(
+        "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
             arch
         )
     )
