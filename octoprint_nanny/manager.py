@@ -96,7 +96,7 @@ class WorkerManager:
         self._remote_control_event_handlers = {
             "StartMonitoring": self.start_monitoring,
             "StopMonitoring": self.stop_monitoring,
-            "Snapshot": lambda event_data, event_type: (event_data, event_type),
+            "Snapshot": self.on_snapshot
         }
 
         self._environment = {}
@@ -208,6 +208,9 @@ class WorkerManager:
         self.remote_control_worker_thread.start()
         while self.loop is None:
             sleep(1)
+    
+    def on_snapshot(self, *args, **kwargs):
+        logger.info(f'WorkerManager.on_snapshot called with {args} {kwargs}')
 
     def apply_auth(self):
         logger.warning("WorkerManager.apply_auth() not implemented yet")
@@ -353,7 +356,7 @@ class WorkerManager:
                         metadata=metadata,
                     )
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(f'Error calling handler_fn {handler_fn} \n {e}')
                     metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
                         command_id,
@@ -460,7 +463,7 @@ class WorkerManager:
                 if handler_fn:
                     await handler_fn(**event)
             except CLIENT_EXCEPTIONS as e:
-                logger.error(e, exc_info=True)
+                logger.error(f'Error running {handler_fn } \n {e}', exc_info=True)
 
             self._honeycomb_tracer.finish_trace(trace)
 
@@ -606,4 +609,6 @@ class WorkerManager:
             logger.error(f"_handle_print_start API called failed {e}", exc_info=True)
             return
 
-        self.start_monitoring()
+        if self.plugin._settings.get(["auto_start"]):
+            logger.info("Print Nanny monitoring is set to auto-start")
+            self.start_monitoring()
