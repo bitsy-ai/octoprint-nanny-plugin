@@ -292,7 +292,6 @@ class WorkerManager:
                 device_cloudiot_name=self.device_cloudiot_name,
             )
         )
-        event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
@@ -425,6 +424,7 @@ class WorkerManager:
                 continue
             # publish to octoprint-events telemetry topic
             else:
+                event.update(self._get_metadata())
                 await self._publish_octoprint_event_telemetry(event)
 
             trace = self._honeycomb_tracer.start_trace()
@@ -558,7 +558,8 @@ class WorkerManager:
             )
             printer_profile = (
                 await self.plugin.rest_client.update_or_create_printer_profile(
-                    current_profile
+                    current_profile,
+                    self.device_id
                 )
             )
 

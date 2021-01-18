@@ -165,7 +165,7 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
-    async def _sync_printer_profiles(self):
+    async def _sync_printer_profiles(self, device_id):
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
@@ -274,7 +274,7 @@ class OctoPrintNannyPlugin(
             payload={"msg": "Syncing printer profiles..."},
         )
         try:
-            printers = await self._sync_printer_profiles()
+            printers = await self._sync_printer_profiles(device.id)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
