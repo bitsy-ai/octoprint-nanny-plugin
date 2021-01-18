@@ -50,6 +50,8 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
 )
 GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
+Events.PRINT_PROGRESS = "print_progress"
+
 
 class OctoPrintNannyPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -62,6 +64,7 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.EnvironmentDetectionPlugin,
     octoprint.plugin.ProgressPlugin,
     octoprint.plugin.ShutdownPlugin,
+    octoprint.plugin.ReloadNeedingPlugin,
 ):
     def __init__(self, *args, **kwargs):
 
@@ -435,7 +438,7 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, progress):
         self._worker_manager.telemetry_queue.put(
-            {"event_type": self.PRINT_PROGRESS, "event_data": {"progress": progress}}
+            {"event_type": Events.PRINT_PROGRESS, "event_data": {"progress": progress}}
         )
 
     ## EnvironmentDetectionPlugin
