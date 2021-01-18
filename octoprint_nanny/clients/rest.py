@@ -145,7 +145,7 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             request = OctoPrintEventRequest(
-                dt=event_data["metadata"]["dt"],
+                created_dt=event_data["metadata"]["created_dt"],
                 event_type=event_type,
                 event_data=event_data,
                 plugin_version=event_data["metadata"]["plugin_version"],
@@ -204,7 +204,7 @@ class RestAPIClient:
             api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.models.print_job_request.PrintJobRequest(
                 gcode_file=gcode_file_id,
-                dt=event_data["dt"],
+                created_dt=event_data["created_dt"],
                 name=event_data["name"],
                 printer_profile=printer_profile_id,
             )
@@ -217,14 +217,16 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_or_create_printer_profile(self, printer_profile, octoprint_device_id):
+    async def update_or_create_printer_profile(
+        self, printer_profile, octoprint_device_id
+    ):
 
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
             request = PrinterProfileRequest(
                 octoprint_device=octoprint_device_id,
-                octoprint_key=printer_profile['id'],
+                octoprint_key=printer_profile["id"],
                 axes_e_inverted=printer_profile["axes"]["e"]["inverted"],
                 axes_x_inverted=printer_profile["axes"]["x"]["inverted"],
                 axes_y_inverted=printer_profile["axes"]["y"]["inverted"],
@@ -245,7 +247,7 @@ class RestAPIClient:
                 volume_formfactor=printer_profile["volume"]["formFactor"],
                 volume_height=printer_profile["volume"]["height"],
                 volume_origin=printer_profile["volume"]["origin"],
-                volume_width=printer_profile["volume"]["width"],
+                volume_wicreated_dth=printer_profile["volume"]["wicreated_dth"],
             )
             printer_profile = await api_instance.printer_profiles_update_or_create(
                 request

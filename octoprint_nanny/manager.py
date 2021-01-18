@@ -558,8 +558,7 @@ class WorkerManager:
             )
             printer_profile = (
                 await self.plugin.rest_client.update_or_create_printer_profile(
-                    current_profile,
-                    self.device_id
+                    current_profile, self.device_id
                 )
             )
 
