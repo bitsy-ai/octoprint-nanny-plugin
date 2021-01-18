@@ -86,7 +86,6 @@ class WorkerManager:
             Events.PRINT_CANCELLED: self.stop_monitoring,
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
-            Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
         self._remote_control_event_handlers = {
@@ -215,17 +214,6 @@ class WorkerManager:
         self.stop_monitoring()
         self.start_monitoring()
 
-    async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
-        if self.shared.print_job_id is not None:
-            try:
-                await self.rest_client.update_print_progress(
-                    self.shared.print_job_id, event_data
-                )
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(
-                    f"_handle_print_progress_upload() exception {e}", exc_info=True
-                )
-
     async def _on_monitoring_start(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
             self.device_id, monitoring_acitve=True
@@ -306,7 +294,7 @@ class WorkerManager:
         )
         event.update(self._get_metadata())
         if event_type in self.PRINT_JOB_EVENTS:
-            event.update(self._get_print_job_metadata)
+            event.update(self._get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
     async def _remote_control_receive_loop(self):
@@ -560,7 +548,7 @@ class WorkerManager:
             environment=self._environment,
         )
 
-    async def _handle_print_start(self, event_type, event_data):
+    async def _handle_print_start(self, event_type, event_data, **kwargs):
 
         try:
             printer_profile = (
