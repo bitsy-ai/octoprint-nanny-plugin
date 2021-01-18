@@ -96,7 +96,7 @@ class WorkerManager:
         self._remote_control_event_handlers = {
             "StartMonitoring": self.start_monitoring,
             "StopMonitoring": self.stop_monitoring,
-            "Snapshot": lambda event_data, event_type: (event_data, event_type)
+            "Snapshot": lambda event_data, event_type: (event_data, event_type),
         }
 
         self._environment = {}
@@ -330,8 +330,11 @@ class WorkerManager:
 
             command_id = event.get("remote_control_command_id")
             snapshot = await self._remote_control_snapshot()
+
+            metadata = self._get_metadata()
             await self.rest_client.update_remote_control_command(
-                command_id, received=True, snapshot_id=snapshot.id
+                command_id, received=True, snapshot_id=snapshot.id,
+                metadata=metadata
             )
 
             handler_fn = self._remote_control_event_handlers.get(command)
@@ -343,13 +346,15 @@ class WorkerManager:
                     else:
                         handler_fn(event=event, event_type=command)
                     # set success state
+                    metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=True, snapshot_id=snapshot.id
+                        command_id, success=True, snapshot_id=snapshot.id, metadata=metadata
                     )
                 except Exception as e:
                     logger.error(e)
+                    metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=False, snapshot_id=snapshot.id
+                        command_id, success=False, snapshot_id=snapshot.id, metadata=metadata
                     )
 
             self._honeycomb_tracer.finish_trace(trace)
