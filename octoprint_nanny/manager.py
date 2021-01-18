@@ -549,11 +549,16 @@ class WorkerManager:
         )
 
     async def _handle_print_start(self, event_type, event_data, **kwargs):
-
+        logger.info(
+            f"_handle_print_start called for {event_type} with data {event_data}"
+        )
         try:
+            current_profile = (
+                self.plugin._printer_profile_manager.get_current_or_default()
+            )
             printer_profile = (
                 await self.plugin.rest_client.update_or_create_printer_profile(
-                    event_data
+                    current_profile
                 )
             )
 
