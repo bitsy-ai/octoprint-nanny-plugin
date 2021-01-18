@@ -178,17 +178,21 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_or_create_gcode_file(self, event_data, gcode_file_path):
+    async def update_or_create_gcode_file(
+        self, event_data, gcode_file_path, octoprint_device_id
+    ):
         gcode_f = open(gcode_file_path, "rb")
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
         gcode_f.seek(0)
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
-
+            # https://github.com/aio-libs/aiohttp/issues/3652
+            # in a multi-part form request (file upload), octoprint_device is accepted as a string and deserialized to an integer on the server-side
             gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data["name"],
                 file_hash=file_hash,
                 file=gcode_f,
+                octoprint_device=str(octoprint_device_id),
             )
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file
@@ -199,14 +203,16 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def create_print_job(self, event_data, gcode_file_id, printer_profile_id):
+    async def create_print_job(
+        self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
+    ):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.models.print_job_request.PrintJobRequest(
                 gcode_file=gcode_file_id,
-                created_dt=event_data["created_dt"],
                 name=event_data["name"],
                 printer_profile=printer_profile_id,
+                octoprint_device=octoprint_device_id,
             )
             print_job = await api_instance.print_jobs_create(request)
             return print_job
@@ -247,7 +253,7 @@ class RestAPIClient:
                 volume_formfactor=printer_profile["volume"]["formFactor"],
                 volume_height=printer_profile["volume"]["height"],
                 volume_origin=printer_profile["volume"]["origin"],
-                volume_wicreated_dth=printer_profile["volume"]["wicreated_dth"],
+                volume_width=printer_profile["volume"]["width"],
             )
             printer_profile = await api_instance.printer_profiles_update_or_create(
                 request

@@ -18,6 +18,7 @@ from octoprint.events import Events
 import inspect
 import threading
 
+from rest_framework.parsers import MultiPartParser
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -292,6 +293,8 @@ class WorkerManager:
                 device_cloudiot_name=self.device_cloudiot_name,
             )
         )
+        event.update(self._get_metadata())
+
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
@@ -424,7 +427,6 @@ class WorkerManager:
                 continue
             # publish to octoprint-events telemetry topic
             else:
-                event.update(self._get_metadata())
                 await self._publish_octoprint_event_telemetry(event)
 
             trace = self._honeycomb_tracer.start_trace()
@@ -568,11 +570,11 @@ class WorkerManager:
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
             gcode_file = await self.plugin.rest_client.update_or_create_gcode_file(
-                event_data, gcode_file_path
+                event_data, gcode_file_path, self.device_id
             )
 
             print_job = await self.plugin.rest_client.create_print_job(
-                event_data, gcode_file.id, printer_profile.id
+                event_data, gcode_file.id, printer_profile.id, self.device_id
             )
 
             self.shared.print_job_id = print_job.id
