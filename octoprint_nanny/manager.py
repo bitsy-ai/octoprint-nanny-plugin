@@ -96,6 +96,7 @@ class WorkerManager:
         self._remote_control_event_handlers = {
             "StartMonitoring": self.start_monitoring,
             "StopMonitoring": self.stop_monitoring,
+            "Snapshot": lambda event_data, event_type: (event_data, event_type)
         }
 
         self._environment = {}
@@ -328,11 +329,10 @@ class WorkerManager:
                 continue
 
             command_id = event.get("remote_control_command_id")
-            # set received state
+            snapshot = await self._remote_control_snapshot()
             await self.rest_client.update_remote_control_command(
-                command_id, received=True
+                command_id, received=True, snapshot_id=snapshot.id
             )
-            snapshot = await self._remote_control_snapshot(command_id)
 
             handler_fn = self._remote_control_event_handlers.get(command)
 
