@@ -333,8 +333,7 @@ class WorkerManager:
 
             metadata = self._get_metadata()
             await self.rest_client.update_remote_control_command(
-                command_id, received=True, snapshot_id=snapshot.id,
-                metadata=metadata
+                command_id, received=True, snapshot_id=snapshot.id, metadata=metadata
             )
 
             handler_fn = self._remote_control_event_handlers.get(command)
@@ -348,13 +347,19 @@ class WorkerManager:
                     # set success state
                     metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=True, snapshot_id=snapshot.id, metadata=metadata
+                        command_id,
+                        success=True,
+                        snapshot_id=snapshot.id,
+                        metadata=metadata,
                     )
                 except Exception as e:
                     logger.error(e)
                     metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=False, snapshot_id=snapshot.id, metadata=metadata
+                        command_id,
+                        success=False,
+                        snapshot_id=snapshot.id,
+                        metadata=metadata,
                     )
 
             self._honeycomb_tracer.finish_trace(trace)
