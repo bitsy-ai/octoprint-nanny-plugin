@@ -188,7 +188,7 @@ class RestAPIClient:
             api_instance = RemoteControlApi(api_client=api_client)
             # https://github.com/aio-libs/aiohttp/issues/3652
             # in a multi-part form request (file upload), octoprint_device is accepted as a string and deserialized to an integer on the server-side
-            
+
             gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data["name"],
                 file_hash=file_hash,

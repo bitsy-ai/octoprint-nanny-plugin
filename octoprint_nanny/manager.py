@@ -55,9 +55,7 @@ class WorkerManager:
     ]
 
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [
-        Events.Z_CHANGE
-    ]
+    MUTED_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, plugin):
 
