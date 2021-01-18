@@ -210,8 +210,8 @@ class RestAPIClient:
             api_instance = RemoteControlApi(api_client=api_client)
             # https://github.com/aio-libs/aiohttp/issues/3652
             # in a multi-part form request (file upload), params MUST be serialized as strings and deserialized to integers on the server-side
-            gcode_file = await api_instance.gcode_files_update_or_create(
-                snapshot=snapshot_io, command=str(command_id)
+            gcode_file = await api_instance.snapshot_update_or_create(
+                snapshot=snapshot_io
             )
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file

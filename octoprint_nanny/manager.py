@@ -332,6 +332,7 @@ class WorkerManager:
             await self.rest_client.update_remote_control_command(
                 command_id, received=True
             )
+            snapshot = await self._remote_control_snapshot(command_id)
 
             handler_fn = self._remote_control_event_handlers.get(command)
 
@@ -343,24 +344,22 @@ class WorkerManager:
                         handler_fn(event=event, event_type=command)
                     # set success state
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=True
+                        command_id, success=True, snapshot_id=snapshot.id
                     )
                 except Exception as e:
                     logger.error(e)
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=False
+                        command_id, success=False, snapshot_id=snapshot.id
                     )
-
-            await self._remote_control_snapshot(command_id)
 
             self._honeycomb_tracer.finish_trace(trace)
 
-    async def _remote_control_snapshot(self, command_id):
+    async def _remote_control_snapshot(self):
         async with aiohttp.ClientSession() as session:
             res = await session.get(self.snapshot_url)
             snapshot_io = io.BytesIO(await res.read())
 
-        await self.rest_client.update_or_create_snapshot(snapshot_io, command_id)
+        return await self.rest_client.update_or_create_snapshot(snapshot_io)
 
     async def _telemetry_queue_send_loop(self):
         """
