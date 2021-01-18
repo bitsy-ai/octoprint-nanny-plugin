@@ -7,6 +7,8 @@ import platform
 import uuid
 import pytz
 from time import sleep
+import io
+import aiohttp
 
 import logging
 
@@ -332,6 +334,7 @@ class WorkerManager:
             )
 
             handler_fn = self._remote_control_event_handlers.get(command)
+
             if handler_fn:
                 try:
                     if inspect.isawaitable(handler_fn):
@@ -348,7 +351,16 @@ class WorkerManager:
                         command_id, success=False
                     )
 
+            await self._remote_control_snapshot(command_id)
+
             self._honeycomb_tracer.finish_trace(trace)
+
+    async def _remote_control_snapshot(self, command_id):
+        async with aiohttp.ClientSession() as session:
+            res = await session.get(self.snapshot_url)
+            snapshot_io = io.BytesIO(await res.read())
+
+        await self.rest_client.update_or_create_snapshot(snapshot_io, command_id)
 
     async def _telemetry_queue_send_loop(self):
         """
@@ -444,12 +456,12 @@ class WorkerManager:
             self._honeycomb_tracer.finish_trace(trace)
 
     @beeline.traced("WorkerManager.stop_monitoring")
-    def stop_monitoring(self, event_type=None, event=None):
+    def stop_monitoring(self, event_type=None, **kwargs):
         """
         joins and terminates dedicated prediction and pn websocket processes
         """
         logging.info(
-            f"WorkerManager.stop_monitoring called by event_type={event_type} event={event}"
+            f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.active = False
         self.plugin._event_bus.fire(
@@ -474,13 +486,13 @@ class WorkerManager:
         self.stop_monitoring()
         self._honeycomb_tracer.on_shutdown()
 
-    @beeline.traced("WorkerManager.stop_monitoring")
-    def start_monitoring(self, event_type=None, event=None):
+    @beeline.traced("WorkerManager.start_monitoring")
+    def start_monitoring(self, event_type=None, **kwargs):
         """
         starts prediction and pn websocket processes
         """
         logging.info(
-            f"WorkerManager.start_monitoring called by event_type={event_type} event={event}"
+            f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.active = True
         self.plugin._event_bus.fire(

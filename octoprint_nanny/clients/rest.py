@@ -204,6 +204,24 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
+    async def update_or_create_snapshot(self, snapshot_io, command_id):
+        snapshot_io.name = str(command_id) + ".jpg"
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = RemoteControlApi(api_client=api_client)
+            # https://github.com/aio-libs/aiohttp/issues/3652
+            # in a multi-part form request (file upload), params MUST be serialized as strings and deserialized to integers on the server-side
+            gcode_file = await api_instance.gcode_files_update_or_create(
+                snapshot=snapshot_io, command=str(command_id)
+            )
+            logger.info(f"Upserted gcode_file {gcode_file}")
+            return gcode_file
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
     async def create_print_job(
         self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
     ):
