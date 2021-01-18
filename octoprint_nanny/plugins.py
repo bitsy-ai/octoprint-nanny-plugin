@@ -50,7 +50,7 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
 )
 GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
-Events.PRINT_PROGRESS = "print_progress"
+Events.PRINT_PROGRESS = "PrintProgress"
 
 
 class OctoPrintNannyPlugin(
@@ -173,7 +173,8 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             logger.info("Syncing profile")
             created_profile = await self.rest_client.update_or_create_printer_profile(
-                profile
+                profile,
+                device_id
             )
             id_map["octoprint"][profile_id] = created_profile.id
             id_map["octoprint_nanny"][created_profile.id] = profile_id

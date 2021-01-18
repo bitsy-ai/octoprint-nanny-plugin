@@ -18,7 +18,6 @@ from octoprint.events import Events
 import inspect
 import threading
 
-from rest_framework.parsers import MultiPartParser
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -33,7 +32,7 @@ import beeline
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
-Events.PRINT_PROGRESS = "print_progress"
+Events.PRINT_PROGRESS = "PrintProgress"
 
 
 class WorkerManager:
@@ -53,6 +52,11 @@ class WorkerManager:
         Events.PRINT_PAUSED,
         Events.PRINT_RESUMED,
         Events.PRINT_STARTED,
+    ]
+
+    # do not warn when the following events are skipped on telemetry update
+    MUTED_EVENTS = [
+        Events.Z_CHANGE
     ]
 
     def __init__(self, plugin):
@@ -422,7 +426,7 @@ class WorkerManager:
                 # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
                 if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
                     pass
-                else:
+                elif event_type not in self.MUTED_EVENTS:
                     logger.warning(f"Discarding {event_type} with payload {event}")
                 continue
             # publish to octoprint-events telemetry topic
