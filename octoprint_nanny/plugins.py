@@ -50,6 +50,8 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
 )
 GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
 
+Events.PRINT_PROGRESS = "PrintProgress"
+
 
 class OctoPrintNannyPlugin(
     octoprint.plugin.SettingsPlugin,
@@ -62,6 +64,7 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.EnvironmentDetectionPlugin,
     octoprint.plugin.ProgressPlugin,
     octoprint.plugin.ShutdownPlugin,
+    octoprint.plugin.ReloadNeedingPlugin,
 ):
     def __init__(self, *args, **kwargs):
 
@@ -162,7 +165,7 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
-    async def _sync_printer_profiles(self):
+    async def _sync_printer_profiles(self, device_id):
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
@@ -170,7 +173,7 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             logger.info("Syncing profile")
             created_profile = await self.rest_client.update_or_create_printer_profile(
-                {"printer_profile": profile}
+                profile, device_id
             )
             id_map["octoprint"][profile_id] = created_profile.id
             id_map["octoprint_nanny"][created_profile.id] = profile_id
@@ -271,7 +274,7 @@ class OctoPrintNannyPlugin(
             payload={"msg": "Syncing printer profiles..."},
         )
         try:
-            printers = await self._sync_printer_profiles()
+            printers = await self._sync_printer_profiles(device.id)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
@@ -435,7 +438,7 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, progress):
         self._worker_manager.telemetry_queue.put(
-            {"event_type": self.PRINT_PROGRESS, "event_data": {"progress": progress}}
+            {"event_type": Events.PRINT_PROGRESS, "event_data": {"progress": progress}}
         )
 
     ## EnvironmentDetectionPlugin

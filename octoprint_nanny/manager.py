@@ -7,6 +7,8 @@ import platform
 import uuid
 import pytz
 from time import sleep
+import io
+import aiohttp
 
 import logging
 
@@ -32,7 +34,7 @@ import beeline
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
-Events.PRINT_PROGRESS = "print_progress"
+Events.PRINT_PROGRESS = "PrintProgress"
 
 
 class WorkerManager:
@@ -53,6 +55,9 @@ class WorkerManager:
         Events.PRINT_RESUMED,
         Events.PRINT_STARTED,
     ]
+
+    # do not warn when the following events are skipped on telemetry update
+    MUTED_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, plugin):
 
@@ -86,12 +91,12 @@ class WorkerManager:
             Events.PRINT_CANCELLED: self.stop_monitoring,
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
-            Events.PRINT_PROGRESS: self._handle_print_progress_upload,
         }
 
         self._remote_control_event_handlers = {
             "StartMonitoring": self.start_monitoring,
             "StopMonitoring": self.stop_monitoring,
+            "Snapshot": self.on_snapshot,
         }
 
         self._environment = {}
@@ -204,6 +209,9 @@ class WorkerManager:
         while self.loop is None:
             sleep(1)
 
+    def on_snapshot(self, *args, **kwargs):
+        logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
+
     def apply_auth(self):
         logger.warning("WorkerManager.apply_auth() not implemented yet")
 
@@ -214,17 +222,6 @@ class WorkerManager:
         self._calibration = None
         self.stop_monitoring()
         self.start_monitoring()
-
-    async def _handle_print_progress_upload(self, event_type, event_data, **kwargs):
-        if self.shared.print_job_id is not None:
-            try:
-                await self.rest_client.update_print_progress(
-                    self.shared.print_job_id, event_data
-                )
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(
-                    f"_handle_print_progress_upload() exception {e}", exc_info=True
-                )
 
     async def _on_monitoring_start(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
@@ -305,8 +302,9 @@ class WorkerManager:
             )
         )
         event.update(self._get_metadata())
+
         if event_type in self.PRINT_JOB_EVENTS:
-            event.update(self._get_print_job_metadata)
+            event.update(self._get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
     async def _remote_control_receive_loop(self):
@@ -328,35 +326,60 @@ class WorkerManager:
 
             event = await self.remote_control_queue.coro_get()
             logging.info(f"Received event in _remote_control_receive_loop {event}")
+
             command = event.get("command")
             if command is None:
                 logger.warning("Ignoring received message where command=None")
                 continue
 
             command_id = event.get("remote_control_command_id")
-            # set received state
+
+            await self._remote_control_snapshot(command_id)
+
+            metadata = self._get_metadata()
             await self.rest_client.update_remote_control_command(
-                command_id, received=True
+                command_id, received=True, metadata=metadata
             )
 
             handler_fn = self._remote_control_event_handlers.get(command)
+
+            logger.info(
+                f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for command={command}"
+            )
+
             if handler_fn:
                 try:
                     if inspect.isawaitable(handler_fn):
                         await handler_fn(event=event, event_type=command)
                     else:
                         handler_fn(event=event, event_type=command)
+
+                    metadata = self._get_metadata()
                     # set success state
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=True
+                        command_id,
+                        success=True,
+                        metadata=metadata,
                     )
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
+                    metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
-                        command_id, success=False
+                        command_id,
+                        success=False,
+                        metadata=metadata,
                     )
 
             self._honeycomb_tracer.finish_trace(trace)
+
+    async def _remote_control_snapshot(self, command_id):
+        async with aiohttp.ClientSession() as session:
+            res = await session.get(self.snapshot_url)
+            snapshot_io = io.BytesIO(await res.read())
+
+        return await self.rest_client.create_snapshot(
+            image=snapshot_io, command=command_id
+        )
 
     async def _telemetry_queue_send_loop(self):
         """
@@ -432,7 +455,7 @@ class WorkerManager:
                 # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
                 if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
                     pass
-                else:
+                elif event_type not in self.MUTED_EVENTS:
                     logger.warning(f"Discarding {event_type} with payload {event}")
                 continue
             # publish to octoprint-events telemetry topic
@@ -443,21 +466,25 @@ class WorkerManager:
 
             # run local handler fn
             handler_fn = self._local_event_handlers.get(event["event_type"])
-            try:
-                if handler_fn:
-                    await handler_fn(**event)
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(e, exc_info=True)
+
+            if handler_fn:
+                try:
+                    if inspect.isawaitable(handler_fn):
+                        await handler_fn(**event)
+                    else:
+                        handler_fn(**event)
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f"Error running {handler_fn } \n {e}", exc_info=True)
 
             self._honeycomb_tracer.finish_trace(trace)
 
     @beeline.traced("WorkerManager.stop_monitoring")
-    def stop_monitoring(self, event_type=None, event=None):
+    def stop_monitoring(self, event_type=None, **kwargs):
         """
         joins and terminates dedicated prediction and pn websocket processes
         """
         logging.info(
-            f"WorkerManager.stop_monitoring called by event_type={event_type} event={event}"
+            f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.active = False
         self.plugin._event_bus.fire(
@@ -482,13 +509,13 @@ class WorkerManager:
         self.stop_monitoring()
         self._honeycomb_tracer.on_shutdown()
 
-    @beeline.traced("WorkerManager.stop_monitoring")
-    def start_monitoring(self, event_type=None, event=None):
+    @beeline.traced("WorkerManager.start_monitoring")
+    def start_monitoring(self, event_type=None, **kwargs):
         """
         starts prediction and pn websocket processes
         """
         logging.info(
-            f"WorkerManager.start_monitoring called by event_type={event_type} event={event}"
+            f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.active = True
         self.plugin._event_bus.fire(
@@ -560,12 +587,17 @@ class WorkerManager:
             environment=self._environment,
         )
 
-    async def _handle_print_start(self, event_type, event_data):
-
+    async def _handle_print_start(self, event_type, event_data, **kwargs):
+        logger.info(
+            f"_handle_print_start called for {event_type} with data {event_data}"
+        )
         try:
+            current_profile = (
+                self.plugin._printer_profile_manager.get_current_or_default()
+            )
             printer_profile = (
                 await self.plugin.rest_client.update_or_create_printer_profile(
-                    event_data
+                    current_profile, self.device_id
                 )
             )
 
@@ -575,11 +607,11 @@ class WorkerManager:
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
             gcode_file = await self.plugin.rest_client.update_or_create_gcode_file(
-                event_data, gcode_file_path
+                event_data, gcode_file_path, self.device_id
             )
 
             print_job = await self.plugin.rest_client.create_print_job(
-                event_data, gcode_file.id, printer_profile.id
+                event_data, gcode_file.id, printer_profile.id, self.device_id
             )
 
             self.shared.print_job_id = print_job.id
@@ -588,4 +620,6 @@ class WorkerManager:
             logger.error(f"_handle_print_start API called failed {e}", exc_info=True)
             return
 
-        self.start_monitoring()
+        if self.plugin._settings.get(["auto_start"]):
+            logger.info("Print Nanny monitoring is set to auto-start")
+            self.start_monitoring()
