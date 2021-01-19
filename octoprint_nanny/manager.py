@@ -326,6 +326,7 @@ class WorkerManager:
 
             event = await self.remote_control_queue.coro_get()
             logging.info(f"Received event in _remote_control_receive_loop {event}")
+
             command = event.get("command")
             if command is None:
                 logger.warning("Ignoring received message where command=None")
@@ -336,10 +337,12 @@ class WorkerManager:
 
             metadata = self._get_metadata()
             await self.rest_client.update_remote_control_command(
-                command_id, received=True, snapshot_id=snapshot.id, metadata=metadata
+                command_id, received=True, snapshot=snapshot.id, metadata=metadata
             )
 
             handler_fn = self._remote_control_event_handlers.get(command)
+
+            logger.info(f'Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for command={command}')
 
             if handler_fn:
                 try:
@@ -352,7 +355,7 @@ class WorkerManager:
                     await self.rest_client.update_remote_control_command(
                         command_id,
                         success=True,
-                        snapshot_id=snapshot.id,
+                        snapshot=snapshot.id,
                         metadata=metadata,
                     )
                 except Exception as e:
@@ -361,7 +364,7 @@ class WorkerManager:
                     await self.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
-                        snapshot_id=snapshot.id,
+                        snapshot=snapshot.id,
                         metadata=metadata,
                     )
 
