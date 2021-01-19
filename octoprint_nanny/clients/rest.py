@@ -204,16 +204,14 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_or_create_snapshot(self, snapshot_io, command_id):
+    async def create_snapshot(self, snapshot_io, command_id):
         snapshot_io.name = str(command_id) + ".jpg"
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             # https://github.com/aio-libs/aiohttp/issues/3652
             # in a multi-part form request (file upload), params MUST be serialized as strings and deserialized to integers on the server-side
-            snapshot = await api_instance.snapshots_update_or_create(
-                snapshot_io
-            )
-            logger.info(f"Upserted snapshot {snapshot}")
+            snapshot = await api_instance.snapshots_create(snapshot_io)
+            logger.info(f"Created snapshot {snapshot}")
             return snapshot
 
     @backoff.on_exception(
