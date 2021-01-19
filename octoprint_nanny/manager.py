@@ -459,13 +459,15 @@ class WorkerManager:
 
             # run local handler fn
             handler_fn = self._local_event_handlers.get(event["event_type"])
-            try:
-                if inspect.isawaitable(handler_fn):
-                    await handler_fn(**event)
-                else:
-                    handler_fn(**event)
-            except CLIENT_EXCEPTIONS as e:
-                logger.error(f"Error running {handler_fn } \n {e}", exc_info=True)
+
+            if handler_fn:
+                try:
+                    if inspect.isawaitable(handler_fn):
+                        await handler_fn(**event)
+                    else:
+                        handler_fn(**event)
+                except CLIENT_EXCEPTIONS as e:
+                    logger.error(f"Error running {handler_fn } \n {e}", exc_info=True)
 
             self._honeycomb_tracer.finish_trace(trace)
 
