@@ -96,7 +96,7 @@ class WorkerManager:
         self._remote_control_event_handlers = {
             "StartMonitoring": self.start_monitoring,
             "StopMonitoring": self.stop_monitoring,
-            "Snapshot": self.on_snapshot
+            "Snapshot": self.on_snapshot,
         }
 
         self._environment = {}
@@ -208,9 +208,9 @@ class WorkerManager:
         self.remote_control_worker_thread.start()
         while self.loop is None:
             sleep(1)
-    
+
     def on_snapshot(self, *args, **kwargs):
-        logger.info(f'WorkerManager.on_snapshot called with {args} {kwargs}')
+        logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
     def apply_auth(self):
         logger.warning("WorkerManager.apply_auth() not implemented yet")
@@ -332,7 +332,7 @@ class WorkerManager:
                 continue
 
             command_id = event.get("remote_control_command_id")
-            snapshot = await self._remote_control_snapshot()
+            snapshot = await self._remote_control_snapshot(command_id)
 
             metadata = self._get_metadata()
             await self.rest_client.update_remote_control_command(
@@ -356,7 +356,7 @@ class WorkerManager:
                         metadata=metadata,
                     )
                 except Exception as e:
-                    logger.error(f'Error calling handler_fn {handler_fn} \n {e}')
+                    logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
                     metadata = self._get_metadata()
                     await self.rest_client.update_remote_control_command(
                         command_id,
@@ -367,12 +367,12 @@ class WorkerManager:
 
             self._honeycomb_tracer.finish_trace(trace)
 
-    async def _remote_control_snapshot(self):
+    async def _remote_control_snapshot(self, command_id):
         async with aiohttp.ClientSession() as session:
             res = await session.get(self.snapshot_url)
             snapshot_io = io.BytesIO(await res.read())
 
-        return await self.rest_client.update_or_create_snapshot(snapshot_io)
+        return await self.rest_client.update_or_create_snapshot(snapshot_io, command_id)
 
     async def _telemetry_queue_send_loop(self):
         """
@@ -460,10 +460,12 @@ class WorkerManager:
             # run local handler fn
             handler_fn = self._local_event_handlers.get(event["event_type"])
             try:
-                if handler_fn:
+                if inspect.isawaitable(handler_fn):
                     await handler_fn(**event)
+                else:
+                    handler_fn(**event)
             except CLIENT_EXCEPTIONS as e:
-                logger.error(f'Error running {handler_fn } \n {e}', exc_info=True)
+                logger.error(f"Error running {handler_fn } \n {e}", exc_info=True)
 
             self._honeycomb_tracer.finish_trace(trace)
 
