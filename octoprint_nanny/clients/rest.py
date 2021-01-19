@@ -145,7 +145,7 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = EventsApi(api_client=api_client)
             request = OctoPrintEventRequest(
-                dt=event_data["metadata"]["dt"],
+                created_dt=event_data["metadata"]["created_dt"],
                 event_type=event_type,
                 event_data=event_data,
                 plugin_version=event_data["metadata"]["plugin_version"],
@@ -178,17 +178,22 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_or_create_gcode_file(self, event_data, gcode_file_path):
+    async def update_or_create_gcode_file(
+        self, event_data, gcode_file_path, octoprint_device_id
+    ):
         gcode_f = open(gcode_file_path, "rb")
         file_hash = hashlib.md5(gcode_f.read()).hexdigest()
         gcode_f.seek(0)
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
+            # https://github.com/aio-libs/aiohttp/issues/3652
+            # in a multi-part form request (file upload), octoprint_device is accepted as a string and deserialized to an integer on the server-side
 
             gcode_file = await api_instance.gcode_files_update_or_create(
                 name=event_data["name"],
                 file_hash=file_hash,
                 file=gcode_f,
+                octoprint_device=str(octoprint_device_id),
             )
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file
@@ -199,14 +204,36 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def create_print_job(self, event_data, gcode_file_id, printer_profile_id):
+    async def create_snapshot(self, image, command):
+        image.name = str(command) + ".jpg"
+        image.seek(0)
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = RemoteControlApi(api_client=api_client)
+            # https://github.com/aio-libs/aiohttp/issues/3652
+            # in a multi-part form request (file upload), params MUST be serialized as strings and deserialized to integers on the server-side
+            snapshot = await api_instance.snapshots_create(
+                image=image,
+                command=str(command),
+            )
+            logger.info(f"Created snapshot {snapshot}")
+            return snapshot
+
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def create_print_job(
+        self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
+    ):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             request = print_nanny_client.models.print_job_request.PrintJobRequest(
                 gcode_file=gcode_file_id,
-                dt=event_data["dt"],
                 name=event_data["name"],
                 printer_profile=printer_profile_id,
+                octoprint_device=octoprint_device_id,
             )
             print_job = await api_instance.print_jobs_create(request)
             return print_job
@@ -217,85 +244,38 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    async def update_or_create_printer_profile(self, event_data):
+    async def update_or_create_printer_profile(
+        self, printer_profile, octoprint_device_id
+    ):
 
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
             request = PrinterProfileRequest(
-                axes_e_inverted=event_data["printer_profile"]["axes"]["e"]["inverted"],
-                axes_x_inverted=event_data["printer_profile"]["axes"]["x"]["inverted"],
-                axes_y_inverted=event_data["printer_profile"]["axes"]["y"]["inverted"],
-                axes_z_inverted=event_data["printer_profile"]["axes"]["z"]["inverted"],
-                axes_e_speed=event_data["printer_profile"]["axes"]["e"]["speed"],
-                axes_x_speed=event_data["printer_profile"]["axes"]["x"]["speed"],
-                axes_y_speed=event_data["printer_profile"]["axes"]["y"]["speed"],
-                axes_z_speed=event_data["printer_profile"]["axes"]["z"]["speed"],
-                extruder_count=event_data["printer_profile"]["extruder"]["count"],
-                extruder_nozzle_diameter=event_data["printer_profile"]["extruder"][
-                    "nozzleDiameter"
-                ],
-                extruder_shared_nozzle=event_data["printer_profile"]["extruder"][
-                    "sharedNozzle"
-                ],
-                name=event_data["printer_profile"]["name"],
-                model=event_data["printer_profile"]["model"],
-                heated_bed=event_data["printer_profile"]["heatedBed"],
-                heated_chamber=event_data["printer_profile"]["heatedChamber"],
-                volume_custom_box=event_data["printer_profile"]["volume"]["custom_box"],
-                volume_depth=event_data["printer_profile"]["volume"]["depth"],
-                volume_formfactor=event_data["printer_profile"]["volume"]["formFactor"],
-                volume_height=event_data["printer_profile"]["volume"]["height"],
-                volume_origin=event_data["printer_profile"]["volume"]["origin"],
-                volume_width=event_data["printer_profile"]["volume"]["width"],
+                octoprint_device=octoprint_device_id,
+                octoprint_key=printer_profile["id"],
+                axes_e_inverted=printer_profile["axes"]["e"]["inverted"],
+                axes_x_inverted=printer_profile["axes"]["x"]["inverted"],
+                axes_y_inverted=printer_profile["axes"]["y"]["inverted"],
+                axes_z_inverted=printer_profile["axes"]["z"]["inverted"],
+                axes_e_speed=printer_profile["axes"]["e"]["speed"],
+                axes_x_speed=printer_profile["axes"]["x"]["speed"],
+                axes_y_speed=printer_profile["axes"]["y"]["speed"],
+                axes_z_speed=printer_profile["axes"]["z"]["speed"],
+                extruder_count=printer_profile["extruder"]["count"],
+                extruder_nozzle_diameter=printer_profile["extruder"]["nozzleDiameter"],
+                extruder_shared_nozzle=printer_profile["extruder"]["sharedNozzle"],
+                name=printer_profile["name"],
+                model=printer_profile["model"],
+                heated_bed=printer_profile["heatedBed"],
+                heated_chamber=printer_profile["heatedChamber"],
+                volume_custom_box=printer_profile["volume"]["custom_box"],
+                volume_depth=printer_profile["volume"]["depth"],
+                volume_formfactor=printer_profile["volume"]["formFactor"],
+                volume_height=printer_profile["volume"]["height"],
+                volume_origin=printer_profile["volume"]["origin"],
+                volume_width=printer_profile["volume"]["width"],
             )
-            printer_profile = await api_instance.printer_profiles_update_or_create(
-                request
-            )
-            return printer_profile
-
-    def _printer_profile_request(self, data):
-        """
-        data: https://docs.octoprint.org/en/master/api/printerprofiles.html
-        """
-        return PrinterProfileRequest(
-            axes_e_inverted=data["printer_profile"]["axes"]["e"]["inverted"],
-            axes_x_inverted=data["printer_profile"]["axes"]["x"]["inverted"],
-            axes_y_inverted=data["printer_profile"]["axes"]["y"]["inverted"],
-            axes_z_inverted=data["printer_profile"]["axes"]["z"]["inverted"],
-            axes_e_speed=data["printer_profile"]["axes"]["e"]["speed"],
-            axes_x_speed=data["printer_profile"]["axes"]["x"]["speed"],
-            axes_y_speed=data["printer_profile"]["axes"]["y"]["speed"],
-            axes_z_speed=data["printer_profile"]["axes"]["z"]["speed"],
-            extruder_count=data["printer_profile"]["extruder"]["count"],
-            extruder_nozzle_diameter=data["printer_profile"]["extruder"][
-                "nozzleDiameter"
-            ],
-            extruder_shared_nozzle=data["printer_profile"]["extruder"]["sharedNozzle"],
-            octoprint_id=data["printer_profile"]["id"],
-            name=data["printer_profile"]["name"],
-            model=data["printer_profile"]["model"],
-            heated_bed=data["printer_profile"]["heatedBed"],
-            heated_chamber=data["printer_profile"]["heatedChamber"],
-            volume_custom_box=data["printer_profile"]["volume"]["custom_box"],
-            volume_depth=data["printer_profile"]["volume"]["depth"],
-            volume_formfactor=data["printer_profile"]["volume"]["formFactor"],
-            volume_height=data["printer_profile"]["volume"]["height"],
-            volume_origin=data["printer_profile"]["volume"]["origin"],
-            volume_width=data["printer_profile"]["volume"]["width"],
-        )
-
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-    )
-    async def update_or_create_printer_profile(self, event_data):
-        async with AsyncApiClient(self._api_config) as api_client:
-            # printer profile
-            api_instance = RemoteControlApi(api_client=api_client)
-            request = self._printer_profile_request(event_data)
             printer_profile = await api_instance.printer_profiles_update_or_create(
                 request
             )
