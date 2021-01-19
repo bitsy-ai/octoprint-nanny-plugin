@@ -206,6 +206,7 @@ class RestAPIClient:
     )
     async def create_snapshot(self, image, command):
         image.name = str(command) + ".jpg"
+        image.seek(0)
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             # https://github.com/aio-libs/aiohttp/issues/3652

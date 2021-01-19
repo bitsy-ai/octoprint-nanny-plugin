@@ -377,7 +377,7 @@ class WorkerManager:
             res = await session.get(self.snapshot_url)
             snapshot_io = io.BytesIO(await res.read())
 
-        return await self.rest_client.create_snapshot(snapshot_io, command_id)
+        return await self.rest_client.create_snapshot(image=snapshot_io, command=command_id)
 
     async def _telemetry_queue_send_loop(self):
         """
