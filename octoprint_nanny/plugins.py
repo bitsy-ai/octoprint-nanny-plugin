@@ -339,6 +339,7 @@ class OctoPrintNannyPlugin(
             Events.PLUGIN_OCTOPRINT_NANNY_WORKER_RESTART_DONE,
             payload={"msg": "Successfully reinitialized workers"},
         )
+        self._settings.save()
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")

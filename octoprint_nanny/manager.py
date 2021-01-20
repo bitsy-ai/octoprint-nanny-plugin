@@ -337,6 +337,7 @@ class WorkerManager:
 
     def _remote_control_worker(self):
         self.remote_control_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.remote_control_loop)
         return self.remote_control_loop.run_until_complete(
             asyncio.ensure_future(self._remote_control_receive_loop())
         )
