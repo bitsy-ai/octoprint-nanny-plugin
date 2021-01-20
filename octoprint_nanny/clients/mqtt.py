@@ -234,8 +234,8 @@ class MQTTClient:
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
 
-    def run(self):
-        self.active = True
+    def run(self, active):
+        self.active = active
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),

@@ -487,6 +487,7 @@ class OctoPrintNannyPlugin(
         )
         prev_auth_token = self._settings.get(["auth_token"])
         prev_api_url = self._settings.get(["api_token"])
+        prev_device_fingerprint = self._settings.get(["device_fingerprint"])
         super().on_settings_save(data)
 
         new_calibration = (
@@ -497,6 +498,7 @@ class OctoPrintNannyPlugin(
         )
         new_auth_token = self._settings.get(["auth_token"])
         new_api_url = self._settings.get(["api_url"])
+        new_device_fingerprint = self._settings.get(["device_fingerprint"])
 
         if prev_calibration != new_calibration:
             logger.info("Change in calibration detected, applying new settings")
@@ -506,6 +508,12 @@ class OctoPrintNannyPlugin(
         if prev_auth_token != new_auth_token:
             logger.info("Change in auth detected, applying new settings")
             self._worker_manager.apply_auth()
+
+        if prev_device_fingerprint != new_device_fingerprint:
+            logger.info(
+                "Change in device identity detected (did you re-register?), applying new settings"
+            )
+            self._worker_manager.apply_device_registration()
 
     ## Template plugin
 

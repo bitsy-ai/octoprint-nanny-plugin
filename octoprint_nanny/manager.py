@@ -72,7 +72,7 @@ class WorkerManager:
         self.shared.calibration = None
 
         self.mqtt_client = None
-        self.active = False
+        self.monitoring_active = False
 
         # outbound telemetry to GCP MQTT bridge
         self.telemetry_queue = self.manager.AioQueue()
@@ -101,7 +101,24 @@ class WorkerManager:
 
         self._environment = {}
 
+        self.telemetry_events = None
+        self._user_id = None
+        self._device_id = None
+        self._calibration = None
+        self._snapshot_url = None
+        self._device_cloudiot_name = None
+        self._device_serial = None
+        self._auth_token = None
+
+        self.predict_proc = None
+        self.pn_ws_proc = None
+
+        self.init_worker_threads()
+
+    def init_worker_threads(self):
+        self._thread_halt = threading.Event()
         # daemonized thread for outbount telemetry event handlers
+
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
 
@@ -120,16 +137,44 @@ class WorkerManager:
         self.remote_control_worker_thread.daemon = True
 
         self.loop = None
-        self.telemetry_events = None
-        self._user_id = None
-        self._device_id = None
-        self._calibration = None
-        self._snapshot_url = None
-        self._device_cloudiot_name = None
-        self._device_serial = None
 
-        self.predict_proc = None
-        self.pn_ws_proc = None
+    def start_worker_threads(self):
+        self.mqtt_worker_thread.start()
+        self.octo_ws_thread.start()
+        self.telemetry_worker_thread.start()
+        self.remote_control_worker_thread.start()
+        while self.loop is None:
+            sleep(1)
+
+    def stop_worker_threads(self):
+        logger.warning("Setting halt signal for worker threads")
+        self._thread_halt.set()
+
+        logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
+        self.mqtt_client.client.loop_stop()
+        self.mqtt_worker_thread.join()
+
+        logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
+        self.remote_control_worker_thread.join()
+
+        logger.info("Waiting for WorkerManager.octo_ws_threadd to drain")
+        self.octo_ws_thread.join()
+
+        logger.info("Finished halting WorkerManager threads")
+
+    @property
+    def workers_active(self):
+        return self._thread_halt.is_set()
+
+    @property
+    def api_url(self):
+        return self.plugin._settings.get(["api_url"])
+
+    @property
+    def auth_token(self):
+        if self._auth_token is None:
+            self._auth_token = self.plugin._settings.get(["auth_token"])
+        return self._auth_token
 
     @property
     def snapshot_url(self):
@@ -143,7 +188,6 @@ class WorkerManager:
             self._device_cloudiot_name = self.plugin._settings.get(
                 ["device_cloudiot_name"]
             )
-
         return self._device_cloudiot_name
 
     @property
@@ -177,12 +221,8 @@ class WorkerManager:
 
     @property
     def rest_client(self):
-
-        api_token = self.plugin._settings.get(["auth_token"])
-        api_url = self.plugin._settings.get(["api_url"])
-
-        logger.debug(f"RestAPIClient init with api_token={api_token} api_url={api_url}")
-        return RestAPIClient(auth_token=api_token, api_url=api_url)
+        logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
+        return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
 
     def _register_plugin_event_handlers(self):
         """
@@ -202,26 +242,39 @@ class WorkerManager:
     def on_settings_initialized(self):
         # register plugin event handlers
         self._register_plugin_event_handlers()
-        self.mqtt_worker_thread.start()
-        self.octo_ws_thread.start()
-        self.telemetry_worker_thread.start()
-        self.remote_control_worker_thread.start()
-        while self.loop is None:
-            sleep(1)
+        self.start_worker_threads()
 
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
+    def apply_device_registration(self):
+        self._device_cloudiot_name = None
+        self._device_id = None
+        logger.info("Halting worker threads to apply new device registration")
+        self.stop_worker_threads()
+        self.init_worker_threads()
+        self.start_worker_threads()
+
     def apply_auth(self):
-        logger.warning("WorkerManager.apply_auth() not implemented yet")
+        self._user_id = None
+        self._auth_token = None
+        logger.info("Halting worker threads to apply new auth settings")
+        self.stop_worker_threads()
+        self.init_worker_threads()
+        self.start_worker_threads()
 
     @beeline.traced("WorkerManager.apply_calibration")
     def apply_calibration(self):
-
-        logger.info("Applying new calibration")
         self._calibration = None
+        logger.info(
+            "Stopping any existing monitoring processes to apply new calibration"
+        )
         self.stop_monitoring()
-        self.start_monitoring()
+        if self.monitoring_active:
+            logger.info(
+                "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
+            )
+            self.start_monitoring()
 
     async def _on_monitoring_start(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
@@ -237,7 +290,7 @@ class WorkerManager:
         private_key = self.plugin._settings.get(["device_private_key"])
         device_id = self.plugin._settings.get(["device_cloudiot_name"])
         gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
-        while True:
+        while self.workers_active:
             if private_key is None or device_id is None or gcp_root_ca is None:
                 logger.warning(
                     f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
@@ -257,7 +310,7 @@ class WorkerManager:
         ###
         # MQTT bridge available
         ###
-        return self.mqtt_client.run()
+        return self.mqtt_client.run(self.workers_active)
 
     def _telemetry_worker(self):
         """
@@ -309,15 +362,13 @@ class WorkerManager:
 
     async def _remote_control_receive_loop(self):
         logger.info("Started _remote_control_receive_loop")
-        api_token = self.plugin._settings.get(["auth_token"])
-        while True:
+        while self.workers_active:
 
-            if api_token is None:
+            if self.auth_token is None:
                 logger.warning(
                     f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
                 )
                 await asyncio.sleep(self.BACKOFF)
-                api_token = self.plugin._settings.get(["auth_token"])
                 if self.BACKOFF < self.MAX_BACKOFF:
                     self.BACKOFF = self.BACKOFF ** 2
                 continue
@@ -387,17 +438,15 @@ class WorkerManager:
         """
         logger.info("Started _telemetry_queue_send_loop")
 
-        api_token = self.plugin._settings.get(["auth_token"])
         self.BACKOFF
 
-        while True:
+        while self.workers_active:
 
-            if api_token is None:
+            if self.auth_token is None:
                 logger.warning(
                     f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
                 )
                 await asyncio.sleep(self.BACKOFF)
-                api_token = self.plugin._settings.get(["auth_token"])
                 if self.BACKOFF < self.MAX_BACKOFF:
                     self.BACKOFF = self.BACKOFF ** 2
                 continue
@@ -486,7 +535,7 @@ class WorkerManager:
         logging.info(
             f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
         )
-        self.active = False
+        self.monitoring_active = False
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
         )
@@ -517,7 +566,7 @@ class WorkerManager:
         logging.info(
             f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
         )
-        self.active = True
+        self.monitoring_active = True
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
         )
@@ -561,8 +610,8 @@ class WorkerManager:
         Child process to -> Octoprint event bus relay
         """
         logger.info("Started _octo_ws_queue_worker")
-        while True:
-            if self.active:
+        while self.workers_active:
+            if self.monitoring_active:
                 viz_bytes = self.octo_ws_queue.get(block=True)
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
