@@ -166,13 +166,10 @@ extra_requires = {
 # Vendor libatlas library and distribute it with Print Nanny
 #
 # Pros: apt permission is not required by Pi user
-# Cons: I'll need to subscribe to libatlas's vulnerability mailing list and make sure I keep this library patched
-#
-# arm64
-# https://packages.debian.org/buster/arm64/libatlas-base-dev/download
-#
-# armhf
-# https://packages.debian.org/buster/armhf/libatlas-base-dev/download
+# Cons: I'll need to subscribe to libatlas's vulnerability mailing list. nbd.
+
+# $ apt-get download --print-uris libatlas-base-dev
+# 'http://raspbian.raspberrypi.org/raspbian/pool/main/a/atlas/libatlas-base-dev_3.10.3-8+rpi1_armhf.deb' libatlas-base-dev_3.10.3-8+rpi1_armhf.deb 2965588 SHA256:cba2880d81bd80d794b12a64707d1caba87814363466101604a6e0cf1d104704
 
 
 ansible_libs = ["ansible"]
@@ -204,8 +201,6 @@ class CustomCommands(setuptools.Command):
         pass
 
     def run_command(self, command):
-        if sudo:
-            command = ["sudo"] + command
         print("Running PLATFORM_INSTALL command: {}".format(command))
         p = subprocess.Popen(
             command,
