@@ -144,6 +144,7 @@ class WorkerManager:
         self.telemetry_worker_thread.start()
         self.remote_control_worker_thread.start()
         while self.loop is None:
+            logger.warning('Waiting for event loop to be set and exposed')
             sleep(1)
 
     def stop_worker_threads(self):
@@ -164,7 +165,7 @@ class WorkerManager:
 
     @property
     def workers_active(self):
-        return self._thread_halt.is_set()
+        return not self._thread_halt.is_set()
 
     @property
     def api_url(self):

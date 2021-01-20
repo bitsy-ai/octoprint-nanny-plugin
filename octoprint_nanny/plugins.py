@@ -423,7 +423,7 @@ class OctoPrintNannyPlugin(
                 self._worker_manager.loop,
             ).result()
 
-            if isinstance(Exception, user):
+            if isinstance(user, Exception):
                 logger.error(user)
                 return
             if user is not None:
@@ -525,7 +525,7 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "active": self._worker_manager.active,
+            "active": self._worker_manager.monitoring_active,
         }
 
     ## Wizard plugin mixin
