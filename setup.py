@@ -175,7 +175,7 @@ extra_requires = {
 ansible_libs = ["ansible"]
 
 BUILD_STAGE_INSTALL = [
-    ["pip", "install"] + ansible_libs,
+    [sys.executable, "-m", "pip", "install"] + ansible_libs,
     ["ansible-playbook", "playbooks/libatlas.yml"],
 ]
 
