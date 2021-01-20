@@ -98,7 +98,6 @@ class OctoPrintNannyPlugin(
         except CLIENT_EXCEPTIONS as e:
             logger.error(f"_test_api_auth API call failed")
             self._settings.set(["auth_valid"], False)
-            return e
 
     def _cpuinfo(self) -> dict:
         """
