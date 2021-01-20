@@ -202,7 +202,7 @@ $(function() {
     self.imageData = ko.observable();
     self.deviceRegisterProgressPercent = ko.observable();
     self.deviceRegisterProgress = 0;
-    self.deviceRegisterProgressCompleted = 4;
+    self.deviceRegisterProgressCompleted = 6;
 
     self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
     self.authAlertText = ko.observable(self.authAlerts.warning.text)

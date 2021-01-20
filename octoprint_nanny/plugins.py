@@ -266,9 +266,6 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_registered"], True)
 
         self._settings.save()
-
-        # initial sync (just printer profiles for now)
-        # @todo enqueue files sync
         self._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_START,
             payload={"msg": "Syncing printer profiles..."},
@@ -278,7 +275,7 @@ class OctoPrintNannyPlugin(
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
-                    "msg": "Sucess! Printer profiles synced to https://print-nanny.com/dashboard/printer-profiles"
+                    "msg": "Success! Printer profiles synced to https://print-nanny.com/dashboard/printer-profiles"
                 },
             )
         except CLIENT_EXCEPTIONS as e:
@@ -333,7 +330,15 @@ class OctoPrintNannyPlugin(
 
         if isinstance(result, Exception):
             raise result
-
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_WORKER_RESTART_START,
+            payload={"msg": "Re-initializing worker threads"},
+        )
+        self._worker_manager.apply_device_registration()
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_WORKER_RESTART_DONE,
+            payload={"msg": "Successfully reinitialized workers"},
+        )
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
@@ -396,6 +401,8 @@ class OctoPrintNannyPlugin(
             "printer_profile_sync_start",
             "printer_profile_sync_done",
             "printer_profile_sync_failed",
+            "worker_restart_start",
+            "worker_restart_done",
         ]
 
     def on_event(self, event_type, event_data):
@@ -478,7 +485,6 @@ class OctoPrintNannyPlugin(
         )
 
     def on_settings_save(self, data):
-
         prev_calibration = (
             self._settings.get(["calibrate_x0"]),
             self._settings.get(["calibrate_y0"]),

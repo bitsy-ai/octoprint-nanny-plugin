@@ -144,28 +144,37 @@ class WorkerManager:
         self.telemetry_worker_thread.start()
         self.remote_control_worker_thread.start()
         while self.loop is None:
-            logger.warning('Waiting for event loop to be set and exposed')
+            logger.warning("Waiting for event loop to be set and exposed")
             sleep(1)
 
     def stop_worker_threads(self):
         logger.warning("Setting halt signal for worker threads")
         self._thread_halt.set()
 
+        logger.info(
+            "Waiting for WorkerMangager.mqtt_client network connection to close"
+        )
+        while self.mqtt_client.client.is_connected():
+            self.mqtt_client.client.disconnect()
         logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
+        self.mqtt_client.client.disconnect()
         self.mqtt_client.client.loop_stop()
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
+        self.remote_control_queue.put({"msg": "halt"})
         self.remote_control_worker_thread.join()
+        self.remote_control_loop.close()
 
-        logger.info("Waiting for WorkerManager.octo_ws_threadd to drain")
+        logger.info("Waiting for WorkerManager.octo_ws_thread to drain")
         self.octo_ws_thread.join()
 
-        logger.info("Finished halting WorkerManager threads")
+        logger.info("Waiting for WorkerManager.telemetry_worker_thread to drain")
+        self.telemetry_queue.put({"msg": "halt"})
+        self.telemetry_worker_thread.join()
+        self.loop.close()
 
-    @property
-    def workers_active(self):
-        return not self._thread_halt.is_set()
+        logger.info("Finished halting WorkerManager threads")
 
     @property
     def api_url(self):
@@ -291,7 +300,7 @@ class WorkerManager:
         private_key = self.plugin._settings.get(["device_private_key"])
         device_id = self.plugin._settings.get(["device_cloudiot_name"])
         gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
-        while self.workers_active:
+        while not self._thread_halt.is_set():
             if private_key is None or device_id is None or gcp_root_ca is None:
                 logger.warning(
                     f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
@@ -311,7 +320,7 @@ class WorkerManager:
         ###
         # MQTT bridge available
         ###
-        return self.mqtt_client.run(self.workers_active)
+        return self.mqtt_client.run(self._thread_halt)
 
     def _telemetry_worker(self):
         """
@@ -328,8 +337,6 @@ class WorkerManager:
 
     def _remote_control_worker(self):
         self.remote_control_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.remote_control_loop)
-
         return self.remote_control_loop.run_until_complete(
             asyncio.ensure_future(self._remote_control_receive_loop())
         )
@@ -363,7 +370,7 @@ class WorkerManager:
 
     async def _remote_control_receive_loop(self):
         logger.info("Started _remote_control_receive_loop")
-        while self.workers_active:
+        while not self._thread_halt.is_set():
 
             if self.auth_token is None:
                 logger.warning(
@@ -441,7 +448,7 @@ class WorkerManager:
 
         self.BACKOFF
 
-        while self.workers_active:
+        while not self._thread_halt.is_set():
 
             if self.auth_token is None:
                 logger.warning(
@@ -482,11 +489,10 @@ class WorkerManager:
             if event_type is None:
                 logger.warning(
                     "Ignoring enqueued msg without type declared {event}".format(
-                        event_type=event_type
+                        event=event
                     )
                 )
                 continue
-
             ##
             # Publish non-octoprint telemetry events
             ##
@@ -557,6 +563,7 @@ class WorkerManager:
     @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
         self.stop_monitoring()
+        self.stop_worker_threads()
         self._honeycomb_tracer.on_shutdown()
 
     @beeline.traced("WorkerManager.start_monitoring")
@@ -611,7 +618,7 @@ class WorkerManager:
         Child process to -> Octoprint event bus relay
         """
         logger.info("Started _octo_ws_queue_worker")
-        while self.workers_active:
+        while not self._thread_halt.is_set():
             if self.monitoring_active:
                 viz_bytes = self.octo_ws_queue.get(block=True)
                 self.plugin._event_bus.fire(

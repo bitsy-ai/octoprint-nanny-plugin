@@ -187,9 +187,10 @@ class MQTTClient:
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
         )
-        if self.active:
-            time.sleep(self.backoff)
-            self.backoff = min(self.backoff * 2, self.max_backoff)
+        time.sleep(self.backoff)
+        self.backoff = min(self.backoff * 2, self.max_backoff)
+        if not self._thread_halt.is_set():
+
             logger.info(
                 "Device attempting to re-authenticate with MQTT broker (JWT probably expired)"
             )
@@ -234,8 +235,8 @@ class MQTTClient:
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
 
-    def run(self, active):
-        self.active = active
+    def run(self, halt):
+        self._thread_halt = halt
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
