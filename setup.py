@@ -176,7 +176,7 @@ ansible_libs = ["ansible"]
 
 BUILD_STAGE_INSTALL = [
     [sys.executable, "-m", "pip", "install"] + ansible_libs,
-    ["ansible-playbook", "playbooks/libatlas.yml"],
+    [sys.executable, "-m", "ansible", "ansible-playbook", "playbooks/libatlas.yml"],
 ]
 
 
