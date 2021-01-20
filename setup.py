@@ -3,8 +3,10 @@
 import os
 from setuptools.command.install import install
 from distutils.command.build import build as _build
+import platform
 import sys
 import subprocess
+
 
 ########################################################################################################################
 ### Do not forget to adjust the following variables to your own plugin.
@@ -20,7 +22,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.3.0"
+plugin_version = "0.3.1"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -55,19 +57,56 @@ if sys.version_info.major == 2:
     )
     sys.exit(1)
 
-arch = os.uname().machine
+##
+# Raspberry Pi OS and OctoPi distribute images with a 64-bit kernel space and a 32-bit userspace
+# On these systems, os.uname().machine will return "aarch64" (64-bit hardware detected)
+# Instead, use platform.architecture() to detect whether the Python interpreter was installed with 32-bit or 64-bit address space
+#
+# Here's an example:
+#
+# 64-bit kernel and 64-bit userland
+# >>> import platform; platform.architecture()
+# ('64bit', 'ELF')
+# >>> import os; os.uname().machine
+# 'aarch64'
+#
+# 64-bit kernel and 32-bit userland
+# >>> import platform; platform.architecture()
+# ('32bit', 'ELF')
+# >>> import os; os.uname().machine
+# 'aarch64'
+#
+# 32-bit kernel & userland
+# >>> import platform; platform.architecture()
+# ('32bit', 'ELF')
+# >>> import os; os.uname().machine
+# 'arm7l'
+#
+# https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/63
+# Credit to @CTFishUSA for debugging this issue!
+##
 
-# TensorFlow does not distribute arm7l and aarch64 wheels via PyPi. Install community-built wheels
-if arch == "armv7l":
-    tensorflow = "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
-elif arch == "aarch64":
-    tensorflow = "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl"
-elif arch == "x86_64":
-    tensorflow = "tensorflow==2.4.0"
+# hardware layer : software layer : wheel
+tensorflow_wheel_map = {
+    "armv7l": {
+        "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
+    },
+    "aarch64": {
+        "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl",
+        "64bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl",
+    },
+    "x86_64": {"32bit": "tensorflow==2.4.0", "64bit": "tensorflow==2.4.0"},
+}
+
+hardware_arch = os.uname().machine
+software_arch, _ = platform.architecture()
+
+if hardware_arch in tensorflow_wheel_map.keys():
+    tensorflow = tensorflow_wheel_map[hardware_arch][software_arch]
 else:
     raise CPUNotSupported(
         "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
-            arch
+            hardware_arch
         )
     )
     sys.exit(1)
@@ -80,7 +119,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
-    "print-nanny-client~=0.3.0",
+    "print-nanny-client~=0.3.1",
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
