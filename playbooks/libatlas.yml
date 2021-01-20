@@ -1,0 +1,28 @@
+---
+- name: Install libatlas
+  hosts: localhost
+  vars:
+    deb_path: .octoprint/data/octoprint_nanny/deb
+  tasks:
+  - name: Fetch libatlas .deb url
+    shell: apt-get download --print-uris libatlas-base-dev | awk '{print $1}'
+    register: libatlas_deb_url
+
+  - name: Save libatlas .deb url as fact for this run
+    set_fact: 
+      libatlas_deb_url={{ libatlas_deb_url.stdout.strip("'") }}
+
+  - name: Parse libatlas .deb version
+    shell: awk 'BEGIN { FS = "/" } ; {print $9}'
+    register: libatlas_deb_version
+
+  - name: Save libatlas .deb version as fact for this run
+    set_fact: 
+      libatlas_deb_version={{ libatlas_deb_version.stdout }}
+  - name: Download libatlas .deb
+    get_url: 
+      url: "{{ libatlas_deb_url }}"
+      dest: "{{ ansible_env.HOME }}/{{ deb_path }}"
+  - name: Install libatlas from deb
+    apt:
+      deb: "{ {ansible_env.HOME }}/{{ deb_path }}"
