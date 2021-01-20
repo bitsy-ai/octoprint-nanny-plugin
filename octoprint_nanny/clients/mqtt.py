@@ -115,6 +115,8 @@ class MQTTClient:
         self.client.tls_set(ca_certs=ca_certs, tls_version=tls_version)
 
         self.active = False
+        self.backoff = 2
+        self.max_backoff = 300
 
     ###
     #   callbacks
@@ -152,42 +154,52 @@ class MQTTClient:
         getattr(device_logger, level)(buf)
 
     def _on_connect(self, client, userdata, flags, rc):
+        """
+        reason codes:
+        0 connection successful
+        1 connection refused - incorrect protocol version
+        2 connection refused - invalid client id
+        3 connection refused - server unavailable
+        4 connection refused - bad username / password
+        5 connection refused - not authorized
+        6-255 unused
+        """
+
         logger.info(
             f"MQTTClient._on_connect called with client={client} userdata={userdata} rc={rc}"
         )
-        self.client.subscribe(self.mqtt_config_topic, qos=1)
-        logger.info(
-            f"Subscribing device_id={self.device_id} to topic {self.mqtt_command_topic}"
-        )
-        self.client.subscribe(self.mqtt_command_topic, qos=1)
+
+        if rc == 0:
+            self.backoff = 2
+            logger.info("Device successfully connected to MQTT broker")
+            self.client.subscribe(self.mqtt_config_topic, qos=1)
+            logger.info(
+                f"Subscribing to config updates device_id={self.device_id} to topic {self.mqtt_command_topic}"
+            )
+            self.client.subscribe(self.mqtt_command_topic, qos=1)
+            logger.info(
+                f"Subscribing to remote commands device_id={self.device_id} to topic {self.mqtt_command_topic}"
+            )
+        else:
+            logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")
 
     def _on_disconnect(self, client, userdata, rc):
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
         )
         if self.active:
-            j = 10
-            for i in range(j):
-                logger.info(
-                    "Device attempting to reconnect to MQTT broker (JWT probably expired)"
-                )
-                try:
-                    self.client.username_pw_set(
-                        username="unused",
-                        password=create_jwt(
-                            self.project_id, self.private_key_file, self.algorithm
-                        ),
-                    )
-                    self.client.reconnect()
-                    logger.info("Gateway successfully reconnected to MQTT broker")
-                    break
-                except Exception as e:
-                    if i < j:
-                        logger.warn(e)
-                        time.sleep(1)
-                        continue
-                    else:
-                        raise
+            time.sleep(self.backoff)
+            self.backoff = min(self.backoff * 2, self.max_backoff)
+            logger.info(
+                "Device attempting to re-authenticate with MQTT broker (JWT probably expired)"
+            )
+            self.client.username_pw_set(
+                username="unused",
+                password=create_jwt(
+                    self.project_id, self.private_key_file, self.algorithm
+                ),
+            )
+            self.client.reconnect()
 
     def publish(self, payload, topic=None, retain=False, qos=1):
 
