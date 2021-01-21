@@ -154,11 +154,13 @@ class WorkerManager:
         logger.info(
             "Waiting for WorkerMangager.mqtt_client network connection to close"
         )
-        while self.mqtt_client.client.is_connected():
+
+        if self.mqtt_client is not None:
+            while self.mqtt_client.client.is_connected():
+                self.mqtt_client.client.disconnect()
+            logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
             self.mqtt_client.client.disconnect()
-        logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
-        self.mqtt_client.client.disconnect()
-        self.mqtt_client.client.loop_stop()
+            self.mqtt_client.client.loop_stop()
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
