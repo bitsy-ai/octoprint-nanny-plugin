@@ -553,6 +553,8 @@ class WorkerManager:
             logger.info("Terminating predict process")
             self.predict_proc.terminate()
             self.predict_proc.join(30)
+            if self.predict_proc.is_alive():
+                self.predict_proc.kill()
             self.predict_proc.close()
             self.predict_proc = None
 
@@ -560,6 +562,8 @@ class WorkerManager:
             logger.info("Terminating websocket process")
             self.pn_ws_proc.terminate()
             self.pn_ws_proc.join(30)
+            if self.pn_ws_proc.is_alive():
+                self.pn_ws_proc.kill()
             self.pn_ws_proc.close()
             self.pn_ws_proc = None
 
