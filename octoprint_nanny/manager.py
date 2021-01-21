@@ -154,11 +154,13 @@ class WorkerManager:
         logger.info(
             "Waiting for WorkerMangager.mqtt_client network connection to close"
         )
-        while self.mqtt_client.client.is_connected():
+
+        if self.mqtt_client is not None:
+            while self.mqtt_client.client.is_connected():
+                self.mqtt_client.client.disconnect()
+            logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
             self.mqtt_client.client.disconnect()
-        logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
-        self.mqtt_client.client.disconnect()
-        self.mqtt_client.client.loop_stop()
+            self.mqtt_client.client.loop_stop()
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
@@ -551,6 +553,8 @@ class WorkerManager:
             logger.info("Terminating predict process")
             self.predict_proc.terminate()
             self.predict_proc.join(30)
+            if self.predict_proc.is_alive():
+                self.predict_proc.kill()
             self.predict_proc.close()
             self.predict_proc = None
 
@@ -558,6 +562,8 @@ class WorkerManager:
             logger.info("Terminating websocket process")
             self.pn_ws_proc.terminate()
             self.pn_ws_proc.join(30)
+            if self.pn_ws_proc.is_alive():
+                self.pn_ws_proc.kill()
             self.pn_ws_proc.close()
             self.pn_ws_proc = None
 

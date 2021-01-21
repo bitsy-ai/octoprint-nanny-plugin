@@ -273,11 +273,6 @@ $(function() {
         } 
     });
     registerDevice = function(){
-        if (self.settingsViewModel.settings.plugins.octoprint_nanny.device_name() == undefined){
-            self.deviceAlertClass(self.deviceAlerts.nameError.class)
-            self.deviceAlertHeader(self.deviceAlerts.nameError.header)
-            self.deviceAlertText(self.deviceAlerts.nameError.text)
-        }
         self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
         self.deviceRegisterProgressPercent(self.deviceRegisterProgress +'%');
         const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'registerDevice'
