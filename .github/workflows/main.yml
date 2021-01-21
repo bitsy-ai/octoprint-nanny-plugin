@@ -27,17 +27,22 @@ jobs:
       - name: Set up Python virtualenv
         run: |
           python3 -m venv .venv
+          source .venv/bin/activate
       - name: Install dependencies
         run: |
-          .venv/bin/python -m pip install --upgrade pip
-          .venv/bin/pip install --upgrade setuptools wheel twine octoprint
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install --upgrade setuptools wheel twine octoprint
         # Runs a set of commands using the runners shell
       - name: Test installation
         run: |
-          .venv/bin/pip install e .
+          source .venv/bin/activate
+          pip install e .
       - name: Install test dependencies
         run: |
-          .venv/bin/pip install -r dev-requirements.txt
+          source .venv/bin/activate
+          pip install -r dev-requirements.txt
       - name: Run offline / unit tests
         run: |
+          source .venv/bin/activate
           make ci-test
