@@ -17,16 +17,17 @@ jobs:
     - name: Set up Python virtualenv
       run: |
         python3 -m venv .venv
-        source .venv/bin/activate
     - name: Install dependencies
       run: |
-        source .venv/bin/activate
+        .venv/bin/python -m pip install --upgrade pip
+        .venv/bin/pip install --upgrade setuptools wheel twine octoprint
+    - name: Install dependencies
+      run: |
         python -m pip install --upgrade pip
-        pip install --upgrade setuptools wheel twine octoprint
+        pip install setuptools wheel twine
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        source .venv/bin/activate
         make release

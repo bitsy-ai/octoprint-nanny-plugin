@@ -72,8 +72,5 @@ octoprint-prod:
 test:
 	pytest -p no:warnings --log-level=INFO
 
-ci-test:
-	pytest -p no:warnings --log-level=INFO -m "not webapp"
-
 install-git-hooks:
 	cp -a hooks/. .git/hooks/
