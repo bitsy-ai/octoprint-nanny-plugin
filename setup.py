@@ -6,6 +6,7 @@ from distutils.command.build import build as _build
 import platform
 import sys
 import subprocess
+import setuptools
 
 
 ########################################################################################################################
