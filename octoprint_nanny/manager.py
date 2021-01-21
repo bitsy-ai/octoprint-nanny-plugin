@@ -508,7 +508,7 @@ class WorkerManager:
             ##
 
             # ignore untracked events
-            if self.telemetry_events is None or event_type not in self.telemetry_events:
+            if event_type not in self.telemetry_events:
                 # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
                 if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
                     pass
