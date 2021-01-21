@@ -14,9 +14,10 @@ def ws_client(mocker):
     mocker.patch("octoprint_nanny.clients.websocket.asyncio")
     m = aioprocessing.AioManager()
     return WebSocketWorker(
-        "ws://localhost:8000/ws/images/",
+        "ws://localhost:8000/ws/",
         "3a833ac48104772a349254690cae747e826886f1",
         m.Queue(),
+        1,
         1,
     )
 
@@ -37,7 +38,7 @@ def predict_worker(mocker):
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
-        WebSocketWorker("http://foo.com/ws/", "api_team", queue.Queue(), 1)
+        WebSocketWorker("http://foo.com/ws/", "api_team", queue.Queue(), 1, 1)
 
 
 @pytest.mark.webapp
