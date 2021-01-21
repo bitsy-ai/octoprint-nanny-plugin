@@ -113,7 +113,6 @@ else:
     sys.exit(1)
 
 plugin_requires = [
-    tensorflow,
     "numpy",
     "pillow",
     "bravado",
@@ -177,7 +176,9 @@ ansible_libs = ["ansible"]
 
 BUILD_STAGE_INSTALL = [
     [sys.executable, "-m", "pip", "install"] + ansible_libs,
+    [sys.executable, "-m", "pip", "install"] + ansible_libs,
     [sys.executable, "-m", "ansible", "ansible-playbook", "playbooks/libatlas.yml"],
+    [sys.executable, "-m", "pip", "install", tensorflow],
 ]
 
 
