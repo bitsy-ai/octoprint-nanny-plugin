@@ -2,7 +2,6 @@
 
 import os
 from setuptools.command.install import install
-from distutils.command.build import build as _build
 import platform
 import sys
 import subprocess
@@ -182,7 +181,7 @@ BUILD_STAGE_INSTALL = [
 ]
 
 
-class build(_build):
+class CustomInstall(install):
     """A build command class that will be invoked during package install.
     The package built using the current setup.py will be staged and later
     installed in the worker using `pip install package'. This class will be
@@ -190,7 +189,7 @@ class build(_build):
     running the custom commands specified.
     """
 
-    sub_commands = _build.sub_commands + [("CustomCommands", None)]
+    sub_commands = [("CustomCommands", None)] + install.sub_commands
 
 
 class CustomCommands(setuptools.Command):
@@ -284,7 +283,7 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
     additional_data=plugin_additional_data,
     extra_requires=extra_requires,
     cmdclass={
-        "build": build,
+        "install": CustomCommands,
         "CustomCommands": CustomCommands,
     },
 )

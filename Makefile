@@ -55,6 +55,7 @@ release: dist
 	twine upload dist/*
 
 octoprint-dev:
+	# rm -rf ~/.octoprint && rsync ~/.octoprint-dev ~/.octoprint
 	cd ~/projects/OctoPrint && \
 	. .venv/bin/activate && \
 	OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" \
@@ -65,9 +66,12 @@ octoprint-dev:
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="5e658dc16cff5ce3d576aa9bd5a356a5" \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve
+	rsync ~/.octoprint ~/.octoprint-dev
 
 octoprint-prod:
+	rm -rf ~/.octoprint && rsync ~/.octoprint-prod ~/.octoprint
 	cd ~/projects/OctoPrint && . .venv/bin/activate && octoprint serve
+	rsync ~/.octoprint ~/.octoprint-prod
 
 test:
 	pytest -p no:warnings --log-level=INFO
