@@ -1,7 +1,7 @@
 # coding=utf-8
 
+import fnmatch
 import os
-from setuptools.command.install import install
 import platform
 import sys
 import subprocess
@@ -58,6 +58,26 @@ if sys.version_info.major == 2:
     sys.exit(1)
 
 ###
+#
+# Locate vendored .so files
+#
+##
+
+
+def find_files(pattern, root):
+    """Return all the files matching pattern below root dir."""
+    for dirpath, _, files in os.walk(root):
+        for filename in fnmatch.filter(files, pattern):
+            yield os.path.join(dirpath, filename)
+
+
+so_lib_paths = ["lib/"]
+
+vendor_libs = []
+for path in so_lib_paths:
+    vendor_libs.extend([find_files("*", path)])
+
+###
 # Raspberry Pi OS and OctoPi distribute images with a 64-bit kernel space and a 32-bit userspace
 # On these systems, os.uname().machine will return "aarch64" (64-bit hardware detected)
 # Instead, use platform.architecture() to detect whether the Python interpreter was installed with 32-bit or 64-bit address space
@@ -112,9 +132,9 @@ else:
     sys.exit(1)
 
 plugin_requires = [
+    tensorflow,
     "numpy",
     "pillow",
-    "bravado",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",
@@ -132,90 +152,6 @@ extra_requires = {
     "dev": ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio", "twine"]
 }
 
-###
-# Platform Dependency Installation
-#
-# Ref: https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/54
-#
-# Print Nanny depends on TensorFlow, which I distribute as a binary (whl) dynamically linked again libatlas
-# That means the libatlas library MUST be installed and resolvable by ld (library linker) for the TensorFlow binary installer to succeed
-# I took a ham-fisted approach to this problem by running `sudo apt-get install libatlas-base-dev cmake python3-dev` in a subprocess during pip install
-# Ref: https://github.com/bitsy-ai/octoprint-nanny-plugin/pull/35/files#diff-60f61ab7a8d1910d86d9fda2261620314edcae5894d5aaa236b821c7256badd7R84
-#
-# This isn't ideal because the OctoPi image (very reasonably) restricts passwordless sudo.
-# For ref, here are the sudoers rules in the OctoPi image: https://github.com/guysoft/OctoPi/blob/2f51ef2dcb60508f25b47c4c2bc070ffe2b363df/src/modules/octopi/start_chroot_script#L155
-#
-# To move forward, I have three viable options:
-#
-# (Option 1)
-# Provide instructions to add a passwordless sudo rule for Print Nanny
-#
-# This would look something like...
-# $ echo "pi ALL=NOPASSWD: /usr/bin/apt" > /etc/sudoers.d/print-nanny-passwordless-apt
-#
-# This would open up a lot of attack surface on the user's system.
-# ANY plugin or software running as the Pi user would be able to download packages and update package lists willy-nilly
-# For example, a random LED light-blinker OctoPrint plugin could update the user's system to pull packages from a botnet repository instead of Raspbian's package repo
-#
-# Pros: "easy"
-# Cons: Do you want ants? This is how we get ants.
-# ┻━┻ ︵ヽ(`Д´)ﾉ︵ ┻━┻
-#
-# (Option 2)
-# Vendor libatlas library and distribute it with Print Nanny
-#
-# Pros: apt permission is not required by Pi user
-# Cons: I'll need to subscribe to libatlas's vulnerability mailing list. nbd.
-
-# $ apt-get download --print-uris libatlas-base-dev
-# 'http://raspbian.raspberrypi.org/raspbian/pool/main/a/atlas/libatlas-base-dev_3.10.3-8+rpi1_armhf.deb' libatlas-base-dev_3.10.3-8+rpi1_armhf.deb 2965588 SHA256:cba2880d81bd80d794b12a64707d1caba87814363466101604a6e0cf1d104704
-
-
-ansible_libs = ["ansible"]
-
-BUILD_STAGE_INSTALL = [
-    [sys.executable, "-m", "pip", "install"] + ansible_libs,
-    [sys.executable, "-m", "pip", "install"] + ansible_libs,
-    [sys.executable, "-m", "ansible", "ansible-playbook", "playbooks/libatlas.yml"],
-    [sys.executable, "-m", "pip", "install", tensorflow],
-]
-
-
-class CustomInstall(install):
-    """A build command class that will be invoked during package install.
-    The package built using the current setup.py will be staged and later
-    installed in the worker using `pip install package'. This class will be
-    instantiated during install for this specific scenario and will trigger
-    running the custom commands specified.
-    """
-
-    sub_commands = [("CustomCommands", None)] + install.sub_commands
-
-
-class CustomCommands(setuptools.Command):
-    """A setuptools Command class able to run arbitrary commands."""
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run_command(self, command):
-        print("Running PLATFORM_INSTALL command: {}".format(command))
-        p = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        stdout_data, _ = p.communicate()
-        print("PLATFORM_INSTALL Command output: {}".format(stdout_data))
-
-    def run(self):
-        for command in BUILD_STAGE_INSTALL:
-            self.run_command(command)
-
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
@@ -225,7 +161,7 @@ class CustomCommands(setuptools.Command):
 # already be installed automatically if they exist. Note that if you add something here you'll also need to update
 # MANIFEST.in to match to ensure that python setup.py sdist produces a source distribution that contains all your
 # files. This is sadly due to how python's setup.py works, see also http://stackoverflow.com/a/14159430/2028598
-plugin_additional_data = ["data"]
+plugin_additional_data = ["data", "lib"] + so_lib_paths
 
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
 plugin_additional_packages = []
@@ -282,10 +218,6 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
     ignored_packages=plugin_ignored_packages,
     additional_data=plugin_additional_data,
     extra_requires=extra_requires,
-    cmdclass={
-        "install": CustomCommands,
-        "CustomCommands": CustomCommands,
-    },
 )
 
 if len(additional_setup_parameters):
