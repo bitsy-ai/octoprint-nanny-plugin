@@ -582,7 +582,7 @@ class OctoPrintNannyPlugin(
         # for details.
         return dict(
             octoprint_nanny=dict(
-                displayName="OctoPrint Nanny",
+                displayName=self._plugin_name,
                 displayVersion=self._plugin_version,
                 # version check: github repository
                 type="github_release",
