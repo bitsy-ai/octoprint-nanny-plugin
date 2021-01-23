@@ -1,15 +1,15 @@
 ---
-name: Bug report
+name: Plugin Bug report
 about: Create a report to improve Print Nanny
-title: ''
-labels: bug
+title: 'New plugin bug report'
+labels: 'bug'
 assignees: leigh-johnson
 
 ---
 
 - OctoPrint version:
- - Print Nanny version:
- - OctoPi (or other OS) version:
+- Print Nanny version:
+- OctoPi (or other OS) version:
 
 **Describe the bug**
 A clear and concise description of what the bug is.
