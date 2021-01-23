@@ -1,5 +1,5 @@
 ---
-name: Plugin Bug report
+name: Bug report
 about: Create a report to improve Print Nanny
 title: 'New plugin bug report'
 labels: 'bug'
