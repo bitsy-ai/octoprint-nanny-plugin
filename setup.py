@@ -195,6 +195,8 @@ class CustomInstall(install):
 class CustomCommands(setuptools.Command):
     """A setuptools Command class able to run arbitrary commands."""
 
+    user_options = []
+
     def initialize_options(self):
         pass
 
