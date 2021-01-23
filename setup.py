@@ -135,7 +135,6 @@ plugin_requires = [
     tensorflow,
     "numpy",
     "pillow",
-    "bravado",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp",

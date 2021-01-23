@@ -214,11 +214,6 @@ $(function() {
             text: 'You need to test your auth token before this device can be provisioned. 👆',
             class: 'alert'
         },
-        'warning2': {
-            header: 'Wait!',
-            text: 'Your device is not registered yet! \n Choose a name for your device and then click the Start Registration button.',
-            class: 'alert'
-        },
         'nameError': {
             header: 'Hey, choose a name!',
             text: 'Pick a nickname for this device and enter it above.',
@@ -320,7 +315,6 @@ $(function() {
                 self.authAlertClass(self.authAlerts.success.class)
                 self.authAlertHeader(self.authAlerts.success.header)
                 self.authAlertText(self.authAlerts.success.text)
-                self.deviceAlertText(self.deviceAlerts.warning2.text);
                 self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid(true);
 
 
