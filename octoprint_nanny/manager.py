@@ -107,6 +107,7 @@ class WorkerManager:
         self._device_cloudiot_name = None
         self._device_serial = None
         self._auth_token = None
+        self._ws_url = None
 
         self.pn_ws_proc = None
 
@@ -127,6 +128,17 @@ class WorkerManager:
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
         self.predict_worker_thread.daemon = True
+
+        self.websocket_worker = WebSocketWorker(
+            self.ws_url,
+            self.auth_token,
+            self.pn_ws_queue,
+            self.shared.print_job_id,
+            self.device_serial,
+            self._monitoring_halt,
+        )
+        self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
+        self.pn_ws_thread.daemon = True
 
     def init_worker_threads(self):
         self._thread_halt = threading.Event()
@@ -152,6 +164,7 @@ class WorkerManager:
 
     def start_monitoring_threads(self):
         self.predict_worker_thread.start()
+        self.pn_ws_thread.start()
 
     def start_worker_threads(self):
         self.mqtt_worker_thread.start()
@@ -168,6 +181,9 @@ class WorkerManager:
 
         logger.info("Waiting for WorkerManager.predict_worker_thread to drain")
         self.predict_worker_thread.join()
+
+        logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
+        self.pn_ws_thread.join()
 
     def stop_worker_threads(self):
         logger.warning("Setting halt signal for telemetry worker threads")
@@ -209,6 +225,12 @@ class WorkerManager:
         if self._auth_token is None:
             self._auth_token = self.plugin._settings.get(["auth_token"])
         return self._auth_token
+
+    @property
+    def ws_url(self):
+        if self._ws_url is None:
+            self._ws_url = self.plugin._settings.get(["ws_url"])
+        return self._ws_url
 
     @property
     def snapshot_url(self):
@@ -585,15 +607,6 @@ class WorkerManager:
         )
         self.stop_monitoring_threads()
 
-        if self.pn_ws_proc:
-            logger.info("Terminating websocket process")
-            self.pn_ws_proc.terminate()
-            self.pn_ws_proc.join(30)
-            if self.pn_ws_proc.is_alive():
-                self.pn_ws_proc.kill()
-            self.pn_ws_proc.close()
-            self.pn_ws_proc = None
-
     @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
         self.stop_monitoring()
@@ -614,26 +627,6 @@ class WorkerManager:
         )
         self.init_monitoring_threads()
         self.start_monitoring_threads()
-
-        auth_token = self.plugin._settings.get(["auth_token"])
-        ws_url = self.plugin._settings.get(["ws_url"])
-        api_url = self.plugin._settings.get(["api_url"])
-
-        self.plugin.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
-
-        if self.pn_ws_proc is None:
-            self.pn_ws_proc = multiprocessing.Process(
-                target=WebSocketWorker,
-                args=(
-                    ws_url,
-                    auth_token,
-                    self.pn_ws_queue,
-                    self.shared.print_job_id,
-                    self.device_serial,
-                ),
-                daemon=True,
-            )
-            self.pn_ws_proc.start()
 
     def _octo_ws_queue_worker(self):
         """

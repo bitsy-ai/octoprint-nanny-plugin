@@ -384,7 +384,7 @@ class PredictWorker:
                 )
                 self._pn_ws_queue.put_nowait(ws_msg)
                 self._telemetry_queue.put_nowait(mqtt_msg)
-            logger.warning("Halt event set, thread will exit soon")
+            logger.warning("Halt event set, worker will exit soon")
 
     def run(self):
         loop = asyncio.get_running_loop()
