@@ -608,6 +608,7 @@ class WorkerManager:
                     self.octo_ws_queue,
                     self.pn_ws_queue,
                     self.telemetry_queue,
+                    self.monitoring_frames_per_minute,
                 ),
                 daemon=True,
             )

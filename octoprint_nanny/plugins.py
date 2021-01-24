@@ -510,12 +510,13 @@ class OctoPrintNannyPlugin(
         new_device_fingerprint = self._settings.get(["device_fingerprint"])
         new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
 
-        predictor_restart_needed = (prev_monitoring_fpm != new_monitoring_fpm or
-            prev_calibration != new_calibration:
-        )
-
-        if predictor_restart_needed:
-            logger.info("Change in frames per minute or calibration detected, applying new settings")
+        if (
+            prev_monitoring_fpm != new_monitoring_fpm
+            or prev_calibration != new_calibration
+        ):
+            logger.info(
+                "Change in frames per minute or calibration detected, applying new settings"
+            )
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
             self._worker_manager.apply_monitoring_settings()
 

@@ -246,14 +246,14 @@ class PredictWorker:
         octoprint_ws_queue,
         pn_ws_queue,
         telemetry_queue,
-        fpm=30,
+        fpm,
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
         octoprint_ws_queue - consumer relay to octoprint's main event bus
         pn_ws_queue - consumer relay to websocket upload proc
         calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
-        fps - wildly approximate buffer sample rate, depends on time.sleep()
+        fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
         """
 
         self._calibration = calibration
