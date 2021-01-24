@@ -1,25 +1,22 @@
+from datetime import datetime
+from time import sleep
+import aiohttp
 import aioprocessing
 import asyncio
 import base64
-import re
-from datetime import datetime
-import platform
-import uuid
-import pytz
-from time import sleep
+import concurrent
+import inspect
 import io
-import aiohttp
-
 import logging
-
-import aiohttp
-
 import multiprocessing
+import platform
+import pytz
+import re
+import threading
+import uuid
+
 import octoprint.filemanager
 from octoprint.events import Events
-import inspect
-import threading
-
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -111,14 +108,28 @@ class WorkerManager:
         self._device_serial = None
         self._auth_token = None
 
-        self.predict_proc = None
         self.pn_ws_proc = None
 
         self.init_worker_threads()
 
+    def init_monitoring_threads(self):
+        self._monitoring_halt = threading.Event()
+
+        self.predict_worker = PredictWorker(
+            self.snapshot_url,
+            self.calibration,
+            self.octo_ws_queue,
+            self.pn_ws_queue,
+            self.telemetry_queue,
+            self.monitoring_frames_per_minute,
+            self._monitoring_halt,
+        )
+
+        self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
+        self.predict_worker_thread.daemon = True
+
     def init_worker_threads(self):
         self._thread_halt = threading.Event()
-        # daemonized thread for outbount telemetry event handlers
 
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
@@ -139,6 +150,9 @@ class WorkerManager:
 
         self.loop = None
 
+    def start_monitoring_threads(self):
+        self.predict_worker_thread.start()
+
     def start_worker_threads(self):
         self.mqtt_worker_thread.start()
         self.octo_ws_thread.start()
@@ -148,8 +162,15 @@ class WorkerManager:
             logger.warning("Waiting for event loop to be set and exposed")
             sleep(1)
 
+    def stop_monitoring_threads(self):
+        logger.warning("Setting halt signal for monitoring worker threads")
+        self._monitoring_halt.set()
+
+        logger.info("Waiting for WorkerManager.predict_worker_thread to drain")
+        self.predict_worker_thread.join()
+
     def stop_worker_threads(self):
-        logger.warning("Setting halt signal for worker threads")
+        logger.warning("Setting halt signal for telemetry worker threads")
         self._thread_halt.set()
 
         logger.info(
@@ -562,14 +583,7 @@ class WorkerManager:
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
         )
-        if self.predict_proc:
-            logger.info("Terminating predict process")
-            self.predict_proc.terminate()
-            self.predict_proc.join(30)
-            if self.predict_proc.is_alive():
-                self.predict_proc.kill()
-            self.predict_proc.close()
-            self.predict_proc = None
+        self.stop_monitoring_threads()
 
         if self.pn_ws_proc:
             logger.info("Terminating websocket process")
@@ -598,21 +612,8 @@ class WorkerManager:
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
         )
-
-        if self.predict_proc is None:
-            self.predict_proc = multiprocessing.Process(
-                target=PredictWorker,
-                args=(
-                    self.snapshot_url,
-                    self.calibration,
-                    self.octo_ws_queue,
-                    self.pn_ws_queue,
-                    self.telemetry_queue,
-                    self.monitoring_frames_per_minute,
-                ),
-                daemon=True,
-            )
-            self.predict_proc.start()
+        self.init_monitoring_threads()
+        self.start_monitoring_threads()
 
         auth_token = self.plugin._settings.get(["auth_token"])
         ws_url = self.plugin._settings.get(["ws_url"])

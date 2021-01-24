@@ -247,6 +247,7 @@ class PredictWorker:
         pn_ws_queue,
         telemetry_queue,
         fpm,
+        halt,
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
@@ -258,7 +259,7 @@ class PredictWorker:
 
         self._calibration = calibration
         self._fpm = fpm
-        self._sleep_interval = 60 / fpm
+        self._sleep_interval = 60 / int(fpm)
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
 
@@ -266,22 +267,8 @@ class PredictWorker:
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
 
-        self._halt = threading.Event()
-        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
-            signal.signal(signame, self._signal_handler)
-
+        self._halt = halt
         self._predictor = ThreadLocalPredictor(calibration=calibration)
-
-        self._producer_thread = threading.Thread(
-            target=self._producer_worker, name="producer"
-        )
-        self._producer_thread.daemon = True
-        self._producer_thread.start()
-        self._producer_thread.join()
-
-    def _signal_handler(self, received_signal, _):
-        logger.warning(f"Received signal {received_signal}")
-        self._halt.set()
 
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
@@ -387,7 +374,7 @@ class PredictWorker:
         logger.info("Started PredictWorker.consumer thread")
 
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ProcessPoolExecutor() as pool:
+        with concurrent.futures.ProccessPoolExecutor() as pool:
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
                 now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
@@ -397,5 +384,8 @@ class PredictWorker:
                 )
                 self._pn_ws_queue.put_nowait(ws_msg)
                 self._telemetry_queue.put_nowait(mqtt_msg)
-            logger.warning("Halt event set, process will exit soon")
-            sys.exit(0)
+            logger.warning("Halt event set, thread will exit soon")
+
+    def run(self):
+        loop = asyncio.get_running_loop()
+        return loop.run_until_complete(self._producer())
