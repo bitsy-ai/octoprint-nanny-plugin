@@ -384,7 +384,7 @@ class PredictWorker:
         logger.info("Started PredictWorker.consumer thread")
 
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
+        with concurrent.futures.ProcessPoolExecutor() as pool:
             async with aiohttp.ClientSession() as session:
                 while not self._halt.is_set():
                     now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
