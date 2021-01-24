@@ -246,7 +246,7 @@ class PredictWorker:
         octoprint_ws_queue,
         pn_ws_queue,
         telemetry_queue,
-        fps: int = 5,
+        fpm=30,
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
@@ -257,7 +257,8 @@ class PredictWorker:
         """
 
         self._calibration = calibration
-        self._fps = fps
+        self._fpm = fpm
+        self._sleep_interval = 60 / fpm
         self._webcam_url = webcam_url
         self._task_queue = queue.Queue()
 
@@ -325,12 +326,13 @@ class PredictWorker:
         loop.run_until_complete(asyncio.ensure_future(self._producer()))
         loop.close()
 
-    async def _image_msg(self, ts, session):
-        original_image = await self.load_url_buffer(session)
-        return dict(
-            ts=ts,
-            original_image=original_image,
-        )
+    async def _image_msg(self, ts):
+        async with aiohttp.ClientSession() as session:
+            original_image = await self.load_url_buffer(session)
+            return dict(
+                ts=ts,
+                original_image=original_image,
+            )
 
     def _predict_msg(self, msg):
         # msg["original_image"].name = "original_image.jpg"
@@ -371,6 +373,7 @@ class PredictWorker:
             {
                 "calibration": calibration,
                 "event_type": "bounding_box_predict",
+                "fpm": self._fpm,
             }
         )
         mqtt_msg.update(prediction)
@@ -385,14 +388,14 @@ class PredictWorker:
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ProcessPoolExecutor() as pool:
-            async with aiohttp.ClientSession() as session:
-                while not self._halt.is_set():
-                    now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
-                    msg = await self._image_msg(now, session)
-                    ws_msg, mqtt_msg = await loop.run_in_executor(
-                        pool, lambda: self._predict_msg(msg)
-                    )
-                    self._pn_ws_queue.put_nowait(ws_msg)
-                    self._telemetry_queue.put_nowait(mqtt_msg)
-                logger.warning("Halt event set, process will exit soon")
-                sys.exit(0)
+            while not self._halt.is_set():
+                await asyncio.sleep(self._sleep_interval)
+                now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
+                msg = await self._image_msg(now)
+                ws_msg, mqtt_msg = await loop.run_in_executor(
+                    pool, lambda: self._predict_msg(msg)
+                )
+                self._pn_ws_queue.put_nowait(ws_msg)
+                self._telemetry_queue.put_nowait(mqtt_msg)
+            logger.warning("Halt event set, process will exit soon")
+            sys.exit(0)

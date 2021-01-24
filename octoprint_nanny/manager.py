@@ -105,6 +105,7 @@ class WorkerManager:
         self._user_id = None
         self._device_id = None
         self._calibration = None
+        self._monitoring_frames_per_minute = None
         self._snapshot_url = None
         self._device_cloudiot_name = None
         self._device_serial = None
@@ -232,6 +233,14 @@ class WorkerManager:
         return self._calibration
 
     @property
+    def monitoring_frames_per_minute(self):
+        if self._monitoring_frames_per_minute is None:
+            self._monitoring_frames_per_minute = self.plugin._settings.get(
+                ["monitoring_frames_per_minute"]
+            )
+        return self._monitoring_frames_per_minute
+
+    @property
     def rest_client(self):
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
@@ -275,9 +284,13 @@ class WorkerManager:
         self.init_worker_threads()
         self.start_worker_threads()
 
-    @beeline.traced("WorkerManager.apply_calibration")
-    def apply_calibration(self):
+    def _reset_monitoring_settings(self):
         self._calibration = None
+        self._monitoring_frames_per_minute = None
+
+    @beeline.traced("WorkerManager.apply_monitoring_settings")
+    def apply_monitoring_settings(self):
+        self._reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )

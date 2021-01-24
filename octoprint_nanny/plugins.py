@@ -461,6 +461,7 @@ class OctoPrintNannyPlugin(
             auth_valid=False,
             device_registered=False,
             user_email=None,
+            monitoring_frames_per_minute=30,
             user_id=None,
             user_url=None,
             device_url=None,
@@ -494,6 +495,8 @@ class OctoPrintNannyPlugin(
         prev_auth_token = self._settings.get(["auth_token"])
         prev_api_url = self._settings.get(["api_token"])
         prev_device_fingerprint = self._settings.get(["device_fingerprint"])
+        prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
+
         super().on_settings_save(data)
 
         new_calibration = (
@@ -505,11 +508,16 @@ class OctoPrintNannyPlugin(
         new_auth_token = self._settings.get(["auth_token"])
         new_api_url = self._settings.get(["api_url"])
         new_device_fingerprint = self._settings.get(["device_fingerprint"])
+        new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
 
-        if prev_calibration != new_calibration:
-            logger.info("Change in calibration detected, applying new settings")
+        predictor_restart_needed = (prev_monitoring_fpm != new_monitoring_fpm or
+            prev_calibration != new_calibration:
+        )
+
+        if predictor_restart_needed:
+            logger.info("Change in frames per minute or calibration detected, applying new settings")
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
-            self._worker_manager.apply_calibration()
+            self._worker_manager.apply_monitoring_settings()
 
         if prev_auth_token != new_auth_token:
             logger.info("Change in auth detected, applying new settings")
