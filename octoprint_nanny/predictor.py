@@ -373,7 +373,6 @@ class PredictWorker:
         """
         logger.info("Started PredictWorker.consumer thread")
 
-        loop = asyncio.get_running_loop()
         with concurrent.futures.ProccessPoolExecutor() as pool:
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
@@ -387,5 +386,6 @@ class PredictWorker:
             logger.warning("Halt event set, worker will exit soon")
 
     def run(self):
-        loop = asyncio.get_running_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         return loop.run_until_complete(self._producer())

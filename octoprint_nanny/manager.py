@@ -113,6 +113,7 @@ class WorkerManager:
 
         self.init_worker_threads()
 
+    @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
         self._monitoring_halt = threading.Event()
 
@@ -140,6 +141,7 @@ class WorkerManager:
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
 
+    @beeline.traced("WorkerManager.init_worker_threads")
     def init_worker_threads(self):
         self._thread_halt = threading.Event()
 
@@ -162,10 +164,12 @@ class WorkerManager:
 
         self.loop = None
 
+    @beeline.traced("WorkerManager.start_monitoring_threads")
     def start_monitoring_threads(self):
         self.predict_worker_thread.start()
         self.pn_ws_thread.start()
 
+    @beeline.traced("WorkerManager.start_worker_threads")
     def start_worker_threads(self):
         self.mqtt_worker_thread.start()
         self.octo_ws_thread.start()
@@ -175,6 +179,7 @@ class WorkerManager:
             logger.warning("Waiting for event loop to be set and exposed")
             sleep(1)
 
+    @beeline.traced("WorkerManager.stop_monitoring_threads")
     def stop_monitoring_threads(self):
         logger.warning("Setting halt signal for monitoring worker threads")
         self._monitoring_halt.set()
@@ -185,6 +190,7 @@ class WorkerManager:
         logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
         self.pn_ws_thread.join()
 
+    @beeline.traced("WorkerManager.stop_worker_threads")
     def stop_worker_threads(self):
         logger.warning("Setting halt signal for telemetry worker threads")
         self._thread_halt.set()
@@ -311,6 +317,7 @@ class WorkerManager:
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
+    @beeline.traced("WorkerManager.apply_device_registration")
     def apply_device_registration(self):
         self._device_cloudiot_name = None
         self._device_id = None
@@ -319,6 +326,7 @@ class WorkerManager:
         self.init_worker_threads()
         self.start_worker_threads()
 
+    @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
         self._user_id = None
         self._auth_token = None

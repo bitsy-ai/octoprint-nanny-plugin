@@ -77,7 +77,7 @@ class WebSocketWorker:
     def run(self, backoff=1):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.relay_loop())
+        return loop.run_until_complete(self.relay_loop())
 
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
