@@ -75,7 +75,8 @@ class WebSocketWorker:
             await websocket.send(msg)
 
     def run(self, backoff=1):
-        loop = asyncio.get_running_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         loop.run_until_complete(self.relay_loop())
 
     async def relay_loop(self):
