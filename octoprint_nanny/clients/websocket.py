@@ -30,7 +30,7 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, base_url, api_token, producer, print_job_id, device_id):
+    def __init__(self, base_url, api_token, producer, print_job_id, device_id, halt):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -45,10 +45,7 @@ class WebSocketWorker:
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
-        self._halt = threading.Event()
-        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
-            signal.signal(signame, self._signal_handler)
-        asyncio.run(self.run())
+        self._halt = halt
 
     def _signal_handler(self, received_signal, _):
         logger.warning(f"Received signal {received_signal}")
@@ -77,15 +74,10 @@ class WebSocketWorker:
             msg = self.encode(msg)
             await websocket.send(msg)
 
-    async def run(self, backoff=1):
-        try:
-            return await self.relay_loop()
-        except websockets.exceptions.WebSocketException as e:
-            logger.error(
-                f"Error connecting to websocket. Retrying in {backoff} seconds. Exception: \n {e}"
-            )
-            await asyncio.sleep(backoff)
-            return await self.run(backoff=backoff * 2)
+    def run(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.relay_loop())
 
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
@@ -102,5 +94,4 @@ class WebSocketWorker:
                     await websocket.send(encoded_msg)
                 else:
                     logger.warning(f"Invalid event_type {event_type}, msg ignored")
-            logger.warning("Halt event set, process will exit soon")
-            sys.exit(0)
+            logger.warning("Halt event set, worker will exit soon")

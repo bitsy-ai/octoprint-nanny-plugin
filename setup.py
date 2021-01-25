@@ -22,7 +22,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.3.4"
+plugin_version = "0.4.0"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -56,26 +56,6 @@ if sys.version_info.major == 2:
         "Sorry, OctoPrint Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
     )
     sys.exit(1)
-
-###
-#
-# Locate vendored .so files
-#
-##
-
-
-def find_files(pattern, root):
-    """Return all the files matching pattern below root dir."""
-    for dirpath, _, files in os.walk(root):
-        for filename in fnmatch.filter(files, pattern):
-            yield os.path.join(dirpath, filename)
-
-
-so_lib_paths = ["lib/"]
-
-vendor_libs = []
-for path in so_lib_paths:
-    vendor_libs.extend([find_files("*", path)])
 
 ###
 # Raspberry Pi OS and OctoPi distribute images with a 64-bit kernel space and a 32-bit userspace
@@ -161,8 +141,7 @@ extra_requires = {
 # already be installed automatically if they exist. Note that if you add something here you'll also need to update
 # MANIFEST.in to match to ensure that python setup.py sdist produces a source distribution that contains all your
 # files. This is sadly due to how python's setup.py works, see also http://stackoverflow.com/a/14159430/2028598
-plugin_additional_data = ["data", "lib"] + so_lib_paths
-
+plugin_additional_data = ["data"]
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
 plugin_additional_packages = []
 

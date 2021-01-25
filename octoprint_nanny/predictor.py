@@ -25,6 +25,8 @@ import tensorflow as tf
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
+
 
 # python >= 3.8
 try:
@@ -231,12 +233,26 @@ class ThreadLocalPredictor(threading.local):
         )
 
 
+predictor = None
+
+
+def _get_predict_bytes(msg):
+    global predictor
+    image = predictor.load_image(msg["original_image"])
+    prediction = predictor.predict(image)
+
+    viz_np = predictor.postprocess(image, prediction)
+    viz_image = PImage.fromarray(viz_np, "RGB")
+    viz_buffer = io.BytesIO()
+    viz_buffer.name = "annotated_image.jpg"
+    viz_image.save(viz_buffer, format="JPEG")
+    return viz_buffer, prediction
+
+
 class PredictWorker:
     """
     Coordinates frame buffer sampling and prediction work
     Publishes results to websocket and main octoprint event bus
-
-    Restart proc on calibration settings change
     """
 
     def __init__(
@@ -246,41 +262,30 @@ class PredictWorker:
         octoprint_ws_queue,
         pn_ws_queue,
         telemetry_queue,
-        fps: int = 5,
+        fpm,
+        halt,
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
         octoprint_ws_queue - consumer relay to octoprint's main event bus
         pn_ws_queue - consumer relay to websocket upload proc
         calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
-        fps - wildly approximate buffer sample rate, depends on time.sleep()
+        fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
+        halt - threading.Event()
         """
 
         self._calibration = calibration
-        self._fps = fps
+        self._fpm = fpm
+        self._sleep_interval = 60 / int(fpm)
         self._webcam_url = webcam_url
-        self._task_queue = queue.Queue()
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
 
-        self._halt = threading.Event()
-        for signame in (signal.SIGINT, signal.SIGTERM, signal.SIGQUIT):
-            signal.signal(signame, self._signal_handler)
+        self._honeycomb_tracer = HoneycombTracer(service_name="predict_worker")
 
-        self._predictor = ThreadLocalPredictor(calibration=calibration)
-
-        self._producer_thread = threading.Thread(
-            target=self._producer_worker, name="producer"
-        )
-        self._producer_thread.daemon = True
-        self._producer_thread.start()
-        self._producer_thread.join()
-
-    def _signal_handler(self, received_signal, _):
-        logger.warning(f"Received signal {received_signal}")
-        self._halt.set()
+        self._halt = halt
 
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
@@ -325,26 +330,17 @@ class PredictWorker:
         loop.run_until_complete(asyncio.ensure_future(self._producer()))
         loop.close()
 
-    async def _image_msg(self, ts, session):
-        original_image = await self.load_url_buffer(session)
-        return dict(
-            ts=ts,
-            original_image=original_image,
-        )
+    async def _image_msg(self, ts):
+        async with aiohttp.ClientSession() as session:
+            original_image = await self.load_url_buffer(session)
+            return dict(
+                ts=ts,
+                original_image=original_image,
+            )
 
-    def _predict_msg(self, msg):
-        # msg["original_image"].name = "original_image.jpg"
-        image = self._predictor.load_image(msg["original_image"])
-        prediction = self._predictor.predict(image)
-
-        viz_np = self._predictor.postprocess(image, prediction)
-        viz_image = PImage.fromarray(viz_np, "RGB")
-        viz_buffer = io.BytesIO()
-        viz_buffer.name = "annotated_image.jpg"
-        viz_image.save(viz_buffer, format="JPEG")
-        viz_bytes = viz_buffer.getvalue()
-
+    def _create_msgs(self, msg, viz_buffer, prediction):
         # send annotated image bytes to octoprint ui ws
+        viz_bytes = viz_buffer.getvalue()
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         # send annotated image bytes to print nanny ui ws
@@ -371,6 +367,7 @@ class PredictWorker:
             {
                 "calibration": calibration,
                 "event_type": "bounding_box_predict",
+                "fpm": self._fpm,
             }
         )
         mqtt_msg.update(prediction)
@@ -382,17 +379,29 @@ class PredictWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started PredictWorker.consumer thread")
-
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            async with aiohttp.ClientSession() as session:
-                while not self._halt.is_set():
-                    now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
-                    msg = await self._image_msg(now, session)
-                    ws_msg, mqtt_msg = await loop.run_in_executor(
-                        pool, lambda: self._predict_msg(msg)
-                    )
-                    self._pn_ws_queue.put_nowait(ws_msg)
-                    self._telemetry_queue.put_nowait(mqtt_msg)
-                logger.warning("Halt event set, process will exit soon")
-                sys.exit(0)
+        global predictor
+        predictor = ThreadLocalPredictor(calibration=self._calibration)
+        logger.info(f"Initialized predictor {predictor}")
+        with concurrent.futures.ProcessPoolExecutor() as pool:
+            while not self._halt.is_set():
+                await asyncio.sleep(self._sleep_interval)
+                trace = self._honeycomb_tracer.start_trace()
+
+                now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
+                msg = await self._image_msg(now)
+                viz_buffer, prediction = await loop.run_in_executor(
+                    pool, _get_predict_bytes, msg
+                )
+                ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
+                self._pn_ws_queue.put_nowait(ws_msg)
+                self._telemetry_queue.put_nowait(mqtt_msg)
+
+                self._honeycomb_tracer.finish_trace(trace)
+
+            logger.warning("Halt event set, worker will exit soon")
+
+    def run(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._producer())
