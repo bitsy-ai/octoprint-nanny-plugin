@@ -32,7 +32,6 @@ import print_nanny_client
 from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
-from octoprint_nanny.predictor import ThreadLocalPredictor
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import beeline
 
@@ -92,7 +91,7 @@ class OctoPrintNannyPlugin(
         logger.info("Initialized rest_client")
         try:
             user = await rest_client.get_user()
-            logger.info(f"Authenticated as user {user}")
+            logger.info(f"Authenticated as user id={user.id} url={user.url}")
             self.rest_client = rest_client
             return user
         except CLIENT_EXCEPTIONS as e:

@@ -49,7 +49,7 @@ class Prediction(TypedDict):
     viz: Optional[PImage.Image]
 
 
-class ThreadLocalPredictor(threading.local):
+class Predictor(object):
     base_path = os.path.join(os.path.dirname(__file__), "data")
 
     def __init__(
@@ -231,6 +231,27 @@ class ThreadLocalPredictor(threading.local):
         )
 
 
+predictor = None
+
+
+def _get_predict_bytes(msg):
+    image = predictor.load_image(msg["original_image"])
+    prediction = predictor.predict(image)
+
+    viz_np = predictor.postprocess(image, prediction)
+    viz_image = PImage.fromarray(viz_np, "RGB")
+    viz_buffer = io.BytesIO()
+    viz_buffer.name = "annotated_image.jpg"
+    viz_image.save(viz_buffer, format="JPEG")
+    viz_bytes = viz_buffer.getvalue()
+    return viz_bytes, prediction
+
+
+def _init_predictor(calibration):
+    global predictor
+    predictor = Predictor(calibration=calibration)
+
+
 class PredictWorker:
     """
     Coordinates frame buffer sampling and prediction work
@@ -261,14 +282,12 @@ class PredictWorker:
         self._fpm = fpm
         self._sleep_interval = 60 / int(fpm)
         self._webcam_url = webcam_url
-        self._task_queue = queue.Queue()
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
 
         self._halt = halt
-        self._predictor = ThreadLocalPredictor(calibration=calibration)
 
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
@@ -321,18 +340,7 @@ class PredictWorker:
                 original_image=original_image,
             )
 
-    def _predict_msg(self, msg):
-        # msg["original_image"].name = "original_image.jpg"
-        image = self._predictor.load_image(msg["original_image"])
-        prediction = self._predictor.predict(image)
-
-        viz_np = self._predictor.postprocess(image, prediction)
-        viz_image = PImage.fromarray(viz_np, "RGB")
-        viz_buffer = io.BytesIO()
-        viz_buffer.name = "annotated_image.jpg"
-        viz_image.save(viz_buffer, format="JPEG")
-        viz_bytes = viz_buffer.getvalue()
-
+    def _create_msgs(self, msg, viz_bytes, prediction):
         # send annotated image bytes to octoprint ui ws
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
@@ -372,15 +380,19 @@ class PredictWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started PredictWorker.consumer thread")
+        loop = asyncio.get_running_loop()
 
-        with concurrent.futures.ProccessPoolExecutor() as pool:
+        with concurrent.futures.ProcessPoolExecutor(
+            initializer=_init_predictor, initargs=(self._calibration)
+        ) as pool:
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
                 now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
                 msg = await self._image_msg(now)
-                ws_msg, mqtt_msg = await loop.run_in_executor(
-                    pool, lambda: self._predict_msg(msg)
+                viz_bytes, prediction = await loop.run_in_executor(
+                    pool, _get_predict_bytes, (msg)
                 )
+                ws_msg, mqtt_msg = self._create_msgs(msg, viz_bytes, prediction)
                 self._pn_ws_queue.put_nowait(ws_msg)
                 self._telemetry_queue.put_nowait(mqtt_msg)
             logger.warning("Halt event set, worker will exit soon")
@@ -388,4 +400,4 @@ class PredictWorker:
     def run(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self._producer())
+        loop.run_until_complete(self._producer())
