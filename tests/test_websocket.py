@@ -7,6 +7,7 @@ from datetime import datetime
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.predictor import PredictWorker
 import pytz
+import threading
 
 
 @pytest.fixture
@@ -19,6 +20,7 @@ def ws_client(mocker):
         m.Queue(),
         1,
         1,
+        threading.Event(),
     )
 
 
@@ -33,12 +35,15 @@ def predict_worker(mocker):
         m.Queue(),
         m.Queue(),
         m.Queue(),
+        threading.Event(),
     )
 
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
-        WebSocketWorker("http://foo.com/ws/", "api_team", queue.Queue(), 1, 1)
+        WebSocketWorker(
+            "http://foo.com/ws/", "api_team", queue.Queue(), 1, 1, threading.Event()
+        )
 
 
 @pytest.mark.webapp
