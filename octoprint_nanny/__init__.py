@@ -11,14 +11,18 @@ c_libs = os.path.join(site_package_dir, "lib/")
 # Add lib/ to LD_LIBRARY_PATH
 ##
 
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
+
 LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH")
 
 if LD_LIBRARY_PATH is None:
     os.environ["LD_LIBRARY_PATH"] = c_libs
 else:
     os.environ["LD_LIBRARY_PATH"] = "{}:{}".format(
-        (os.environ["LD_LIBRARY_PATH"], c_libs)
+        os.environ["LD_LIBRARY_PATH"], c_libs
     )
+
+logger.info(f'Loading libraries from {os.environ["LD_LIBRARY_PATH"}')
 
 from .plugins import OctoPrintNannyPlugin
 
