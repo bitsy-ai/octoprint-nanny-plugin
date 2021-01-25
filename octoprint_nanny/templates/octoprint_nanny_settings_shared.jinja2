@@ -166,7 +166,24 @@
     <div id="{{template_name}}_advanced" class="tab-pane">
         <fieldset>
             <legend>Warning! Advanced Settings </legend>
-            <p>The following settings are for developers and on-prem installations of Print Nanny.</p>
+            <p>The following settings are for Print Nanny developers. Adjust these at your own risk. </p>
+
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_monitoring_frames_per_minute">
+                    Monitoring Frames per Minute 
+                    <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute"></strong>
+                </label>
+                <div class="controls">
+                    <input 
+                    class="input-xxlarge" 
+                    id="octoprint_nanny_settings_monitoring_frames_per_minute" 
+                    type="range"
+                    min="1"
+                    max="60"
+                    data-bind="value: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute" type="text" />
+                </div>
+            </div>
+
             <div class="control-group">
                 <label class="control-label" for="octoprint_nanny_settings_api_url">Print Nanny API</label>
                 <div class="controls">

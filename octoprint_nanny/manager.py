@@ -1,25 +1,22 @@
+from datetime import datetime
+from time import sleep
+import aiohttp
 import aioprocessing
 import asyncio
 import base64
-import re
-from datetime import datetime
-import platform
-import uuid
-import pytz
-from time import sleep
+import concurrent
+import inspect
 import io
-import aiohttp
-
 import logging
-
-import aiohttp
-
 import multiprocessing
+import platform
+import pytz
+import re
+import threading
+import uuid
+
 import octoprint.filemanager
 from octoprint.events import Events
-import inspect
-import threading
-
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -61,7 +58,7 @@ class WorkerManager:
 
     def __init__(self, plugin):
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager_main")
+        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager")
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
@@ -105,19 +102,45 @@ class WorkerManager:
         self._user_id = None
         self._device_id = None
         self._calibration = None
+        self._monitoring_frames_per_minute = None
         self._snapshot_url = None
         self._device_cloudiot_name = None
         self._device_serial = None
         self._auth_token = None
-
-        self.predict_proc = None
-        self.pn_ws_proc = None
-
+        self._ws_url = None
         self.init_worker_threads()
 
+    @beeline.traced("WorkerManager.init_monitoring_threads")
+    def init_monitoring_threads(self):
+        self._monitoring_halt = threading.Event()
+
+        self.predict_worker = PredictWorker(
+            self.snapshot_url,
+            self.calibration,
+            self.octo_ws_queue,
+            self.pn_ws_queue,
+            self.telemetry_queue,
+            self.monitoring_frames_per_minute,
+            self._monitoring_halt,
+        )
+
+        self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
+        self.predict_worker_thread.daemon = True
+
+        self.websocket_worker = WebSocketWorker(
+            self.ws_url,
+            self.auth_token,
+            self.pn_ws_queue,
+            self.shared.print_job_id,
+            self.device_serial,
+            self._monitoring_halt,
+        )
+        self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
+        self.pn_ws_thread.daemon = True
+
+    @beeline.traced("WorkerManager.init_worker_threads")
     def init_worker_threads(self):
         self._thread_halt = threading.Event()
-        # daemonized thread for outbount telemetry event handlers
 
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
@@ -138,6 +161,12 @@ class WorkerManager:
 
         self.loop = None
 
+    @beeline.traced("WorkerManager.start_monitoring_threads")
+    def start_monitoring_threads(self):
+        self.predict_worker_thread.start()
+        self.pn_ws_thread.start()
+
+    @beeline.traced("WorkerManager.start_worker_threads")
     def start_worker_threads(self):
         self.mqtt_worker_thread.start()
         self.octo_ws_thread.start()
@@ -147,8 +176,20 @@ class WorkerManager:
             logger.warning("Waiting for event loop to be set and exposed")
             sleep(1)
 
+    @beeline.traced("WorkerManager.stop_monitoring_threads")
+    def stop_monitoring_threads(self):
+        logger.warning("Setting halt signal for monitoring worker threads")
+        self._monitoring_halt.set()
+
+        logger.info("Waiting for WorkerManager.predict_worker_thread to drain")
+        self.predict_worker_thread.join()
+
+        logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
+        self.pn_ws_thread.join()
+
+    @beeline.traced("WorkerManager.stop_worker_threads")
     def stop_worker_threads(self):
-        logger.warning("Setting halt signal for worker threads")
+        logger.warning("Setting halt signal for telemetry worker threads")
         self._thread_halt.set()
 
         logger.info(
@@ -187,6 +228,12 @@ class WorkerManager:
         if self._auth_token is None:
             self._auth_token = self.plugin._settings.get(["auth_token"])
         return self._auth_token
+
+    @property
+    def ws_url(self):
+        if self._ws_url is None:
+            self._ws_url = self.plugin._settings.get(["ws_url"])
+        return self._ws_url
 
     @property
     def snapshot_url(self):
@@ -232,6 +279,14 @@ class WorkerManager:
         return self._calibration
 
     @property
+    def monitoring_frames_per_minute(self):
+        if self._monitoring_frames_per_minute is None:
+            self._monitoring_frames_per_minute = self.plugin._settings.get(
+                ["monitoring_frames_per_minute"]
+            )
+        return self._monitoring_frames_per_minute
+
+    @property
     def rest_client(self):
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
@@ -259,6 +314,7 @@ class WorkerManager:
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
+    @beeline.traced("WorkerManager.apply_device_registration")
     def apply_device_registration(self):
         self._device_cloudiot_name = None
         self._device_id = None
@@ -267,6 +323,7 @@ class WorkerManager:
         self.init_worker_threads()
         self.start_worker_threads()
 
+    @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
         self._user_id = None
         self._auth_token = None
@@ -275,9 +332,13 @@ class WorkerManager:
         self.init_worker_threads()
         self.start_worker_threads()
 
-    @beeline.traced("WorkerManager.apply_calibration")
-    def apply_calibration(self):
+    def _reset_monitoring_settings(self):
         self._calibration = None
+        self._monitoring_frames_per_minute = None
+
+    @beeline.traced("WorkerManager.apply_monitoring_settings")
+    def apply_monitoring_settings(self):
+        self._reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
@@ -549,23 +610,7 @@ class WorkerManager:
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
         )
-        if self.predict_proc:
-            logger.info("Terminating predict process")
-            self.predict_proc.terminate()
-            self.predict_proc.join(30)
-            if self.predict_proc.is_alive():
-                self.predict_proc.kill()
-            self.predict_proc.close()
-            self.predict_proc = None
-
-        if self.pn_ws_proc:
-            logger.info("Terminating websocket process")
-            self.pn_ws_proc.terminate()
-            self.pn_ws_proc.join(30)
-            if self.pn_ws_proc.is_alive():
-                self.pn_ws_proc.kill()
-            self.pn_ws_proc.close()
-            self.pn_ws_proc = None
+        self.stop_monitoring_threads()
 
     @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
@@ -585,40 +630,8 @@ class WorkerManager:
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
         )
-
-        if self.predict_proc is None:
-            self.predict_proc = multiprocessing.Process(
-                target=PredictWorker,
-                args=(
-                    self.snapshot_url,
-                    self.calibration,
-                    self.octo_ws_queue,
-                    self.pn_ws_queue,
-                    self.telemetry_queue,
-                ),
-                daemon=True,
-            )
-            self.predict_proc.start()
-
-        auth_token = self.plugin._settings.get(["auth_token"])
-        ws_url = self.plugin._settings.get(["ws_url"])
-        api_url = self.plugin._settings.get(["api_url"])
-
-        self.plugin.rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
-
-        if self.pn_ws_proc is None:
-            self.pn_ws_proc = multiprocessing.Process(
-                target=WebSocketWorker,
-                args=(
-                    ws_url,
-                    auth_token,
-                    self.pn_ws_queue,
-                    self.shared.print_job_id,
-                    self.device_serial,
-                ),
-                daemon=True,
-            )
-            self.pn_ws_proc.start()
+        self.init_monitoring_threads()
+        self.start_monitoring_threads()
 
     def _octo_ws_queue_worker(self):
         """

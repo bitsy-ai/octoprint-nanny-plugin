@@ -334,6 +334,7 @@ $(function() {
         OctoPrint.settings.savePluginSettings('octoprint_nanny', {
             'ws_url': self.settingsViewModel.settings.plugins.octoprint_nanny.ws_url(),
             'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
+            'monitoring_frames_per_minute': self.settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute()
             })
             .done((res) =>{
                 console.log(res)
