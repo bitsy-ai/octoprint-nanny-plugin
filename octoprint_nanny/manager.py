@@ -108,9 +108,6 @@ class WorkerManager:
         self._device_serial = None
         self._auth_token = None
         self._ws_url = None
-
-        self.pn_ws_proc = None
-
         self.init_worker_threads()
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
