@@ -58,26 +58,6 @@ if sys.version_info.major == 2:
     sys.exit(1)
 
 ###
-#
-# Locate vendored .so files
-#
-##
-
-
-def find_files(pattern, root):
-    """Return all the files matching pattern below root dir."""
-    for dirpath, _, files in os.walk(root):
-        for filename in fnmatch.filter(files, pattern):
-            yield os.path.join(dirpath, filename)
-
-
-so_lib_paths = ["lib/"]
-
-vendor_libs = []
-for path in so_lib_paths:
-    vendor_libs.extend([find_files("*", path)])
-
-###
 # Raspberry Pi OS and OctoPi distribute images with a 64-bit kernel space and a 32-bit userspace
 # On these systems, os.uname().machine will return "aarch64" (64-bit hardware detected)
 # Instead, use platform.architecture() to detect whether the Python interpreter was installed with 32-bit or 64-bit address space
@@ -161,8 +141,7 @@ extra_requires = {
 # already be installed automatically if they exist. Note that if you add something here you'll also need to update
 # MANIFEST.in to match to ensure that python setup.py sdist produces a source distribution that contains all your
 # files. This is sadly due to how python's setup.py works, see also http://stackoverflow.com/a/14159430/2028598
-plugin_additional_data = ["data", "lib"] + so_lib_paths
-
+plugin_additional_data = ["data", "lib"]
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
 plugin_additional_packages = []
 
