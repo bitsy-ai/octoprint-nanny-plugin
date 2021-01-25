@@ -11,7 +11,7 @@ c_libs = os.path.join(site_package_dir, "lib/")
 # Add lib/ to LD_LIBRARY_PATH
 ##
 
-LD_LIBRARY_PATH = os.environ.getenv("LD_LIBRARY_PATH")
+LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH")
 
 if LD_LIBRARY_PATH is None:
     os.environ["LD_LIBRARY_PATH"] = c_libs
