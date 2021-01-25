@@ -58,7 +58,7 @@ class WorkerManager:
 
     def __init__(self, plugin):
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager_main")
+        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager")
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()

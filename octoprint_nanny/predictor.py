@@ -25,6 +25,8 @@ import tensorflow as tf
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
+
 
 # python >= 3.8
 try:
@@ -49,7 +51,7 @@ class Prediction(TypedDict):
     viz: Optional[PImage.Image]
 
 
-class Predictor(object):
+class Predictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), "data")
 
     def __init__(
@@ -235,6 +237,7 @@ predictor = None
 
 
 def _get_predict_bytes(msg):
+    global predictor
     image = predictor.load_image(msg["original_image"])
     prediction = predictor.predict(image)
 
@@ -243,21 +246,13 @@ def _get_predict_bytes(msg):
     viz_buffer = io.BytesIO()
     viz_buffer.name = "annotated_image.jpg"
     viz_image.save(viz_buffer, format="JPEG")
-    viz_bytes = viz_buffer.getvalue()
-    return viz_bytes, prediction
-
-
-def _init_predictor(calibration):
-    global predictor
-    predictor = Predictor(calibration=calibration)
+    return viz_buffer, prediction
 
 
 class PredictWorker:
     """
     Coordinates frame buffer sampling and prediction work
     Publishes results to websocket and main octoprint event bus
-
-    Restart proc on calibration settings change
     """
 
     def __init__(
@@ -276,6 +271,7 @@ class PredictWorker:
         pn_ws_queue - consumer relay to websocket upload proc
         calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
         fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
+        halt - threading.Event()
         """
 
         self._calibration = calibration
@@ -286,6 +282,8 @@ class PredictWorker:
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
+
+        self._honeycomb_tracer = HoneycombTracer(service_name="predict_worker")
 
         self._halt = halt
 
@@ -340,8 +338,9 @@ class PredictWorker:
                 original_image=original_image,
             )
 
-    def _create_msgs(self, msg, viz_bytes, prediction):
+    def _create_msgs(self, msg, viz_buffer, prediction):
         # send annotated image bytes to octoprint ui ws
+        viz_bytes = viz_buffer.getvalue()
         self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         # send annotated image bytes to print nanny ui ws
@@ -381,20 +380,25 @@ class PredictWorker:
         """
         logger.info("Started PredictWorker.consumer thread")
         loop = asyncio.get_running_loop()
-
-        with concurrent.futures.ProcessPoolExecutor(
-            initializer=_init_predictor, initargs=(self._calibration)
-        ) as pool:
+        global predictor
+        predictor = Predictor(calibration=self._calibration)
+        logger.info(f"Initialized predictor {predictor}")
+        with concurrent.futures.ProcessPoolExecutor() as pool:
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
+                trace = self._honeycomb_tracer.start_trace()
+
                 now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
                 msg = await self._image_msg(now)
-                viz_bytes, prediction = await loop.run_in_executor(
-                    pool, _get_predict_bytes, (msg)
+                viz_buffer, prediction = await loop.run_in_executor(
+                    pool, _get_predict_bytes, msg
                 )
-                ws_msg, mqtt_msg = self._create_msgs(msg, viz_bytes, prediction)
+                ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
                 self._pn_ws_queue.put_nowait(ws_msg)
                 self._telemetry_queue.put_nowait(mqtt_msg)
+
+                self._honeycomb_tracer.finish_trace(trace)
+
             logger.warning("Halt event set, worker will exit soon")
 
     def run(self):
