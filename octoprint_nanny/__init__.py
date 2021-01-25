@@ -2,7 +2,23 @@
 from __future__ import absolute_import
 
 import logging
+import os
+import pathlib
 
+site_package_dir = pathlib.Path(__file__).parent.absolute()
+c_libs = os.path.join(site_package_dir, "lib/")
+##
+# Add lib/ to LD_LIBRARY_PATH
+##
+
+LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH")
+
+if LD_LIBRARY_PATH is None:
+    os.environ["LD_LIBRARY_PATH"] = c_libs
+else:
+    os.environ["LD_LIBRARY_PATH"] = "{}:{}".format(
+        (os.environ["LD_LIBRARY_PATH"], c_libs)
+    )
 
 from .plugins import OctoPrintNannyPlugin
 
