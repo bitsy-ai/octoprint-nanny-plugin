@@ -22,7 +22,7 @@ else:
         os.environ["LD_LIBRARY_PATH"], c_libs
     )
 
-logger.info(f'Loading libraries from {os.environ["LD_LIBRARY_PATH"}')
+logger.info(f'Loading libraries from {os.environ["LD_LIBRARY_PATH"]}')
 
 from .plugins import OctoPrintNannyPlugin
 
