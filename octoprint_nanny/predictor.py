@@ -51,7 +51,7 @@ class Prediction(TypedDict):
     viz: Optional[PImage.Image]
 
 
-class Predictor(threading.local):
+class ThreadLocalPredictor(threading.local):
     base_path = os.path.join(os.path.dirname(__file__), "data")
 
     def __init__(
@@ -381,7 +381,7 @@ class PredictWorker:
         logger.info("Started PredictWorker.consumer thread")
         loop = asyncio.get_running_loop()
         global predictor
-        predictor = Predictor(calibration=self._calibration)
+        predictor = ThreadLocalPredictor(calibration=self._calibration)
         logger.info(f"Initialized predictor {predictor}")
         with concurrent.futures.ProcessPoolExecutor() as pool:
             while not self._halt.is_set():
