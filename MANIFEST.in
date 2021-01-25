@@ -3,4 +3,3 @@ recursive-include octoprint_nanny/templates *
 recursive-include octoprint_nanny/translations *
 recursive-include octoprint_nanny/static *
 recursive-include octoprint_nanny/data *
-recursive-include octoprint_nanny/lib/*

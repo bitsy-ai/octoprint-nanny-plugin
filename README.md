@@ -2,6 +2,14 @@
 
 OctoPrint monitoring & alerting AI.
 
+## Pre-requisites
+
+SSH into your Raspberry Pi and install ATLAS (Automatically Tuned Linear Alebra Software) library
+
+```
+$ sudo apt-get update && sudo apt-get install libatlas3-base
+```
+
 ## Installation
 
 Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
