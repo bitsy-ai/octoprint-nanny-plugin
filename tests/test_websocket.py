@@ -21,6 +21,7 @@ def ws_client(mocker):
         1,
         1,
         threading.Event(),
+        {},
     )
 
 
@@ -36,13 +37,15 @@ def predict_worker(mocker):
         m.Queue(),
         m.Queue(),
         threading.Event(),
+        mocker.mock(),
+        {},
     )
 
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
         WebSocketWorker(
-            "http://foo.com/ws/", "api_team", queue.Queue(), 1, 1, threading.Event()
+            "http://foo.com/ws/", "api_team", queue.Queue(), 1, 1, threading.Event(), {}
         )
 
 

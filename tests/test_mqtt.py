@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 from octoprint_nanny.clients import mqtt
+import paho.mqtt.client
+
 import pytest
 
 
@@ -36,5 +38,9 @@ def test_client_id_constructor(
     mocker, private_key_filename, root_ca_filename, device_id, client_id
 ):
     mock_mqtt = mocker.patch("octoprint_nanny.clients.mqtt.mqtt")
-    client = mqtt.MQTTClient(device_id, private_key_filename, root_ca_filename)
-    mock_mqtt.Client.assert_called_once_with(client_id=client_id)
+    client = mqtt.MQTTClient(
+        device_id, private_key_filename, root_ca_filename, trace_context={}
+    )
+    mock_mqtt.Client.assert_called_once_with(
+        client_id=client_id, protocol=mock_mqtt.MQTTv311
+    )
