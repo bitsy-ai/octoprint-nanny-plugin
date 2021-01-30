@@ -32,7 +32,16 @@ class WebSocketWorker:
     Restart proc on api_url and api_token settings change
     """
 
-    def __init__(self, base_url, api_token, producer, print_job_id, device_id, halt):
+    def __init__(
+        self,
+        base_url,
+        api_token,
+        producer,
+        print_job_id,
+        device_id,
+        halt,
+        trace_context,
+    ):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -49,6 +58,7 @@ class WebSocketWorker:
         self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
         self._halt = halt
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
+        self._honeycomb_tracer.add_global_context(trace_context)
 
     def _signal_handler(self, received_signal, _):
         logger.warning(f"Received signal {received_signal}")

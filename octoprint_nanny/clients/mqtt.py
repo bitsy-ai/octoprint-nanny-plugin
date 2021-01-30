@@ -58,6 +58,7 @@ class MQTTClient:
         region=GCP_IOT_DEVICE_REGISTRY_REGION,
         registry_id=GCP_IOT_DEVICE_REGISTRY,
         tls_version=ssl.PROTOCOL_TLS,
+        trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
         self.device_id = device_id

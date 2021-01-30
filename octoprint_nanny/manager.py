@@ -137,6 +137,7 @@ class WorkerManager:
             self.shared.print_job_id,
             self.device_serial,
             self._monitoring_halt,
+            self._get_metadata,
         )
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
@@ -391,6 +392,7 @@ class WorkerManager:
             private_key_file=private_key,
             ca_certs=gcp_root_ca,
             remote_control_queue=self.remote_control_queue,
+            trace_context=self._get_metadata(),
         )
         logger.info(f"Initialized mqtt client with id {self.mqtt_client.client_id}")
         ###
