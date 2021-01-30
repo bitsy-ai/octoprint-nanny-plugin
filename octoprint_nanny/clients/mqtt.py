@@ -9,7 +9,10 @@ import json
 import io
 import paho.mqtt.client as mqtt
 
+import beeline
+
 from octoprint_nanny.utils.encoder import NumpyEncoder
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 
 JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 60)
@@ -55,6 +58,7 @@ class MQTTClient:
         region=GCP_IOT_DEVICE_REGISTRY_REGION,
         registry_id=GCP_IOT_DEVICE_REGISTRY,
         tls_version=ssl.PROTOCOL_TLS,
+        trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
         self.device_id = device_id
@@ -75,8 +79,9 @@ class MQTTClient:
         self.algorithm = algorithm
 
         self.remote_control_queue = remote_control_queue
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-        self.client = mqtt.Client(client_id=client_id)
+        self.client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311)
         logger.info(f"Initializing MQTTClient from {locals()}")
 
         # register callback functions
@@ -121,7 +126,7 @@ class MQTTClient:
     ###
     #   callbacks
     ##
-
+    @beeline.traced("MQTTClient._on_message")
     def _on_message(self, client, userdata, message):
         if message.topic == self.remote_control_command_topic:
             parsed_message = json.loads(message.payload.decode("utf-8"))
@@ -153,6 +158,7 @@ class MQTTClient:
     def _on_log(self, client, userdata, level, buf):
         getattr(device_logger, level)(buf)
 
+    @beeline.traced("MQTTClient._on_connect")
     def _on_connect(self, client, userdata, flags, rc):
         """
         reason codes:
@@ -183,6 +189,7 @@ class MQTTClient:
         else:
             logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")
 
+    @beeline.traced("MQTTClient._on_disconnect")
     def _on_disconnect(self, client, userdata, rc):
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
@@ -219,12 +226,14 @@ class MQTTClient:
 
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
+    @beeline.traced("MQTTClient.publish_octoprint_event")
     def publish_octoprint_event(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
             payload, topic=self.mqtt_octoprint_event_topic, retain=retain, qos=qos
         )
 
+    @beeline.traced("MQTTClient.publish_bounding_boxes")
     def publish_bounding_boxes(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
         outfile = io.BytesIO()
@@ -241,8 +250,9 @@ class MQTTClient:
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
         )
-
+        trace = self._honeycomb_tracer.start_trace()
         self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
+        self._honeycomb_tracer.finish_trace(trace)
         logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
         return self.client.loop_forever()
 

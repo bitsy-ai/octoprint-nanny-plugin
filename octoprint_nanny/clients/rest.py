@@ -4,8 +4,11 @@ import urllib
 import hashlib
 import backoff
 
+import beeline
+
 from octoprint.events import Events
 
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
 
@@ -38,6 +41,7 @@ class RestAPIClient:
 
         self.api_url = api_url
         self.auth_token = auth_token
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     @property
     def _api_config(self):
@@ -48,6 +52,7 @@ class RestAPIClient:
         config.access_token = self.auth_token
         return config
 
+    @beeline.traced("RestAPIClient.update_or_create_octoprint_device")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -72,6 +77,7 @@ class RestAPIClient:
         config.access_token = self.auth_token
         return config
 
+    @beeline.traced("RestAPIClient.update_octoprint_device")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -89,6 +95,7 @@ class RestAPIClient:
             )
             return octoprint_device
 
+    @beeline.traced("RestAPIClient.update_remote_control_command")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -106,6 +113,7 @@ class RestAPIClient:
             )
             return command
 
+    @beeline.traced("RestAPIClient.get_telemetry_events")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -123,6 +131,7 @@ class RestAPIClient:
             )
             return telemetry_events
 
+    @beeline.traced("RestAPIClient.get_user")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -135,6 +144,7 @@ class RestAPIClient:
             user = await api_instance.users_me_retrieve()
             return user
 
+    @beeline.traced("RestAPIClient.create_octoprint_event")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -153,6 +163,7 @@ class RestAPIClient:
             )
             return await api_instance.octoprint_events_create(request)
 
+    @beeline.traced("RestAPIClient.update_print_progress")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -172,6 +183,7 @@ class RestAPIClient:
             )
             return print_job
 
+    @beeline.traced("RestAPIClient.update_or_create_gcode_file")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -198,6 +210,7 @@ class RestAPIClient:
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file
 
+    @beeline.traced("RestAPIClient.create_snapshot")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -218,6 +231,7 @@ class RestAPIClient:
             logger.info(f"Created snapshot {snapshot}")
             return snapshot
 
+    @beeline.traced("RestAPIClient.create_print_job")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -238,6 +252,7 @@ class RestAPIClient:
             print_job = await api_instance.print_jobs_create(request)
             return print_job
 
+    @beeline.traced("RestAPIClient.update_or_create_printer_profile")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,

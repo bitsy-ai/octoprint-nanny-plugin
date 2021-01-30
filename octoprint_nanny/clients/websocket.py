@@ -15,8 +15,10 @@ import signal
 import sys
 import os
 
+import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
@@ -27,10 +29,19 @@ class WebSocketWorker:
     Relays prediction and image buffers from PredictWorker
     to websocket connection
 
-    Restart proc on api_url and api_token settings change
+    Restart proc on api_url and auth_token settings change
     """
 
-    def __init__(self, base_url, api_token, producer, print_job_id, device_id, halt):
+    def __init__(
+        self,
+        base_url,
+        auth_token,
+        producer,
+        print_job_id,
+        device_id,
+        halt,
+        trace_context={},
+    ):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
             raise ValueError(
@@ -41,11 +52,13 @@ class WebSocketWorker:
         self._device_id = device_id
         self._base_url = base_url
         self._url = f"{base_url}{device_id}/video/upload/"
-        self._api_token = api_token
+        self._auth_token = auth_token
         self._producer = producer
 
-        self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
+        self._extra_headers = (("Authorization", f"Bearer {self._auth_token}"),)
         self._halt = halt
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
+        self._honeycomb_tracer.add_global_context(trace_context)
 
     def _signal_handler(self, received_signal, _):
         logger.warning(f"Received signal {received_signal}")
@@ -55,6 +68,7 @@ class WebSocketWorker:
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
 
+    @beeline.traced("WebSocketWorker.ping")
     async def ping(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -65,6 +79,7 @@ class WebSocketWorker:
             await websocket.send(msg)
             return await websocket.recv()
 
+    @beeline.traced("WebSocketWorker.send")
     async def send(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -86,7 +101,12 @@ class WebSocketWorker:
         ) as websocket:
             logger.info(f"Websocket connected {websocket}")
             while not self._halt.is_set():
+                trace = self._honeycomb_tracer.start_trace()
+                span = self._honeycomb_tracer.start_span(
+                    context={"name": "WebSocketWorker._producer.coro_get"}
+                )
                 msg = await self._producer.coro_get()
+                self._honeycomb_tracer.finish_span(span)
 
                 event_type = msg.get("event_type")
                 if event_type == "annotated_image":
@@ -94,4 +114,6 @@ class WebSocketWorker:
                     await websocket.send(encoded_msg)
                 else:
                     logger.warning(f"Invalid event_type {event_type}, msg ignored")
+
+                self._honeycomb_tracer.finish_trace(trace)
             logger.warning("Halt event set, worker will exit soon")

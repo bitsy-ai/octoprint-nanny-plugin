@@ -77,13 +77,7 @@ class OctoPrintNannyPlugin(
         self._environment = {}
 
         self._worker_manager = WorkerManager(plugin=self)
-
-        self._honeycomb_tracer = HoneycombTracer(
-            service_name="octoprint-plugin-main",
-        )
-
-    def on_shutdown(self):
-        self._worker_manager.shutdown()
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
@@ -98,6 +92,7 @@ class OctoPrintNannyPlugin(
             logger.error(f"_test_api_auth API call failed")
             self._settings.set(["auth_valid"], False)
 
+    @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
@@ -112,6 +107,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
+    @beeline.traced("OctoPrintNannyPlugin._meminfo")
     def _meminfo(self) -> dict:
         """
         Dict from /proc/meminfo
@@ -131,6 +127,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
+    @beeline.traced("OctoPrintNannyPlugin._get_device_info")
     def _get_device_info(self):
         cpuinfo = self._cpuinfo()
 
@@ -163,6 +160,7 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
+    @beeline.traced("OctoPrintNannyPlugin._sync_printer_profiles")
     async def _sync_printer_profiles(self, device_id):
         printer_profiles = self._printer_profile_manager.get_all()
 
@@ -187,38 +185,8 @@ class OctoPrintNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
-    @beeline.traced_thread
-    async def _register_device(self, device_name):
-
-        # device registration
-        self._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_START,
-            payload={"msg": "Requesting new identity from provision service"},
-        )
-        device_info = self._get_device_info()
-        try:
-            device = await self.rest_client.update_or_create_octoprint_device(
-                name=device_name, **device_info
-            )
-            self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
-                payload={
-                    "msg": f"Success! Device can now be managed remotely: {device.url}"
-                },
-            )
-
-        except CLIENT_EXCEPTIONS as e:
-            logger.error(e)
-            self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
-                payload={"msg": str(e.body)},
-            )
-            return e
-
-        logger.info(
-            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} device={device}"
-        )
-
+    @beeline.traced("OctoPrintNannyPlugin._download_keypair")
+    async def _download_keypair(self, device):
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
@@ -251,9 +219,53 @@ class OctoPrintNannyPlugin(
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
+
         self._settings.set(["device_private_key"], privkey_filename)
         self._settings.set(["device_public_key"], pubkey_filename)
         self._settings.set(["gcp_root_ca"], root_ca_filename)
+
+    @beeline.traced_thread
+    async def _register_device(self, device_name):
+
+        # device registration
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_START,
+            payload={"msg": "Requesting new identity from provision service"},
+        )
+        span = self._honeycomb_tracer.start_span(context={"name": "_get_device_info"})
+        device_info = self._get_device_info()
+        self._honeycomb_tracer.add_context(dict(device_info=device_info))
+        self._honeycomb_tracer.finish_span(span)
+
+        span = self._honeycomb_tracer.start_span(
+            context={"name": "update_or_create_octoprint_device"}
+        )
+        try:
+            device = await self.rest_client.update_or_create_octoprint_device(
+                name=device_name, **device_info
+            )
+            self._honeycomb_tracer.add_context(dict(device_upserted=device))
+            self._honeycomb_tracer.finish_span(span)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
+                payload={
+                    "msg": f"Success! Device can now be managed remotely: {device.url}"
+                },
+            )
+
+        except CLIENT_EXCEPTIONS as e:
+            logger.error(e)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
+                payload={"msg": str(e.body)},
+            )
+            return e
+
+        logger.info(
+            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} device={device}"
+        )
+
+        await self._download_keypair(device)
 
         self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_url"], device.url)
@@ -286,6 +298,7 @@ class OctoPrintNannyPlugin(
 
         return printers
 
+    @beeline.traced("OctoPrintNannyPlugin._test_snapshot_url")
     async def _test_snapshot_url(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as res:
@@ -304,6 +317,10 @@ class OctoPrintNannyPlugin(
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
         res.raise_for_status()
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+            payload={"image": base64.b64encode(res.content)},
+        )
         if res.status_code == 200:
             self._worker_manager.start_monitoring()
             return flask.json.jsonify({"ok": 1})
@@ -322,6 +339,7 @@ class OctoPrintNannyPlugin(
         device_name = flask.request.json.get("device_name")
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
         self._worker_manager.reset_backoff()
+
         result = asyncio.run_coroutine_threadsafe(
             self._register_device(device_name), self._worker_manager.loop
         ).result()
@@ -409,10 +427,12 @@ class OctoPrintNannyPlugin(
             {"event_type": event_type, "event_data": event_data}
         )
 
+    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
         """
         Called after plugin initialization
         """
+        self._honeycomb_tracer.add_global_context(self._worker_manager._get_metadata())
 
         self._log_path = self._settings.get_plugin_logfile_path()
 
@@ -448,7 +468,7 @@ class OctoPrintNannyPlugin(
         )
 
     ## EnvironmentDetectionPlugin
-
+    @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
     def on_environment_detected(self, environment, *args, **kwargs):
         self._environment = environment
         self._worker_manager._environment = environment
@@ -461,6 +481,7 @@ class OctoPrintNannyPlugin(
             device_registered=False,
             user_email=None,
             monitoring_frames_per_minute=30,
+            monitoring_active=False,
             user_id=None,
             user_url=None,
             device_url=None,
@@ -484,6 +505,7 @@ class OctoPrintNannyPlugin(
             gcp_root_ca=None,
         )
 
+    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
         prev_calibration = (
             self._settings.get(["calibrate_x0"]),
@@ -583,7 +605,7 @@ class OctoPrintNannyPlugin(
         )
 
     ##~~ Softwareupdate hook
-
+    @beeline.traced(name="OctoPrintNannyPlugin.get_update_information")
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html
