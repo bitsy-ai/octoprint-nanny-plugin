@@ -108,6 +108,7 @@ class WorkerManager:
         self._device_serial = None
         self._auth_token = None
         self._ws_url = None
+        self._monitoring_halt = None
         self.init_worker_threads()
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
@@ -179,13 +180,13 @@ class WorkerManager:
     @beeline.traced("WorkerManager.stop_monitoring_threads")
     def stop_monitoring_threads(self):
         logger.warning("Setting halt signal for monitoring worker threads")
-        self._monitoring_halt.set()
+        if self._monitoring_halt is not None:
+            self._monitoring_halt.set()
+            logger.info("Waiting for WorkerManager.predict_worker_thread to drain")
+            self.predict_worker_thread.join()
 
-        logger.info("Waiting for WorkerManager.predict_worker_thread to drain")
-        self.predict_worker_thread.join()
-
-        logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
-        self.pn_ws_thread.join()
+            logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
+            self.pn_ws_thread.join()
 
     @beeline.traced("WorkerManager.stop_worker_threads")
     def stop_worker_threads(self):
