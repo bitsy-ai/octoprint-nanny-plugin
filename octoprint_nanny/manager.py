@@ -89,12 +89,14 @@ class WorkerManager:
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
             Events.SHUTDOWN: self.shutdown,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
         }
 
         self._remote_control_event_handlers = {
-            "StartMonitoring": self.start_monitoring,
-            "StopMonitoring": self.stop_monitoring,
-            "Snapshot": self.on_snapshot,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
+            Events.PLUGIN_OCTOPRINT_NANNY_SNAPSHOT: self.on_snapshot,
         }
 
         self._environment = {}

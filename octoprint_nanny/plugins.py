@@ -317,12 +317,12 @@ class OctoPrintNannyPlugin(
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
         res.raise_for_status()
-        self._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
-            payload={"image": base64.b64encode(res.content)},
-        )
         if res.status_code == 200:
-            self._worker_manager.start_monitoring()
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+                payload={"image": base64.b64encode(res.content)},
+            )
+            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
@@ -330,7 +330,7 @@ class OctoPrintNannyPlugin(
     def stop_predict(self):
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
         self._worker_manager.reset_backoff()
-        self._worker_manager.stop_monitoring()
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.register_device")
@@ -412,6 +412,7 @@ class OctoPrintNannyPlugin(
             "predict_offline",
             "monitoring_start",
             "monitoring_stop",
+            "snapshot",
             "device_register_start",
             "device_register_done",
             "device_register_failed",
