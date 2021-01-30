@@ -409,7 +409,6 @@ class OctoPrintNannyPlugin(
     def register_custom_events(self):
         return [
             "predict_done",
-            "predict_offline",
             "monitoring_start",
             "monitoring_stop",
             "snapshot",

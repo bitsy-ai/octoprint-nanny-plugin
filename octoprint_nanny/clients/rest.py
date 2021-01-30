@@ -262,10 +262,21 @@ class RestAPIClient:
     async def update_or_create_printer_profile(
         self, printer_profile, octoprint_device_id
     ):
+        """
+        https://github.com/OctoPrint/OctoPrint/blob/f67c15a9a47794a68be9aed4f2d5a12a87e70179/src/octoprint/printer/profile.py#L46
+        """
 
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
+
+            # cooerce a few duck-typed fields
+            volume_custom_box = (
+                printer_profile["volume"]["custom_box"]
+                if printer_profile["volume"]["custom_box"]
+                else {}
+            )
+
             request = PrinterProfileRequest(
                 octoprint_device=octoprint_device_id,
                 octoprint_key=printer_profile["id"],
@@ -284,7 +295,7 @@ class RestAPIClient:
                 model=printer_profile["model"],
                 heated_bed=printer_profile["heatedBed"],
                 heated_chamber=printer_profile["heatedChamber"],
-                volume_custom_box=printer_profile["volume"]["custom_box"],
+                volume_custom_box=volume_custom_box,
                 volume_depth=printer_profile["volume"]["depth"],
                 volume_formfactor=printer_profile["volume"]["formFactor"],
                 volume_height=printer_profile["volume"]["height"],

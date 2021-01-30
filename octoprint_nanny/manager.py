@@ -56,6 +56,8 @@ class WorkerManager:
     # do not warn when the following events are skipped on telemetry update
     MUTED_EVENTS = [Events.Z_CHANGE]
 
+    EVENT_PREFIX = "plugin_octoprint_nanny_"
+
     def __init__(self, plugin):
 
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
@@ -552,6 +554,7 @@ class WorkerManager:
                     await asyncio.sleep(self.BACKOFF)
                     if self.BACKOFF < self.MAX_BACKOFF:
                         self.BACKOFF = self.BACKOFF ** 2
+                    continue
 
             ###
             # Rest API available
@@ -596,7 +599,7 @@ class WorkerManager:
             ##
             # Handle OctoPrint telemetry events
             ##
-
+            # remove "plugin_octoprint_nanny_" prefix
             # ignore untracked events
             if self.telemetry_events is None or event_type not in self.telemetry_events:
                 # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
