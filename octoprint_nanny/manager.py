@@ -89,15 +89,9 @@ class WorkerManager:
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
             Events.SHUTDOWN: self.shutdown,
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
         }
 
-        self._remote_control_event_handlers = {
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
-            Events.PLUGIN_OCTOPRINT_NANNY_SNAPSHOT: self.on_snapshot,
-        }
+        self._remote_control_event_handlers = {}
 
         self._environment = {}
 
@@ -302,8 +296,15 @@ class WorkerManager:
         """
         self._local_event_handlers.update(
             {
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self._on_monitoring_start,
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self._on_monitoring_stop,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
+            }
+        )
+        self._remote_control_event_handlers.update(
+            {
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_SNAPSHOT: self.on_snapshot,
             }
         )
 
@@ -633,14 +634,27 @@ class WorkerManager:
             f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.monitoring_active = False
-        self.plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
-        )
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=False
+            ),
+            self.loop,
+        ).result()
+
         self.stop_monitoring_threads()
 
     @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
         self.stop_monitoring()
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=False
+            ),
+            self.loop,
+        ).result()
+
         self.stop_worker_threads()
         self._honeycomb_tracer.on_shutdown()
 
@@ -653,9 +667,14 @@ class WorkerManager:
             f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.monitoring_active = True
-        self.plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
-        )
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=True
+            ),
+            self.loop,
+        ).result()
+
         self.init_monitoring_threads()
         self.start_monitoring_threads()
 
