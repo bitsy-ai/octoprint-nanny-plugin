@@ -112,8 +112,6 @@ class WorkerManager:
         self._monitoring_halt = None
         self.init_worker_threads()
 
-        self._honeycomb_tracer.add_global_context(self._get_metadata())
-
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
         self._monitoring_halt = threading.Event()
@@ -210,7 +208,6 @@ class WorkerManager:
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
-        self.remote_control_queue.put({"msg": "halt"})
         self.remote_control_worker_thread.join()
         self.remote_control_loop.close()
 
@@ -218,7 +215,6 @@ class WorkerManager:
         self.octo_ws_thread.join()
 
         logger.info("Waiting for WorkerManager.telemetry_worker_thread to drain")
-        self.telemetry_queue.put({"msg": "halt"})
         self.telemetry_worker_thread.join()
         self.loop.close()
 
@@ -319,6 +315,7 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
+        self._honeycomb_tracer.add_global_context(self._get_metadata())
         # register plugin event handlers
         self._register_plugin_event_handlers()
         self.start_worker_threads()

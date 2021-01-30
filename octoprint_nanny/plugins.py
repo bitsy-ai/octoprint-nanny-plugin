@@ -77,7 +77,6 @@ class OctoPrintNannyPlugin(
         self._environment = {}
 
         self._worker_manager = WorkerManager(plugin=self)
-
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     @beeline.traced("OctoPrintNannyPlugin.on_shutdown")
@@ -433,6 +432,7 @@ class OctoPrintNannyPlugin(
         """
         Called after plugin initialization
         """
+        self._honeycomb_tracer.add_global_context(self._worker_manager_get_metadata())
 
         self._log_path = self._settings.get_plugin_logfile_path()
 
