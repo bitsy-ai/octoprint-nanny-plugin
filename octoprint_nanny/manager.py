@@ -125,7 +125,8 @@ class WorkerManager:
             self.telemetry_queue,
             self.monitoring_frames_per_minute,
             self._monitoring_halt,
-            self._get_metadata(),
+            self.plugin._event_bus,
+            trace_context=self._get_metadata(),
         )
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
@@ -150,10 +151,6 @@ class WorkerManager:
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
 
-        # daemonized thread for sending annotated image frames to Octoprint's UI
-        self.octo_ws_thread = threading.Thread(target=self._octo_ws_queue_worker)
-        self.octo_ws_thread.daemon = True
-
         # daemonized thread for MQTT worker thread
         self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
         self.mqtt_worker_thread.daemon = True
@@ -174,7 +171,6 @@ class WorkerManager:
     @beeline.traced("WorkerManager.start_worker_threads")
     def start_worker_threads(self):
         self.mqtt_worker_thread.start()
-        self.octo_ws_thread.start()
         self.telemetry_worker_thread.start()
         self.remote_control_worker_thread.start()
         while self.loop is None:
@@ -212,9 +208,6 @@ class WorkerManager:
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
         self.remote_control_worker_thread.join()
         self.remote_control_loop.close()
-
-        logger.info("Waiting for WorkerManager.octo_ws_thread to drain")
-        self.octo_ws_thread.join()
 
         logger.info("Waiting for WorkerManager.telemetry_worker_thread to drain")
         self.telemetry_worker_thread.join()
@@ -663,25 +656,6 @@ class WorkerManager:
         )
         self.init_monitoring_threads()
         self.start_monitoring_threads()
-
-    def _octo_ws_queue_worker(self):
-        """
-        Child process to -> Octoprint event bus relay
-        """
-        logger.info("Started _octo_ws_queue_worker")
-        while not self._thread_halt.is_set():
-            if self.monitoring_active:
-                trace = self._honeycomb_tracer.start_trace()
-                span = self._honeycomb_tracer.start_span(
-                    {"name": "WorkerManager.octo_ws_queue.get"}
-                )
-                viz_bytes = self.octo_ws_queue.get(block=True)
-                self._honeycomb_tracer.finish_span(span)
-                self.plugin._event_bus.fire(
-                    Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
-                    payload={"image": base64.b64encode(viz_bytes)},
-                )
-                self._honeycomb_tracer.finish_trace(trace)
 
     @beeline.traced("WorkerManager._get_print_job_metadata")
     def _get_print_job_metadata(self):

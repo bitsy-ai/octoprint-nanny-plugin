@@ -114,4 +114,6 @@ class WebSocketWorker:
                     await websocket.send(encoded_msg)
                 else:
                     logger.warning(f"Invalid event_type {event_type}, msg ignored")
+
+                self._honeycomb_tracer.finish_trace(trace)
             logger.warning("Halt event set, worker will exit soon")

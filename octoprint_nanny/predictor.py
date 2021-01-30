@@ -23,6 +23,7 @@ from PIL import Image as PImage
 import requests
 import tensorflow as tf
 
+from octoprint.events import Events
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
@@ -265,7 +266,8 @@ class PredictWorker:
         telemetry_queue,
         fpm,
         halt,
-        trace_context,
+        plugin_event_bus,
+        trace_context={},
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
@@ -275,7 +277,7 @@ class PredictWorker:
         fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
         halt - threading.Event()
         """
-
+        self._plugin_event_bus = plugin_event_bus
         self._calibration = calibration
         self._fpm = fpm
         self._sleep_interval = 60 / int(fpm)
@@ -346,8 +348,8 @@ class PredictWorker:
     @beeline.traced(name="PredictWorker._create_msgs")
     def _create_msgs(self, msg, viz_buffer, prediction):
         # send annotated image bytes to octoprint ui ws
-        viz_bytes = viz_buffer.getvalue()
-        self._octoprint_ws_queue.put_nowait(viz_bytes)
+        # viz_bytes = viz_buffer.getvalue()
+        # self._octoprint_ws_queue.put_nowait(viz_bytes)
 
         # send annotated image bytes to print nanny ui ws
         ws_msg = msg.copy()
@@ -401,6 +403,10 @@ class PredictWorker:
                     pool, _get_predict_bytes, msg
                 )
                 ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
+                self._plugin_event_bus.fire(
+                    Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+                    payload={"image": base64.b64encode(viz_buffer.getvalue())},
+                )
                 self._pn_ws_queue.put_nowait(ws_msg)
                 self._telemetry_queue.put_nowait(mqtt_msg)
 

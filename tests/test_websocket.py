@@ -37,6 +37,7 @@ def predict_worker(mocker):
         m.Queue(),
         m.Queue(),
         threading.Event(),
+        mocker.mock(),
         {},
     )
 

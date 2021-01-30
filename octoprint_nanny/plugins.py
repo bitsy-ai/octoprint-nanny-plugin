@@ -317,6 +317,10 @@ class OctoPrintNannyPlugin(
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
         res.raise_for_status()
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+            payload={"image": base64.b64encode(res.content)},
+        )
         if res.status_code == 200:
             self._worker_manager.start_monitoring()
             return flask.json.jsonify({"ok": 1})
@@ -477,6 +481,7 @@ class OctoPrintNannyPlugin(
             device_registered=False,
             user_email=None,
             monitoring_frames_per_minute=30,
+            monitoring_active=False,
             user_id=None,
             user_url=None,
             device_url=None,
