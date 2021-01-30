@@ -76,11 +76,20 @@ class HoneycombTracer:
         """
         return beeline.add_trace_field(name, value)
 
-    def start_trace(self):
+    def start_span(self, context={}):
+        context = {**self.context, **context}
+        span = beeline.add_span(context=context)
+        return span
+    
+    def finish_span(self, span):
+        return beeline.finish_span(span)
 
-        beeline.add_context(self.context)
-
-        return beeline.start_trace()
+    def start_trace(self, context={}):
+        # merge global context and any context passed to this trace
+        # values in context supercede global self.context
+        context = {**self.context, **context}
+        trace = beeline.start_trace(context=context)
+        return trace
 
     def finish_trace(self, trace):
         return beeline.finish_trace(trace)
