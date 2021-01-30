@@ -240,8 +240,11 @@ class OctoPrintNannyPlugin(
         span = self._honeycomb_tracer.start_span(context={"name": "_get_device_info"})
         device_info = self._get_device_info()
         self._honeycomb_tracer.add_context(dict(device_info=device_info))
+        self._honeycomb_tracer.finish_span(span)
 
-        span = self._honeycomb_tracer.start_span(context={"name":"update_or_create_octoprint_device"})
+        span = self._honeycomb_tracer.start_span(
+            context={"name": "update_or_create_octoprint_device"}
+        )
         try:
             device = await self.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info

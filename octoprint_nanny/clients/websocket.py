@@ -92,7 +92,9 @@ class WebSocketWorker:
             logger.info(f"Websocket connected {websocket}")
             while not self._halt.is_set():
                 trace = self._honeycomb_tracer.start_trace()
-                span = self._honeycomb_tracer.start_span(context={"name": "WebSocketWorker._producer.coro_get"})
+                span = self._honeycomb_tracer.start_span(
+                    context={"name": "WebSocketWorker._producer.coro_get"}
+                )
                 msg = await self._producer.coro_get()
                 self._honeycomb_tracer.finish_span(span)
 

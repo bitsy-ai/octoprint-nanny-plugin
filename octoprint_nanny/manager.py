@@ -103,7 +103,7 @@ class WorkerManager:
         self._calibration = None
         self._device_cloudiot_name = None
         self._device_id = None
-        self._device_info
+        self._device_info = None
         self._device_serial = None
         self._monitoring_frames_per_minute = None
         self._snapshot_url = None
@@ -113,7 +113,6 @@ class WorkerManager:
         self.init_worker_threads()
 
         self._honeycomb_tracer.add_global_context(self._get_metadata())
-
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
@@ -127,7 +126,7 @@ class WorkerManager:
             self.telemetry_queue,
             self.monitoring_frames_per_minute,
             self._monitoring_halt,
-            self._get_metadata()
+            self._get_metadata(),
         )
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
@@ -346,6 +345,7 @@ class WorkerManager:
         self.init_worker_threads()
         self.start_worker_threads()
 
+    @beeline.traced("WorkerManager._reset_monitoring_settings")
     def _reset_monitoring_settings(self):
         self._calibration = None
         self._monitoring_frames_per_minute = None
@@ -363,14 +363,16 @@ class WorkerManager:
             )
             self.start_monitoring()
 
+    @beeline.traced("WorkerManager._on_monitoring_start")
     async def _on_monitoring_start(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
-            self.device_id, monitoring_acitve=True
+            self.device_id, monitoring_active=True
         )
 
+    @beeline.traced("WorkerManager._on_monitoring_stop")
     async def _on_monitoring_stop(self, event_type, event_data):
         await self.rest_client.update_octoprint_device(
-            self.device_id, monitoring_acitve=False
+            self.device_id, monitoring_active=False
         )
 
     def _mqtt_worker(self):
@@ -419,6 +421,7 @@ class WorkerManager:
             asyncio.ensure_future(self._remote_control_receive_loop())
         )
 
+    @beeline.traced("WorkerManager._publish_bounding_box_telemetry")
     async def _publish_bounding_box_telemetry(self, event):
         logger.debug(f"_publish_bounding_box_telemetry {event}")
         event.update(
@@ -430,6 +433,7 @@ class WorkerManager:
         )
         self.mqtt_client.publish_bounding_boxes(event)
 
+    @beeline.traced("WorkerManager._publish_octoprint_event_telemetry")
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
@@ -460,8 +464,13 @@ class WorkerManager:
                 continue
 
             trace = self._honeycomb_tracer.start_trace()
-
+            span = self._honeycomb_tracer.start_span(
+                {"name": "WorkerManager.remote_control_queue.coro_get"}
+            )
             event = await self.remote_control_queue.coro_get()
+            self._honeycomb_tracer.add_context(dict(event=event))
+            self._honeycomb_tracer.finish_span(span)
+
             logging.info(f"Received event in _remote_control_receive_loop {event}")
 
             command = event.get("command")
@@ -509,6 +518,7 @@ class WorkerManager:
 
             self._honeycomb_tracer.finish_trace(trace)
 
+    @beeline.traced("WorkerManager._remote_control_snapshot")
     async def _remote_control_snapshot(self, command_id):
         async with aiohttp.ClientSession() as session:
             res = await session.get(self.snapshot_url)
@@ -561,8 +571,15 @@ class WorkerManager:
             ###
             # mqtt client available
             ##
+            trace = self._honeycomb_tracer.start_trace()
+            span = self._honeycomb_tracer.start_span(
+                {"name": "WorkerManager.telemetry_queue.coro_get"}
+            )
 
             event = await self.telemetry_queue.coro_get()
+            self._honeycomb_tracer.add_context(dict(event=event))
+            self._honeycomb_tracer.finish_span(span)
+
             event_type = event.get("event_type")
             if event_type is None:
                 logger.warning(
@@ -654,12 +671,19 @@ class WorkerManager:
         logger.info("Started _octo_ws_queue_worker")
         while not self._thread_halt.is_set():
             if self.monitoring_active:
+                trace = self._honeycomb_tracer.start_trace()
+                span = self._honeycomb_tracer.start_span(
+                    {"name": "WorkerManager.octo_ws_queue.get"}
+                )
                 viz_bytes = self.octo_ws_queue.get(block=True)
+                self._honeycomb_tracer.finish_span(span)
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_bytes)},
                 )
+                self._honeycomb_tracer.finish_trace(trace)
 
+    @beeline.traced("WorkerManager._get_print_job_metadata")
     def _get_print_job_metadata(self):
         return dict(
             printer_data=self.plugin._printer.get_current_data(),
@@ -677,6 +701,7 @@ class WorkerManager:
         metadata.update(self.device_info)
         return metadata
 
+    @beeline.traced("WorkerManager._handle_print_start")
     async def _handle_print_start(self, event_type, event_data, **kwargs):
         logger.info(
             f"_handle_print_start called for {event_type} with data {event_data}"
