@@ -79,10 +79,6 @@ class OctoPrintNannyPlugin(
         self._worker_manager = WorkerManager(plugin=self)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    @beeline.traced("OctoPrintNannyPlugin.on_shutdown")
-    def on_shutdown(self):
-        self._worker_manager.shutdown()
-
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
@@ -432,7 +428,7 @@ class OctoPrintNannyPlugin(
         """
         Called after plugin initialization
         """
-        self._honeycomb_tracer.add_global_context(self._worker_manager_get_metadata())
+        self._honeycomb_tracer.add_global_context(self._worker_manager._get_metadata())
 
         self._log_path = self._settings.get_plugin_logfile_path()
 

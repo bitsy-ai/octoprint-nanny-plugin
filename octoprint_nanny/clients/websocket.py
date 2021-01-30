@@ -29,18 +29,18 @@ class WebSocketWorker:
     Relays prediction and image buffers from PredictWorker
     to websocket connection
 
-    Restart proc on api_url and api_token settings change
+    Restart proc on api_url and auth_token settings change
     """
 
     def __init__(
         self,
         base_url,
-        api_token,
+        auth_token,
         producer,
         print_job_id,
         device_id,
         halt,
-        trace_context,
+        trace_context={},
     ):
 
         if not isinstance(producer, multiprocessing.managers.BaseProxy):
@@ -52,10 +52,10 @@ class WebSocketWorker:
         self._device_id = device_id
         self._base_url = base_url
         self._url = f"{base_url}{device_id}/video/upload/"
-        self._api_token = api_token
+        self._auth_token = auth_token
         self._producer = producer
 
-        self._extra_headers = (("Authorization", f"Bearer {self._api_token}"),)
+        self._extra_headers = (("Authorization", f"Bearer {self._auth_token}"),)
         self._halt = halt
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)

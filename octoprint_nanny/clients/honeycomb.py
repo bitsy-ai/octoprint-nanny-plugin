@@ -45,7 +45,7 @@ class HoneycombTracer:
         )
         self.context = {}
 
-    def add_global_context(self, context):
+    def add_global_context(self, context={}):
         """
         Context will be added to each trace
         """
@@ -78,7 +78,7 @@ class HoneycombTracer:
 
     def start_span(self, context={}):
         context = {**self.context, **context}
-        span = beeline.add_span(context=context)
+        span = beeline.start_span(context=context)
         return span
 
     def finish_span(self, span):

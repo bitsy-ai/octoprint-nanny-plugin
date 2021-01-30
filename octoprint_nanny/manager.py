@@ -88,6 +88,7 @@ class WorkerManager:
             Events.PRINT_CANCELLED: self.stop_monitoring,
             Events.PRINT_PAUSED: self.stop_monitoring,
             Events.PRINT_RESUMED: self.stop_monitoring,
+            Events.SHUTDOWN: self.shutdown,
         }
 
         self._remote_control_event_handlers = {
@@ -137,7 +138,7 @@ class WorkerManager:
             self.shared.print_job_id,
             self.device_serial,
             self._monitoring_halt,
-            self._get_metadata,
+            trace_context=self._get_metadata(),
         )
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
