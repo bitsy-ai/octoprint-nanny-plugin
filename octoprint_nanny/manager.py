@@ -58,7 +58,7 @@ class WorkerManager:
 
     def __init__(self, plugin):
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="worker_manager")
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
@@ -99,17 +99,21 @@ class WorkerManager:
         self._environment = {}
 
         self.telemetry_events = None
-        self._user_id = None
-        self._device_id = None
+        self._auth_token = None
         self._calibration = None
+        self._device_cloudiot_name = None
+        self._device_id = None
+        self._device_info
+        self._device_serial = None
         self._monitoring_frames_per_minute = None
         self._snapshot_url = None
-        self._device_cloudiot_name = None
-        self._device_serial = None
-        self._auth_token = None
+        self._user_id = None
         self._ws_url = None
         self._monitoring_halt = None
         self.init_worker_threads()
+
+        self._honeycomb_tracer.add_global_context(self._get_metadata())
+
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
@@ -123,6 +127,7 @@ class WorkerManager:
             self.telemetry_queue,
             self.monitoring_frames_per_minute,
             self._monitoring_halt,
+            self._get_metadata()
         )
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
@@ -221,6 +226,12 @@ class WorkerManager:
         logger.info("Finished halting WorkerManager threads")
 
     @property
+    def device_info(self):
+        if self._device_info is None:
+            self._device_info = self.plugin._get_device_info()
+        return self._device_info
+
+    @property
     def api_url(self):
         return self.plugin._settings.get(["api_url"])
 
@@ -292,6 +303,7 @@ class WorkerManager:
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
 
+    @beeline.traced("WorkerManager._register_plugin_event_handlers")
     def _register_plugin_event_handlers(self):
         """
         Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
@@ -312,6 +324,7 @@ class WorkerManager:
         self._register_plugin_event_handlers()
         self.start_worker_threads()
 
+    @beeline.traced("WorkerManager.on_snapshot")
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
@@ -657,13 +670,12 @@ class WorkerManager:
         )
 
     def _get_metadata(self):
-        return dict(
+        metadata = dict(
             created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
-            plugin_version=self.plugin._plugin_version,
-            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-            platform=platform.platform(),
             environment=self._environment,
         )
+        metadata.update(self.device_info)
+        return metadata
 
     async def _handle_print_start(self, event_type, event_data, **kwargs):
         logger.info(

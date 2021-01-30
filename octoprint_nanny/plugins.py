@@ -78,10 +78,9 @@ class OctoPrintNannyPlugin(
 
         self._worker_manager = WorkerManager(plugin=self)
 
-        self._honeycomb_tracer = HoneycombTracer(
-            service_name="octoprint_plugin"
-        )
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
+    @beeline.traced("OctoPrintNannyPlugin.on_shutdown")
     def on_shutdown(self):
         self._worker_manager.shutdown()
 
@@ -98,6 +97,7 @@ class OctoPrintNannyPlugin(
             logger.error(f"_test_api_auth API call failed")
             self._settings.set(["auth_valid"], False)
 
+    @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
@@ -112,6 +112,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
+    @beeline.traced("OctoPrintNannyPlugin._meminfo")
     def _meminfo(self) -> dict:
         """
         Dict from /proc/meminfo
@@ -131,6 +132,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
+    @beeline.traced("OctoPrintNannyPlugin._get_device_info")
     def _get_device_info(self):
         cpuinfo = self._cpuinfo()
 
@@ -235,11 +237,11 @@ class OctoPrintNannyPlugin(
             Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_START,
             payload={"msg": "Requesting new identity from provision service"},
         )
-        span = self._honeycomb_tracer.start_span("get_device_info")
+        span = self._honeycomb_tracer.start_span(context={"name": "_get_device_info"})
         device_info = self._get_device_info()
         self._honeycomb_tracer.add_context(dict(device_info=device_info))
 
-        span = self._honeycomb_tracer.start_span("update_or_create_octoprint_device")
+        span = self._honeycomb_tracer.start_span(context={"name":"update_or_create_octoprint_device"})
         try:
             device = await self.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
@@ -499,6 +501,7 @@ class OctoPrintNannyPlugin(
             gcp_root_ca=None,
         )
 
+    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
         prev_calibration = (
             self._settings.get(["calibrate_x0"]),
@@ -598,7 +601,7 @@ class OctoPrintNannyPlugin(
         )
 
     ##~~ Softwareupdate hook
-
+    @beeline.traced(name="OctoPrintNannyPlugin.get_update_information")
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html

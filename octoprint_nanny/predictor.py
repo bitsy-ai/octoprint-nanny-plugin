@@ -18,6 +18,7 @@ from uuid import uuid1
 import signal
 import sys
 
+import beeline
 from PIL import Image as PImage
 import requests
 import tensorflow as tf
@@ -264,6 +265,7 @@ class PredictWorker:
         telemetry_queue,
         fpm,
         halt,
+        trace_context
     ):
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
@@ -283,10 +285,12 @@ class PredictWorker:
         self._pn_ws_queue = pn_ws_queue
         self._telemetry_queue = telemetry_queue
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="predict_worker")
+        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
+        self._honeycomb_tracer.add_global_context(trace_context)
 
         self._halt = halt
 
+    @beeline.traced(name="PredictWorker.load_url_buffer")
     async def load_url_buffer(self, session):
         res = await session.get(self._webcam_url)
         assert res.headers["content-type"] == "image/jpeg"
@@ -330,6 +334,7 @@ class PredictWorker:
         loop.run_until_complete(asyncio.ensure_future(self._producer()))
         loop.close()
 
+    @beeline.traced(name="PredictWorker._image_msg")
     async def _image_msg(self, ts):
         async with aiohttp.ClientSession() as session:
             original_image = await self.load_url_buffer(session)
@@ -338,6 +343,7 @@ class PredictWorker:
                 original_image=original_image,
             )
 
+    @beeline.traced(name="PredictWorker._create_msgs")
     def _create_msgs(self, msg, viz_buffer, prediction):
         # send annotated image bytes to octoprint ui ws
         viz_bytes = viz_buffer.getvalue()
@@ -374,6 +380,7 @@ class PredictWorker:
 
         return ws_msg, mqtt_msg
 
+    @beeline.traced(name="PredictWorker._producer")
     async def _producer(self):
         """
         Calculates prediction and publishes result to subscriber queues

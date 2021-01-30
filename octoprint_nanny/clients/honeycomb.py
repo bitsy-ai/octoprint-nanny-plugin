@@ -80,7 +80,7 @@ class HoneycombTracer:
         context = {**self.context, **context}
         span = beeline.add_span(context=context)
         return span
-    
+
     def finish_span(self, span):
         return beeline.finish_span(span)
 
