@@ -34,7 +34,122 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 Events.PRINT_PROGRESS = "PrintProgress"
 
 
-class WorkerManager:
+class PluginSettingsMemoizeMixin:
+    '''
+        Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
+    '''
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+        self._auth_token = None
+        self._calibration = None
+        self._device_cloudiot_name = None
+        self._device_id = None
+        self._device_info = None
+        self._device_serial = None
+        self._monitoring_frames_per_minute = None
+        self._snapshot_url = None
+        self._user_id = None
+        self._ws_url = None
+
+    @beeline.traced("PluginSettingsMemoize._reset_device_settings_state")
+    @beeline.traced_thread
+    def reset_device_settings_state(self):
+        self._mqtt_bridge_hostname = None
+        self._mqtt_bridge_port = None
+        self._mqtt_bridge_root_certificate_url = None
+        self._device_cloudiot_name = None
+        self._device_id = None
+        self._monitoring_frames_per_minute = None
+        self._calibration = None
+
+
+    @beeline.traced("PluginSettingsMemoize._reset_user_auth_state")
+    @beeline.traced_thread
+    def _reset_user_auth_state(self):
+        self._user_id = None
+        self._auth_token = None
+
+    @property
+    def device_info(self):
+        if self._device_info is None:
+            self._device_info = self.plugin._get_device_info()
+        return self._device_info
+
+    @property
+    def api_url(self):
+        return self.plugin._settings.get(["api_url"])
+
+    @property
+    def auth_token(self):
+        if self._auth_token is None:
+            self._auth_token = self.plugin._settings.get(["auth_token"])
+        return self._auth_token
+
+    @property
+    def ws_url(self):
+        if self._ws_url is None:
+            self._ws_url = self.plugin._settings.get(["ws_url"])
+        return self._ws_url
+
+    @property
+    def snapshot_url(self):
+        if self._snapshot_url is None:
+            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
+        return self._snapshot_url
+
+    @property
+    def device_cloudiot_name(self):
+        if self._device_cloudiot_name is None:
+            self._device_cloudiot_name = self.plugin._settings.get(
+                ["device_cloudiot_name"]
+            )
+        return self._device_cloudiot_name
+
+    @property
+    def device_id(self):
+        if self._device_id is None:
+            self._device_id = self.plugin._settings.get(["device_id"])
+        return self._device_id
+
+    @property
+    def device_serial(self):
+        if self._device_id is None:
+            self._device_id = self.plugin._settings.get(["device_serial"])
+        return self._device_id
+
+    @property
+    def user_id(self):
+        if self._user_id is None:
+            self._user_id = self.plugin._settings.get(["user_id"])
+        return self._user_id
+
+    @property
+    def calibration(self):
+        if self._calibration is None:
+            self._calibration = PredictWorker.calc_calibration(
+                self.plugin._settings.get(["calibrate_x0"]),
+                self.plugin._settings.get(["calibrate_y0"]),
+                self.plugin._settings.get(["calibrate_x1"]),
+                self.plugin._settings.get(["calibrate_y1"]),
+            )
+        return self._calibration
+
+    @property
+    def monitoring_frames_per_minute(self):
+        if self._monitoring_frames_per_minute is None:
+            self._monitoring_frames_per_minute = self.plugin._settings.get(
+                ["monitoring_frames_per_minute"]
+            )
+        return self._monitoring_frames_per_minute
+
+    @property
+    def rest_client(self):
+        logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
+        return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
+
+
+class WorkerManager(PluginSettingsMemoizeMixin):
     """
     Manages PredictWorker, WebsocketWorker, RestWorker processes
     """
@@ -59,8 +174,10 @@ class WorkerManager:
     EVENT_PREFIX = "plugin_octoprint_nanny_"
 
     def __init__(self, plugin):
-
+        
+        super().__init__(plugin)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
+
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
@@ -98,16 +215,7 @@ class WorkerManager:
         self._environment = {}
 
         self.telemetry_events = None
-        self._auth_token = None
-        self._calibration = None
-        self._device_cloudiot_name = None
-        self._device_id = None
-        self._device_info = None
-        self._device_serial = None
-        self._monitoring_frames_per_minute = None
-        self._snapshot_url = None
-        self._user_id = None
-        self._ws_url = None
+
         self._monitoring_halt = None
         self.init_worker_threads()
 
@@ -213,84 +321,6 @@ class WorkerManager:
 
         logger.info("Finished halting WorkerManager threads")
 
-    @property
-    def device_info(self):
-        if self._device_info is None:
-            self._device_info = self.plugin._get_device_info()
-        return self._device_info
-
-    @property
-    def api_url(self):
-        return self.plugin._settings.get(["api_url"])
-
-    @property
-    def auth_token(self):
-        if self._auth_token is None:
-            self._auth_token = self.plugin._settings.get(["auth_token"])
-        return self._auth_token
-
-    @property
-    def ws_url(self):
-        if self._ws_url is None:
-            self._ws_url = self.plugin._settings.get(["ws_url"])
-        return self._ws_url
-
-    @property
-    def snapshot_url(self):
-        if self._snapshot_url is None:
-            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
-        return self._snapshot_url
-
-    @property
-    def device_cloudiot_name(self):
-        if self._device_cloudiot_name is None:
-            self._device_cloudiot_name = self.plugin._settings.get(
-                ["device_cloudiot_name"]
-            )
-        return self._device_cloudiot_name
-
-    @property
-    def device_id(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_id"])
-        return self._device_id
-
-    @property
-    def device_serial(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_serial"])
-        return self._device_id
-
-    @property
-    def user_id(self):
-        if self._user_id is None:
-            self._user_id = self.plugin._settings.get(["user_id"])
-        return self._user_id
-
-    @property
-    def calibration(self):
-        if self._calibration is None:
-            self._calibration = PredictWorker.calc_calibration(
-                self.plugin._settings.get(["calibrate_x0"]),
-                self.plugin._settings.get(["calibrate_y0"]),
-                self.plugin._settings.get(["calibrate_x1"]),
-                self.plugin._settings.get(["calibrate_y1"]),
-            )
-        return self._calibration
-
-    @property
-    def monitoring_frames_per_minute(self):
-        if self._monitoring_frames_per_minute is None:
-            self._monitoring_frames_per_minute = self.plugin._settings.get(
-                ["monitoring_frames_per_minute"]
-            )
-        return self._monitoring_frames_per_minute
-
-    @property
-    def rest_client(self):
-        logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
-        return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
-
     @beeline.traced("WorkerManager._register_plugin_event_handlers")
     def _register_plugin_event_handlers(self):
         """
@@ -324,10 +354,12 @@ class WorkerManager:
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
+
     @beeline.traced("WorkerManager.apply_device_registration")
     def apply_device_registration(self):
-        self._device_cloudiot_name = None
-        self._device_id = None
+        logger.info("Resetting WorkerManager device registration state")
+        self._reset_device_settings_state()
+
         logger.info("Halting worker threads to apply new device registration")
         self.stop_worker_threads()
         self.init_worker_threads()
@@ -335,8 +367,9 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
-        self._user_id = None
-        self._auth_token = None
+        logger.info("Resetting WorkerManager user auth state")
+        self._reset_user_auth_state()
+
         logger.info("Halting worker threads to apply new auth settings")
         self.stop_worker_threads()
         self.init_worker_threads()
