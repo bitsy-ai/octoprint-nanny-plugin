@@ -120,7 +120,7 @@ class OctoPrintNannyPlugin(
     @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
     def get_setting(self, key):
-        return self._setting.get([key])
+        return self._settings.get([key])
 
     @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
@@ -171,7 +171,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
-    @beeline.traced("OctoPrintNannyPlugin._get_device_info")
+    @beeline.traced("OctoPrintNannyPlugin.get_device_info")
     def get_device_info(self):
         cpuinfo = self._cpuinfo()
 
@@ -370,7 +370,6 @@ class OctoPrintNannyPlugin(
     @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
     def start_predict(self):
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
-        self._worker_manager.reset_backoff()
         # settings test#
         url = self._settings.get(["snapshot_url"])
         res = requests.get(url)
@@ -387,7 +386,6 @@ class OctoPrintNannyPlugin(
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
-        self._worker_manager.reset_backoff()
         self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
 
@@ -396,7 +394,6 @@ class OctoPrintNannyPlugin(
     def register_device(self):
         device_name = flask.request.json.get("device_name")
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
-        self._worker_manager.reset_backoff()
 
         result = asyncio.run_coroutine_threadsafe(
             self._register_device(device_name), self._worker_manager.loop
@@ -434,7 +431,6 @@ class OctoPrintNannyPlugin(
         api_url = flask.request.json.get("api_url")
 
         logger.info("Resetting backoff timer in OctoPrintNanny._worker_manager")
-        self._worker_manager.reset_backoff()
 
         logger.info("Testing auth_token in event")
         response = asyncio.run_coroutine_threadsafe(
@@ -496,7 +492,7 @@ class OctoPrintNannyPlugin(
 
         self._log_path = self._settings.get_plugin_logfile_path()
 
-        self._honeycomb_tracer.add_global_context(self._get_device_info())
+        self._honeycomb_tracer.add_global_context(self.get_device_info())
 
         self._worker_manager.on_settings_initialized()
 

@@ -95,7 +95,7 @@ class PluginSettingsMemoizeMixin:
     @property
     def device_info(self):
         if self._device_info is None:
-            self._device_info = self.plugin._get_device_info()
+            self._device_info = self.plugin.get_device_info()
         return self._device_info
 
     @property
@@ -156,12 +156,17 @@ class PluginSettingsMemoizeMixin:
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
 
-    @property
-    def mqtt_client(self):
+
+    def test_mqtt_settings(self):
         if self.device_id is None or self.private_key_file is None:
             raise PluginSettingsRequired(
                 f"Received None for device_id={self.device_id} or private_key_file={self.device_private_key}"
             )
+        return True
+
+    @property
+    def mqtt_client(self):
+        self.test_mqtt_settings()
         if self._mqtt_client is None:
             self._mqtt_client = MQTTClient(
                 device_id=self.device_id,
@@ -171,7 +176,6 @@ class PluginSettingsMemoizeMixin:
                 trace_context=self.get_device_metadata(),
             )
         return self._mqtt_client
-
     @property
     def telemetry_events(self):
         if self.auth_token is None:
@@ -183,6 +187,8 @@ class PluginSettingsMemoizeMixin:
             ).result()
         return self._telemetry_events
 
+    def event_in_tracked_telemetry(self, event_type):
+        return event_type in self.telemetry_events
 
 class WorkerManager(PluginSettingsMemoizeMixin):
     """
@@ -204,7 +210,10 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     ]
 
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE]
+    MUTED_EVENTS = [
+        Events.Z_CHANGE,
+        "plugin_octoprint_nanny_predict_done"
+    ]
 
     EVENT_PREFIX = "plugin_octoprint_nanny_"
 
@@ -246,7 +255,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
         self._remote_control_event_handlers = {}
         self._monitoring_halt = None
-        self.init_worker_threads()
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
@@ -332,12 +340,14 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             "Waiting for WorkerMangager.mqtt_client network connection to close"
         )
 
-        if self.mqtt_client is not None:
+        try:
             while self.mqtt_client.client.is_connected():
                 self.mqtt_client.client.disconnect()
             logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
             self.mqtt_client.client.disconnect()
             self.mqtt_client.client.loop_stop()
+        except PluginSettingsRequired:
+            pass
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
@@ -369,12 +379,11 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             }
         )
 
-    def reset_backoff(self):
-        self.BACKOFF = 2
-
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         self._honeycomb_tracer.add_global_context(self.get_device_metadata())
+        self.init_worker_threads()
+
         # register plugin event handlers
         self._register_plugin_event_handlers()
         self.start_worker_threads()
@@ -446,9 +455,12 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         asyncio.set_event_loop(loop)
         self.loop = loop
 
-        return self.loop.run_until_complete(
-            asyncio.ensure_future(self._telemetry_queue_send_loop())
-        )
+        try:
+            return self.loop.run_until_complete(
+                asyncio.ensure_future(self._telemetry_queue_send_loop_forever())
+            )
+        except PluginSettingsRequired:
+            pass
 
     def _remote_control_worker(self):
         self.remote_control_loop = asyncio.new_event_loop()
@@ -564,64 +576,58 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             image=snapshot_io, command=command_id
         )
 
+    @beeline.traced("WorkerManager._telemetry_queue_send_loop")
     async def _telemetry_queue_send_loop(self):
+        try:
+            span = self._honeycomb_tracer.start_span(
+                {"name": "WorkerManager.telemetry_queue.coro_get"}
+            )
+
+            event = await self.telemetry_queue.coro_get()
+            self._honeycomb_tracer.add_context(dict(event=event))
+            self._honeycomb_tracer.finish_span(span)
+
+            event_type = event.get("event_type")
+            if event_type is None:
+                logger.warning(
+                    "Ignoring enqueued msg without type declared {event}".format(
+                        event=event
+                    )
+                )
+                return
+
+            if event_type == BOUNDING_BOX_PREDICT_EVENT:
+                await self._publish_bounding_box_telemetry(event)
+                return
+
+            if (
+                self.event_in_tracked_telemetry(event_type)
+            ):
+                await self._publish_octoprint_event_telemetry(event)
+            else:
+                if event_type not in self.MUTED_EVENTS:
+                    logger.warning(f"Discarding {event_type} with payload {event}")
+                return
+
+            # run local handler fn
+            handler_fn = self._local_event_handlers.get(event_type)
+            if handler_fn:
+
+                if inspect.isawaitable(handler_fn):
+                    await handler_fn(**event)
+                else:
+                    handler_fn(**event)
+        except API_CLIENT_EXCEPTIONS as e:
+            logger.error(f"REST client raised exception {e}", exc_info=True)
+
+    async def _telemetry_queue_send_loop_forever(self):
         """
         Publishes telemetry events via HTTP
         """
-        logger.info("Started _telemetry_queue_send_loop")
+        logger.info("Started _telemetry_queue_send_loop_forever")
         while not self._thread_halt.is_set():
-            trace = self._honeycomb_tracer.start_trace()
-            try:
-                trace = self._honeycomb_tracer.start_trace()
-                span = self._honeycomb_tracer.start_span(
-                    {"name": "WorkerManager.telemetry_queue.coro_get"}
-                )
-
-                event = await self.telemetry_queue.coro_get()
-                self._honeycomb_tracer.add_context(dict(event=event))
-                self._honeycomb_tracer.finish_span(span)
-
-                event_type = event.get("event_type")
-                if event_type is None:
-                    logger.warning(
-                        "Ignoring enqueued msg without type declared {event}".format(
-                            event=event
-                        )
-                    )
-                    continue
-
-                if event_type == BOUNDING_BOX_PREDICT_EVENT:
-                    await self._publish_bounding_box_telemetry(event)
-                    continue
-                if (
-                    self.telemetry_events is None
-                    or event_type not in self.telemetry_events
-                ):
-                    # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
-                    if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                        pass
-                    elif event_type not in self.MUTED_EVENTS:
-                        logger.warning(f"Discarding {event_type} with payload {event}")
-                    continue
-                # publish to octoprint-events telemetry topic
-                else:
-                    await self._publish_octoprint_event_telemetry(event)
-
-                trace = self._honeycomb_tracer.start_trace()
-
-                # run local handler fn
-                handler_fn = self._local_event_handlers.get(event["event_type"])
-
-                if handler_fn:
-
-                    if inspect.isawaitable(handler_fn):
-                        await handler_fn(**event)
-                    else:
-                        handler_fn(**event)
-            except API_CLIENT_EXCEPTIONS as e:
-                logger.error(f"REST client raised exception {e}", exc_info=True)
-            finally:
-                self._honeycomb_tracer.finish_trace(trace)
+            await self._telemetry_queue_send_loop()
+        logging.info("Exiting soon _telemetry_queue_send_loop_forever")
 
     @beeline.traced("WorkerManager.stop_monitoring")
     def stop_monitoring(self, event_type=None, **kwargs):
