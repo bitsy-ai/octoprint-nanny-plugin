@@ -35,40 +35,56 @@ Events.PRINT_PROGRESS = "PrintProgress"
 
 
 class PluginSettingsMemoizeMixin:
-    '''
-        Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
-    '''
+    """
+    Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
+    """
 
     def __init__(self, plugin):
         self.plugin = plugin
-        self._auth_token = None
+
+        # stateful clients and computed settings that require re-initialization when settings change
         self._calibration = None
-        self._device_cloudiot_name = None
-        self._device_id = None
-        self._device_info = None
-        self._device_serial = None
-        self._monitoring_frames_per_minute = None
-        self._snapshot_url = None
-        self._user_id = None
-        self._ws_url = None
+        self._mqtt_client = None
+        self._telemetry_events = None
+
+        self.environment = {}
 
     @beeline.traced("PluginSettingsMemoize._reset_device_settings_state")
     @beeline.traced_thread
     def reset_device_settings_state(self):
-        self._mqtt_bridge_hostname = None
-        self._mqtt_bridge_port = None
-        self._mqtt_bridge_root_certificate_url = None
-        self._device_cloudiot_name = None
-        self._device_id = None
-        self._monitoring_frames_per_minute = None
-        self._calibration = None
+        self._mqtt_client = None
 
-
-    @beeline.traced("PluginSettingsMemoize._reset_user_auth_state")
+    @beeline.traced(name="PluginSettingsMemoize.get_device_metadata")
     @beeline.traced_thread
-    def _reset_user_auth_state(self):
-        self._user_id = None
-        self._auth_token = None
+    def get_device_metadata(self):
+        metadata = dict(
+            created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
+            environment=self.environment,
+        )
+        metadata.update(self.device_info)
+        return metadata
+
+    @beeline.traced(name="PluginSettingsMemoize.get_print_job_metadata")
+    def get_print_job_metadata(self):
+        return dict(
+            printer_data=self.plugin._printer.get_current_data(),
+            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
+            temperatures=self.plugin._printer.get_current_temperatures(),
+            printer_profile_id=self.shared.printer_profile_id,
+            print_job_id=self.shared.print_job_id,
+        )
+
+    @beeline.traced(name="PluginSettingsMemoize.on_environment_detected")
+    def on_environment_detected(self, environment):
+        self.environment = environment
+
+    @property
+    def device_cloudiot_name(self):
+        return self.plugin._settings.get(["device_cloudiot_name"])
+
+    @property
+    def device_id(self):
+        return self.plugin._settings.get(["device_id"])
 
     @property
     def device_info(self):
@@ -77,52 +93,40 @@ class PluginSettingsMemoizeMixin:
         return self._device_info
 
     @property
+    def device_serial(self):
+        return self.plugin._settings.get(["device_serial"])
+
+    @property
+    def device_private_key(self):
+        return self.plugin._settings.get(["device_private_key"])
+
+    @property
+    def device_public_key(self):
+        return self.plugin._settings.get(["device_public_key"])
+
+    @property
+    def gcp_root_ca(self):
+        return self.plugin._settings.get(["gcp_root_ca"])
+
+    @property
     def api_url(self):
         return self.plugin._settings.get(["api_url"])
 
     @property
     def auth_token(self):
-        if self._auth_token is None:
-            self._auth_token = self.plugin._settings.get(["auth_token"])
-        return self._auth_token
+        return self.plugin._settings.get(["auth_token"])
 
     @property
     def ws_url(self):
-        if self._ws_url is None:
-            self._ws_url = self.plugin._settings.get(["ws_url"])
-        return self._ws_url
+        return self.plugin._settings.get(["ws_url"])
 
     @property
     def snapshot_url(self):
-        if self._snapshot_url is None:
-            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
-        return self._snapshot_url
-
-    @property
-    def device_cloudiot_name(self):
-        if self._device_cloudiot_name is None:
-            self._device_cloudiot_name = self.plugin._settings.get(
-                ["device_cloudiot_name"]
-            )
-        return self._device_cloudiot_name
-
-    @property
-    def device_id(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_id"])
-        return self._device_id
-
-    @property
-    def device_serial(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_serial"])
-        return self._device_id
+        return self.plugin._settings.get(["snapshot_url"])
 
     @property
     def user_id(self):
-        if self._user_id is None:
-            self._user_id = self.plugin._settings.get(["user_id"])
-        return self._user_id
+        return self.plugin._settings.get(["user_id"])
 
     @property
     def calibration(self):
@@ -137,16 +141,33 @@ class PluginSettingsMemoizeMixin:
 
     @property
     def monitoring_frames_per_minute(self):
-        if self._monitoring_frames_per_minute is None:
-            self._monitoring_frames_per_minute = self.plugin._settings.get(
-                ["monitoring_frames_per_minute"]
-            )
-        return self._monitoring_frames_per_minute
+        return self.plugin._settings.get(["monitoring_frames_per_minute"])
 
     @property
     def rest_client(self):
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
+
+    @property
+    def mqtt_client(self):
+        if self._mqtt_client is None:
+            self._mqtt_client = MQTTClient(
+                device_id=self.device_id,
+                private_key_file=self.private_key,
+                ca_certs=self.gcp_root_ca,
+                remote_control_queue=self.remote_control_queue,
+                trace_context=self.get_device_metadata(),
+            )
+        return self._mqtt_client
+
+    @property
+    def telemetry_events(self):
+        if self._telemetry_events is None:
+            loop = asyncio.get_event_loop()
+            self.telemetry_events = asyncio.run_coroutine_threadsafe(
+                self._download_root_certificates(), loop
+            ).result()
+        return self._telemetry_events
 
 
 class WorkerManager(PluginSettingsMemoizeMixin):
@@ -174,7 +195,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     EVENT_PREFIX = "plugin_octoprint_nanny_"
 
     def __init__(self, plugin):
-        
+
         super().__init__(plugin)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
@@ -187,7 +208,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         self.shared.print_job_id = None
         self.shared.calibration = None
 
-        self.mqtt_client = None
         self.monitoring_active = False
 
         # outbound telemetry to GCP MQTT bridge
@@ -211,11 +231,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         }
 
         self._remote_control_event_handlers = {}
-
-        self._environment = {}
-
-        self.telemetry_events = None
-
         self._monitoring_halt = None
         self.init_worker_threads()
 
@@ -232,7 +247,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             self.monitoring_frames_per_minute,
             self._monitoring_halt,
             self.plugin._event_bus,
-            trace_context=self._get_metadata(),
+            trace_context=self.get_device_metadata(),
         )
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
@@ -245,7 +260,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             self.shared.print_job_id,
             self.device_serial,
             self._monitoring_halt,
-            trace_context=self._get_metadata(),
+            trace_context=self.get_device_metadata(),
         )
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
@@ -345,7 +360,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(self._get_metadata())
+        self._honeycomb_tracer.add_global_context(self.get_device_metadata())
         # register plugin event handlers
         self._register_plugin_event_handlers()
         self.start_worker_threads()
@@ -354,11 +369,10 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     def on_snapshot(self, *args, **kwargs):
         logger.info(f"WorkerManager.on_snapshot called with {args} {kwargs}")
 
-
     @beeline.traced("WorkerManager.apply_device_registration")
     def apply_device_registration(self):
         logger.info("Resetting WorkerManager device registration state")
-        self._reset_device_settings_state()
+        self.reset_device_settings_state()
 
         logger.info("Halting worker threads to apply new device registration")
         self.stop_worker_threads()
@@ -368,8 +382,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
         logger.info("Resetting WorkerManager user auth state")
-        self._reset_user_auth_state()
-
         logger.info("Halting worker threads to apply new auth settings")
         self.stop_worker_threads()
         self.init_worker_threads()
@@ -406,27 +418,25 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         )
 
     def _mqtt_worker(self):
-        private_key = self.plugin._settings.get(["device_private_key"])
-        device_id = self.plugin._settings.get(["device_cloudiot_name"])
-        gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
-        while not self._thread_halt.is_set():
-            if private_key is None or device_id is None or gcp_root_ca is None:
-                logger.warning(
-                    f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
-                )
-                sleep(self.BACKOFF)
-                if self.BACKOFF < self.MAX_BACKOFF:
-                    self.BACKOFF = self.BACKOFF ** 2
-                continue
-            break
-        self.mqtt_client = MQTTClient(
-            device_id=device_id,
-            private_key_file=private_key,
-            ca_certs=gcp_root_ca,
-            remote_control_queue=self.remote_control_queue,
-            trace_context=self._get_metadata(),
-        )
-        logger.info(f"Initialized mqtt client with id {self.mqtt_client.client_id}")
+
+        # while not self._thread_halt.is_set():
+        #     if private_key is None or device_id is None or gcp_root_ca is None:
+        #         logger.warning(
+        #             f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
+        #         )
+        #         sleep(self.BACKOFF)
+        #         if self.BACKOFF < self.MAX_BACKOFF:
+        #             self.BACKOFF = self.BACKOFF ** 2
+        #         continue
+        #     break
+        # self.mqtt_client = MQTTClient(
+        #     device_id=device_id,
+        #     private_key_file=private_key,
+        #     ca_certs=gcp_root_ca,
+        #     remote_control_queue=self.remote_control_queue,
+        #     trace_context=self.get_device_metadata(),
+        # )
+
         ###
         # MQTT bridge available
         ###
@@ -475,7 +485,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                 device_cloudiot_name=self.device_cloudiot_name,
             )
         )
-        event.update(self._get_metadata())
+        event.update(self.get_device_metadata())
 
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self._get_print_job_metadata())
@@ -513,7 +523,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
             await self._remote_control_snapshot(command_id)
 
-            metadata = self._get_metadata()
+            metadata = self.get_device_metadata()
             await self.rest_client.update_remote_control_command(
                 command_id, received=True, metadata=metadata
             )
@@ -531,7 +541,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                     else:
                         handler_fn(event=event, event_type=command)
 
-                    metadata = self._get_metadata()
+                    metadata = self.get_device_metadata()
                     # set success state
                     await self.rest_client.update_remote_control_command(
                         command_id,
@@ -540,7 +550,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    metadata = self._get_metadata()
+                    metadata = self.get_device_metadata()
                     await self.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
@@ -577,17 +587,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                 if self.BACKOFF < self.MAX_BACKOFF:
                     self.BACKOFF = self.BACKOFF ** 2
                 continue
-
-            if self.telemetry_events is None:
-                try:
-                    self.telemetry_events = (
-                        await self.rest_client.get_telemetry_events()
-                    )
-                except CLIENT_EXCEPTIONS as e:
-                    await asyncio.sleep(self.BACKOFF)
-                    if self.BACKOFF < self.MAX_BACKOFF:
-                        self.BACKOFF = self.BACKOFF ** 2
-                    continue
 
             ###
             # Rest API available
@@ -713,24 +712,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
         self.init_monitoring_threads()
         self.start_monitoring_threads()
-
-    @beeline.traced("WorkerManager._get_print_job_metadata")
-    def _get_print_job_metadata(self):
-        return dict(
-            printer_data=self.plugin._printer.get_current_data(),
-            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
-            temperatures=self.plugin._printer.get_current_temperatures(),
-            printer_profile_id=self.shared.printer_profile_id,
-            print_job_id=self.shared.print_job_id,
-        )
-
-    def _get_metadata(self):
-        metadata = dict(
-            created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
-            environment=self._environment,
-        )
-        metadata.update(self.device_info)
-        return metadata
 
     @beeline.traced("WorkerManager._handle_print_start")
     async def _handle_print_start(self, event_type, event_data, **kwargs):

@@ -166,12 +166,12 @@
     <div id="{{template_name}}_advanced" class="tab-pane">
         <fieldset>
             <legend>Warning! Advanced Settings </legend>
-            <p>The following settings are for Print Nanny developers. Adjust these at your own risk. </p>
+            <p>The following settings are for advanced configurations or Print Nanny developers. </p>
 
             <div class="control-group">
                 <label class="control-label" for="octoprint_nanny_settings_monitoring_frames_per_minute">
-                    Monitoring Frames per Minute 
-                    <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute"></strong>
+                    <h3>Monitoring Frames per Minute </h3>
+                    <p>Drag the slider to adjust the current value: <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute"></strong></p>
                 </label>
                 <div class="controls">
                     <input 
@@ -185,7 +185,8 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_url">Print Nanny API</label>
+                <label class="control-label" for="octoprint_nanny_settings_api_url"><h3>Print Nanny API</h3></label>
+                
                 <div class="controls">
                     <input 
                     class="input-xxlarge" 
@@ -195,21 +196,39 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_ws_url">Websocket URL</label>
+                <label class="control-label" for="octoprint_nanny_settings_ws_url"><h3>Websocket URL</h3></label>
                 <div class="controls">
                     <input id="octoprint_nanny_settings_ws_url" 
                     data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
                 </div>
             </div>
+
+
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_auth_token_advanced"><strong>Authentication Token</strong></label>
+                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_hostname"><h3>MQTT Bridge Host</h3></label>
                 <div class="controls">
-                    <input 
-                        id="octoprint_nanny_settings_auth_token_advanced" 
-                        class="input-xxlarge"
-                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
+                    <input id="octoprint_nanny_settings_mqtt_bridge_hostname" 
+                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_hostname" type="text" />
                 </div>
             </div>
+
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_port"><h3>MQTT Bridge Port</h3></label>
+                <p>Valid ports are <strong>8883</strong> and <strong>443</strong>.</p>
+                <div class="controls">
+                    <input id="octoprint_nanny_settings_mqtt_bridge_port" 
+                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_port" type="text" />
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_root_certificate_url"><h3>MQTT Bridge Certificates</h3></label>
+                <div class="controls">
+                    <input id="octoprint_nanny_settings_mqtt_bridge_certificate_url" 
+                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_root_certificate_url" type="text" />
+                </div>
+            </div>
+
 
             <div class="alert alert-block" data-bind="css: authAlertClass">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>

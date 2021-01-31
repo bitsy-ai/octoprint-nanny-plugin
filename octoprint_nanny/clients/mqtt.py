@@ -15,17 +15,18 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 
-JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 60)
+JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 600)
 GCP_PROJECT_ID = os.environ.get("OCTOPRINT_NANNY_GCP_PROJECT_ID", "print-nanny")
-GCP_MQTT_BRIDGE_HOSTNAME = os.environ.get(
-    "OCTOPRINT_NANNY_GCP_MQTT_BRIDGE_HOSTNAME", "mqtt.googleapis.com"
+MQTT_BRIDGE_HOSTNAME = os.environ.get(
+    "OCTOPRINT_NANNY_MQTT_BRIDGE_HOSTNAME", "mqtt.googleapis.com"
 )
-GCP_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_GCP_MQTT_BRIDGE_PORT", 443)
-GCP_IOT_DEVICE_REGISTRY = os.environ.get(
-    "OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY", "devices-us-central1-prod"
+
+MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
+IOT_DEVICE_REGISTRY = os.environ.get(
+    "OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY", "devices-us-central1-prod"
 )
-GCP_IOT_DEVICE_REGISTRY_REGION = os.environ.get(
-    "OCTOPRINT_NANNY_GCP_IOT_DEVICE_REGISTRY_REGION", "us-central1"
+IOT_DEVICE_REGISTRY_REGION = os.environ.get(
+    "OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY_REGION", "us-central1"
 )
 
 OCTOPRINT_EVENT_FOLDER = "octoprint-events"
@@ -45,8 +46,8 @@ class MQTTClient:
         ca_certs,
         algorithm="RS256",
         remote_control_queue=None,
-        mqtt_bridge_hostname=GCP_MQTT_BRIDGE_HOSTNAME,
-        mqtt_bridge_port=GCP_MQTT_BRIDGE_PORT,
+        mqtt_bridge_hostname=MQTT_BRIDGE_HOSTNAME,
+        mqtt_bridge_port=MQTT_BRIDGE_PORT,
         on_connect=None,
         on_disconnect=None,
         on_log=None,
@@ -55,8 +56,8 @@ class MQTTClient:
         on_subscribe=None,
         on_unsubscribe=None,
         project_id=GCP_PROJECT_ID,
-        region=GCP_IOT_DEVICE_REGISTRY_REGION,
-        registry_id=GCP_IOT_DEVICE_REGISTRY,
+        region=IOT_DEVICE_REGISTRY_REGION,
+        registry_id=IOT_DEVICE_REGISTRY,
         tls_version=ssl.PROTOCOL_TLS,
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe

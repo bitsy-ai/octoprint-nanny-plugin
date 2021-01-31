@@ -47,7 +47,45 @@ DEFAULT_WS_URL = os.environ.get(
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
-GCP_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
+
+DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
+DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
+    "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.googleapis.com"
+)
+DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
+
+DEFAULT_SETTINGS = dict(
+    auth_token=None,
+    auth_valid=False,
+    device_registered=False,
+    user_email=None,
+    monitoring_frames_per_minute=30,
+    monitoring_active=False,
+    mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
+    mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
+    mqtt_bridge_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
+    user_id=None,
+    user_url=None,
+    device_url=None,
+    device_fingerprint=None,
+    device_cloudiot_name=None,
+    device_id=None,
+    device_name=platform.node(),
+    device_private_key=None,
+    device_public_key=None,
+    device_serial=None,
+    user=None,
+    calibrated=False,
+    calibrate_x0=None,
+    calibrate_y0=None,
+    calibrate_x1=None,
+    calibrate_y1=None,
+    auto_start=False,
+    api_url=DEFAULT_API_URL,
+    ws_url=DEFAULT_WS_URL,
+    snapshot_url=DEFAULT_SNAPSHOT_URL,
+    gcp_root_ca=None,
+)
 
 Events.PRINT_PROGRESS = "PrintProgress"
 
@@ -191,9 +229,6 @@ class OctoPrintNannyPlugin(
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
         )
-        root_ca_filename = os.path.join(
-            self.get_plugin_data_folder(), "gcp_root_ca.pem"
-        )
 
         async with aiohttp.ClientSession() as session:
             logger.info(f"Downloading newly-provisioned public key {device.public_key}")
@@ -213,8 +248,6 @@ class OctoPrintNannyPlugin(
             f.write(pubkey)
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
             f.write(privkey)
-        with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
-            f.write(root_ca)
 
         logger.info(
             f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
@@ -224,6 +257,24 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_public_key"], pubkey_filename)
         self._settings.set(["gcp_root_ca"], root_ca_filename)
 
+    @beeline.traced("OctoPrintNannyPlugin._download_root_certificate")
+    @beeline.traced_thread
+    async def _download_root_certificates(self):
+        root_ca_filename = os.path.join(
+            self.get_plugin_data_folder(), "gcp_root_ca.pem"
+        )
+
+        root_ca_url = self._settings.get(["mqtt_bridge_root_certificate_url"])
+
+        async with aiohttp.ClientSession() as session:
+            logger.info(f"Downloading GCP root certificates")
+            async with session.get(root_ca_url) as res:
+                root_ca = await res.text()
+        with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
+            f.write(root_ca)
+        self._settings.set(["gcp_root_ca"], root_ca_filename)
+
+    @beeline.traced("OctoPrintNannyPlugin._register_device")
     @beeline.traced_thread
     async def _register_device(self, device_name):
 
@@ -266,6 +317,7 @@ class OctoPrintNannyPlugin(
         )
 
         await self._download_keypair(device)
+        await self._download_root_certificates()
 
         self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_url"], device.url)
@@ -471,39 +523,11 @@ class OctoPrintNannyPlugin(
     @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
     def on_environment_detected(self, environment, *args, **kwargs):
         self._environment = environment
-        self._worker_manager._environment = environment
+        self._worker_manager.on_environment_detected(environment)
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
-        return dict(
-            auth_token=None,
-            auth_valid=False,
-            device_registered=False,
-            user_email=None,
-            monitoring_frames_per_minute=30,
-            monitoring_active=False,
-            user_id=None,
-            user_url=None,
-            device_url=None,
-            device_fingerprint=None,
-            device_cloudiot_name=None,
-            device_id=None,
-            device_name=platform.node(),
-            device_private_key=None,
-            device_public_key=None,
-            device_serial=None,
-            user=None,
-            calibrated=False,
-            calibrate_x0=None,
-            calibrate_y0=None,
-            calibrate_x1=None,
-            calibrate_y1=None,
-            auto_start=False,
-            api_url=DEFAULT_API_URL,
-            ws_url=DEFAULT_WS_URL,
-            snapshot_url=DEFAULT_SNAPSHOT_URL,
-            gcp_root_ca=None,
-        )
+        return DEFAULT_SETTINGS
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
@@ -518,6 +542,12 @@ class OctoPrintNannyPlugin(
         prev_device_fingerprint = self._settings.get(["device_fingerprint"])
         prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
 
+        prev_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
+        prev_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
+        prev_mqtt_bridge_certificate_url = self._settings.get(
+            ["mqtt_bridge_certificate_url"]
+        )
+
         super().on_settings_save(data)
 
         new_calibration = (
@@ -531,6 +561,16 @@ class OctoPrintNannyPlugin(
         new_device_fingerprint = self._settings.get(["device_fingerprint"])
         new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
 
+        new_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
+        new_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
+        new_mqtt_bridge_certificate_url = self._settings.get(
+            ["mqtt_bridge_certificate_url"]
+        )
+
+        if prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url:
+            asyncio.run_coroutine_threadsafe(
+                self._download_root_certificates(), self._worker_manager.loop
+            )
         if (
             prev_monitoring_fpm != new_monitoring_fpm
             or prev_calibration != new_calibration
@@ -545,7 +585,12 @@ class OctoPrintNannyPlugin(
             logger.info("Change in auth detected, applying new settings")
             self._worker_manager.apply_auth()
 
-        if prev_device_fingerprint != new_device_fingerprint:
+        if (
+            prev_device_fingerprint != new_device_fingerprint
+            or prev_mqtt_bridge_hostname != new_mqtt_bridge_hostname
+            or prev_mqtt_bridge_port != new_mqtt_bridge_port
+            or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
+        ):
             logger.info(
                 "Change in device identity detected (did you re-register?), applying new settings"
             )
