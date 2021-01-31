@@ -503,7 +503,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             event.update(self.get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
-    @beeline.traced("WorkerManager._remote_control_receive_loop_forever")
     async def _remote_control_receive_loop_forever(self):
         logger.info("Started _remote_control_receive_loop_forever")
         while not self._thread_halt.is_set():
@@ -623,7 +622,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"REST client raised exception {e}", exc_info=True)
 
-    @beeline.traced("WorkerManager._telemetry_queue_send_loop_forever")
     async def _telemetry_queue_send_loop_forever(self):
         """
         Publishes telemetry events via HTTP
