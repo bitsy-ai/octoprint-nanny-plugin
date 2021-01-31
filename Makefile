@@ -80,5 +80,9 @@ test:
 ci-test:
 	pytest -p no:warnings --log-level=INFO -m "not webapp"
 
+ci-coverage:
+	pytest --cov=./ --cov-report=xml -m "not webapp"
+
+
 install-git-hooks:
 	cp -a hooks/. .git/hooks/
