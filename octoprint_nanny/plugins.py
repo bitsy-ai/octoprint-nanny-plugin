@@ -69,6 +69,7 @@ DEFAULT_SETTINGS = dict(
     device_url=None,
     device_fingerprint=None,
     device_cloudiot_name=None,
+    device_cloudiot_id=None,
     device_id=None,
     device_name=platform.node(),
     device_private_key=None,
@@ -330,7 +331,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
-
+        self._settings.set(["device_cloudiot_id"], device.cloudiot_device_num_id)
         self._settings.set(["device_registered"], True)
 
         self._settings.save()
@@ -599,10 +600,12 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_url"]) is None,
                 self._settings.get(["device_cloudiot_name"]) is None,
+                self._settings.get(["device_cloudiot_id"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
+                self._settings.get(["gcp_root_ca"]) is None,
             ]
         )
 

@@ -114,6 +114,10 @@ class PluginSettingsMemoizeMixin:
         return self.plugin.get_setting("device_serial")
 
     @property
+    def device_cloudiot_id(self):
+        return self.plugin.get_setting("device_cloudiot_id")
+
+    @property
     def device_private_key(self):
         return self.plugin.get_setting("device_private_key")
 
@@ -172,9 +176,9 @@ class PluginSettingsMemoizeMixin:
         return self._rest_client
 
     def test_mqtt_settings(self):
-        if self.device_id is None or self.device_private_key is None:
+        if self.device_cloudiot_id is None or self.device_private_key is None:
             raise PluginSettingsRequired(
-                f"Received None for device_id={self.device_id} or private_key_file={self.device_private_key}"
+                f"Received None for device_cloudiot_id={self.device_cloudiot_id} or private_key_file={self.device_private_key}"
             )
         return True
 
@@ -184,6 +188,7 @@ class PluginSettingsMemoizeMixin:
         if self._mqtt_client is None:
             self._mqtt_client = MQTTClient(
                 device_id=self.device_id,
+                device_cloudiot_id=self.device_cloudiot_id,
                 private_key_file=self.device_private_key,
                 ca_certs=self.gcp_root_ca,
                 remote_control_queue=self.remote_control_queue,
@@ -297,7 +302,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             self.auth_token,
             self.pn_ws_queue,
             self.shared.print_job_id,
-            self.device_serial,
+            self.device_id,
             self._monitoring_halt,
             trace_context=self.get_device_metadata(),
         )
@@ -414,8 +419,8 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         logger.info("Resetting WorkerManager device registration state")
         self.stop_worker_threads()
         self.reset_device_settings_state()
-        self.init_monitoring_threads()
-        self.start_monitoring_threads()
+        self.init_worker_threads()
+        self.start_worker_threads()
 
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
@@ -441,6 +446,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             return self.mqtt_client.run(self._thread_halt)
         except PluginSettingsRequired:
             pass
+        logger.warning("WorkerManager._mqtt_worker exiting")
 
     @beeline.traced("WorkerManager._telemetry_worker")
     def _telemetry_worker(self):

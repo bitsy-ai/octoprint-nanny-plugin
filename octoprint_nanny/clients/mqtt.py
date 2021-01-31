@@ -42,7 +42,7 @@ device_logger = logging.getLogger(
 minimum_backoff_time = 1
 
 # The maximum backoff time before giving up, in seconds.
-MAXIMUM_BACKOFF_TIME = 32
+MAXIMUM_BACKOFF_TIME = 300
 
 # Whether to wait with exponential backoff before publishing.
 should_backoff = False
@@ -52,6 +52,7 @@ class MQTTClient:
     def __init__(
         self,
         device_id: str,
+        device_cloudiot_id: str,
         private_key_file: str,
         ca_certs,
         algorithm="RS256",
@@ -72,8 +73,9 @@ class MQTTClient:
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
-        self.device_id = device_id
-        client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{device_id}"
+        self.device_id = device_cloudiot_id
+        self.device_cloudiot_id = device_cloudiot_id
+        client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{device_cloudiot_id}"
 
         self.client_id = client_id
         self.private_key_file = private_key_file
@@ -104,19 +106,19 @@ class MQTTClient:
         self.client.on_unsubscribe = self._on_unsubscribe
 
         # device receives configuration updates on this topic
-        self.mqtt_config_topic = f"/devices/{self.device_id}/config"
+        self.mqtt_config_topic = f"/devices/{self.device_cloudiot_id}/config"
 
         # device receives commands on this topic
-        self.mqtt_command_topic = f"/devices/{self.device_id}/commands/#"
+        self.mqtt_command_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
         # remote_control app commmands are routed to this subfolder
         self.remote_control_command_topic = (
-            f"/devices/{self.device_id}/commands/remote_control"
+            f"/devices/{self.device_cloudiot_id}/commands/remote_control"
         )
         # this permits routing on a per-app basis, e.g.
-        # /devices/{self.device_id}/commands/my_app_name
+        # /devices/{self.device_cloudiot_id}/commands/my_app_name
 
         # default telemetry topic
-        self.mqtt_default_telemetry_topic = f"/devices/{self.device_id}/events"
+        self.mqtt_default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
 
         # octoprint event telemetry topic
         self.mqtt_octoprint_event_topic = os.path.join(
@@ -179,7 +181,7 @@ class MQTTClient:
         """
 
         logger.info(
-            f"MQTTClient._on_connect called with client={client} userdata={userdata} rc={rc}"
+            f"MQTTClient._on_connect called with client={client} userdata={userdata} rc={rc} reason={mqtt.error_string(rc)}"
         )
 
         if rc == 0:
@@ -190,11 +192,11 @@ class MQTTClient:
             logger.info("Device successfully connected to MQTT broker")
             self.client.subscribe(self.mqtt_config_topic, qos=1)
             logger.info(
-                f"Subscribing to config updates device_id={self.device_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
             )
             self.client.subscribe(self.mqtt_command_topic, qos=1)
             logger.info(
-                f"Subscribing to remote commands device_id={self.device_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
             )
         else:
             logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")
@@ -213,10 +215,14 @@ class MQTTClient:
             if should_backoff:
 
                 # Otherwise, wait and connect again.
-                delay = minimum_backoff_time + random.randint(0, 1000) / 1000.0
+                jitter = random.randint(0, 1000) / 1000.0
+                delay = min(
+                    minimum_backoff_time + jitter, MAXIMUM_BACKOFF_TIME + jitter
+                )
                 logger.info("Waiting for {} before reconnecting.".format(delay))
                 time.sleep(delay)
-                minimum_backoff_time *= 2
+                if minimum_backoff_time <= MAXIMUM_BACKOFF_TIME:
+                    minimum_backoff_time *= 2
             self.connect()
 
     @beeline.traced("MQTTClient.connect")
