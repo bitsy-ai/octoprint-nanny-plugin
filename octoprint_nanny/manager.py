@@ -538,7 +538,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         logger.info(
             f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for command={command}"
         )
-
         if handler_fn:
             try:
                 if inspect.isawaitable(handler_fn):

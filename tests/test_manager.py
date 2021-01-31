@@ -76,7 +76,6 @@ async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
 
     mocker.patch.object(WorkerManager, "telemetry_events")
     mocker.patch.object(WorkerManager, "event_in_tracked_telemetry", return_value=True)
-    mock_handle_print_start = mocker.patch.object(WorkerManager, "_handle_print_start")
 
     manager = WorkerManager(plugin)
 
@@ -91,3 +90,55 @@ async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
     await manager._telemetry_queue_send_loop()
 
     mock_fn.assert_called_once_with(event)
+
+
+@pytest.mark.asyncio
+async def test_remote_control_receive_loop_valid_event(mocker):
+    plugin = octoprint_nanny.plugins.OctoPrintNannyPlugin()
+    plugin.get_setting = get_default_setting
+
+    mocker.patch.object(WorkerManager, "test_mqtt_settings")
+
+    mock_remote_control_snapshot = mocker.patch.object(
+        WorkerManager, "_remote_control_snapshot", return_value=asyncio.Future()
+    )
+    mock_remote_control_snapshot.return_value.set_result("foo")
+
+    mock_rest_client = mocker.patch.object(WorkerManager, "rest_client")
+    mock_rest_client.update_remote_control_command.return_value = asyncio.Future()
+    mock_rest_client.update_remote_control_command.return_value.set_result("foo")
+
+    mocker.patch.object(WorkerManager, "get_device_metadata", return_value={})
+
+    mock_start_monitoring = mocker.patch.object(WorkerManager, "start_monitoring")
+
+    manager = WorkerManager(plugin)
+    manager._remote_control_event_handlers = {
+        "octoprint_nanny_plugin_monitoring_start": manager.start_monitoring
+    }
+
+    command = {
+        "command": "octoprint_nanny_plugin_monitoring_start",
+        "remote_control_command_id": 1,
+    }
+    manager.remote_control_queue.put_nowait(command)
+
+    await manager._remote_control_receive_loop()
+
+    mock_remote_control_snapshot.assert_called_once_with(
+        command["remote_control_command_id"]
+    )
+
+    mock_rest_client.update_remote_control_command.assert_has_calls(
+        [
+            mocker.call(
+                command["remote_control_command_id"], received=True, metadata={}
+            ),
+            mocker.call(
+                command["remote_control_command_id"], success=True, metadata={}
+            ),
+        ]
+    )
+    mock_start_monitoring.assert_called_once_with(
+        event=command, event_type=command["command"]
+    )
