@@ -48,7 +48,7 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
 
-DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
+DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 8883)
 DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
     "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.googleapis.com"
 )
@@ -171,6 +171,7 @@ class OctoPrintNannyPlugin(
         }
 
     @beeline.traced("OctoPrintNannyPlugin.get_device_info")
+    @beeline.traced_thread
     def get_device_info(self):
         cpuinfo = self._cpuinfo()
 
@@ -204,6 +205,7 @@ class OctoPrintNannyPlugin(
         }
 
     @beeline.traced("OctoPrintNannyPlugin._sync_printer_profiles")
+    @beeline.traced_thread
     async def _sync_printer_profiles(self, device_id):
         printer_profiles = self._printer_profile_manager.get_all()
 
@@ -230,6 +232,8 @@ class OctoPrintNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
+    @beeline.traced("OctoPrintNannyPlugin._download_keypair")
+    @beeline.traced_thread
     async def _download_keypair(self, device):
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
         privkey_filename = os.path.join(
@@ -258,6 +262,8 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_private_key"], privkey_filename)
         self._settings.set(["device_public_key"], pubkey_filename)
 
+    @beeline.traced("OctoPrintNannyPlugin._download_root_certificates")
+    @beeline.traced_thread
     async def _download_root_certificates(self):
         root_ca_filename = os.path.join(
             self.get_plugin_data_folder(), "gcp_root_ca.pem"
@@ -597,7 +603,6 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
-                self._settings.get(["gcp_root_ca"]) is None,
             ]
         )
 

@@ -7,6 +7,7 @@ import os
 import time
 import json
 import io
+import random
 import paho.mqtt.client as mqtt
 
 import beeline
@@ -37,6 +38,15 @@ device_logger = logging.getLogger(
     "octoprint.plugins.octoprint_nanny.clients.mqtt.device"
 )
 
+# The initial backoff time after a disconnection occurs, in seconds.
+minimum_backoff_time = 1
+
+# The maximum backoff time before giving up, in seconds.
+MAXIMUM_BACKOFF_TIME = 32
+
+# Whether to wait with exponential backoff before publishing.
+should_backoff = False
+
 
 class MQTTClient:
     def __init__(
@@ -58,7 +68,7 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=IOT_DEVICE_REGISTRY_REGION,
         registry_id=IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLS,
+        tls_version=ssl.PROTOCOL_TLSv1_2,
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
@@ -120,10 +130,6 @@ class MQTTClient:
         # configure tls
         self.client.tls_set(ca_certs=ca_certs, tls_version=tls_version)
 
-        self.active = False
-        self.backoff = 2
-        self.max_backoff = 300
-
     ###
     #   callbacks
     ##
@@ -177,7 +183,10 @@ class MQTTClient:
         )
 
         if rc == 0:
-            self.backoff = 2
+            global should_backoff
+            global minimum_backoff_time
+            should_backoff = False
+            minimum_backoff_time = 1
             logger.info("Device successfully connected to MQTT broker")
             self.client.subscribe(self.mqtt_config_topic, qos=1)
             logger.info(
@@ -195,20 +204,29 @@ class MQTTClient:
         logger.warning(
             f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
         )
-        time.sleep(self.backoff)
-        self.backoff = min(self.backoff * 2, self.max_backoff)
+        # Since a disconnect occurred, the next loop iteration will wait with
+        # exponential backoff.
+        global should_backoff
+        global minimum_backoff_time
+        should_backoff = True
         if not self._thread_halt.is_set():
+            if should_backoff:
 
-            logger.info(
-                "Device attempting to re-authenticate with MQTT broker (JWT probably expired)"
-            )
-            self.client.username_pw_set(
-                username="unused",
-                password=create_jwt(
-                    self.project_id, self.private_key_file, self.algorithm
-                ),
-            )
-            self.client.reconnect()
+                # Otherwise, wait and connect again.
+                delay = minimum_backoff_time + random.randint(0, 1000) / 1000.0
+                logger.info("Waiting for {} before reconnecting.".format(delay))
+                time.sleep(delay)
+                minimum_backoff_time *= 2
+            self.connect()
+
+    @beeline.traced("MQTTClient.connect")
+    def connect(self):
+        self.client.username_pw_set(
+            username="unused",
+            password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
+        )
+        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
+        logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
 
     def publish(self, payload, topic=None, retain=False, qos=1):
 
@@ -245,16 +263,10 @@ class MQTTClient:
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )
 
+    @beeline.traced("MQTTClient.run")
     def run(self, halt):
         self._thread_halt = halt
-        self.client.username_pw_set(
-            username="unused",
-            password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
-        )
-        trace = self._honeycomb_tracer.start_trace()
-        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
-        self._honeycomb_tracer.finish_trace(trace)
-        logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
+        self.connect()
         return self.client.loop_forever()
 
 
