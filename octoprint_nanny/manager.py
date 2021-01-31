@@ -526,9 +526,9 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
         logging.info(f"Received event in _remote_control_receive_loop {event}")
 
-        command = event.get("command")
-        if command is None:
-            logger.warning("Ignoring received message where command=None")
+        event_type = event.get("octoprint_event_type")
+        if event_type is None:
+            logger.warning("Ignoring received message where octoprint_event_type=None")
             return
 
         command_id = event.get("remote_control_command_id")
@@ -540,17 +540,17 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             command_id, received=True, metadata=metadata
         )
 
-        handler_fn = self._remote_control_event_handlers.get(command)
+        handler_fn = self._remote_control_event_handlers.get(event_type)
 
         logger.info(
-            f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for command={command}"
+            f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for octoprint_event_type={octoprint_event_type}"
         )
         if handler_fn:
             try:
                 if inspect.isawaitable(handler_fn):
-                    await handler_fn(event=event, event_type=command)
+                    await handler_fn(event=event, event_type=event_type)
                 else:
-                    handler_fn(event=event, event_type=command)
+                    handler_fn(event=event, event_type=event_type)
 
                 metadata = self.get_device_metadata()
                 # set success state
