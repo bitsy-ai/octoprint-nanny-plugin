@@ -543,7 +543,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         handler_fn = self._remote_control_event_handlers.get(event_type)
 
         logger.info(
-            f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for octoprint_event_type={octoprint_event_type}"
+            f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for octoprint_event_type={event_type}"
         )
         if handler_fn:
             try:
