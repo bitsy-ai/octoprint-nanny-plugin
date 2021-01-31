@@ -16,3 +16,6 @@ print_nanny/data/tflite-print3d-2020-10-23T18:00:41.136Z/*
 .vscode
 
 *.retry
+
+.coverage*
+coverage.xml

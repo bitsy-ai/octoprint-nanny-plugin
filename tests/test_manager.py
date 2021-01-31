@@ -118,7 +118,8 @@ async def test_remote_control_receive_loop_valid_event(mocker):
     }
 
     command = {
-        "command": "octoprint_nanny_plugin_monitoring_start",
+        "octoprint_event_type": "octoprint_nanny_plugin_monitoring_start",
+        "command": "MonitoringStart",
         "remote_control_command_id": 1,
     }
     manager.remote_control_queue.put_nowait(command)
@@ -140,5 +141,5 @@ async def test_remote_control_receive_loop_valid_event(mocker):
         ]
     )
     mock_start_monitoring.assert_called_once_with(
-        event=command, event_type=command["command"]
+        event=command, event_type=command["octoprint_event_type"]
     )
