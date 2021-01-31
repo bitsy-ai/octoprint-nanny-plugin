@@ -156,7 +156,6 @@ class PluginSettingsMemoizeMixin:
         logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
         return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
 
-
     def test_mqtt_settings(self):
         if self.device_id is None or self.private_key_file is None:
             raise PluginSettingsRequired(
@@ -176,6 +175,7 @@ class PluginSettingsMemoizeMixin:
                 trace_context=self.get_device_metadata(),
             )
         return self._mqtt_client
+
     @property
     def telemetry_events(self):
         if self.auth_token is None:
@@ -189,6 +189,7 @@ class PluginSettingsMemoizeMixin:
 
     def event_in_tracked_telemetry(self, event_type):
         return event_type in self.telemetry_events
+
 
 class WorkerManager(PluginSettingsMemoizeMixin):
     """
@@ -210,10 +211,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     ]
 
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [
-        Events.Z_CHANGE,
-        "plugin_octoprint_nanny_predict_done"
-    ]
+    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_predict_done"]
 
     EVENT_PREFIX = "plugin_octoprint_nanny_"
 
@@ -600,9 +598,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                 await self._publish_bounding_box_telemetry(event)
                 return
 
-            if (
-                self.event_in_tracked_telemetry(event_type)
-            ):
+            if self.event_in_tracked_telemetry(event_type):
                 await self._publish_octoprint_event_telemetry(event)
             else:
                 if event_type not in self.MUTED_EVENTS:
