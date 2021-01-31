@@ -64,7 +64,8 @@ octoprint-dev:
 	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_dev" \
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="5e658dc16cff5ce3d576aa9bd5a356a5" \
-	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
+	PYTHONASYNCIODEBUG=True \
+	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
 	octoprint serve
 	rsync ~/.octoprint ~/.octoprint-dev
 

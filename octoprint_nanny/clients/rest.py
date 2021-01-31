@@ -67,15 +67,6 @@ class RestAPIClient:
             )
             return octoprint_device
 
-    @property
-    def _api_config(self):
-        parsed_uri = urllib.parse.urlparse(self.api_url)
-        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-        config = print_nanny_client.Configuration(host=host)
-
-        config.access_token = self.auth_token
-        return config
-
     @beeline.traced("RestAPIClient.update_octoprint_device")
     @backoff.on_exception(
         backoff.expo,
@@ -269,12 +260,11 @@ class RestAPIClient:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
 
-            # cooerce a few duck-typed fields
-            volume_custom_box = (
-                printer_profile["volume"]["custom_box"]
-                if printer_profile["volume"]["custom_box"]
-                else {}
-            )
+            # cooerce duck-typed fields
+            if type(printer_profile["volume"]["custom_box"]) is bool:
+                volume_custom_box = {}
+            else:
+                volume_custom_box = printer_profile["volume"]["custom_box"]
 
             request = PrinterProfileRequest(
                 octoprint_device=octoprint_device_id,

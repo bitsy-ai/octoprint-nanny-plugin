@@ -49,6 +49,7 @@ class PluginSettingsMemoizeMixin:
         self._mqtt_client = None
         self._telemetry_events = None
         self._device_info = None
+        self._rest_client = None
 
         self.environment = {}
 
@@ -153,11 +154,15 @@ class PluginSettingsMemoizeMixin:
     def rest_client(self):
         if self.auth_token is None:
             raise PluginSettingsRequired(f"auth_token is not set")
-        logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
-        return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
+        if self._rest_client is None:
+            self._rest_client = RestAPIClient(
+                auth_token=self.auth_token, api_url=self.api_url
+            )
+            logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
+        return self._rest_client
 
     def test_mqtt_settings(self):
-        if self.device_id is None or self.private_key_file is None:
+        if self.device_id is None or self.device_private_key is None:
             raise PluginSettingsRequired(
                 f"Received None for device_id={self.device_id} or private_key_file={self.device_private_key}"
             )
@@ -254,6 +259,10 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         self._remote_control_event_handlers = {}
         self._monitoring_halt = None
 
+        self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
+        self.event_loop_thread.daemon = True
+        self.event_loop_thread.start()
+
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
         self._monitoring_halt = threading.Event()
@@ -285,24 +294,34 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
 
+    def _event_loop_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
+
+        self.loop = loop
+        return loop.run_forever()
+
+    @beeline.traced("WorkerManager.init_mqtt_worker_thread")
+    def init_mqtt_worker_thread(self):
+        # daemonized thread for MQTT worker thread
+        self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
+        self.mqtt_worker_thread.daemon = True
+
     @beeline.traced("WorkerManager.init_worker_threads")
     def init_worker_threads(self):
         self._thread_halt = threading.Event()
 
+        self.init_mqtt_worker_thread()
+
         self.telemetry_worker_thread = threading.Thread(target=self._telemetry_worker)
         self.telemetry_worker_thread.daemon = True
-
-        # daemonized thread for MQTT worker thread
-        self.mqtt_worker_thread = threading.Thread(target=self._mqtt_worker)
-        self.mqtt_worker_thread.daemon = True
 
         # daemonized thread for handling inbound commands received via MQTT
         self.remote_control_worker_thread = threading.Thread(
             target=self._remote_control_worker
         )
         self.remote_control_worker_thread.daemon = True
-
-        self.loop = None
 
     @beeline.traced("WorkerManager.start_monitoring_threads")
     def start_monitoring_threads(self):
@@ -314,9 +333,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         self.mqtt_worker_thread.start()
         self.telemetry_worker_thread.start()
         self.remote_control_worker_thread.start()
-        while self.loop is None:
-            logger.warning("Waiting for event loop to be set and exposed")
-            sleep(1)
 
     @beeline.traced("WorkerManager.stop_monitoring_threads")
     def stop_monitoring_threads(self):
@@ -329,11 +345,8 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             logger.info("Waiting for WorkerManger.pn_ws_thread to drain")
             self.pn_ws_thread.join()
 
-    @beeline.traced("WorkerManager.stop_worker_threads")
-    def stop_worker_threads(self):
-        logger.warning("Setting halt signal for telemetry worker threads")
-        self._thread_halt.set()
-
+    @beeline.traced("WorkerManager.stop_mqtt_worker_thread")
+    def stop_mqtt_worker_thread(self):
         logger.info(
             "Waiting for WorkerMangager.mqtt_client network connection to close"
         )
@@ -348,14 +361,20 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             pass
         self.mqtt_worker_thread.join()
 
+    @beeline.traced("WorkerManager.stop_worker_threads")
+    def stop_worker_threads(self):
+        logger.warning("Setting halt signal for telemetry worker threads")
+        self._thread_halt.set()
+        self.plugin._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_WORKER_STOP)
+
+        self.stop_mqtt_worker_thread()
+
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
+        self.remote_control_queue.put_nowait({"event_type": "halt"})
         self.remote_control_worker_thread.join()
-        self.remote_control_loop.close()
 
         logger.info("Waiting for WorkerManager.telemetry_worker_thread to drain")
         self.telemetry_worker_thread.join()
-        self.loop.close()
-
         logger.info("Finished halting WorkerManager threads")
 
     @beeline.traced("WorkerManager._register_plugin_event_handlers")
@@ -394,11 +413,9 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     def apply_device_registration(self):
         logger.info("Resetting WorkerManager device registration state")
         self.reset_device_settings_state()
-
-        logger.info("Halting worker threads to apply new device registration")
-        self.stop_worker_threads()
-        self.init_worker_threads()
-        self.start_worker_threads()
+        self.stop_mqtt_worker_thread()
+        self.init_mqtt_worker_thread()
+        self.mqtt_worker_thread.start()
 
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
@@ -451,25 +468,17 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.loop = loop
-
-        try:
-            return self.loop.run_until_complete(
-                asyncio.ensure_future(self._telemetry_queue_send_loop_forever())
-            )
-        except PluginSettingsRequired:
-            pass
+        return loop.run_until_complete(
+            asyncio.ensure_future(self._telemetry_queue_send_loop_forever())
+        )
 
     def _remote_control_worker(self):
         self.remote_control_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.remote_control_loop)
 
-        try:
-            self.remote_control_loop.run_until_complete(
-                asyncio.ensure_future(self._remote_control_receive_loop_forever())
-            )
-        except PluginSettingsRequired:
-            pass
+        return self.remote_control_loop.run_until_complete(
+            asyncio.ensure_future(self._remote_control_receive_loop_forever())
+        )
 
     @beeline.traced("WorkerManager._publish_bounding_box_telemetry")
     async def _publish_bounding_box_telemetry(self, event):
@@ -503,7 +512,10 @@ class WorkerManager(PluginSettingsMemoizeMixin):
     async def _remote_control_receive_loop_forever(self):
         logger.info("Started _remote_control_receive_loop_forever")
         while not self._thread_halt.is_set():
-            await self._remote_control_receive_loop()
+            try:
+                await self._remote_control_receive_loop()
+            except PluginSettingsRequired:
+                pass
         logger.info("Exiting soon _remote_control_receive_loop_forever")
 
     @beeline.traced("WorkerManager._remote_control_receive_loop")
@@ -581,6 +593,7 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             )
 
             event = await self.telemetry_queue.coro_get()
+
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
@@ -621,7 +634,10 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         """
         logger.info("Started _telemetry_queue_send_loop_forever")
         while not self._thread_halt.is_set():
-            await self._telemetry_queue_send_loop()
+            try:
+                await self._telemetry_queue_send_loop()
+            except PluginSettingsRequired as e:
+                logger.error(e)
         logging.info("Exiting soon _telemetry_queue_send_loop_forever")
 
     @beeline.traced("WorkerManager.stop_monitoring")
