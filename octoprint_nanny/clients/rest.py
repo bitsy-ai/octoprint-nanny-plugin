@@ -25,7 +25,7 @@ from print_nanny_client.models.octo_print_device_key_request import (
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
-CLIENT_EXCEPTIONS = (
+API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
@@ -37,8 +37,7 @@ class RestAPIClient:
     webapp rest API calls and retry behavior
     """
 
-    def __init__(self, auth_token, api_url):
-
+    def __init__(self, auth_token: str, api_url: str):
         self.api_url = api_url
         self.auth_token = auth_token
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")

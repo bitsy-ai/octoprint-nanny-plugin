@@ -26,11 +26,11 @@ import numpy as np
 import multiprocessing_logging
 
 from octoprint.events import Events, eventManager
+from octoprint_nanny.exceptions import PluginSettingsRequired
 
 import print_nanny_client
 
-from .errors import SnapshotHTTPException, WebcamSettingsHTTPException
-from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import beeline
@@ -117,6 +117,12 @@ class OctoPrintNannyPlugin(
         self._worker_manager = WorkerManager(plugin=self)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
+    @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
+    @beeline.traced_thread
+    def get_setting(self, key):
+        return self._setting.get([key])
+
+    @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
@@ -126,8 +132,8 @@ class OctoPrintNannyPlugin(
             logger.info(f"Authenticated as user id={user.id} url={user.url}")
             self.rest_client = rest_client
             return user
-        except CLIENT_EXCEPTIONS as e:
-            logger.error(f"_test_api_auth API call failed")
+        except API_CLIENT_EXCEPTIONS as e:
+            logger.error(f"_test_api_auth API call failed {e}")
             self._settings.set(["auth_valid"], False)
 
     @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
@@ -166,7 +172,7 @@ class OctoPrintNannyPlugin(
         }
 
     @beeline.traced("OctoPrintNannyPlugin._get_device_info")
-    def _get_device_info(self):
+    def get_device_info(self):
         cpuinfo = self._cpuinfo()
 
         # @todo warn if neon acceleration is not supported
@@ -283,8 +289,8 @@ class OctoPrintNannyPlugin(
             Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_START,
             payload={"msg": "Requesting new identity from provision service"},
         )
-        span = self._honeycomb_tracer.start_span(context={"name": "_get_device_info"})
-        device_info = self._get_device_info()
+        span = self._honeycomb_tracer.start_span(context={"name": "get_device_info"})
+        device_info = self.get_device_info()
         self._honeycomb_tracer.add_context(dict(device_info=device_info))
         self._honeycomb_tracer.finish_span(span)
 
@@ -304,7 +310,7 @@ class OctoPrintNannyPlugin(
                 },
             )
 
-        except CLIENT_EXCEPTIONS as e:
+        except API_CLIENT_EXCEPTIONS as e:
             logger.error(e)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
@@ -340,7 +346,7 @@ class OctoPrintNannyPlugin(
                     "msg": "Success! Printer profiles synced to https://print-nanny.com/dashboard/printer-profiles"
                 },
             )
-        except CLIENT_EXCEPTIONS as e:
+        except API_CLIENT_EXCEPTIONS as e:
             logger.error(e)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
@@ -484,7 +490,9 @@ class OctoPrintNannyPlugin(
         """
         Called after plugin initialization
         """
-        self._honeycomb_tracer.add_global_context(self._worker_manager._get_metadata())
+        self._honeycomb_tracer.add_global_context(
+            self._worker_manager.get_device_metadata()
+        )
 
         self._log_path = self._settings.get_plugin_logfile_path()
 
