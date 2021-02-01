@@ -3,3 +3,5 @@ black
 pytest-mock
 pytest-asyncio
 bump2version
+pytest-automock
+pytest-cov

@@ -334,7 +334,10 @@ $(function() {
         OctoPrint.settings.savePluginSettings('octoprint_nanny', {
             'ws_url': self.settingsViewModel.settings.plugins.octoprint_nanny.ws_url(),
             'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
-            'monitoring_frames_per_minute': self.settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute()
+            'monitoring_frames_per_minute': self.settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute(),
+            'mqtt_bridge_hostname': self.settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_hostname(),
+            'mqtt_bridge_port': self.settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_port(),
+            'mqtt_bridge_certificate_url': self.settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_certificate_url()
             })
             .done((res) =>{
                 console.log(res)

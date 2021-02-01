@@ -18,13 +18,15 @@ import uuid
 import octoprint.filemanager
 from octoprint.events import Events
 from octoprint_nanny.clients.websocket import WebSocketWorker
-from octoprint_nanny.clients.rest import RestAPIClient, CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.predictor import (
     PredictWorker,
     BOUNDING_BOX_PREDICT_EVENT,
     ANNOTATED_IMAGE_EVENT,
 )
+from octoprint_nanny.exceptions import PluginSettingsRequired
+
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import print_nanny_client
 import beeline
@@ -34,7 +36,182 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 Events.PRINT_PROGRESS = "PrintProgress"
 
 
-class WorkerManager:
+class PluginSettingsMemoizeMixin:
+    """
+    Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
+    """
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+        # stateful clients and computed settings that require re-initialization when settings change
+        self._calibration = None
+        self._mqtt_client = None
+        self._telemetry_events = None
+        self._device_info = None
+        self._rest_client = None
+
+        self.environment = {}
+
+    @beeline.traced("PluginSettingsMemoize.reset_monitoring_settings")
+    def reset_monitoring_settings(self):
+        self._calibration = None
+        self._monitoring_frames_per_minute = None
+
+    @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
+    @beeline.traced_thread
+    def reset_device_settings_state(self):
+        self._mqtt_client = None
+        self._device_info = None
+
+    @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
+    @beeline.traced_thread
+    def reset_rest_client_state(self):
+        self._rest_client = None
+
+    @beeline.traced(name="PluginSettingsMemoize.get_device_metadata")
+    @beeline.traced_thread
+    def get_device_metadata(self):
+        metadata = dict(
+            created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
+            environment=self.environment,
+        )
+        metadata.update(self.device_info)
+        return metadata
+
+    @beeline.traced(name="PluginSettingsMemoize.get_print_job_metadata")
+    @beeline.traced_thread
+    def get_print_job_metadata(self):
+        return dict(
+            printer_data=self.plugin._printer.get_current_data(),
+            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
+            temperatures=self.plugin._printer.get_current_temperatures(),
+            printer_profile_id=self.shared.printer_profile_id,
+            print_job_id=self.shared.print_job_id,
+        )
+
+    @beeline.traced(name="PluginSettingsMemoize.on_environment_detected")
+    @beeline.traced_thread
+    def on_environment_detected(self, environment):
+        self.environment = environment
+
+    @property
+    def device_cloudiot_name(self):
+        return self.plugin.get_setting("device_cloudiot_name")
+
+    @property
+    def device_id(self):
+        return self.plugin.get_setting("device_id")
+
+    @property
+    def device_info(self):
+        if self._device_info is None:
+            self._device_info = self.plugin.get_device_info()
+        return self._device_info
+
+    @property
+    def device_serial(self):
+        return self.plugin.get_setting("device_serial")
+
+    @property
+    def device_cloudiot_id(self):
+        return self.plugin.get_setting("device_cloudiot_id")
+
+    @property
+    def device_private_key(self):
+        return self.plugin.get_setting("device_private_key")
+
+    @property
+    def device_public_key(self):
+        return self.plugin.get_setting("device_public_key")
+
+    @property
+    def gcp_root_ca(self):
+        return self.plugin.get_setting("gcp_root_ca")
+
+    @property
+    def api_url(self):
+        return self.plugin.get_setting("api_url")
+
+    @property
+    def auth_token(self):
+        return self.plugin.get_setting("auth_token")
+
+    @property
+    def ws_url(self):
+        return self.plugin.get_setting("ws_url")
+
+    @property
+    def snapshot_url(self):
+        return self.plugin.get_setting("snapshot_url")
+
+    @property
+    def user_id(self):
+        return self.plugin.get_setting("user_id")
+
+    @property
+    def calibration(self):
+        if self._calibration is None:
+            self._calibration = PredictWorker.calc_calibration(
+                self.plugin.get_setting("calibrate_x0"),
+                self.plugin.get_setting("calibrate_y0"),
+                self.plugin.get_setting("calibrate_x1"),
+                self.plugin.get_setting("calibrate_y1"),
+            )
+        return self._calibration
+
+    @property
+    def monitoring_frames_per_minute(self):
+        return self.plugin.get_setting("monitoring_frames_per_minute")
+
+    @property
+    def rest_client(self):
+        if self.auth_token is None:
+            raise PluginSettingsRequired(f"auth_token is not set")
+        if self._rest_client is None:
+            self._rest_client = RestAPIClient(
+                auth_token=self.auth_token, api_url=self.api_url
+            )
+            logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
+        return self._rest_client
+
+    def test_mqtt_settings(self):
+        if self.device_cloudiot_id is None or self.device_private_key is None:
+            raise PluginSettingsRequired(
+                f"Received None for device_cloudiot_id={self.device_cloudiot_id} or private_key_file={self.device_private_key}"
+            )
+        return True
+
+    @property
+    def mqtt_client(self):
+        self.test_mqtt_settings()
+        if self._mqtt_client is None:
+            self._mqtt_client = MQTTClient(
+                device_id=self.device_id,
+                device_cloudiot_id=self.device_cloudiot_id,
+                private_key_file=self.device_private_key,
+                ca_certs=self.gcp_root_ca,
+                remote_control_queue=self.remote_control_queue,
+                trace_context=self.get_device_metadata(),
+            )
+        return self._mqtt_client
+
+    @property
+    def telemetry_events(self):
+        if self.auth_token is None:
+            raise PluginSettingsRequired(f"auth_token is not set")
+        if self._telemetry_events is None:
+            loop = asyncio.get_event_loop()
+            self.telemetry_events = asyncio.run_coroutine_threadsafe(
+                self.rest_client.get_telemetry_events(), loop
+            ).result()
+        return self._telemetry_events
+
+    def event_in_tracked_telemetry(self, event_type):
+        return event_type in self.telemetry_events
+
+
+class WorkerManager(PluginSettingsMemoizeMixin):
     """
     Manages PredictWorker, WebsocketWorker, RestWorker processes
     """
@@ -54,11 +231,15 @@ class WorkerManager:
     ]
 
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE]
+    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_predict_done"]
+
+    EVENT_PREFIX = "plugin_octoprint_nanny_"
 
     def __init__(self, plugin):
 
+        super().__init__(plugin)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
+
         self.plugin = plugin
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
@@ -68,7 +249,6 @@ class WorkerManager:
         self.shared.print_job_id = None
         self.shared.calibration = None
 
-        self.mqtt_client = None
         self.monitoring_active = False
 
         # outbound telemetry to GCP MQTT bridge
@@ -91,27 +271,12 @@ class WorkerManager:
             Events.SHUTDOWN: self.shutdown,
         }
 
-        self._remote_control_event_handlers = {
-            "StartMonitoring": self.start_monitoring,
-            "StopMonitoring": self.stop_monitoring,
-            "Snapshot": self.on_snapshot,
-        }
-
-        self._environment = {}
-
-        self.telemetry_events = None
-        self._auth_token = None
-        self._calibration = None
-        self._device_cloudiot_name = None
-        self._device_id = None
-        self._device_info = None
-        self._device_serial = None
-        self._monitoring_frames_per_minute = None
-        self._snapshot_url = None
-        self._user_id = None
-        self._ws_url = None
+        self._remote_control_event_handlers = {}
         self._monitoring_halt = None
-        self.init_worker_threads()
+
+        self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
+        self.event_loop_thread.daemon = True
+        self.event_loop_thread.start()
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
@@ -126,7 +291,7 @@ class WorkerManager:
             self.monitoring_frames_per_minute,
             self._monitoring_halt,
             self.plugin._event_bus,
-            trace_context=self._get_metadata(),
+            trace_context=self.get_device_metadata(),
         )
 
         self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
@@ -137,12 +302,19 @@ class WorkerManager:
             self.auth_token,
             self.pn_ws_queue,
             self.shared.print_job_id,
-            self.device_serial,
+            self.device_id,
             self._monitoring_halt,
-            trace_context=self._get_metadata(),
+            trace_context=self.get_device_metadata(),
         )
         self.pn_ws_thread = threading.Thread(target=self.websocket_worker.run)
         self.pn_ws_thread.daemon = True
+
+    def _event_loop_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
+        self.loop = loop
+        return loop.run_forever()
 
     @beeline.traced("WorkerManager.init_worker_threads")
     def init_worker_threads(self):
@@ -161,8 +333,6 @@ class WorkerManager:
         )
         self.remote_control_worker_thread.daemon = True
 
-        self.loop = None
-
     @beeline.traced("WorkerManager.start_monitoring_threads")
     def start_monitoring_threads(self):
         self.predict_worker_thread.start()
@@ -173,9 +343,6 @@ class WorkerManager:
         self.mqtt_worker_thread.start()
         self.telemetry_worker_thread.start()
         self.remote_control_worker_thread.start()
-        while self.loop is None:
-            logger.warning("Waiting for event loop to be set and exposed")
-            sleep(1)
 
     @beeline.traced("WorkerManager.stop_monitoring_threads")
     def stop_monitoring_threads(self):
@@ -192,106 +359,28 @@ class WorkerManager:
     def stop_worker_threads(self):
         logger.warning("Setting halt signal for telemetry worker threads")
         self._thread_halt.set()
-
+        self.plugin._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_WORKER_STOP)
         logger.info(
             "Waiting for WorkerMangager.mqtt_client network connection to close"
         )
 
-        if self.mqtt_client is not None:
+        try:
             while self.mqtt_client.client.is_connected():
                 self.mqtt_client.client.disconnect()
             logger.info("Waiting for WorkerManager.mqtt_worker_thread to drain")
             self.mqtt_client.client.disconnect()
             self.mqtt_client.client.loop_stop()
+        except PluginSettingsRequired:
+            pass
         self.mqtt_worker_thread.join()
 
         logger.info("Waiting for WorkerManager.remote_control_worker_thread to drain")
-        self.remote_control_worker_thread.join()
-        self.remote_control_loop.close()
+        self.remote_control_queue.put_nowait({"event_type": "halt"})
+        self.remote_control_worker_thread.join(timeout=10)
 
         logger.info("Waiting for WorkerManager.telemetry_worker_thread to drain")
-        self.telemetry_worker_thread.join()
-        self.loop.close()
-
+        self.telemetry_worker_thread.join(timeout=10)
         logger.info("Finished halting WorkerManager threads")
-
-    @property
-    def device_info(self):
-        if self._device_info is None:
-            self._device_info = self.plugin._get_device_info()
-        return self._device_info
-
-    @property
-    def api_url(self):
-        return self.plugin._settings.get(["api_url"])
-
-    @property
-    def auth_token(self):
-        if self._auth_token is None:
-            self._auth_token = self.plugin._settings.get(["auth_token"])
-        return self._auth_token
-
-    @property
-    def ws_url(self):
-        if self._ws_url is None:
-            self._ws_url = self.plugin._settings.get(["ws_url"])
-        return self._ws_url
-
-    @property
-    def snapshot_url(self):
-        if self._snapshot_url is None:
-            self._snapshot_url = self.plugin._settings.get(["snapshot_url"])
-        return self._snapshot_url
-
-    @property
-    def device_cloudiot_name(self):
-        if self._device_cloudiot_name is None:
-            self._device_cloudiot_name = self.plugin._settings.get(
-                ["device_cloudiot_name"]
-            )
-        return self._device_cloudiot_name
-
-    @property
-    def device_id(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_id"])
-        return self._device_id
-
-    @property
-    def device_serial(self):
-        if self._device_id is None:
-            self._device_id = self.plugin._settings.get(["device_serial"])
-        return self._device_id
-
-    @property
-    def user_id(self):
-        if self._user_id is None:
-            self._user_id = self.plugin._settings.get(["user_id"])
-        return self._user_id
-
-    @property
-    def calibration(self):
-        if self._calibration is None:
-            self._calibration = PredictWorker.calc_calibration(
-                self.plugin._settings.get(["calibrate_x0"]),
-                self.plugin._settings.get(["calibrate_y0"]),
-                self.plugin._settings.get(["calibrate_x1"]),
-                self.plugin._settings.get(["calibrate_y1"]),
-            )
-        return self._calibration
-
-    @property
-    def monitoring_frames_per_minute(self):
-        if self._monitoring_frames_per_minute is None:
-            self._monitoring_frames_per_minute = self.plugin._settings.get(
-                ["monitoring_frames_per_minute"]
-            )
-        return self._monitoring_frames_per_minute
-
-    @property
-    def rest_client(self):
-        logger.info(f"RestAPIClient initialized with api_url={self.api_url}")
-        return RestAPIClient(auth_token=self.auth_token, api_url=self.api_url)
 
     @beeline.traced("WorkerManager._register_plugin_event_handlers")
     def _register_plugin_event_handlers(self):
@@ -300,17 +389,23 @@ class WorkerManager:
         """
         self._local_event_handlers.update(
             {
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self._on_monitoring_start,
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self._on_monitoring_stop,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
+            }
+        )
+        self._remote_control_event_handlers.update(
+            {
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
+                Events.PLUGIN_OCTOPRINT_NANNY_SNAPSHOT: self.on_snapshot,
             }
         )
 
-    def reset_backoff(self):
-        self.BACKOFF = 2
-
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(self._get_metadata())
+        self._honeycomb_tracer.add_global_context(self.get_device_metadata())
+        self.init_worker_threads()
+
         # register plugin event handlers
         self._register_plugin_event_handlers()
         self.start_worker_threads()
@@ -321,30 +416,20 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.apply_device_registration")
     def apply_device_registration(self):
-        self._device_cloudiot_name = None
-        self._device_id = None
-        logger.info("Halting worker threads to apply new device registration")
+        logger.info("Resetting WorkerManager device registration state")
         self.stop_worker_threads()
+        self.reset_device_settings_state()
         self.init_worker_threads()
         self.start_worker_threads()
 
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
-        self._user_id = None
-        self._auth_token = None
-        logger.info("Halting worker threads to apply new auth settings")
-        self.stop_worker_threads()
-        self.init_worker_threads()
-        self.start_worker_threads()
-
-    @beeline.traced("WorkerManager._reset_monitoring_settings")
-    def _reset_monitoring_settings(self):
-        self._calibration = None
-        self._monitoring_frames_per_minute = None
+        logger.info("Resetting WorkerManager user auth state")
+        self.reset_rest_client_state()
 
     @beeline.traced("WorkerManager.apply_monitoring_settings")
     def apply_monitoring_settings(self):
-        self._reset_monitoring_settings()
+        self.reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
@@ -355,45 +440,15 @@ class WorkerManager:
             )
             self.start_monitoring()
 
-    @beeline.traced("WorkerManager._on_monitoring_start")
-    async def _on_monitoring_start(self, event_type, event_data):
-        await self.rest_client.update_octoprint_device(
-            self.device_id, monitoring_active=True
-        )
-
-    @beeline.traced("WorkerManager._on_monitoring_stop")
-    async def _on_monitoring_stop(self, event_type, event_data):
-        await self.rest_client.update_octoprint_device(
-            self.device_id, monitoring_active=False
-        )
-
+    @beeline.traced("WorkerManager._mqtt_worker")
     def _mqtt_worker(self):
-        private_key = self.plugin._settings.get(["device_private_key"])
-        device_id = self.plugin._settings.get(["device_cloudiot_name"])
-        gcp_root_ca = self.plugin._settings.get(["gcp_root_ca"])
-        while not self._thread_halt.is_set():
-            if private_key is None or device_id is None or gcp_root_ca is None:
-                logger.warning(
-                    f"Waiting {self.BACKOFF} seconds to initialize mqtt client, missing device registration private_key={private_key} device_id={device_id} gcp_root_ca={gcp_root_ca}"
-                )
-                sleep(self.BACKOFF)
-                if self.BACKOFF < self.MAX_BACKOFF:
-                    self.BACKOFF = self.BACKOFF ** 2
-                continue
-            break
-        self.mqtt_client = MQTTClient(
-            device_id=device_id,
-            private_key_file=private_key,
-            ca_certs=gcp_root_ca,
-            remote_control_queue=self.remote_control_queue,
-            trace_context=self._get_metadata(),
-        )
-        logger.info(f"Initialized mqtt client with id {self.mqtt_client.client_id}")
-        ###
-        # MQTT bridge available
-        ###
-        return self.mqtt_client.run(self._thread_halt)
+        try:
+            return self.mqtt_client.run(self._thread_halt)
+        except PluginSettingsRequired:
+            pass
+        logger.warning("WorkerManager._mqtt_worker exiting")
 
+    @beeline.traced("WorkerManager._telemetry_worker")
     def _telemetry_worker(self):
         """
         Telemetry worker's event loop is exposed as WorkerManager.loop
@@ -401,17 +456,22 @@ class WorkerManager:
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.loop = loop
+        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
 
-        return self.loop.run_until_complete(
-            asyncio.ensure_future(self._telemetry_queue_send_loop())
+        return loop.run_until_complete(
+            asyncio.ensure_future(self._telemetry_queue_send_loop_forever())
         )
 
+    @beeline.traced("WorkerManager._remote_control_worker")
     def _remote_control_worker(self):
         self.remote_control_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.remote_control_loop)
+        self.remote_control_loop.set_default_executor(
+            concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        )
+
         return self.remote_control_loop.run_until_complete(
-            asyncio.ensure_future(self._remote_control_receive_loop())
+            asyncio.ensure_future(self._remote_control_receive_loop_forever())
         )
 
     @beeline.traced("WorkerManager._publish_bounding_box_telemetry")
@@ -437,79 +497,77 @@ class WorkerManager:
                 device_cloudiot_name=self.device_cloudiot_name,
             )
         )
-        event.update(self._get_metadata())
+        event.update(self.get_device_metadata())
 
         if event_type in self.PRINT_JOB_EVENTS:
-            event.update(self._get_print_job_metadata())
+            event.update(self.get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
-    async def _remote_control_receive_loop(self):
-        logger.info("Started _remote_control_receive_loop")
+    async def _remote_control_receive_loop_forever(self):
+        logger.info("Started _remote_control_receive_loop_forever")
         while not self._thread_halt.is_set():
+            try:
+                await self._remote_control_receive_loop()
+            except PluginSettingsRequired:
+                pass
+        logger.info("Exiting soon _remote_control_receive_loop_forever")
 
-            if self.auth_token is None:
-                logger.warning(
-                    f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
+    @beeline.traced("WorkerManager._remote_control_receive_loop")
+    async def _remote_control_receive_loop(self):
+
+        trace = self._honeycomb_tracer.start_trace()
+        span = self._honeycomb_tracer.start_span(
+            {"name": "WorkerManager.remote_control_queue.coro_get"}
+        )
+        event = await self.remote_control_queue.coro_get()
+        self._honeycomb_tracer.add_context(dict(event=event))
+        self._honeycomb_tracer.finish_span(span)
+
+        logging.info(f"Received event in _remote_control_receive_loop {event}")
+
+        event_type = event.get("octoprint_event_type")
+        if event_type is None:
+            logger.warning("Ignoring received message where octoprint_event_type=None")
+            return
+
+        command_id = event.get("remote_control_command_id")
+
+        await self._remote_control_snapshot(command_id)
+
+        metadata = self.get_device_metadata()
+        await self.rest_client.update_remote_control_command(
+            command_id, received=True, metadata=metadata
+        )
+
+        handler_fn = self._remote_control_event_handlers.get(event_type)
+
+        logger.info(
+            f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for octoprint_event_type={event_type}"
+        )
+        if handler_fn:
+            try:
+                if inspect.isawaitable(handler_fn):
+                    await handler_fn(event=event, event_type=event_type)
+                else:
+                    handler_fn(event=event, event_type=event_type)
+
+                metadata = self.get_device_metadata()
+                # set success state
+                await self.rest_client.update_remote_control_command(
+                    command_id,
+                    success=True,
+                    metadata=metadata,
                 )
-                await asyncio.sleep(self.BACKOFF)
-                if self.BACKOFF < self.MAX_BACKOFF:
-                    self.BACKOFF = self.BACKOFF ** 2
-                continue
+            except Exception as e:
+                logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
+                metadata = self.get_device_metadata()
+                await self.rest_client.update_remote_control_command(
+                    command_id,
+                    success=False,
+                    metadata=metadata,
+                )
 
-            trace = self._honeycomb_tracer.start_trace()
-            span = self._honeycomb_tracer.start_span(
-                {"name": "WorkerManager.remote_control_queue.coro_get"}
-            )
-            event = await self.remote_control_queue.coro_get()
-            self._honeycomb_tracer.add_context(dict(event=event))
-            self._honeycomb_tracer.finish_span(span)
-
-            logging.info(f"Received event in _remote_control_receive_loop {event}")
-
-            command = event.get("command")
-            if command is None:
-                logger.warning("Ignoring received message where command=None")
-                continue
-
-            command_id = event.get("remote_control_command_id")
-
-            await self._remote_control_snapshot(command_id)
-
-            metadata = self._get_metadata()
-            await self.rest_client.update_remote_control_command(
-                command_id, received=True, metadata=metadata
-            )
-
-            handler_fn = self._remote_control_event_handlers.get(command)
-
-            logger.info(
-                f"Got handler_fn={handler_fn} from WorkerManager._remote_control_event_handlers for command={command}"
-            )
-
-            if handler_fn:
-                try:
-                    if inspect.isawaitable(handler_fn):
-                        await handler_fn(event=event, event_type=command)
-                    else:
-                        handler_fn(event=event, event_type=command)
-
-                    metadata = self._get_metadata()
-                    # set success state
-                    await self.rest_client.update_remote_control_command(
-                        command_id,
-                        success=True,
-                        metadata=metadata,
-                    )
-                except Exception as e:
-                    logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    metadata = self._get_metadata()
-                    await self.rest_client.update_remote_control_command(
-                        command_id,
-                        success=False,
-                        metadata=metadata,
-                    )
-
-            self._honeycomb_tracer.finish_trace(trace)
+        self._honeycomb_tracer.finish_trace(trace)
 
     @beeline.traced("WorkerManager._remote_control_snapshot")
     async def _remote_control_snapshot(self, command_id):
@@ -521,55 +579,15 @@ class WorkerManager:
             image=snapshot_io, command=command_id
         )
 
+    @beeline.traced("WorkerManager._telemetry_queue_send_loop")
     async def _telemetry_queue_send_loop(self):
-        """
-        Publishes telemetry events via HTTP
-        """
-        logger.info("Started _telemetry_queue_send_loop")
-
-        self.BACKOFF
-
-        while not self._thread_halt.is_set():
-
-            if self.auth_token is None:
-                logger.warning(
-                    f"auth_token not saved to plugin settings, waiting {self.BACKOFF} seconds"
-                )
-                await asyncio.sleep(self.BACKOFF)
-                if self.BACKOFF < self.MAX_BACKOFF:
-                    self.BACKOFF = self.BACKOFF ** 2
-                continue
-
-            if self.telemetry_events is None:
-                try:
-                    self.telemetry_events = (
-                        await self.rest_client.get_telemetry_events()
-                    )
-                except CLIENT_EXCEPTIONS as e:
-                    await asyncio.sleep(self.BACKOFF)
-                    if self.BACKOFF < self.MAX_BACKOFF:
-                        self.BACKOFF = self.BACKOFF ** 2
-
-            ###
-            # Rest API available
-            ###
-            if self.mqtt_client is None:
-                logger.warning(
-                    f"Waiting {self.BACKOFF} seconds for mqtt client to be available"
-                )
-                await asyncio.sleep(self.BACKOFF)
-                if self.BACKOFF < self.MAX_BACKOFF:
-                    self.BACKOFF = self.BACKOFF ** 2
-                continue
-            ###
-            # mqtt client available
-            ##
-            trace = self._honeycomb_tracer.start_trace()
+        try:
             span = self._honeycomb_tracer.start_span(
                 {"name": "WorkerManager.telemetry_queue.coro_get"}
             )
 
             event = await self.telemetry_queue.coro_get()
+
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
@@ -580,47 +598,41 @@ class WorkerManager:
                         event=event
                     )
                 )
-                continue
-            ##
-            # Publish non-octoprint telemetry events
-            ##
+                return
 
-            # publish to bounding-box telemetry topic
             if event_type == BOUNDING_BOX_PREDICT_EVENT:
                 await self._publish_bounding_box_telemetry(event)
-                continue
+                return
 
-            ##
-            # Handle OctoPrint telemetry events
-            ##
-
-            # ignore untracked events
-            if self.telemetry_events is None or event_type not in self.telemetry_events:
-                # supress warnings about PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE event; this is for octoprint front-end only
-                if event_type == Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE:
-                    pass
-                elif event_type not in self.MUTED_EVENTS:
-                    logger.warning(f"Discarding {event_type} with payload {event}")
-                continue
-            # publish to octoprint-events telemetry topic
-            else:
+            if self.event_in_tracked_telemetry(event_type):
                 await self._publish_octoprint_event_telemetry(event)
-
-            trace = self._honeycomb_tracer.start_trace()
+            else:
+                if event_type not in self.MUTED_EVENTS:
+                    logger.warning(f"Discarding {event_type} with payload {event}")
+                return
 
             # run local handler fn
-            handler_fn = self._local_event_handlers.get(event["event_type"])
-
+            handler_fn = self._local_event_handlers.get(event_type)
             if handler_fn:
-                try:
-                    if inspect.isawaitable(handler_fn):
-                        await handler_fn(**event)
-                    else:
-                        handler_fn(**event)
-                except CLIENT_EXCEPTIONS as e:
-                    logger.error(f"Error running {handler_fn } \n {e}", exc_info=True)
 
-            self._honeycomb_tracer.finish_trace(trace)
+                if inspect.isawaitable(handler_fn):
+                    await handler_fn(**event)
+                else:
+                    handler_fn(**event)
+        except API_CLIENT_EXCEPTIONS as e:
+            logger.error(f"REST client raised exception {e}", exc_info=True)
+
+    async def _telemetry_queue_send_loop_forever(self):
+        """
+        Publishes telemetry events via HTTP
+        """
+        logger.info("Started _telemetry_queue_send_loop_forever")
+        while not self._thread_halt.is_set():
+            try:
+                await self._telemetry_queue_send_loop()
+            except PluginSettingsRequired as e:
+                pass
+        logging.info("Exiting soon _telemetry_queue_send_loop_forever")
 
     @beeline.traced("WorkerManager.stop_monitoring")
     def stop_monitoring(self, event_type=None, **kwargs):
@@ -631,14 +643,27 @@ class WorkerManager:
             f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.monitoring_active = False
-        self.plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP,
-        )
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=False
+            ),
+            self.loop,
+        ).result()
+
         self.stop_monitoring_threads()
 
     @beeline.traced("WorkerManager.shutdown")
     def shutdown(self):
         self.stop_monitoring()
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=False
+            ),
+            self.loop,
+        ).result()
+
         self.stop_worker_threads()
         self._honeycomb_tracer.on_shutdown()
 
@@ -651,29 +676,16 @@ class WorkerManager:
             f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
         )
         self.monitoring_active = True
-        self.plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START,
-        )
+
+        asyncio.run_coroutine_threadsafe(
+            self.rest_client.update_octoprint_device(
+                self.device_id, monitoring_active=True
+            ),
+            self.loop,
+        ).result()
+
         self.init_monitoring_threads()
         self.start_monitoring_threads()
-
-    @beeline.traced("WorkerManager._get_print_job_metadata")
-    def _get_print_job_metadata(self):
-        return dict(
-            printer_data=self.plugin._printer.get_current_data(),
-            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
-            temperatures=self.plugin._printer.get_current_temperatures(),
-            printer_profile_id=self.shared.printer_profile_id,
-            print_job_id=self.shared.print_job_id,
-        )
-
-    def _get_metadata(self):
-        metadata = dict(
-            created_dt=datetime.now(pytz.timezone("America/Los_Angeles")),
-            environment=self._environment,
-        )
-        metadata.update(self.device_info)
-        return metadata
 
     @beeline.traced("WorkerManager._handle_print_start")
     async def _handle_print_start(self, event_type, event_data, **kwargs):
@@ -705,10 +717,10 @@ class WorkerManager:
 
             self.shared.print_job_id = print_job.id
 
-        except CLIENT_EXCEPTIONS as e:
+        except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"_handle_print_start API called failed {e}", exc_info=True)
             return
 
-        if self.plugin._settings.get(["auto_start"]):
+        if self.plugin.get_setting("auto_start"):
             logger.info("Print Nanny monitoring is set to auto-start")
             self.start_monitoring()

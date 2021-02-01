@@ -18,14 +18,14 @@ from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
 from print_nanny_client.models.print_job_request import PrintJobRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.octo_print_device_key_request import (
-    OctoPrintDeviceKeyRequest,
+from print_nanny_client.models.octo_print_device_request import (
+    OctoPrintDeviceRequest,
 )
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
-CLIENT_EXCEPTIONS = (
+API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
@@ -37,8 +37,7 @@ class RestAPIClient:
     webapp rest API calls and retry behavior
     """
 
-    def __init__(self, auth_token, api_url):
-
+    def __init__(self, auth_token: str, api_url: str):
         self.api_url = api_url
         self.auth_token = auth_token
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
@@ -61,21 +60,12 @@ class RestAPIClient:
     )
     async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = OctoPrintDeviceKeyRequest(**kwargs)
+            request = OctoPrintDeviceRequest(**kwargs)
             api_instance = RemoteControlApi(api_client=api_client)
             octoprint_device = await api_instance.octoprint_devices_update_or_create(
                 request
             )
             return octoprint_device
-
-    @property
-    def _api_config(self):
-        parsed_uri = urllib.parse.urlparse(self.api_url)
-        host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-        config = print_nanny_client.Configuration(host=host)
-
-        config.access_token = self.auth_token
-        return config
 
     @beeline.traced("RestAPIClient.update_octoprint_device")
     @backoff.on_exception(
@@ -86,12 +76,11 @@ class RestAPIClient:
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = print_nanny_client.models.octo_print_device_request.OctoPrintDeviceRequest(
-                **kwargs
-            )
+            request = print_nanny_client.PatchedOctoPrintDeviceRequest(**kwargs)
+
             api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_update_or_create(
-                device_id, request
+            octoprint_device = await api_instance.octoprint_devices_partial_update(
+                device_id, patched_octo_print_device_request=request
             )
             return octoprint_device
 
@@ -262,10 +251,20 @@ class RestAPIClient:
     async def update_or_create_printer_profile(
         self, printer_profile, octoprint_device_id
     ):
+        """
+        https://github.com/OctoPrint/OctoPrint/blob/f67c15a9a47794a68be9aed4f2d5a12a87e70179/src/octoprint/printer/profile.py#L46
+        """
 
         async with AsyncApiClient(self._api_config) as api_client:
             # printer profile
             api_instance = RemoteControlApi(api_client=api_client)
+
+            # cooerce duck-typed fields
+            if type(printer_profile["volume"]["custom_box"]) is bool:
+                volume_custom_box = {}
+            else:
+                volume_custom_box = printer_profile["volume"]["custom_box"]
+
             request = PrinterProfileRequest(
                 octoprint_device=octoprint_device_id,
                 octoprint_key=printer_profile["id"],
@@ -284,7 +283,7 @@ class RestAPIClient:
                 model=printer_profile["model"],
                 heated_bed=printer_profile["heatedBed"],
                 heated_chamber=printer_profile["heatedChamber"],
-                volume_custom_box=printer_profile["volume"]["custom_box"],
+                volume_custom_box=volume_custom_box,
                 volume_depth=printer_profile["volume"]["depth"],
                 volume_formfactor=printer_profile["volume"]["formFactor"],
                 volume_height=printer_profile["volume"]["height"],
