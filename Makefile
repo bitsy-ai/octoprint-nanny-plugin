@@ -55,19 +55,18 @@ release: dist
 	twine upload dist/*
 
 octoprint-dev:
-	# rm -rf ~/.octoprint && rsync ~/.octoprint-dev ~/.octoprint
 	cd ~/projects/OctoPrint && \
 	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" \
 	OCTOPRINT_NANNY_WS_URL="ws://localhost:8000/ws/" \
-	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="devices-us-central1-dev" \
+	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="octoprint-devices" \
 	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_dev" \
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="5e658dc16cff5ce3d576aa9bd5a356a5" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
 	octoprint serve
-	rsync ~/.octoprint ~/.octoprint-dev
 
 octoprint-prod:
 	rm -rf ~/.octoprint && rsync ~/.octoprint-prod ~/.octoprint
