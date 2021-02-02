@@ -233,31 +233,21 @@ class OctoPrintNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
-    @beeline.traced("OctoPrintNannyPlugin._download_keypair")
+    @beeline.traced("OctoPrintNannyPlugin._write_keypair")
     @beeline.traced_thread
-    async def _download_keypair(self, device):
+    async def _write_keypair(self, device):
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
         privkey_filename = os.path.join(
             self.get_plugin_data_folder(), "private_key.pem"
         )
 
-        async with aiohttp.ClientSession() as session:
-            logger.info(f"Downloading newly-provisioned public key {device.public_key}")
-            async with session.get(device.public_key) as res:
-                pubkey = await res.text()
-            logger.info(
-                f"Downloading newly-provisioned private key {device.private_key}"
-            )
-            async with session.get(device.private_key) as res:
-                privkey = await res.text()
-
         with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
-            f.write(pubkey)
+            f.write(device.public_key)
         with io.open(privkey_filename, "w+", encoding="utf-8") as f:
-            f.write(privkey)
+            f.write(device.private_key)
 
         logger.info(
-            f"Downloaded key pair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
+            f"Saved keypair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
 
         self._settings.set(["device_private_key"], privkey_filename)
@@ -323,7 +313,7 @@ class OctoPrintNannyPlugin(
             f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} device={device}"
         )
 
-        await self._download_keypair(device)
+        await self._write_keypair(device)
         await self._download_root_certificates()
 
         self._settings.set(["device_serial"], device.serial)
