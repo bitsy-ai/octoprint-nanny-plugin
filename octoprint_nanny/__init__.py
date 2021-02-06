@@ -4,20 +4,7 @@ from __future__ import absolute_import
 import logging
 import os
 import pathlib
-
-site_package_dir = pathlib.Path(__file__).parent.absolute()
-c_libs = os.path.join(site_package_dir, "lib/")
-##
-# Add lib/ to LD_LIBRARY_PATH
-##
-
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
-
 from .plugins import OctoPrintNannyPlugin
-
-
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
-
 
 __plugin_name__ = "OctoPrint Nanny"
 
