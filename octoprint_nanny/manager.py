@@ -476,7 +476,6 @@ class WorkerManager(PluginSettingsMemoizeMixin):
 
     @beeline.traced("WorkerManager._publish_bounding_box_telemetry")
     async def _publish_bounding_box_telemetry(self, event):
-        logger.debug(f"_publish_bounding_box_telemetry {event}")
         event.update(
             dict(
                 user_id=self.user_id,

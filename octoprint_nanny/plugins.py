@@ -26,6 +26,7 @@ import uuid
 import numpy as np
 
 from octoprint.events import Events, eventManager
+from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import print_nanny_client
 
@@ -304,7 +305,7 @@ class OctoPrintNannyPlugin(
             return e
 
         logger.info(
-            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} device={device}"
+            f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} id={device.id} cloudiot_num_id={device.cloudiot_device_num_id}"
         )
 
         await self._write_keypair(device)
@@ -452,6 +453,20 @@ class OctoPrintNannyPlugin(
             "worker_stop",
             "worker_start",
         ]
+
+    @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
+    def on_after_startup(self):
+        file_logging_handler = CleaningTimedRotatingFileHandler(
+            self._settings.get_plugin_logfile_path(),
+            when="D",
+            backupCount=7,
+        )
+        file_logging_handler.setFormatter(
+            logging.Formatter("%(asctime)s %(name)s %(message)s")
+        )
+
+        logger.addHandler(file_logging_handler)
+        logger.propagate = False
 
     def on_event(self, event_type, event_data):
         self._worker_manager.telemetry_queue.put_nowait(
