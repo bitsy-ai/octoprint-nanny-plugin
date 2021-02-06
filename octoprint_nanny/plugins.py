@@ -18,14 +18,12 @@ import time
 import requests
 
 import beeline
-import multiprocessing
 import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
 import uuid
 import numpy as np
-import multiprocessing_logging
 
 from octoprint.events import Events, eventManager
 
@@ -105,10 +103,6 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.ReloadNeedingPlugin,
 ):
     def __init__(self, *args, **kwargs):
-
-        # log multiplexing for multiprocessing.Process
-        multiprocessing_logging.install_mp_handler()
-
         # User interactive
         self._calibration = None
 

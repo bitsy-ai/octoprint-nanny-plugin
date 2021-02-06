@@ -122,7 +122,6 @@ plugin_requires = [
     "websockets",
     "backoff==1.10.0",
     "aioprocessing==1.1.0",
-    "multiprocessing-logging==0.3.1",
     "jwt",
     "paho-mqtt==1.5.1",
     "honeycomb-beeline",
