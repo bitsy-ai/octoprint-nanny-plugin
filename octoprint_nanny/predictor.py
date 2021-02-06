@@ -238,6 +238,8 @@ class ThreadLocalPredictor(threading.local):
 predictor = None
 
 
+@beeline.traced(name="PredictWorker.get_predict_bytes")
+@beeline.traced_thread
 def _get_predict_bytes(msg):
     global predictor
     image = predictor.load_image(msg["original_image"])
