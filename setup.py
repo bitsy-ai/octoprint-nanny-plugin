@@ -90,17 +90,17 @@ if sys.version_info.major == 2:
 tensorflow_wheel_map = {
     "armv7l": {
         # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
-        "32bit": "https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl#sha256=1b448604c3f04eea05fef02cb6fbd9377ae5875acb16d27fe029b5c51749dfde"
+        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl"
     },
     "aarch64": {
         # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl",
         # "64bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl",
-        "32bit": "https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl#sha256=1b448604c3f04eea05fef02cb6fbd9377ae5875acb16d27fe029b5c51749dfde",
-        "64bit": "https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl#sha256=848c7719cb43dda4b3df8899b34bc6f070bbc10676266a735b485336153ad219",
+        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
+        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl",
     },
     "x86_64": {
         # "64bit": "tensorflow==2.4.0"
-        "64bit": "https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl#sha256=a51f02c811c32dd8d9a003f9b6451734598e47f99d69ef35f9b6ced90517a016"
+        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl"
     },
 }
 
@@ -131,6 +131,7 @@ plugin_requires = [
     "jwt",
     "paho-mqtt==1.5.1",
     "honeycomb-beeline",
+    "aiofile==3.3.3",
 ]
 
 extra_requires = {
