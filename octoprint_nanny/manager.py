@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import sleep
 import aiohttp
+import aiofiles
 import aioprocessing
 import asyncio
 import base64
@@ -11,6 +12,7 @@ import logging
 import multiprocessing
 import platform
 import pytz
+import os
 import re
 import threading
 import uuid
@@ -271,12 +273,53 @@ class WorkerManager(PluginSettingsMemoizeMixin):
             Events.SHUTDOWN: self.shutdown,
         }
 
-        self._remote_control_event_handlers = {}
+        self._remote_control_event_handlers = {
+            MQTTClient.CONFIG_UPDATE_START: self.get_device_config
+        }
         self._monitoring_halt = None
 
         self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
         self.event_loop_thread.daemon = True
         self.event_loop_thread.start()
+
+    @beeline.traced("WorkerManager.get_device_config")
+    async def get_device_config(self, topic, message):
+        device_config = print_nanny_client.ExperimentDeviceConfig(**message)
+
+        labels = device_config.artifact.get("labels")
+        artifacts = device_config.artifact.get("artifacts")
+        version = device_config.artifact.get("version")
+        metadata = device_config.artifact.get("metadata")
+
+        async def _download(session, url, filename):
+            async with session.get(url) as res:
+                async with aiofiles.open(filename, "w+") as f:
+                    content = await res.text()
+                    return await f.write(content)
+
+        async def _data_file(content, filename):
+            async with aiofiles.open(filename, "w+") as f:
+                return await f.write(content)
+
+        async with aiohttp.ClientSession() as session:
+            await _download(
+                session,
+                labels,
+                os.path.join(self.plugin.get_plugin_data_folder(), "labels.txt"),
+            )
+            await _download(
+                session,
+                artifacts,
+                os.path.join(self.plugin.get_plugin_data_folder(), "model.tflite"),
+            )
+        await _data_file(
+            version,
+            os.path.join(self.plugin.get_plugin_data_folder(), "version.txt"),
+        )
+        await _data_file(
+            metadata,
+            os.path.join(self.plugin.get_plugin_data_folder(), "metadata.json"),
+        )
 
     @beeline.traced("WorkerManager.init_monitoring_threads")
     def init_monitoring_threads(self):
@@ -511,25 +554,15 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                 pass
         logger.info("Exiting soon _remote_control_receive_loop_forever")
 
-    @beeline.traced("WorkerManager._remote_control_receive_loop")
-    async def _remote_control_receive_loop(self):
+    @beeline.traced("WorkerManager._handle_remote_control_command")
+    async def _handle_remote_control_command(self, topic, message):
+        event_type = message.get("octoprint_event_type")
 
-        trace = self._honeycomb_tracer.start_trace()
-        span = self._honeycomb_tracer.start_span(
-            {"name": "WorkerManager.remote_control_queue.coro_get"}
-        )
-        event = await self.remote_control_queue.coro_get()
-        self._honeycomb_tracer.add_context(dict(event=event))
-        self._honeycomb_tracer.finish_span(span)
-
-        logging.info(f"Received event in _remote_control_receive_loop {event}")
-
-        event_type = event.get("octoprint_event_type")
         if event_type is None:
             logger.warning("Ignoring received message where octoprint_event_type=None")
             return
 
-        command_id = event.get("remote_control_command_id")
+        command_id = message.get("remote_control_command_id")
 
         await self._remote_control_snapshot(command_id)
 
@@ -546,9 +579,9 @@ class WorkerManager(PluginSettingsMemoizeMixin):
         if handler_fn:
             try:
                 if inspect.isawaitable(handler_fn):
-                    await handler_fn(event=event, event_type=event_type)
+                    await handler_fn(event=message, event_type=event_type)
                 else:
-                    handler_fn(event=event, event_type=event_type)
+                    handler_fn(event=message, event_type=event_type)
 
                 metadata = self.get_device_metadata()
                 # set success state
@@ -565,6 +598,33 @@ class WorkerManager(PluginSettingsMemoizeMixin):
                     success=False,
                     metadata=metadata,
                 )
+
+    @beeline.traced("WorkerManager._remote_control_receive_loop")
+    async def _remote_control_receive_loop(self):
+
+        trace = self._honeycomb_tracer.start_trace()
+        span = self._honeycomb_tracer.start_span(
+            {"name": "WorkerManager.remote_control_queue.coro_get"}
+        )
+        payload = await self.remote_control_queue.coro_get()
+        self._honeycomb_tracer.add_context(dict(event=payload))
+        self._honeycomb_tracer.finish_span(span)
+
+        topic = payload.get("topic")
+
+        if topic is None:
+            logger.warning("Ignoring received message where topic=None")
+
+        elif topic == self.mqtt_client.remote_control_command_topic:
+            await self._handle_remote_control_command(**payload)
+
+        elif topic == self.mqtt_client.mqtt_config_topic:
+            await self.get_device_config(**payload)
+
+        else:
+            logging.error(
+                f"No handler for topic={topic} in _remote_control_receive_loop"
+            )
 
         self._honeycomb_tracer.finish_trace(trace)
 

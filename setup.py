@@ -131,7 +131,7 @@ plugin_requires = [
     "jwt",
     "paho-mqtt==1.5.1",
     "honeycomb-beeline",
-    "aiofile==3.3.3",
+    "aiofiles>=0.6.0",
 ]
 
 extra_requires = {
