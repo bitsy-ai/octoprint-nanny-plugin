@@ -89,13 +89,19 @@ if sys.version_info.major == 2:
 # hardware layer : software layer : wheel
 tensorflow_wheel_map = {
     "armv7l": {
-        "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
+        # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
+        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl"
     },
     "aarch64": {
-        "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl",
-        "64bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl",
+        # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl",
+        # "64bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl",
+        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
+        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl",
     },
-    "x86_64": {"32bit": "tensorflow==2.4.0", "64bit": "tensorflow==2.4.0"},
+    "x86_64": {
+        # "64bit": "tensorflow==2.4.0"
+        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl"
+    },
 }
 
 hardware_arch = os.uname().machine
@@ -125,6 +131,7 @@ plugin_requires = [
     "jwt",
     "paho-mqtt==1.5.1",
     "honeycomb-beeline",
+    "aiofiles>=0.6.0",
 ]
 
 extra_requires = {

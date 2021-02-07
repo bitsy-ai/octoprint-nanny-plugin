@@ -142,8 +142,18 @@ class MQTTClient:
             logger.info(
                 f"Received remote control command on topic={message.topic} payload={parsed_message}"
             )
-            self.remote_control_queue.put_nowait(parsed_message)
+            self.remote_control_queue.put_nowait(
+                {"topic": self.remote_control_command_topic, "message": parsed_message}
+            )
             # callback to api to indicate command was received
+        elif message.topic == self.mqtt_config_topic:
+            parsed_message = json.loads(message.payload.decode("utf-8"))
+            logger.info(
+                f"Received config update on topic={message.topic} payload={parsed_message}"
+            )
+            self.remote_control_queue.put_nowait(
+                {"topic": self.mqtt_config_topic, "message": parsed_message}
+            )
         else:
             logger.info(
                 f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={message}"
@@ -192,7 +202,7 @@ class MQTTClient:
             logger.info("Device successfully connected to MQTT broker")
             self.client.subscribe(self.mqtt_config_topic, qos=1)
             logger.info(
-                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_config_topic}"
             )
             self.client.subscribe(self.mqtt_command_topic, qos=1)
             logger.info(
