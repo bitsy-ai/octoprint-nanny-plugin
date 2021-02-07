@@ -13,7 +13,7 @@ from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
-logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
 
 class PluginSettingsMemoizeMixin:
