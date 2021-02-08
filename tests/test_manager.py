@@ -69,7 +69,7 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker):
 
 
 @pytest.mark.asyncio
-async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
+async def test_mqtt_send_queue_bounding_box_predict(mocker):
     plugin = mocker.Mock()
     plugin.get_setting = get_default_setting
 
@@ -98,68 +98,84 @@ async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
     mock_fn.assert_called_once_with(event)
 
 
-# @pytest.mark.asyncio
-# async def test_remote_control_receive_loop_valid_octoprint_event(mocker):
-#     plugin = octoprint_nanny.plugins.OctoPrintNannyPlugin()
-#     plugin.get_setting = get_default_setting
+@pytest.mark.asyncio
+async def test_mqtt_receive_queue_valid_octoprint_event(mocker):
+    plugin = mocker.Mock()
+    plugin.get_setting = get_default_setting
 
-#     mocker.patch.object(WorkerManager, "test_mqtt_settings")
+    mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
+    mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.telemetry_events")
+    mocker.patch(
+        "octoprint_nanny.settings.PluginSettingsMemoize.event_in_tracked_telemetry",
+        return_value=True,
+    )
 
-#     mock_remote_control_snapshot = mocker.patch.object(
-#         WorkerManager, "_remote_control_snapshot", return_value=asyncio.Future()
-#     )
-#     mock_remote_control_snapshot.return_value.set_result("foo")
+    manager = WorkerManager(plugin)
 
-#     mock_rest_client = mocker.patch.object(WorkerManager, "rest_client")
-#     mock_rest_client.update_remote_control_command.return_value = asyncio.Future()
-#     mock_rest_client.update_remote_control_command.return_value.set_result("foo")
+    mock_remote_control_snapshot = mocker.patch(
+        "octoprint_nanny.workers.mqtt.MQTTSubscriberWorker._remote_control_snapshot",
+        return_value=asyncio.Future(),
+    )
+    mock_remote_control_snapshot.return_value.set_result("foo")
 
-#     mock_mqtt_client = mocker.patch.object(WorkerManager, "mqtt_client")
+    mock_rest_client = mocker.patch(
+        "octoprint_nanny.settings.PluginSettingsMemoize.rest_client"
+    )
+    mock_rest_client.create_snapshot.return_value = asyncio.Future()
+    mock_rest_client.create_snapshot.return_value.set_result("foo")
+    mock_rest_client.update_remote_control_command.return_value = asyncio.Future()
+    mock_rest_client.update_remote_control_command.return_value.set_result("foo")
 
-#     topic = "remote-control-topic"
-#     type(mock_mqtt_client).remote_control_command_topic = PropertyMock(
-#         return_value=topic
-#     )
+    mock_mqtt_client = mocker.patch(
+        "octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client"
+    )
 
-#     mocker.patch.object(WorkerManager, "get_device_metadata", return_value={})
+    topic = "remote-control-topic"
+    type(mock_mqtt_client).remote_control_command_topic = PropertyMock(
+        return_value=topic
+    )
+    mocker.patch(
+        "octoprint_nanny.settings.PluginSettingsMemoize.get_device_metadata",
+        return_value={},
+    )
 
-#     mock_start_monitoring = mocker.patch.object(WorkerManager, "start_monitoring")
+    mock_start_monitoring = mocker.patch.object(manager.monitoring_manager, "start")
 
-#     manager = WorkerManager(plugin)
-#     manager._remote_control_event_handlers = {
-#         "octoprint_nanny_plugin_monitoring_start": manager.start_monitoring
-#     }
+    manager = WorkerManager(plugin)
+    manager.mqtt_manager.subscriber_worker.register_callbacks(
+        {"octoprint_nanny_plugin_monitoring_start": mock_start_monitoring}
+    )
 
-#     command = {
-#         "message": {
-#             "octoprint_event_type": "octoprint_nanny_plugin_monitoring_start",
-#             "command": "MonitoringStart",
-#             "remote_control_command_id": 1,
-#         },
-#         "topic": topic,
-#     }
-#     manager.remote_control_queue.put_nowait(command)
+    command = {
+        "message": {
+            "octoprint_event_type": "octoprint_nanny_plugin_monitoring_start",
+            "command": "MonitoringStart",
+            "remote_control_command_id": 1,
+        },
+        "topic": topic,
+    }
+    manager.mqtt_manager.mqtt_receive_queue.put_nowait(command)
 
-#     await manager._remote_control_receive_loop()
+    await manager.mqtt_manager.subscriber_worker._loop()
 
-#     mock_remote_control_snapshot.assert_called_once_with(
-#         command["message"]["remote_control_command_id"]
-#     )
+    mock_remote_control_snapshot.assert_called_once_with(
+        command["message"]["remote_control_command_id"]
+    )
 
-#     mock_rest_client.update_remote_control_command.assert_has_calls(
-#         [
-#             mocker.call(
-#                 command["message"]["remote_control_command_id"],
-#                 received=True,
-#                 metadata={},
-#             ),
-#             mocker.call(
-#                 command["message"]["remote_control_command_id"],
-#                 success=True,
-#                 metadata={},
-#             ),
-#         ]
-#     )
-#     mock_start_monitoring.assert_called_once_with(
-#         event=command["message"], event_type=command["message"]["octoprint_event_type"]
-#     )
+    mock_rest_client.update_remote_control_command.assert_has_calls(
+        [
+            mocker.call(
+                command["message"]["remote_control_command_id"],
+                received=True,
+                metadata={},
+            ),
+            mocker.call(
+                command["message"]["remote_control_command_id"],
+                success=True,
+                metadata={},
+            ),
+        ]
+    )
+    mock_start_monitoring.assert_called_once_with(
+        event=command["message"], event_type=command["message"]["octoprint_event_type"]
+    )

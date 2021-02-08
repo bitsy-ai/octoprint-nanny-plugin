@@ -108,24 +108,26 @@ class WorkerManager:
         """
         Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
         """
-        pass
-        # self._local_event_handlers.update(
-        #     {
-        #         Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
-        #         Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
-        #     }
-        # )
-        # self._remote_control_event_handlers.update(
-        #     {
-        #         Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.start_monitoring,
-        #         Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.stop_monitoring,
-        #     }
-        # )
+        self.mqtt_manager.publisher_worker.register_callbacks(
+            {
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
+            }
+        )
+
+        self.mqtt_manager.subscriber_worker.register_callbacks(
+            {
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
+            }
+        )
 
     @beeline.traced
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(self.get_device_metadata())
-        # self._register_plugin_event_handlers()
+        self._honeycomb_tracer.add_global_context(
+            self.plugin_settings.get_device_metadata()
+        )
+        self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
     @beeline.traced

@@ -32,24 +32,21 @@ class PluginSettingsMemoize:
 
         self.environment = {}
 
-    @beeline.traced
+    @beeline.traced("PluginSettingsMemoize.reset_monitoring_settings")
     def reset_monitoring_settings(self):
         self._calibration = None
         self._monitoring_frames_per_minute = None
 
-    @beeline.traced
-    @beeline.traced_thread
+    @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
 
-    @beeline.traced
-    @beeline.traced_thread
+    @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
     def reset_rest_client_state(self):
         self._rest_client = None
 
-    @beeline.traced
-    @beeline.traced_thread
+    @beeline.traced("PluginSettingsMemoize.get_device_metadata")
     def get_device_metadata(self):
         metadata = dict(
             created_dt=datetime.now(pytz.timezone("UTC")),
@@ -58,8 +55,7 @@ class PluginSettingsMemoize:
         metadata.update(self.device_info)
         return metadata
 
-    @beeline.traced
-    @beeline.traced_thread
+    @beeline.traced("PluginSettingsMemoize.get_print_job_metadata")
     def get_print_job_metadata(self):
         return dict(
             printer_data=self.plugin._printer.get_current_data(),
@@ -67,8 +63,7 @@ class PluginSettingsMemoize:
             temperatures=self.plugin._printer.get_current_temperatures(),
         )
 
-    @beeline.traced
-    @beeline.traced_thread
+    @beeline.traced("PluginSettingsMemoize.on_environment_detected")
     def on_environment_detected(self, environment):
         self.environment = environment
 
