@@ -29,9 +29,8 @@ class MonitoringManager:
         self.mqtt_send_queue = mqtt_send_queue
         self.plugin_settings = plugin_settings
         self.plugin_event_bus = plugin_event_bus
-        self.rest_client = plugin_settings.rest_client
 
-    @beeline.traced
+    @beeline.traced("MonitoringManager._drain")
     def _drain(self):
         self.halt.set()
 
@@ -39,6 +38,7 @@ class MonitoringManager:
             logger.info(f"Waiting for worker={worker} thread to drain")
             worker.join()
 
+    @beeline.traced("MonitoringManager._reset")
     def _reset(self):
         self.halt = threading.Event()
         self._predict_worker = PredictWorker(
@@ -63,7 +63,7 @@ class MonitoringManager:
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
 
-    @beeline.traced
+    @beeline.traced("MonitoringManager.start")
     async def start(self):
         self._reset()
 
@@ -72,13 +72,13 @@ class MonitoringManager:
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
-        await self.rest_client.update_octoprint_device(
+        await self.plugin_settings.rest_client.update_octoprint_device(
             self.plugin_settings.device_id, active=True
         )
 
-    @beeline.traced
+    @beeline.traced("MonitoringManager.stop")
     async def stop(self):
         self._drain()
-        await self.rest_client.update_octoprint_device(
+        await self.plugin_settings.rest_client.update_octoprint_device(
             self.plugin_settings.device_id, active=False
         )

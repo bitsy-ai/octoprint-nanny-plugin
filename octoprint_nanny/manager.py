@@ -45,8 +45,6 @@ class WorkerManager:
         self.event_loop_thread.daemon = True
         self.event_loop_thread.start()
 
-        plugin_settings = PluginSettingsMemoize(plugin)
-        self.plugin_settings = plugin_settings
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
         self.plugin = plugin
@@ -69,9 +67,9 @@ class WorkerManager:
         mqtt_receive_queue = self.manager.AioQueue()
         self.mqtt_receive_queue = mqtt_receive_queue
 
-        self.mqtt_manager = MQTTManager(
-            mqtt_send_queue, mqtt_receive_queue, plugin_settings, plugin
-        )
+        plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
+        self.plugin_settings = plugin_settings
+
         self.monitoring_manager = MonitoringManager(
             octo_ws_queue,
             pn_ws_queue,
@@ -80,6 +78,9 @@ class WorkerManager:
             self.plugin._event_bus,
         )
 
+        self.mqtt_manager = MQTTManager(
+            mqtt_send_queue, mqtt_receive_queue, plugin_settings, plugin
+        )
         # local callback/handler functions for events published via telemetry queue
         self._mqtt_send_queue_callbacks = {
             Events.PRINT_STARTED: self.on_print_start,
@@ -91,6 +92,9 @@ class WorkerManager:
             Events.PRINT_RESUMED: self.monitoring_manager.start,
             Events.SHUTDOWN: self.shutdown,
         }
+        self.mqtt_manager.publisher_worker.register_callbacks(
+            self._mqtt_send_queue_callbacks
+        )
 
     def _event_loop_worker(self):
         loop = asyncio.new_event_loop()

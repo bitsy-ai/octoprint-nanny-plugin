@@ -20,9 +20,9 @@ class PluginSettingsMemoize:
     Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
     """
 
-    def __init__(self, plugin):
+    def __init__(self, plugin, mqtt_receive_queue):
         self.plugin = plugin
-
+        self.mqtt_receive_queue = mqtt_receive_queue
         # stateful clients and computed settings that require re-initialization when settings change
         self._calibration = None
         self._mqtt_client = None
@@ -32,23 +32,23 @@ class PluginSettingsMemoize:
 
         self.environment = {}
 
-    @beeline.traced("PluginSettingsMemoize.reset_monitoring_settings")
+    @beeline.traced
     def reset_monitoring_settings(self):
         self._calibration = None
         self._monitoring_frames_per_minute = None
 
-    @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
+    @beeline.traced
     @beeline.traced_thread
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
 
-    @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
+    @beeline.traced
     @beeline.traced_thread
     def reset_rest_client_state(self):
         self._rest_client = None
 
-    @beeline.traced(name="PluginSettingsMemoize.get_device_metadata")
+    @beeline.traced
     @beeline.traced_thread
     def get_device_metadata(self):
         metadata = dict(
@@ -58,18 +58,16 @@ class PluginSettingsMemoize:
         metadata.update(self.device_info)
         return metadata
 
-    @beeline.traced(name="PluginSettingsMemoize.get_print_job_metadata")
+    @beeline.traced
     @beeline.traced_thread
     def get_print_job_metadata(self):
         return dict(
             printer_data=self.plugin._printer.get_current_data(),
             printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
             temperatures=self.plugin._printer.get_current_temperatures(),
-            printer_profile_id=self.shared.printer_profile_id,
-            print_job_id=self.shared.print_job_id,
         )
 
-    @beeline.traced(name="PluginSettingsMemoize.on_environment_detected")
+    @beeline.traced
     @beeline.traced_thread
     def on_environment_detected(self, environment):
         self.environment = environment
@@ -170,7 +168,7 @@ class PluginSettingsMemoize:
                 device_cloudiot_id=self.device_cloudiot_id,
                 private_key_file=self.device_private_key,
                 ca_certs=self.gcp_root_ca,
-                remote_control_queue=self.remote_control_queue,
+                mqtt_receive_queue=self.mqtt_receive_queue,
                 trace_context=self.get_device_metadata(),
             )
         return self._mqtt_client

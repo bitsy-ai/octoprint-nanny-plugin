@@ -56,7 +56,7 @@ class MQTTClient:
         private_key_file: str,
         ca_certs,
         algorithm="RS256",
-        remote_control_queue=None,
+        mqtt_receive_queue=None,
         mqtt_bridge_hostname=MQTT_BRIDGE_HOSTNAME,
         mqtt_bridge_port=MQTT_BRIDGE_PORT,
         on_connect=None,
@@ -91,7 +91,7 @@ class MQTTClient:
         self.region = region
         self.algorithm = algorithm
 
-        self.remote_control_queue = remote_control_queue
+        self.mqtt_receive_queue = mqtt_receive_queue
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
         self.client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311)
@@ -142,7 +142,7 @@ class MQTTClient:
             logger.info(
                 f"Received remote control command on topic={message.topic} payload={parsed_message}"
             )
-            self.remote_control_queue.put_nowait(
+            self.mqtt_receive_queue.put_nowait(
                 {"topic": self.remote_control_commands_topic, "message": parsed_message}
             )
             # callback to api to indicate command was received
@@ -151,7 +151,7 @@ class MQTTClient:
             logger.info(
                 f"Received config update on topic={message.topic} payload={parsed_message}"
             )
-            self.remote_control_queue.put_nowait(
+            self.mqtt_receive_queue.put_nowait(
                 {"topic": self.config_topic, "message": parsed_message}
             )
         else:
