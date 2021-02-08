@@ -95,7 +95,7 @@ async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
 
 
 @pytest.mark.asyncio
-async def test_remote_control_receive_loop_valid_event(mocker):
+async def test_remote_control_receive_loop_valid_octoprint_event(mocker):
     plugin = octoprint_nanny.plugins.OctoPrintNannyPlugin()
     plugin.get_setting = get_default_setting
 

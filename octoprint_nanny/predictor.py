@@ -38,7 +38,6 @@ except:
     from typing_extensions import TypedDict
     from typing import Optional
 
-# @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
 BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"

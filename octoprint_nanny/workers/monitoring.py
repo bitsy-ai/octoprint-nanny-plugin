@@ -14,76 +14,72 @@ from octoprint_nanny.settings import PluginSettingsMemoizeMixin
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
 
-class MonitoringWorker(PluginSettingsMemoizeMixin):
-    """
-    Wrapper for PredictWorker and WebsocketWorker
-    """
+class MonitoringManager:
+    def __init__(
+        self,
+        octo_ws_queue,
+        pn_ws_queue,
+        mqtt_send_queue,
+        plugin_settings,
+        plugin_event_bus,
+    ):
 
-    def __init__(self, plugin, octo_ws_queue, pn_ws_queue, mqtt_send_queue):
-
-        super().__init__(plugin)
         self.halt = threading.Event()
         self.octo_ws_queue = octo_ws_queue
         self.pn_ws_queue = pn_ws_queue
         self.mqtt_send_queue = mqtt_send_queue
+        self.plugin_settings = plugin_settings
+        self.plugin_event_bus = plugin_event_bus
+        self.rest_client = plugin_settings.rest_client
 
     @beeline.traced()
-    def init(self):
+    def _drain(self):
+        self.halt.set()
 
-        self.predict_worker = PredictWorker(
-            self.snapshot_url,
-            self.calibration,
+        for worker in self._worker_threads:
+            logger.info(f"Waiting for worker={worker} thread to drain")
+            worker.join()
+
+    def _reset(self):
+        self.halt = threading.Event()
+        self._predict_worker = PredictWorker(
+            self.plugin_settings.snapshot_url,
+            self.plugin_settings.calibration,
             self.octo_ws_queue,
             self.pn_ws_queue,
             self.mqtt_send_queue,
-            self.monitoring_frames_per_minute,
+            self.plugin_settings.monitoring_frames_per_minute,
             self.halt,
-            self.plugin._event_bus,
-            trace_context=self.get_device_metadata(),
+            self.plugin_event_bus,
+            trace_context=self.plugin_settings.get_device_metadata(),
         )
-
-        self.predict_worker_thread = threading.Thread(target=self.predict_worker.run)
-        self.predict_worker_thread.daemon = True
-
-        self.websocket_worker = WebSocketWorker(
-            self.ws_url,
-            self.auth_token,
+        self._websocket_worker = WebSocketWorker(
+            self.plugin_settings.ws_url,
+            self.plugin_settings.auth_token,
             self.pn_ws_queue,
-            self.device_id,
+            self.plugin_settings.device_id,
             self.halt,
-            trace_context=self.get_device_metadata(),
+            trace_context=self.plugin_settings.get_device_metadata(),
         )
-        self.websocket_worker_thread = threading.Thread(
-            target=self.websocket_worker.run
-        )
-        self.websocket_worker_thread.daemon = True
+        self._workers = [self._predict_worker, self._websocket_worker]
+        self._worker_threads = []
 
     @beeline.traced()
-    async def stop(self, event_type=None, **kwargs):
-        """
-        joins and terminates dedicated prediction and pn websocket processes
-        """
-        logging.info(
-            f"WorkerManager.stop_monitoring called by event_type={event_type} event={kwargs}"
+    async def start(self):
+        self._reset()
+
+        for worker in self._workers:
+            thread = threading.Thread(target=worker.run)
+            thread.daemon = True
+            self._worker_threads.append(thread)
+            thread.start()
+        await self.rest_client.update_octoprint_device(
+            self.plugin_settings.device_id, active=True
         )
-        self.active = False
 
-        await self.rest_client.update_octoprint_device(self.device_id, active=False)
-        self.halt.set()
-        self.predict_worker_thread.join()
-        self.websocket_worker_thrad.join()
-
-    @beeline.traced("WorkerManager.start_monitoring")
-    async def start(self, event_type=None, **kwargs):
-        """
-        starts prediction and pn websocket processes
-        """
-        logging.info(
-            f"WorkerManager.start_monitoring called by event_type={event_type} event={kwargs}"
+    @beeline.traced()
+    async def stop(self):
+        self._drain()
+        await self.rest_client.update_octoprint_device(
+            self.plugin_settings.device_id, active=False
         )
-        self.active = True
-
-        await self.rest_client.update_octoprint_device(self.device_id, active=True)
-        self.init()
-        self.predict_worker_thread.start()
-        self.websocket_worker_thread.start()

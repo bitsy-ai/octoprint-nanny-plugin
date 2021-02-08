@@ -1,5 +1,6 @@
 import aiofiles
 import aiohttp
+import aioprocessing
 import asyncio
 import concurrent
 import io
@@ -7,6 +8,7 @@ import inspect
 import logging
 import os
 import threading
+import queue
 
 import logging
 
@@ -18,17 +20,99 @@ from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.settings import PluginSettingsMemoizeMixin
+from octoprint_nanny.settings import PluginSettingsMemoize
+
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.predictor import BOUNDING_BOX_PREDICT_EVENT
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-class MQTTClientWorker(PluginSettingsMemoizeMixin):
-    def __init__(self, plugin, halt):
+class MQTTManager:
+    def __init__(
+        self,
+        mqtt_send_queue: aioprocessing.Queue,
+        mqtt_receive_queue: aioprocessing.Queue,
+        plugin_settings: PluginSettingsMemoize,
+        plugin,
+    ):
 
-        super().__init__(plugin)
+        super().__init__(self)
+        self.plugin_settings = plugin_settings
+        self.mqtt_client = plugin_settings.mqtt_client
+        self.mqtt_send_queue = mqtt_send_queue
+        self.mqtt_receive_queue = mqtt_receive_queue
+        halt = threading.Event()
+        self.halt = halt
+        self.plugin = plugin
+
+        self._workers = []
+        self._worker_threads = []
+
+    def _drain(self):
+        """
+        Halt running workers and wait pending work
+        """
+        self.halt.set()
+
+        try:
+            logger.info("Waiting for MQTTManager.mqtt_client network loop to finish")
+            while self._client_worker.mqtt_client.client.is_connected():
+                self.mqtt_client.client.disconnect()
+            logger.info("Stopping MQTTManager.mqtt_client network loop")
+            self.mqtt_client.client.loop_stop()
+        except PluginSettingsRequired:
+            pass
+
+        for worker in self._worker_threads:
+            logger.info(f"Waiting for worker={worker} thread to drain")
+            worker.join()
+
+    def _reset(self):
+        self.halt = threading.Event()
+        self._publisher_worker = MQTTPublisherWorker(
+            self.halt, self.mqtt_send_queue, self.plugin_settings
+        )
+        self._subscriber_worker = MQTTSubscriberWorker(
+            self.halt, self.mqtt_receive_queue, self.plugin_settings, self.plugin
+        )
+        self._client_worker = MQTTClientWorker(
+            self.halt, self.plugin_settings.mqtt_client
+        )
+
+        self._workers = [
+            self._client_worker,
+            self._publisher_worker,
+            self._subscriber_worker,
+        ]
+        self._worker_threads = []
+
+    def start(self):
+        """
+        (re)initialize and start worker threads
+        """
+        logger.info("MQTTManager.start was called")
+        self._reset()
+        for worker in self._workers:
+            thread = threading.Thread(target=worker.run)
+            thread.daemon = True
+            self._worker_threads.append(thread)
+            thread.start()
+
+    def stop(self):
+        logger.info("MQTTManager.stop was called")
+        self._drain()
+
+
+class MQTTClientWorker:
+    """
+    Manages paho MQTT client's network loop on behalf of Publisher/Subscriber Workers
+    https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#network-loop
+    """
+
+    def __init__(self, halt, mqtt_client):
+
+        self.mqtt_client = mqtt_client
         self.halt = halt
 
     @beeline.traced()
@@ -40,9 +124,9 @@ class MQTTClientWorker(PluginSettingsMemoizeMixin):
         logger.warning("MQTTClientWorker will exit soon")
 
 
-class MQTTPublishWorker(PluginSettingsMemoizeMixin):
+class MQTTPublisherWorker:
     """
-    Run a worker thread to handle publishing MQTT messages
+    Run a worker thread dedicated to publishing OctoPrint events to MQTT bridge
     """
 
     PRINT_JOB_EVENTS = [
@@ -58,11 +142,12 @@ class MQTTPublishWorker(PluginSettingsMemoizeMixin):
     # do not warn when the following events are skipped on telemetry update
     MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_predict_done"]
 
-    def __init__(self, plugin, halt, queue):
+    def __init__(self, halt, queue, plugin_settings):
 
-        super().__init__(plugin)
         self.halt = halt
         self.queue = queue
+        self.plugin_settings = plugin_settings
+        self.mqtt_client = plugin_settings.mqtt_client
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
@@ -84,24 +169,24 @@ class MQTTPublishWorker(PluginSettingsMemoizeMixin):
         logger.info(f"_publish_octoprint_event_telemetry {event}")
         event.update(
             dict(
-                user_id=self.user_id,
-                device_id=self.device_id,
-                device_cloudiot_name=self.device_cloudiot_name,
+                user_id=self.plugin_settings.user_id,
+                device_id=self.plugin_settings.device_id,
+                device_cloudiot_name=self.plugin_settings.device_cloudiot_name,
             )
         )
-        event.update(self.get_device_metadata())
+        event.update(self.plugin_settings.get_device_metadata())
 
         if event_type in self.PRINT_JOB_EVENTS:
-            event.update(self.get_print_job_metadata())
+            event.update(self.plugin_settings.get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
     @beeline.traced()
     async def _publish_bounding_box_telemetry(self, event):
         event.update(
             dict(
-                user_id=self.user_id,
-                device_id=self.device_id,
-                device_cloudiot_name=self.device_cloudiot_name,
+                user_id=self.plugin_settings.user_id,
+                device_id=self.plugin_settings.device_id,
+                device_cloudiot_name=self.plugin_settings.device_cloudiot_name,
             )
         )
         self.mqtt_client.publish_bounding_boxes(event)
@@ -142,7 +227,7 @@ class MQTTPublishWorker(PluginSettingsMemoizeMixin):
                 return
 
             # run local handler fn
-            handler_fn = self._local_event_handlers.get(event_type)
+            handler_fn = self._callbacks.get(event_type)
             if handler_fn:
 
                 if inspect.isawaitable(handler_fn):
@@ -165,12 +250,15 @@ class MQTTPublishWorker(PluginSettingsMemoizeMixin):
         logging.info("Exiting soon loop_forever")
 
 
-class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
-    def __init__(self, plugin, halt, queue):
+class MQTTSubscriberWorker:
+    def __init__(self, plugin, halt, queue, plugin_settings, plugin):
 
-        super().__init__(plugin)
         self.halt = halt
         self.queue = queue
+        self.plugin_settings = plugin_settings
+        self.plugin = plugin
+        self.mqtt_client = plugin_settings.mqtt_client
+        self.rest_client = plugin_settings.rest_client
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
@@ -190,7 +278,7 @@ class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
                 self._callbacks[k] = [v]
             else:
                 self._callbacks[k].append(v)
-        logging.info(f"Registered MQTTReceiveWorker._callbacks {self._callbacks}")
+        logging.info(f"Registered MQTTSubscribeWorker._callbacks {self._callbacks}")
         return self._callbacks
 
     async def loop_forever(self):
@@ -200,12 +288,12 @@ class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
                 await self._loop()
             except PluginSettingsRequired:
                 pass
-        logger.info("Exiting soon MQTTReceiveWorker.loop_forever")
+        logger.info("Exiting soon MQTTSubscribeWorker.loop_forever")
 
     @beeline.traced()
     async def _remote_control_snapshot(self, command_id):
         async with aiohttp.ClientSession() as session:
-            res = await session.get(self.snapshot_url)
+            res = await session.get(self.plugin_settings.snapshot_url)
             snapshot_io = io.BytesIO(await res.read())
 
         return await self.rest_client.create_snapshot(
@@ -224,7 +312,7 @@ class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
 
         await self._remote_control_snapshot(command_id)
 
-        metadata = self.get_device_metadata()
+        metadata = self.plugin_settings.get_device_metadata()
         await self.rest_client.update_remote_control_command(
             command_id, received=True, metadata=metadata
         )
@@ -242,7 +330,7 @@ class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
                     else:
                         handler_fn(event=message, event_type=event_type)
 
-                    metadata = self.get_device_metadata()
+                    metadata = self.plugin_settings.get_device_metadata()
                     # set success state
                     await self.rest_client.update_remote_control_command(
                         command_id,
@@ -251,7 +339,7 @@ class MQTTReceiveWorker(PluginSettingsMemoizeMixin):
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    metadata = self.get_device_metadata()
+                    metadata = self.plugin_settings.get_device_metadata()
                     await self.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
