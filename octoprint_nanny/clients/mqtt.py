@@ -106,12 +106,12 @@ class MQTTClient:
         self.client.on_unsubscribe = self._on_unsubscribe
 
         # device receives configuration updates on this topic
-        self.mqtt_config_topic = f"/devices/{self.device_cloudiot_id}/config"
+        self.config_topic = f"/devices/{self.device_cloudiot_id}/config"
 
         # device receives commands on this topic
-        self.mqtt_command_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
+        self.commands_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
         # remote_control app commmands are routed to this subfolder
-        self.remote_control_command_topic = (
+        self.remote_control_commands_topic = (
             f"/devices/{self.device_cloudiot_id}/commands/remote_control"
         )
         # this permits routing on a per-app basis, e.g.
@@ -137,22 +137,22 @@ class MQTTClient:
     ##
     @beeline.traced("MQTTClient._on_message")
     def _on_message(self, client, userdata, message):
-        if message.topic == self.remote_control_command_topic:
+        if message.topic == self.remote_control_commands_topic:
             parsed_message = json.loads(message.payload.decode("utf-8"))
             logger.info(
                 f"Received remote control command on topic={message.topic} payload={parsed_message}"
             )
             self.remote_control_queue.put_nowait(
-                {"topic": self.remote_control_command_topic, "message": parsed_message}
+                {"topic": self.remote_control_commands_topic, "message": parsed_message}
             )
             # callback to api to indicate command was received
-        elif message.topic == self.mqtt_config_topic:
+        elif message.topic == self.config_topic:
             parsed_message = json.loads(message.payload.decode("utf-8"))
             logger.info(
                 f"Received config update on topic={message.topic} payload={parsed_message}"
             )
             self.remote_control_queue.put_nowait(
-                {"topic": self.mqtt_config_topic, "message": parsed_message}
+                {"topic": self.config_topic, "message": parsed_message}
             )
         else:
             logger.info(
@@ -200,13 +200,13 @@ class MQTTClient:
             should_backoff = False
             minimum_backoff_time = 1
             logger.info("Device successfully connected to MQTT broker")
-            self.client.subscribe(self.mqtt_config_topic, qos=1)
+            self.client.subscribe(self.config_topic, qos=1)
             logger.info(
-                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_config_topic}"
+                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.config_topic}"
             )
-            self.client.subscribe(self.mqtt_command_topic, qos=1)
+            self.client.subscribe(self.commands_topic, qos=1)
             logger.info(
-                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.commands_topic}"
             )
         else:
             logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")
