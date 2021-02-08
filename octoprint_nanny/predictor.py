@@ -38,7 +38,6 @@ except:
     from typing_extensions import TypedDict
     from typing import Optional
 
-# @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
 BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
@@ -265,10 +264,10 @@ class PredictWorker:
         calibration: dict,
         octoprint_ws_queue,
         pn_ws_queue,
-        telemetry_queue,
+        mqtt_send_queue,
         fpm,
         halt,
-        plugin_event_bus,
+        plugin,
         trace_context={},
     ):
         """
@@ -279,7 +278,7 @@ class PredictWorker:
         fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
         halt - threading.Event()
         """
-        self._plugin_event_bus = plugin_event_bus
+        self._plugin = plugin
         self._calibration = calibration
         self._fpm = fpm
         self._sleep_interval = 60 / int(fpm)
@@ -287,7 +286,7 @@ class PredictWorker:
 
         self._octoprint_ws_queue = octoprint_ws_queue
         self._pn_ws_queue = pn_ws_queue
-        self._telemetry_queue = telemetry_queue
+        self._mqtt_send_queue = mqtt_send_queue
 
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
@@ -405,12 +404,12 @@ class PredictWorker:
                     pool, _get_predict_bytes, msg
                 )
                 ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
-                self._plugin_event_bus.fire(
+                self._plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_buffer.getvalue())},
                 )
                 self._pn_ws_queue.put_nowait(ws_msg)
-                self._telemetry_queue.put_nowait(mqtt_msg)
+                self._mqtt_send_queue.put_nowait(mqtt_msg)
 
                 self._honeycomb_tracer.finish_trace(trace)
 

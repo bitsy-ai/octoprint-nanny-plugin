@@ -37,7 +37,6 @@ class WebSocketWorker:
         base_url,
         auth_token,
         producer,
-        print_job_id,
         device_id,
         halt,
         trace_context={},
@@ -48,7 +47,6 @@ class WebSocketWorker:
                 "producer should be an instance of aioprocessing.managers.AioQueueProxy"
             )
 
-        self._print_job_id = print_job_id
         self._device_id = device_id
         self._base_url = base_url
         self._url = f"{base_url}{device_id}/video/upload/"

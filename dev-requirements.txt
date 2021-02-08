@@ -5,3 +5,5 @@ pytest-asyncio
 bump2version
 pytest-automock
 pytest-cov
+asyncmock
+asynctest
