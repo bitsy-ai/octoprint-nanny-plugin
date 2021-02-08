@@ -9,7 +9,6 @@ from octoprint_nanny.predictor import (
     BOUNDING_BOX_PREDICT_EVENT,
     ANNOTATED_IMAGE_EVENT,
 )
-from octoprint_nanny.settings import PluginSettingsMemoizeMixin
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
@@ -32,7 +31,7 @@ class MonitoringManager:
         self.plugin_event_bus = plugin_event_bus
         self.rest_client = plugin_settings.rest_client
 
-    @beeline.traced()
+    @beeline.traced
     def _drain(self):
         self.halt.set()
 
@@ -64,7 +63,7 @@ class MonitoringManager:
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
 
-    @beeline.traced()
+    @beeline.traced
     async def start(self):
         self._reset()
 
@@ -77,7 +76,7 @@ class MonitoringManager:
             self.plugin_settings.device_id, active=True
         )
 
-    @beeline.traced()
+    @beeline.traced
     async def stop(self):
         self._drain()
         await self.rest_client.update_octoprint_device(

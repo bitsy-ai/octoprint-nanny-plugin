@@ -99,7 +99,7 @@ class WorkerManager:
         self.loop = loop
         return loop.run_forever()
 
-    @beeline.traced()
+    @beeline.traced
     def _register_plugin_event_handlers(self):
         """
         Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
@@ -118,27 +118,27 @@ class WorkerManager:
         #     }
         # )
 
-    @beeline.traced()
+    @beeline.traced
     def on_settings_initialized(self):
         self._honeycomb_tracer.add_global_context(self.get_device_metadata())
         # self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
-    @beeline.traced()
+    @beeline.traced
     def apply_device_registration(self):
         self.mqtt_manager.stop()
         logger.info("Resetting WorkerManager device registration state")
         self.plugin_settings.reset_device_settings_state()
         self.mqtt_manager.start()
 
-    @beeline.traced()
+    @beeline.traced
     def apply_auth(self):
         logger.info("Resetting WorkerManager user auth state")
         self.mqtt_manager.stop()
         self.plugin_settings.reset_rest_client_state()
         self.mqtt_manager.start()
 
-    @beeline.traced()
+    @beeline.traced
     def apply_monitoring_settings(self):
 
         self.reset_monitoring_settings()
@@ -152,7 +152,7 @@ class WorkerManager:
             )
             self.start_monitoring()
 
-    @beeline.traced()
+    @beeline.traced
     def shutdown(self):
         self.stop_monitoring()
 
@@ -166,7 +166,7 @@ class WorkerManager:
         self.stop_worker_threads()
         self._honeycomb_tracer.on_shutdown()
 
-    @beeline.traced()
+    @beeline.traced
     async def on_print_start(self, event_type, event_data, **kwargs):
         logger.info(f"on_print_start called for {event_type} with data {event_data}")
         try:

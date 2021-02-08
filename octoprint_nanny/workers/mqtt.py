@@ -115,7 +115,7 @@ class MQTTClientWorker:
         self.mqtt_client = mqtt_client
         self.halt = halt
 
-    @beeline.traced()
+    @beeline.traced
     def run(self):
         try:
             return self.mqtt_client.run(self.halt)
@@ -151,7 +151,7 @@ class MQTTPublisherWorker:
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    @beeline.traced()
+    @beeline.traced
     def run(self):
         """
         Telemetry worker's event loop is exposed as WorkerManager.loop
@@ -163,7 +163,7 @@ class MQTTPublisherWorker:
 
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
-    @beeline.traced()
+    @beeline.traced
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
@@ -180,7 +180,7 @@ class MQTTPublisherWorker:
             event.update(self.plugin_settings.get_print_job_metadata())
         self.mqtt_client.publish_octoprint_event(event)
 
-    @beeline.traced()
+    @beeline.traced
     async def _publish_bounding_box_telemetry(self, event):
         event.update(
             dict(
@@ -191,7 +191,7 @@ class MQTTPublisherWorker:
         )
         self.mqtt_client.publish_bounding_boxes(event)
 
-    @beeline.traced()
+    @beeline.traced
     async def _loop(self):
         try:
             span = self._honeycomb_tracer.start_span(
@@ -251,7 +251,7 @@ class MQTTPublisherWorker:
 
 
 class MQTTSubscriberWorker:
-    def __init__(self, plugin, halt, queue, plugin_settings, plugin):
+    def __init__(self, halt, queue, plugin_settings, plugin):
 
         self.halt = halt
         self.queue = queue
@@ -262,7 +262,7 @@ class MQTTSubscriberWorker:
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    @beeline.traced()
+    @beeline.traced
     def run(self):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -290,7 +290,7 @@ class MQTTSubscriberWorker:
                 pass
         logger.info("Exiting soon MQTTSubscribeWorker.loop_forever")
 
-    @beeline.traced()
+    @beeline.traced
     async def _remote_control_snapshot(self, command_id):
         async with aiohttp.ClientSession() as session:
             res = await session.get(self.plugin_settings.snapshot_url)
@@ -300,7 +300,7 @@ class MQTTSubscriberWorker:
             image=snapshot_io, command=command_id
         )
 
-    @beeline.traced()
+    @beeline.traced
     async def _handle_remote_control_command(self, topic, message):
         event_type = message.get("octoprint_event_type")
 
@@ -346,7 +346,7 @@ class MQTTSubscriberWorker:
                         metadata=metadata,
                     )
 
-    @beeline.traced()
+    @beeline.traced
     async def _loop(self):
 
         trace = self._honeycomb_tracer.start_trace()
@@ -373,7 +373,7 @@ class MQTTSubscriberWorker:
 
         self._honeycomb_tracer.finish_trace(trace)
 
-    @beeline.traced()
+    @beeline.traced
     async def _handle_config_update(self, topic, message):
         device_config = print_nanny_client.ExperimentDeviceConfig(**message)
 

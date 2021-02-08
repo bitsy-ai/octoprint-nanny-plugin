@@ -10,13 +10,12 @@ from octoprint_nanny.predictor import (
 import beeline
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
-from octoprint_nanny.clients.websocket import WebSocketWorker
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
 
-class PluginSettingsMemoizeMixin:
+class PluginSettingsMemoize:
     """
     Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
     """
