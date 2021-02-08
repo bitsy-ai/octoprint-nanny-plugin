@@ -150,16 +150,17 @@ class MQTTClient:
             # callback to api to indicate command was received
         elif message.topic == self.config_topic:
             try:
-                parsed_message = json.loads(message.payload.decode("utf-8"))
+                parsed_message = message.payload.decode("utf-8")
+                parsed_message = json.loads(parsed_message)
                 logger.info(
                     f"Received config update on topic={message.topic} payload={parsed_message}"
                 )
                 self.mqtt_receive_queue.put_nowait(
                     {"topic": self.config_topic, "message": parsed_message}
                 )
-            except json.decoder.JSONDecodeError as e:
+            except json.decoder.JSONDecodeError:
                 logger.error(
-                    f"Failed to decode message on topic={message.topic} payload={payload} message={payload.message}"
+                    f"Failed to decode message on topic={message.topic} payload={message.payload} message={parsed_message}"
                 )
         else:
             logger.info(

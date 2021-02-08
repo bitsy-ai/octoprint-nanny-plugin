@@ -34,7 +34,7 @@ class MonitoringManager:
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join()
+            worker.join(10)
 
     @beeline.traced("MonitoringManager._reset")
     def _reset(self):

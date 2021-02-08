@@ -71,7 +71,7 @@ class MQTTManager:
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join()
+            worker.join(10)
 
     @beeline.traced("MQTTManager._reset")
     def _reset(self):
