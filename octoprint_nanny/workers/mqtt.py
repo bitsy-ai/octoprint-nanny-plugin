@@ -392,6 +392,7 @@ class MQTTSubscriberWorker:
 
     @beeline.traced("MQTTSubscriberWorker._handle_config_updat")
     async def _handle_config_update(self, topic, message):
+
         device_config = print_nanny_client.ExperimentDeviceConfig(**message)
 
         labels = device_config.artifact.get("labels")
