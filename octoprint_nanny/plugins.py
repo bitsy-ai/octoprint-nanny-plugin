@@ -113,7 +113,7 @@ class OctoPrintNannyPlugin(
     def get_setting(self, key):
         return self._settings.get([key])
 
-    @beeline.traced
+    @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
@@ -126,7 +126,7 @@ class OctoPrintNannyPlugin(
             self._logger.error(f"_test_api_auth API call failed {e}")
             self._settings.set(["auth_valid"], False)
 
-    @beeline.traced
+    @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
