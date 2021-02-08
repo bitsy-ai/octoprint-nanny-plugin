@@ -107,7 +107,7 @@ class OctoPrintNannyPlugin(
         self._log_path = None
         self._environment = {}
 
-        self._worker_manager = WorkerManager(plugin=self)
+        self.worker_manager = WorkerManager(plugin=self)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def get_setting(self, key):
@@ -205,7 +205,7 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             self._logger.info("Syncing profile")
             created_profile = (
-                await self._worker_manager.rest_client.update_or_create_printer_profile(
+                await self.worker_manager.rest_client.update_or_create_printer_profile(
                     profile, device_id
                 )
             )
@@ -279,7 +279,7 @@ class OctoPrintNannyPlugin(
             context={"name": "update_or_create_octoprint_device"}
         )
         try:
-            device = await self._worker_manager.rest_client.update_or_create_octoprint_device(
+            device = await self.worker_manager.plugin.settings.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
             )
             self._honeycomb_tracer.add_context(dict(device_upserted=device))
@@ -379,13 +379,13 @@ class OctoPrintNannyPlugin(
         )
 
         future = asyncio.run_coroutine_threadsafe(
-            self._register_device(device_name), self._worker_manager.loop
+            self._register_device(device_name), self.worker_manager.loop
         )
         result = future.result()
         if isinstance(result, Exception):
             raise result
         self._settings.save()
-        self._worker_manager.apply_device_registration()
+        self.worker_manager.apply_device_registration()
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
@@ -394,7 +394,7 @@ class OctoPrintNannyPlugin(
         snapshot_url = flask.request.json.get("snapshot_url")
 
         image = asyncio.run_coroutine_threadsafe(
-            self._test_snapshot_url(snapshot_url), self._worker_manager.loop
+            self._test_snapshot_url(snapshot_url), self.worker_manager.loop
         ).result()
 
         return flask.jsonify({"image": base64.b64encode(image)})
@@ -408,7 +408,7 @@ class OctoPrintNannyPlugin(
         self._logger.info("Testing auth_token in event loop")
 
         response = asyncio.run_coroutine_threadsafe(
-            self._test_api_auth(auth_token, api_url), self._worker_manager.loop
+            self._test_api_auth(auth_token, api_url), self.worker_manager.loop
         )
         response = response.result()
 
@@ -452,7 +452,7 @@ class OctoPrintNannyPlugin(
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_shutdown(self):
         self._logger.info("Processing shutdown event")
-        self._worker_manager.shutdown()
+        self.worker_manager.shutdown()
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_after_startup(self):
@@ -471,7 +471,7 @@ class OctoPrintNannyPlugin(
         # shutdown event is handled in .on_shutdown
         if event_type == Events.SHUTDOWN:
             return
-        self._worker_manager.telemetry_queue.put_nowait(
+        self.worker_manager.mqtt_send_queue.put_nowait(
             {"event_type": event_type, "event_data": event_data}
         )
 
@@ -482,12 +482,12 @@ class OctoPrintNannyPlugin(
         """
         self._honeycomb_tracer.add_global_context(self.get_device_info())
         self._log_path = self._settings.get_plugin_logfile_path()
-        self._worker_manager.on_settings_initialized()
+        self.worker_manager.on_settings_initialized()
 
     ## Progress plugin
 
     def on_print_progress(self, storage, path, progress):
-        self._worker_manager.telemetry_queue.put_nowait(
+        self.worker_manager.mqtt_send_queue.put_nowait(
             {"event_type": Events.PRINT_PROGRESS, "event_data": {"progress": progress}}
         )
 
@@ -495,7 +495,7 @@ class OctoPrintNannyPlugin(
     @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
     def on_environment_detected(self, environment, *args, **kwargs):
         self._environment = environment
-        self._worker_manager.on_environment_detected(environment)
+        self.worker_manager.plugin.settings.on_environment_detected(environment)
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
@@ -541,7 +541,7 @@ class OctoPrintNannyPlugin(
 
         if prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url:
             asyncio.run_coroutine_threadsafe(
-                self._download_root_certificates(), self._worker_manager.loop
+                self._download_root_certificates(), self.worker_manager.loop
             )
         if (
             prev_monitoring_fpm != new_monitoring_fpm
@@ -551,11 +551,11 @@ class OctoPrintNannyPlugin(
                 "Change in frames per minute or calibration detected, applying new settings"
             )
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
-            self._worker_manager.apply_monitoring_settings()
+            self.worker_manager.apply_monitoring_settings()
 
         if prev_auth_token != new_auth_token:
             self._logger.info("Change in auth detected, applying new settings")
-            self._worker_manager.apply_auth()
+            self.worker_manager.apply_auth()
 
         if (
             prev_device_fingerprint != new_device_fingerprint
@@ -566,7 +566,7 @@ class OctoPrintNannyPlugin(
             self._logger.info(
                 "Change in device identity detected (did you re-register?), applying new settings"
             )
-            self._worker_manager.apply_device_registration()
+            self.worker_manager.apply_device_registration()
 
     ## Template plugin
 
@@ -578,7 +578,7 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "active": self._worker_manager.monitoring_active,
+            "active": self.worker_manager.monitoring_active,
         }
 
     ## Wizard plugin mixin

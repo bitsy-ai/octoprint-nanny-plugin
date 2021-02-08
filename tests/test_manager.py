@@ -25,13 +25,13 @@ def test_default_settings_client_states(mocker):
     plugin.get_setting = get_default_setting
     manager = WorkerManager(plugin)
 
-    assert manager.plugin_settings.auth_token is None
-    assert manager.plugin_settings.device_id is None
+    assert manager.plugin.settings.auth_token is None
+    assert manager.plugin.settings.device_id is None
 
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin_settings.mqtt_client)
+        dir(manager.plugin.settings.mqtt_client)
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin_settings.rest_client)
+        dir(manager.plugin.settings.rest_client)
 
 
 @pytest.mark.asyncio
@@ -131,9 +131,7 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mocker):
     )
 
     topic = "remote-control-topic"
-    type(mock_mqtt_client).remote_control_command_topic = PropertyMock(
-        return_value=topic
-    )
+    type(mock_mqtt_client).commands_topic = PropertyMock(return_value=topic)
     mocker.patch(
         "octoprint_nanny.settings.PluginSettingsMemoize.get_device_metadata",
         return_value={},

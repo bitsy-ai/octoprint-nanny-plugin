@@ -68,18 +68,19 @@ class WorkerManager:
         self.mqtt_receive_queue = mqtt_receive_queue
 
         plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
-        self.plugin_settings = plugin_settings
+        self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
             octo_ws_queue,
             pn_ws_queue,
             mqtt_send_queue,
-            plugin_settings,
-            self.plugin._event_bus,
+            plugin,
         )
 
         self.mqtt_manager = MQTTManager(
-            mqtt_send_queue, mqtt_receive_queue, plugin_settings, plugin
+            mqtt_send_queue=mqtt_send_queue,
+            mqtt_receive_queue=mqtt_receive_queue,
+            plugin=plugin,
         )
         # local callback/handler functions for events published via telemetry queue
         self._mqtt_send_queue_callbacks = {
@@ -125,7 +126,7 @@ class WorkerManager:
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         self._honeycomb_tracer.add_global_context(
-            self.plugin_settings.get_device_metadata()
+            self.plugin.settings.get_device_metadata()
         )
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
@@ -134,20 +135,20 @@ class WorkerManager:
     def apply_device_registration(self):
         self.mqtt_manager.stop()
         logger.info("Resetting WorkerManager device registration state")
-        self.plugin_settings.reset_device_settings_state()
+        self.plugin.settings.reset_device_settings_state()
         self.mqtt_manager.start()
 
     @beeline.traced("WorkerManager.apply_auth")
     def apply_auth(self):
         logger.info("Resetting WorkerManager user auth state")
         self.mqtt_manager.stop()
-        self.plugin_settings.reset_rest_client_state()
+        self.plugin.settings.reset_rest_client_state()
         self.mqtt_manager.start()
 
     @beeline.traced("WorkerManager.apply_monitoring_settings")
     def apply_monitoring_settings(self):
 
-        self.plugin_settings.reset_monitoring_settings()
+        self.plugin.settings.reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
@@ -163,8 +164,8 @@ class WorkerManager:
         self.monitoring_manager.stop()
 
         asyncio.run_coroutine_threadsafe(
-            self.rest_client.update_octoprint_device(
-                self.device_id, monitoring_active=False
+            self.plugin.settings.rest_client.update_octoprint_device(
+                self.plugin.settings.device_id, monitoring_active=False
             ),
             self.loop,
         ).result()
@@ -179,8 +180,10 @@ class WorkerManager:
             current_profile = (
                 self.plugin._printer_profile_manager.get_current_or_default()
             )
-            printer_profile = await self.rest_client.update_or_create_printer_profile(
-                current_profile, self.device_id
+            printer_profile = (
+                await self.plugin.settings.rest_client.update_or_create_printer_profile(
+                    current_profile, self.plugin.settings.device_id
+                )
             )
 
             self.shared.printer_profile_id = printer_profile.id
@@ -188,12 +191,17 @@ class WorkerManager:
             gcode_file_path = self.plugin._file_manager.path_on_disk(
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
-            gcode_file = await self.rest_client.update_or_create_gcode_file(
-                event_data, gcode_file_path, self.device_id
+            gcode_file = (
+                await self.plugin.settings.rest_client.update_or_create_gcode_file(
+                    event_data, gcode_file_path, self.plugin.settings.device_id
+                )
             )
 
-            print_job = await self.rest_client.create_print_job(
-                event_data, gcode_file.id, printer_profile.id, self.device_id
+            print_job = await self.plugin.settings.rest_client.create_print_job(
+                event_data,
+                gcode_file.id,
+                printer_profile.id,
+                self.plugin.settings.device_id,
             )
 
             self.shared.print_job_id = print_job.id
@@ -204,4 +212,4 @@ class WorkerManager:
 
         if self.plugin.get_setting("auto_start"):
             logger.info("Print Nanny monitoring is set to auto-start")
-            self.start_monitoring()
+            self.monitoring_manager.start()

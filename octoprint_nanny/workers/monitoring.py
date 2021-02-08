@@ -19,16 +19,14 @@ class MonitoringManager:
         octo_ws_queue,
         pn_ws_queue,
         mqtt_send_queue,
-        plugin_settings,
-        plugin_event_bus,
+        plugin,
     ):
 
         self.halt = threading.Event()
         self.octo_ws_queue = octo_ws_queue
         self.pn_ws_queue = pn_ws_queue
         self.mqtt_send_queue = mqtt_send_queue
-        self.plugin_settings = plugin_settings
-        self.plugin_event_bus = plugin_event_bus
+        self.plugin = plugin
 
     @beeline.traced("MonitoringManager._drain")
     def _drain(self):
@@ -42,23 +40,23 @@ class MonitoringManager:
     def _reset(self):
         self.halt = threading.Event()
         self._predict_worker = PredictWorker(
-            self.plugin_settings.snapshot_url,
-            self.plugin_settings.calibration,
+            self.plugin.settings.snapshot_url,
+            self.plugin.settings.calibration,
             self.octo_ws_queue,
             self.pn_ws_queue,
             self.mqtt_send_queue,
-            self.plugin_settings.monitoring_frames_per_minute,
+            self.plugin.settings.monitoring_frames_per_minute,
             self.halt,
-            self.plugin_event_bus,
-            trace_context=self.plugin_settings.get_device_metadata(),
+            self.plugin,
+            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._websocket_worker = WebSocketWorker(
-            self.plugin_settings.ws_url,
-            self.plugin_settings.auth_token,
+            self.plugin.settings.ws_url,
+            self.plugin.settings.auth_token,
             self.pn_ws_queue,
-            self.plugin_settings.device_id,
+            self.plugin.settings.device_id,
             self.halt,
-            trace_context=self.plugin_settings.get_device_metadata(),
+            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
@@ -72,13 +70,13 @@ class MonitoringManager:
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
-        await self.plugin_settings.rest_client.update_octoprint_device(
-            self.plugin_settings.device_id, active=True
+        await self.plugin.settings.rest_client.update_octoprint_device(
+            self.plugin.settings.device_id, active=True
         )
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self):
         self._drain()
-        await self.plugin_settings.rest_client.update_octoprint_device(
-            self.plugin_settings.device_id, active=False
+        await self.plugin.settings.rest_client.update_octoprint_device(
+            self.plugin.settings.device_id, active=False
         )
