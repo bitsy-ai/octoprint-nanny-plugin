@@ -68,29 +68,34 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker):
     )
 
 
-# @pytest.mark.asyncio
-# async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
-#     plugin = octoprint_nanny.plugins.OctoPrintNannyPlugin()
-#     plugin.get_setting = get_default_setting
+@pytest.mark.asyncio
+async def test_telemetry_queue_send_loop_bounding_box_predict(mocker):
+    plugin = mocker.Mock()
+    plugin.get_setting = get_default_setting
 
-#     mocker.patch.object(WorkerManager, "test_mqtt_settings")
+    mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
-#     mocker.patch.object(WorkerManager, "telemetry_events")
-#     mocker.patch.object(WorkerManager, "event_in_tracked_telemetry", return_value=True)
+    mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.telemetry_events")
+    mocker.patch(
+        "octoprint_nanny.settings.PluginSettingsMemoize.event_in_tracked_telemetry",
+        return_value=True,
+    )
 
-#     manager = WorkerManager(plugin)
+    manager = WorkerManager(plugin)
 
-#     event = {"event_type": BOUNDING_BOX_PREDICT_EVENT, "event_data": {}}
-#     manager.telemetry_queue.put_nowait(event)
+    event = {"event_type": BOUNDING_BOX_PREDICT_EVENT, "event_data": {}}
+    manager.mqtt_send_queue.put_nowait(event)
 
-#     mock_fn = mocker.patch.object(
-#         manager, "_publish_bounding_box_telemetry", return_value=asyncio.Future()
-#     )
-#     mock_fn.return_value.set_result("foo")
+    mock_fn = mocker.patch.object(
+        manager.mqtt_manager.publisher_worker,
+        "_publish_bounding_box_telemetry",
+        return_value=asyncio.Future(),
+    )
+    mock_fn.return_value.set_result("foo")
 
-#     await manager._telemetry_queue_send_loop()
+    await manager.mqtt_manager.publisher_worker._loop()
 
-#     mock_fn.assert_called_once_with(event)
+    mock_fn.assert_called_once_with(event)
 
 
 # @pytest.mark.asyncio

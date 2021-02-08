@@ -371,7 +371,7 @@ class MQTTSubscriberWorker:
         )
 
         try:
-            event = self.queue.get_nowait()
+            payload = self.queue.get_nowait()
         except queue.Empty:
             return
         self._honeycomb_tracer.add_context(dict(event=payload))
