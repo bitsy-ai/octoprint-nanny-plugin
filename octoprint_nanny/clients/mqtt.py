@@ -69,7 +69,8 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=IOT_DEVICE_REGISTRY_REGION,
         registry_id=IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLSv1_2,
+        tls_version=ssl.PROTOCOL_TLS,
+        keepalive=900,  # 15 minutes
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
@@ -86,6 +87,7 @@ class MQTTClient:
         self.ca_certs = ca_certs
         self.region = region
         self.registry_id = registry_id
+        self.keepalive = keepalive
 
         self.tls_version = tls_version
         self.region = region
@@ -147,13 +149,18 @@ class MQTTClient:
             )
             # callback to api to indicate command was received
         elif message.topic == self.config_topic:
-            parsed_message = json.loads(message.payload.decode("utf-8"))
-            logger.info(
-                f"Received config update on topic={message.topic} payload={parsed_message}"
-            )
-            self.mqtt_receive_queue.put_nowait(
-                {"topic": self.config_topic, "message": parsed_message}
-            )
+            try:
+                parsed_message = json.loads(message.payload.decode("utf-8"))
+                logger.info(
+                    f"Received config update on topic={message.topic} payload={parsed_message}"
+                )
+                self.mqtt_receive_queue.put_nowait(
+                    {"topic": self.config_topic, "message": parsed_message}
+                )
+            except json.decoder.JSONDecodeError as e:
+                logger.error(
+                    f"Failed to decode message on topic={message.topic} payload={payload} message={payload.message}"
+                )
         else:
             logger.info(
                 f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={message}"
@@ -241,7 +248,9 @@ class MQTTClient:
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
         )
-        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
+        self.client.connect(
+            self.mqtt_bridge_hostname, self.mqtt_bridge_port, keepalive=self.keepalive
+        )
         logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
 
     def publish(self, payload, topic=None, retain=False, qos=1):

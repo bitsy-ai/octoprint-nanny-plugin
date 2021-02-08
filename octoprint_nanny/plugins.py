@@ -204,10 +204,8 @@ class OctoPrintNannyPlugin(
         id_map = {"octoprint": {}, "octoprint_nanny": {}}
         for profile_id, profile in printer_profiles.items():
             self._logger.info("Syncing profile")
-            created_profile = (
-                await self.worker_manager.rest_client.update_or_create_printer_profile(
-                    profile, device_id
-                )
+            created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
+                profile, device_id
             )
             id_map["octoprint"][profile_id] = created_profile.id
             id_map["octoprint_nanny"][created_profile.id] = profile_id
