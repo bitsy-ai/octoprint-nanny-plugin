@@ -13,3 +13,7 @@ class WebcamSettingsHTTPException(werkzeug.exceptions.HTTPException):
 
 class PluginSettingsRequired(Exception):
     pass
+
+
+class FileIntegrity(Exception):
+    pass
