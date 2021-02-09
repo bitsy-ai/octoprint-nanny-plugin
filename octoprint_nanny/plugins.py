@@ -1,4 +1,5 @@
 import asyncio
+import aiofiles
 import logging
 import base64
 import concurrent
@@ -30,6 +31,7 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import print_nanny_client
 
+import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
@@ -229,10 +231,30 @@ class OctoPrintNannyPlugin(
             self.get_plugin_data_folder(), "private_key.pem"
         )
 
-        with io.open(pubkey_filename, "w+", encoding="utf-8") as f:
-            f.write(device.public_key)
-        with io.open(privkey_filename, "w+", encoding="utf-8") as f:
-            f.write(device.private_key)
+        async with aiofiles.open(pubkey_filename, "w+", encoding="utf-8") as f:
+            await f.write(device.public_key)
+
+        async with aiofiles.open(pubkey_filename, "r", encoding="utf-8") as f:
+            content = await f.read()
+            if (
+                hashlib.sha256(content.encode("utf-8")).hexdigest()
+                != device.public_key_checksum
+            ):
+                raise octoprint_nanny.exceptions.FileIntegrity(
+                    f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
+                )
+
+        async with aiofiles.open(privkey_filename, "w+", encoding="utf-8") as f:
+            await f.write(device.private_key)
+        async with aiofiles.open(privkey_filename, "r", encoding="utf-8") as f:
+            content = await f.read()
+            if (
+                hashlib.sha256(content.encode("utf-8")).hexdigest()
+                != device.private_key_checksum
+            ):
+                raise octoprint_nanny.exceptions.FileIntegrity(
+                    f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
+                )
 
         self._logger.info(
             f"Saved keypair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
