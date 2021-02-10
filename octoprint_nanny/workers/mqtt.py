@@ -218,7 +218,7 @@ class MQTTPublisherWorker:
                 event = self.queue.get_nowait()
             except queue.Empty:
                 return
-
+            
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
@@ -230,6 +230,8 @@ class MQTTPublisherWorker:
                     )
                 )
                 return
+
+            logger.debug(f"MQTTPublisherWorker received event_type{event_type}")
 
             if event_type == BOUNDING_BOX_PREDICT_EVENT:
                 await self._publish_bounding_box_telemetry(event)

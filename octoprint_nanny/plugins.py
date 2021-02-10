@@ -18,6 +18,25 @@ from datetime import datetime
 import time
 import requests
 
+from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
+def configure_logger(logger):
+    file_logging_handler = CleaningTimedRotatingFileHandler(
+    os.path.expanduser("~/.octoprint/logs/plugin_octoprint_nanny.log"),
+    when="D",
+    backupCount=7,
+    )
+    file_logging_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s")
+    )
+    file_logging_handler.setLevel(logging.DEBUG)
+
+
+
+    logger.addHandler(file_logging_handler)
+    logger.propagate = False
+configure_logger(logger)
+
 import beeline
 import aiohttp.client_exceptions
 import flask
@@ -27,7 +46,6 @@ import uuid
 import numpy as np
 
 from octoprint.events import Events, eventManager
-from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import print_nanny_client
 
@@ -35,6 +53,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
+
 
 DEFAULT_API_URL = os.environ.get(
     "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
@@ -119,13 +138,13 @@ class OctoPrintNannyPlugin(
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
-        self._logger.info("Initialized rest_client")
+        logger.info("Initialized rest_client")
         try:
             user = await rest_client.get_user()
-            self._logger.info(f"Authenticated as user id={user.id} url={user.url}")
+            logger.info(f"Authenticated as user id={user.id} url={user.url}")
             return user
         except API_CLIENT_EXCEPTIONS as e:
-            self._logger.error(f"_test_api_auth API call failed {e}")
+            logger.error(f"_test_api_auth API call failed {e}")
             self._settings.set(["auth_valid"], False)
 
     @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
@@ -205,21 +224,21 @@ class OctoPrintNannyPlugin(
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
         id_map = {"octoprint": {}, "octoprint_nanny": {}}
         for profile_id, profile in printer_profiles.items():
-            self._logger.info("Syncing profile")
+            logger.info("Syncing profile")
             created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
                 profile, device_id
             )
             id_map["octoprint"][profile_id] = created_profile.id
             id_map["octoprint_nanny"][created_profile.id] = profile_id
 
-        self._logger.info(f"Synced {len(printer_profiles)}")
+        logger.info(f"Synced {len(printer_profiles)}")
 
         filename = os.path.join(
             self.get_plugin_data_folder(), "printer_profile_id_map.json"
         )
         with io.open(filename, "w+", encoding="utf-8") as f:
             json.dump(id_map, f)
-        self._logger.info(
+        logger.info(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
@@ -256,7 +275,7 @@ class OctoPrintNannyPlugin(
                     f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        self._logger.info(
+        logger.info(
             f"Saved keypair {device.fingerprint} to {pubkey_filename} {privkey_filename}"
         )
 
@@ -273,7 +292,7 @@ class OctoPrintNannyPlugin(
         root_ca_url = self._settings.get(["mqtt_bridge_root_certificate_url"])
 
         async with aiohttp.ClientSession() as session:
-            self._logger.info(f"Downloading GCP root certificates")
+            logger.info(f"Downloading GCP root certificates")
             async with session.get(root_ca_url) as res:
                 root_ca = await res.text()
         with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
@@ -284,7 +303,7 @@ class OctoPrintNannyPlugin(
     @beeline.traced_thread
     async def _register_device(self, device_name):
 
-        self._logger.info(
+        logger.info(
             f"OctoPrintNanny._register_device called with device_name={device_name}"
         )
         # device registration
@@ -312,14 +331,14 @@ class OctoPrintNannyPlugin(
             )
 
         except API_CLIENT_EXCEPTIONS as e:
-            self._logger.error(e)
+            logger.error(e)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
                 payload={"msg": str(e.body)},
             )
             return e
 
-        self._logger.info(
+        logger.info(
             f"Registered octoprint device with hardware serial={device.serial} url={device.url} fingerprint={device.fingerprint} id={device.id} cloudiot_num_id={device.cloudiot_device_num_id}"
         )
 
@@ -348,7 +367,7 @@ class OctoPrintNannyPlugin(
                 },
             )
         except API_CLIENT_EXCEPTIONS as e:
-            self._logger.error(e)
+            logger.error(e)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
                 payload={"msg": str(e.body)},
@@ -425,7 +444,7 @@ class OctoPrintNannyPlugin(
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
 
-        self._logger.info("Testing auth_token in event loop")
+        logger.info("Testing auth_token in event loop")
 
         response = asyncio.run_coroutine_threadsafe(
             self._test_api_auth(auth_token, api_url), self.worker_manager.loop
@@ -445,7 +464,7 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
         elif isinstance(response, Exception):
             e = str(response)
-            self._logger.error(e)
+            logger.error(e)
             return (
                 flask.json.jsonify(
                     {"msg": "Error communicating with Print Nanny API", "error": e}
@@ -471,21 +490,16 @@ class OctoPrintNannyPlugin(
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_shutdown(self):
-        self._logger.info("Processing shutdown event")
+        logger.info("Processing shutdown event")
+        asyncio.run_coroutine_threadsafe(
+            self.worker_manager.shutdown(),
+            self.worker_manager.loop
+        ).result()
         self.worker_manager.shutdown()
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_after_startup(self):
-        file_logging_handler = CleaningTimedRotatingFileHandler(
-            self._settings.get_plugin_logfile_path(),
-            when="D",
-            backupCount=7,
-        )
-        file_logging_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-
-        self._logger.addHandler(file_logging_handler)
+        pass
 
     def on_event(self, event_type, event_data):
         # shutdown event is handled in .on_shutdown
@@ -567,14 +581,14 @@ class OctoPrintNannyPlugin(
             prev_monitoring_fpm != new_monitoring_fpm
             or prev_calibration != new_calibration
         ):
-            self._logger.info(
+            logger.info(
                 "Change in frames per minute or calibration detected, applying new settings"
             )
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
             self.worker_manager.apply_monitoring_settings()
 
         if prev_auth_token != new_auth_token:
-            self._logger.info("Change in auth detected, applying new settings")
+            logger.info("Change in auth detected, applying new settings")
             self.worker_manager.apply_auth()
 
         if (
@@ -583,7 +597,7 @@ class OctoPrintNannyPlugin(
             or prev_mqtt_bridge_port != new_mqtt_bridge_port
             or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
         ):
-            self._logger.info(
+            logger.info(
                 "Change in device identity detected (did you re-register?), applying new settings"
             )
             self.worker_manager.apply_device_registration()

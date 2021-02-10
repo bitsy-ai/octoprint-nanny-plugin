@@ -109,19 +109,17 @@ class WorkerManager:
         """
         Events.PLUGIN_OCTOPRINT_NANNY* events are not available on Events until plugin is fully initialized
         """
-        self.mqtt_manager.publisher_worker.register_callbacks(
-            {
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
-            }
-        )
 
-        self.mqtt_manager.subscriber_worker.register_callbacks(
-            {
+        callbacks = {
                 Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
                 Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
-            }
-        )
+        }
+        self.mqtt_manager.publisher_worker.register_callbacks(callbacks)
+        logger.info(f"Registered callbacks {callbacks} on publisher worker")
+
+        self.mqtt_manager.subscriber_worker.register_callbacks(callbacks)
+        logger.info(f"Registered callbacks {callbacks} on subscriber worker")
+
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
@@ -146,31 +144,28 @@ class WorkerManager:
         self.mqtt_manager.start()
 
     @beeline.traced("WorkerManager.apply_monitoring_settings")
-    def apply_monitoring_settings(self):
+    async def apply_monitoring_settings(self):
 
         self.plugin.settings.reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
-        self.monitoring_manager.stop()
+        await self.monitoring_manager.stop()
         if self.monitoring_active:
             logger.info(
                 "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
             )
-            self.monitoring_manager.start()
+            await self.monitoring_manager.start()
 
     @beeline.traced("WorkerManager.shutdown")
-    def shutdown(self):
-        self.monitoring_manager.stop()
+    async def shutdown(self):
+        await self.monitoring_manager.stop()
 
-        asyncio.run_coroutine_threadsafe(
-            self.plugin.settings.rest_client.update_octoprint_device(
+        await self.plugin.settings.rest_client.update_octoprint_device(
                 self.plugin.settings.device_id, monitoring_active=False
-            ),
-            self.loop,
-        ).result()
+        )
 
-        self.mqtt_manager.stop()
+        await self.mqtt_manager.stop()
         self._honeycomb_tracer.on_shutdown()
 
     @beeline.traced("WorkerManager.on_print_start")

@@ -401,6 +401,7 @@ class PredictWorker:
                     pool, _get_predict_bytes, msg
                 )
                 ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
+                logger.info(f'Firing {Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE}')
                 self._plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_buffer.getvalue())},
