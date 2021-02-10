@@ -66,7 +66,7 @@ class MonitoringManager:
         self._reset()
 
         for worker in self._workers:
-            thread = threading.Thread(target=worker.run)
+            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
