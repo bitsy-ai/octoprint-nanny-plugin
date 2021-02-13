@@ -168,16 +168,12 @@ class PluginSettingsMemoize:
             )
         return self._mqtt_client
 
-    @property
-    def telemetry_events(self):
+    async def get_telemetry_events(self):
         if self.auth_token is None:
             raise PluginSettingsRequired(f"auth_token is not set")
         if self._telemetry_events is None:
-            loop = asyncio.get_event_loop()
-            self.telemetry_events = asyncio.run_coroutine_threadsafe(
-                self.rest_client.get_telemetry_events(), loop
-            ).result()
+            self._telemetry_events = await self.rest_client.get_telemetry_events()
         return self._telemetry_events
 
-    def event_in_tracked_telemetry(self, event_type):
-        return event_type in self.telemetry_events
+    async def event_in_tracked_telemetry(self, event_type):
+        return event_type in await self.get_telemetry_events()

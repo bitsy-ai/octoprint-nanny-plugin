@@ -111,15 +111,14 @@ class WorkerManager:
         """
 
         callbacks = {
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(callbacks)
         logger.info(f"Registered callbacks {callbacks} on publisher worker")
 
         self.mqtt_manager.subscriber_worker.register_callbacks(callbacks)
         logger.info(f"Registered callbacks {callbacks} on subscriber worker")
-
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
@@ -162,7 +161,7 @@ class WorkerManager:
         await self.monitoring_manager.stop()
 
         await self.plugin.settings.rest_client.update_octoprint_device(
-                self.plugin.settings.device_id, monitoring_active=False
+            self.plugin.settings.device_id, monitoring_active=False
         )
 
         await self.mqtt_manager.stop()

@@ -69,8 +69,8 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=IOT_DEVICE_REGISTRY_REGION,
         registry_id=IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLS,
-        keepalive=900,  # 15 minutes
+        tls_version=ssl.PROTOCOL_TLSv1_2,
+        keepalive=900,
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
@@ -241,7 +241,7 @@ class MQTTClient:
                 time.sleep(delay)
                 if minimum_backoff_time <= MAXIMUM_BACKOFF_TIME:
                     minimum_backoff_time *= 2
-            self.connect()
+            self.client.reconnect()
 
     @beeline.traced("MQTTClient.connect")
     def connect(self):

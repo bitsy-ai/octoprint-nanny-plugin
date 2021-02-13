@@ -12,6 +12,7 @@ from octoprint_nanny.predictor import (
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
+
 class MonitoringManager:
     def __init__(
         self,
@@ -74,12 +75,12 @@ class MonitoringManager:
             logger.info(f"Starting thread {thread.name}")
             thread.start()
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, active=True
+            self.plugin.settings.device_id, monitoring_active=True
         )
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self):
         self._drain()
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, active=False
+            self.plugin.settings.device_id, monitoring_active=False
         )

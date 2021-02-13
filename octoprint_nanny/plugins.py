@@ -19,22 +19,26 @@ import time
 import requests
 
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
+
+
 def configure_logger(logger):
     file_logging_handler = CleaningTimedRotatingFileHandler(
-    os.path.expanduser("~/.octoprint/logs/plugin_octoprint_nanny.log"),
-    when="D",
-    backupCount=7,
+        os.path.expanduser("~/.octoprint/logs/plugin_octoprint_nanny.log"),
+        when="D",
+        backupCount=7,
     )
     file_logging_handler.setFormatter(
-        logging.Formatter("%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s")
+        logging.Formatter(
+            "%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s"
+        )
     )
     file_logging_handler.setLevel(logging.DEBUG)
 
-
-
     logger.addHandler(file_logging_handler)
-    logger.propagate = False
+
+
 configure_logger(logger)
 
 import beeline
@@ -492,19 +496,20 @@ class OctoPrintNannyPlugin(
     def on_shutdown(self):
         logger.info("Processing shutdown event")
         asyncio.run_coroutine_threadsafe(
-            self.worker_manager.shutdown(),
-            self.worker_manager.loop
+            self.worker_manager.shutdown(), self.worker_manager.loop
         ).result()
-        self.worker_manager.shutdown()
 
-    @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
-    def on_after_startup(self):
-        pass
+    def on_startup(self, *args, **kwargs):
+        logger.info("OctoPrint Nanny starting up")
+
+    def on_after_startup(self, *args, **kwargs):
+        logger.info("OctoPrint Nanny startup complete")
 
     def on_event(self, event_type, event_data):
         # shutdown event is handled in .on_shutdown
         if event_type == Events.SHUTDOWN:
             return
+        logger.debug(f"Putting event_type={event_type} into mqtt_send_queue")
         self.worker_manager.mqtt_send_queue.put_nowait(
             {"event_type": event_type, "event_data": event_data}
         )
