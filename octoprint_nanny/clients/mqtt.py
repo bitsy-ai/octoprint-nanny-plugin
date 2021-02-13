@@ -9,6 +9,7 @@ import json
 import io
 import random
 import paho.mqtt.client as mqtt
+from typing import List
 
 import beeline
 
@@ -16,10 +17,10 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 
-JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 600)
+JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 1380)
 GCP_PROJECT_ID = os.environ.get("OCTOPRINT_NANNY_GCP_PROJECT_ID", "print-nanny")
 MQTT_BRIDGE_HOSTNAME = os.environ.get(
-    "OCTOPRINT_NANNY_MQTT_BRIDGE_HOSTNAME", "mqtt.googleapis.com"
+    "OCTOPRINT_NANNY_MQTT_BRIDGE_HOSTNAME", "mqtt.2030.ltsapis.goog"
 )
 
 MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
@@ -54,8 +55,8 @@ class MQTTClient:
         device_id: str,
         device_cloudiot_id: str,
         private_key_file: str,
-        ca_certs,
-        algorithm="RS256",
+        ca_cert: str,
+        algorithm="ES256",
         mqtt_receive_queue=None,
         mqtt_bridge_hostname=MQTT_BRIDGE_HOSTNAME,
         mqtt_bridge_port=MQTT_BRIDGE_PORT,
@@ -69,7 +70,6 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=IOT_DEVICE_REGISTRY_REGION,
         registry_id=IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLSv1_2,
         keepalive=900,
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
@@ -84,19 +84,19 @@ class MQTTClient:
         self.project_id = project_id
         self.mqtt_bridge_hostname = mqtt_bridge_hostname
         self.mqtt_bridge_port = mqtt_bridge_port
-        self.ca_certs = ca_certs
         self.region = region
         self.registry_id = registry_id
         self.keepalive = keepalive
 
-        self.tls_version = tls_version
+        self.ca_cert = ca_cert
+
         self.region = region
         self.algorithm = algorithm
 
         self.mqtt_receive_queue = mqtt_receive_queue
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-        self.client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311)
+        self.client = mqtt.Client(client_id=client_id)
         logger.info(f"Initializing MQTTClient from {locals()}")
 
         # register callback functions
@@ -130,9 +130,6 @@ class MQTTClient:
         self.mqtt_bounding_boxes_topic = os.path.join(
             self.mqtt_default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
         )
-
-        # configure tls
-        self.client.tls_set(ca_certs=ca_certs, tls_version=tls_version)
 
     ###
     #   callbacks
@@ -245,6 +242,12 @@ class MQTTClient:
 
     @beeline.traced("MQTTClient.connect")
     def connect(self):
+        # configure tls
+        self.client.tls_set(
+            ca_certs=self.ca_cert,
+            ciphers="ECDHE-RSA-AES128-GCM-SHA256",
+            tls_version=ssl.PROTOCOL_TLS,
+        )
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
@@ -307,17 +310,15 @@ def create_jwt(
      algorithm: The encryption algorithm to use. Either 'RS256' or 'ES256'
     Returns:
         A JWT generated from the given project_id and private key, which
-        expires in 20 minutes. After 20 minutes, your client will be
+        expires in JWT_EXPIRES_MINUTES minutes. After JWT_EXPIRES_MINUTES minutes, your client will be
         disconnected, and a new JWT will have to be generated.
     Raises:
         ValueError: If the private_key_file does not contain a known key.
     """
-    _jwt = jwt.JWT()
 
-    exp = jwt.utils.get_int_from_datetime(
-        datetime.utcnow() + timedelta(minutes=jwt_expires_minutes)
-    )
-    iat = jwt.utils.get_int_from_datetime(datetime.utcnow())
+    exp = datetime.utcnow() + timedelta(minutes=jwt_expires_minutes)
+
+    iat = datetime.utcnow()
     token = {
         # The time that the token was issued at
         "iat": iat,
@@ -329,7 +330,7 @@ def create_jwt(
 
     # Read the private key file.
     with open(private_key_file, "rb") as f:
-        signing_key = jwt.jwk_from_pem(f.read())
+        signing_key = f.read()
 
     logger.info(
         "Creating JWT using {} from private key file {}".format(
@@ -337,4 +338,4 @@ def create_jwt(
         )
     )
 
-    return _jwt.encode(token, signing_key, alg=algorithm)
+    return jwt.encode(token, signing_key, algorithm=algorithm)

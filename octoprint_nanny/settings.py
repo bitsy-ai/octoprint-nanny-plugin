@@ -98,8 +98,8 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("device_public_key")
 
     @property
-    def gcp_root_ca(self):
-        return self.plugin.get_setting("gcp_root_ca")
+    def ca_cert(self):
+        return self.plugin.get_setting("ca_cert")
 
     @property
     def api_url(self):
@@ -148,9 +148,13 @@ class PluginSettingsMemoize:
         return self._rest_client
 
     def test_mqtt_settings(self):
-        if self.device_cloudiot_id is None or self.device_private_key is None:
+        if (
+            self.device_cloudiot_id is None
+            or self.device_private_key is None
+            or self.ca_cert is None
+        ):
             raise PluginSettingsRequired(
-                f"Received None for device_cloudiot_id={self.device_cloudiot_id} or private_key_file={self.device_private_key}"
+                f"Received None for device_cloudiot_id={self.device_cloudiot_id} or private_key_file={self.device_private_key} or ca_cert={self.ca_cert}"
             )
         return True
 
@@ -162,7 +166,7 @@ class PluginSettingsMemoize:
                 device_id=self.device_id,
                 device_cloudiot_id=self.device_cloudiot_id,
                 private_key_file=self.device_private_key,
-                ca_certs=self.gcp_root_ca,
+                ca_cert=self.ca_cert,
                 mqtt_receive_queue=self.mqtt_receive_queue,
                 trace_context=self.get_device_metadata(),
             )

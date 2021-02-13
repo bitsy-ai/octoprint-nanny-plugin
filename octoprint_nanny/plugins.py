@@ -14,6 +14,7 @@ import queue
 import re
 import threading
 from datetime import datetime
+from pathlib import Path
 
 import time
 import requests
@@ -71,9 +72,10 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
 
 DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 8883)
 DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
-    "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.googleapis.com"
+    "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.2030.ltsapis.goog"
 )
-DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/roots.pem"
+DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gtsltsr/gtsltsr.crt"
+BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
 DEFAULT_SETTINGS = dict(
     auth_token=None,
@@ -84,7 +86,8 @@ DEFAULT_SETTINGS = dict(
     monitoring_active=False,
     mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
     mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
-    mqtt_bridge_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
+    mqtt_bridge_primary_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
+    mqtt_bridge_backup_root_certificate_url=BACKUP_MQTT_ROOT_CERTIFICATE_URL,
     user_id=None,
     user_url=None,
     device_url=None,
@@ -106,7 +109,7 @@ DEFAULT_SETTINGS = dict(
     api_url=DEFAULT_API_URL,
     ws_url=DEFAULT_WS_URL,
     snapshot_url=DEFAULT_SNAPSHOT_URL,
-    gcp_root_ca=None,
+    ca_cert=None,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -254,27 +257,21 @@ class OctoPrintNannyPlugin(
             self.get_plugin_data_folder(), "private_key.pem"
         )
 
-        async with aiofiles.open(pubkey_filename, "w+", encoding="utf-8") as f:
+        async with aiofiles.open(pubkey_filename, "w+") as f:
             await f.write(device.public_key)
 
-        async with aiofiles.open(pubkey_filename, "r", encoding="utf-8") as f:
+        async with aiofiles.open(pubkey_filename, "rb") as f:
             content = await f.read()
-            if (
-                hashlib.sha256(content.encode("utf-8")).hexdigest()
-                != device.public_key_checksum
-            ):
+            if hashlib.sha256(content).hexdigest() != device.public_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        async with aiofiles.open(privkey_filename, "w+", encoding="utf-8") as f:
+        async with aiofiles.open(privkey_filename, "w+") as f:
             await f.write(device.private_key)
-        async with aiofiles.open(privkey_filename, "r", encoding="utf-8") as f:
+        async with aiofiles.open(privkey_filename, "rb") as f:
             content = await f.read()
-            if (
-                hashlib.sha256(content.encode("utf-8")).hexdigest()
-                != device.private_key_checksum
-            ):
+            if hashlib.sha256(content).hexdigest() != device.private_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
                 )
@@ -289,19 +286,84 @@ class OctoPrintNannyPlugin(
     @beeline.traced("OctoPrintNannyPlugin._download_root_certificates")
     @beeline.traced_thread
     async def _download_root_certificates(self):
-        root_ca_filename = os.path.join(
-            self.get_plugin_data_folder(), "gcp_root_ca.pem"
-        )
 
-        root_ca_url = self._settings.get(["mqtt_bridge_root_certificate_url"])
+        ca_path = os.path.join(
+            self.get_plugin_data_folder(),
+            "cacerts",
+        )
+        Path(ca_path).mkdir(parents=True, exist_ok=True)
+
+        primary_root_ca_filename = os.path.join(ca_path, "primary_root_ca.crt")
+
+        backup_root_ca_filename = os.path.join(ca_path, "backup_root_ca.crt")
+
+        primary_ca_url = self._settings.get(
+            ["mqtt_bridge_primary_root_certificate_url"]
+        )
+        backup_ca_url = self._settings.get(["mqtt_bridge_backup_root_certificate_url"])
 
         async with aiohttp.ClientSession() as session:
             logger.info(f"Downloading GCP root certificates")
-            async with session.get(root_ca_url) as res:
-                root_ca = await res.text()
-        with io.open(root_ca_filename, "w+", encoding="utf-8") as f:
-            f.write(root_ca)
-        self._settings.set(["gcp_root_ca"], root_ca_filename)
+            async with session.get(primary_ca_url) as res:
+                root_ca = await res.read()
+                logger.info(
+                    f"Finished downloading primary root CA from {primary_ca_url}"
+                )
+            async with session.get(backup_ca_url) as res:
+                backup_ca = await res.read()
+                logger.info(f"Finished downloading backup root CA from {backup_ca_url}")
+
+        async with aiofiles.open(primary_root_ca_filename, "wb+") as f:
+            await f.write(root_ca)
+        async with aiofiles.open(backup_root_ca_filename, "wb+") as f:
+            await f.write(backup_ca)
+
+        self._settings.set(["ca_cert"], primary_root_ca_filename)
+        self._settings.set(["backup_ca_cert"], backup_root_ca_filename)
+
+    @beeline.traced("OctoPrintNannyPlugin._write_ca_certs")
+    @beeline.traced_thread
+    async def _write_ca_certs(self, device):
+
+        ca_path = os.path.join(
+            self.get_plugin_data_folder(),
+            "cacerts",
+        )
+        Path(ca_path).mkdir(parents=True, exist_ok=True)
+
+        primary_ca_filename = os.path.join(ca_path, "primary_ca.pem")
+
+        backup_ca_filename = os.path.join(ca_path, "backup_ca.pem")
+
+        async with aiofiles.open(primary_ca_filename, "w+") as f:
+            await f.write(device.ca_certs["primary"])
+
+        async with aiofiles.open(primary_ca_filename, "rb") as f:
+            content = await f.read()
+
+            if (
+                hashlib.sha256(content).hexdigest()
+                != device.ca_certs["primary_checksum"]
+            ):
+                raise octoprint_nanny.exceptions.FileIntegrity(
+                    f"The checksum of file {primary_ca_filename} did not match the expected checksum value. Please try again!"
+                )
+
+        async with aiofiles.open(backup_ca_filename, "w+") as f:
+            await f.write(device.ca_certs["backup"])
+
+        async with aiofiles.open(backup_ca_filename, "rb") as f:
+            content = await f.read()
+            if (
+                hashlib.sha256(content).hexdigest()
+                != device.ca_certs["backup_checksum"]
+            ):
+                raise octoprint_nanny.exceptions.FileIntegrity(
+                    f"The checksum of file {backup_ca_filename} did not match the expected checksum value. Please try again!"
+                )
+
+        self._settings.set(["ca_cert"], primary_ca_filename)
+        self._settings.set(["backup_ca_cert"], backup_ca_filename)
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
     @beeline.traced_thread
@@ -347,7 +409,8 @@ class OctoPrintNannyPlugin(
         )
 
         await self._write_keypair(device)
-        await self._download_root_certificates()
+        await self._write_ca_certs(device)
+        # await self._download_root_certificates()
 
         self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_url"], device.url)
@@ -645,7 +708,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
-                self._settings.get(["gcp_root_ca"]) is None,
+                self._settings.get(["ca_cert"]) is None,
             ]
         )
 
