@@ -111,8 +111,8 @@ class WorkerManager:
         """
 
         callbacks = {
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START: self.monitoring_manager.start,
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: self.monitoring_manager.stop,
+            Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START: self.monitoring_manager.start,
+            Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP: self.monitoring_manager.stop,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(callbacks)
         logger.info(f"Registered callbacks {callbacks} on publisher worker")

@@ -465,13 +465,13 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                 payload={"image": base64.b64encode(res.content)},
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
+            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START)
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
     @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
     def stop_predict(self):
-        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP)
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.register_device")
@@ -541,18 +541,25 @@ class OctoPrintNannyPlugin(
 
     def register_custom_events(self):
         return [
+            "calibration_update",
             "predict_done",
             "monitoring_start",
             "monitoring_stop",
-            "snapshot",
             "device_register_start",
             "device_register_done",
             "device_register_failed",
             "printer_profile_sync_start",
             "printer_profile_sync_done",
             "printer_profile_sync_failed",
-            "worker_stop",
-            "worker_start",
+            # remote commands via RemoteControlCommand.CommandChoices (webapp)
+            "rc_print_start",
+            "rc_print_stop",
+            "rc_print_pause",
+            "rc_print_resume",
+            "rc_snapshot",
+            "rc_move_nozzle",
+            "rc_monitoring_start",
+            "rc_monitoring_stop",
         ]
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
@@ -641,10 +648,6 @@ class OctoPrintNannyPlugin(
             ["mqtt_bridge_certificate_url"]
         )
 
-        if prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url:
-            asyncio.run_coroutine_threadsafe(
-                self._download_root_certificates(), self.worker_manager.loop
-            )
         if (
             prev_monitoring_fpm != new_monitoring_fpm
             or prev_calibration != new_calibration
@@ -652,7 +655,10 @@ class OctoPrintNannyPlugin(
             logger.info(
                 "Change in frames per minute or calibration detected, applying new settings"
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_OFFLINE)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE,
+                payload={"calibration"},
+            )
             self.worker_manager.apply_monitoring_settings()
 
         if prev_auth_token != new_auth_token:
