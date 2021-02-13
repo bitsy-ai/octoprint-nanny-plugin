@@ -50,7 +50,11 @@ class MQTTManager:
             self.halt, self.mqtt_receive_queue, self.plugin
         )
         self.client_worker = MQTTClientWorker(self.halt, self.plugin)
-        self._workers = []
+        self._workers = [
+            self.client_worker,
+            self.publisher_worker,
+            self.subscriber_worker,
+        ]
         self._worker_threads = []
 
     @beeline.traced("MQTTManager._drain")
@@ -76,19 +80,8 @@ class MQTTManager:
     @beeline.traced("MQTTManager._reset")
     def _reset(self):
         self.halt = threading.Event()
-        self.publisher_worker = MQTTPublisherWorker(
-            self.halt, self.mqtt_send_queue, self.plugin
-        )
-        self.subscriber_worker = MQTTSubscriberWorker(
-            self.halt, self.mqtt_receive_queue, self.plugin
-        )
-        self.client_worker = MQTTClientWorker(self.halt, self.plugin)
-
-        self._workers = [
-            self.client_worker,
-            self.publisher_worker,
-            self.subscriber_worker,
-        ]
+        for worker in self._workers:
+            worker.halt = self.halt
         self._worker_threads = []
 
     @beeline.traced("MQTTManager.start")
@@ -99,7 +92,7 @@ class MQTTManager:
         logger.info("MQTTManager.start was called")
         self._reset()
         for worker in self._workers:
-            thread = threading.Thread(target=worker.run)
+            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
@@ -126,7 +119,8 @@ class MQTTClientWorker:
 
         try:
             return self.plugin.settings.mqtt_client.run(self.halt)
-        except PluginSettingsRequired:
+        except PluginSettingsRequired as e:
+            logger.debug(e)
             pass
         logger.warning("MQTTClientWorker will exit soon")
 
@@ -214,10 +208,7 @@ class MQTTPublisherWorker:
                 {"name": "WorkerManager.queue.coro_get"}
             )
 
-            try:
-                event = self.queue.get_nowait()
-            except queue.Empty:
-                return
+            event = await self.queue.coro_get()
 
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
@@ -231,11 +222,14 @@ class MQTTPublisherWorker:
                 )
                 return
 
+            logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
+
             if event_type == BOUNDING_BOX_PREDICT_EVENT:
                 await self._publish_bounding_box_telemetry(event)
                 return
 
-            if self.plugin.settings.event_in_tracked_telemetry(event_type):
+            tracked = await self.plugin.settings.event_in_tracked_telemetry(event_type)
+            if tracked:
                 await self._publish_octoprint_event_telemetry(event)
             else:
                 if event_type not in self.MUTED_EVENTS:
@@ -243,6 +237,9 @@ class MQTTPublisherWorker:
                 return
 
             handler_fns = self._callbacks.get(event_type)
+            if handler_fns is None:
+                logger.info(f"No {self.__class__} handler registered for {event_type}")
+                return
             for handler_fn in handler_fns:
                 if handler_fn:
                     if inspect.isawaitable(handler_fn):
@@ -256,13 +253,13 @@ class MQTTPublisherWorker:
         """
         Publishes telemetry events via HTTP
         """
-        logger.info("Started loop_forever")
+        logger.info(f"Started {self.__class__}.loop_forever ")
         while not self.halt.is_set():
             try:
                 await self._loop()
             except PluginSettingsRequired as e:
-                pass
-        logging.info("Exiting soon loop_forever")
+                logger.debug(e)
+        logger.info(f"Exiting soon {self.__class__}.loop_forever")
 
 
 class MQTTSubscriberWorker:
@@ -295,13 +292,13 @@ class MQTTSubscriberWorker:
         return self._callbacks
 
     async def loop_forever(self):
-        logger.info("Started loop_forever")
+        logger.info(f"Started {self.__class__}.loop_forever")
         while not self.halt.is_set():
             try:
                 await self._loop()
-            except PluginSettingsRequired:
-                pass
-        logger.info("Exiting soon MQTTSubscribeWorker.loop_forever")
+            except PluginSettingsRequired as e:
+                logger.debug(e)
+        logger.info(f"Exiting soon {self.__class__}.loop_forever")
 
     @beeline.traced("MQTTSubscriberWorker._remote_control_snapshot")
     async def _remote_control_snapshot(self, command_id):
@@ -367,10 +364,8 @@ class MQTTSubscriberWorker:
             {"name": "WorkerManager.queue.coro_get"}
         )
 
-        try:
-            payload = self.queue.get_nowait()
-        except queue.Empty:
-            return
+        payload = await self.queue.coro_get()
+
         self._honeycomb_tracer.add_context(dict(event=payload))
         self._honeycomb_tracer.finish_span(span)
 

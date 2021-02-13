@@ -21,7 +21,7 @@ import sys
 import beeline
 from PIL import Image as PImage
 import requests
-import tensorflow as tf
+import tflite_runtime.interpreter as tflite
 
 from octoprint.events import Events
 from octoprint_nanny.utils.visualization import (
@@ -80,7 +80,7 @@ class ThreadLocalPredictor(threading.local):
             self.base_path, model_version, metadata_filename
         )
 
-        self.tflite_interpreter = tf.lite.Interpreter(model_path=self.model_path)
+        self.tflite_interpreter = tflite.Interpreter(model_path=self.model_path)
         self.tflite_interpreter.allocate_tensors()
         self.input_details = self.tflite_interpreter.get_input_details()
         self.output_details = self.tflite_interpreter.get_output_details()
@@ -109,9 +109,6 @@ class ThreadLocalPredictor(threading.local):
 
     def preprocess(self, image: PImage):
         image = np.asarray(image)
-        image = tf.convert_to_tensor(image, dtype=tf.uint8)
-        image = tf.image.resize(image, self.input_shape[1:-1], method="nearest")
-        image = image[tf.newaxis, ...]
         return image
 
     def write_image(self, outfile: str, image_np: np.ndarray):
@@ -404,6 +401,7 @@ class PredictWorker:
                     pool, _get_predict_bytes, msg
                 )
                 ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
+                logger.info(f"Firing {Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE}")
                 self._plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
                     payload={"image": base64.b64encode(viz_buffer.getvalue())},
