@@ -371,17 +371,9 @@ class PredictWorker:
         mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
         # del mqtt_msg["original_image"]
-
-        calibration = (
-            self._calibration
-            if self._calibration is None
-            else self._calibration.get("coords")
-        )
         mqtt_msg.update(
             {
-                "calibration": calibration,
                 "event_type": "bounding_box_predict",
-                "fpm": self._fpm,
             }
         )
         mqtt_msg.update(prediction)
