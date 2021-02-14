@@ -113,6 +113,7 @@ class WorkerManager:
         callbacks = {
             Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START: self.monitoring_manager.start,
             Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP: self.monitoring_manager.stop,
+            Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE: self.on_calibration_update,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(callbacks)
         logger.info(f"Registered callbacks {callbacks} on publisher worker")
@@ -167,6 +168,9 @@ class WorkerManager:
         await self.mqtt_manager.stop()
         self._honeycomb_tracer.on_shutdown()
 
+    ##
+    #  Event handlers
+    ##
     @beeline.traced("WorkerManager.on_print_start")
     async def on_print_start(self, event_type, event_data, **kwargs):
         logger.info(f"on_print_start called for {event_type} with data {event_data}")
@@ -207,3 +211,22 @@ class WorkerManager:
         if self.plugin.get_setting("auto_start"):
             logger.info("Print Nanny monitoring is set to auto-start")
             self.monitoring_manager.start()
+
+    async def on_calibration_update(self, event_type, event_data, **kwargs):
+        logger.info(
+            f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
+        )
+        await self.apply_monitoring_settings()
+        device_calibration = (
+            await self.plugin.settings.rest_client.update_or_create_device_calibration(
+                self.plugin.settings.device_id,
+                {
+                    "x0": self.plugin.get_setting("calibrate_x0"),
+                    "x1": self.plugin.get_setting("calibrate_x1"),
+                    "y0": self.plugin.get_setting("calibrate_y0"),
+                    "y1": self.plugin.get_setting("calibrate_y1"),
+                },
+                self.plugin.settings.calibration,
+            )
+        )
+        logger.info(f"Device calibration upsert succeeded {device_calibration}")

@@ -64,7 +64,7 @@ class MonitoringManager:
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self):
+    async def start(self, **kwargs):
 
         self._reset()
 
@@ -79,7 +79,7 @@ class MonitoringManager:
         )
 
     @beeline.traced("MonitoringManager.stop")
-    async def stop(self):
+    async def stop(self, **kwargs):
         self._drain()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False

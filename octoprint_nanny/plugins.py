@@ -541,17 +541,16 @@ class OctoPrintNannyPlugin(
 
     def register_custom_events(self):
         return [
+            # events from octoprint plugin
             "calibration_update",
             "predict_done",
-            "monitoring_start",
-            "monitoring_stop",
             "device_register_start",
             "device_register_done",
             "device_register_failed",
             "printer_profile_sync_start",
             "printer_profile_sync_done",
             "printer_profile_sync_failed",
-            # remote commands via RemoteControlCommand.CommandChoices (webapp)
+            # events from RemoteControlCommand.CommandChoices (webapp)
             "rc_print_start",
             "rc_print_stop",
             "rc_print_pause",
@@ -659,7 +658,6 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE,
                 payload={"calibration"},
             )
-            self.worker_manager.apply_monitoring_settings()
 
         if prev_auth_token != new_auth_token:
             logger.info("Change in auth detected, applying new settings")
