@@ -231,21 +231,22 @@ class MQTTPublisherWorker:
             tracked = await self.plugin.settings.event_in_tracked_telemetry(event_type)
             if tracked:
                 await self._publish_octoprint_event_telemetry(event)
-            else:
-                if event_type not in self.MUTED_EVENTS:
-                    logger.warning(f"Discarding {event_type} with payload {event}")
-                return
 
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
-                logger.info(f"No {self.__class__} handler registered for {event_type}")
+                if event_type not in self.MUTED_EVENTS:
+                    logger.info(
+                        f"No {self.__class__} handler registered for {event_type}"
+                    )
                 return
             for handler_fn in handler_fns:
-                if handler_fn:
-                    if inspect.isawaitable(handler_fn):
-                        await handler_fn(**event)
-                    else:
-                        handler_fn(**event)
+                logger.debug(f"MQTTPublisherWorker calling handler_fn={handler_fn}")
+                if inspect.isawaitable(handler_fn) or inspect.iscoroutinefunction(
+                    handler_fn
+                ):
+                    await handler_fn(**event)
+                else:
+                    handler_fn(**event)
         except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"REST client raised exception {e}", exc_info=True)
 

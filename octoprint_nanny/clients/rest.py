@@ -3,7 +3,7 @@ import logging
 import urllib
 import hashlib
 import backoff
-
+import json
 import beeline
 
 from octoprint.events import Events
@@ -21,6 +21,7 @@ from print_nanny_client.models.printer_profile_request import PrinterProfileRequ
 from print_nanny_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
 )
+from octoprint_nanny.utils.encoder import NumpyEncoder
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
@@ -294,3 +295,25 @@ class RestAPIClient:
                 request
             )
             return printer_profile
+
+    @beeline.traced("RestAPIClient.update_or_create_device_calibration")
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
+    async def update_or_create_device_calibration(
+        self, octoprint_device_id, coordinates, mask
+    ):
+        mask = json.dumps(mask, cls=NumpyEncoder)
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = print_nanny_client.MlOpsApi(api_client=api_client)
+
+            request = print_nanny_client.DeviceCalibrationRequest(
+                octoprint_device=octoprint_device_id, coordinates=coordinates, mask=mask
+            )
+            device_calibration = await api_instance.device_calibration_update_or_create(
+                request
+            )
+            return device_calibration
