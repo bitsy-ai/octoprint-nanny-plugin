@@ -46,14 +46,10 @@ class PrintNannyMonitoringFrameMessage(TypedDict):
     data: str
 
 
-class RawImageData(TypedDict):
-    original_image: str
-
-
 class RawImageMessage(TypedDict):
     ts: datetime
     event_type: str = RAW_IMAGE_PREDICT_EVENT
-    data: RawImageData
+    data: str
 
 
 class BoundingBoxMessage(TypedDict):
@@ -160,42 +156,36 @@ class MonitoringWorker:
         loop.close()
 
     @beeline.traced(name="MonitoringWorker._create_active_learning_msgs")
-    def _create_active_learning_msgs(self, image_msg):
+    def _create_active_learning_msgs(
+        self, now, image
+    ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
 
         # send annotated image bytes to print nanny ui ws
-        ws_msg = image_msg.copy()
-        # send only annotated image data
-        # del ws_msg["original_image"]
-        ws_msg.update(
-            {
-                "event_type": MONITORING_FRAME_EVENT,
-                "frame": viz_buffer,
-            }
+        b64_image = base64.b64encode(image.getvalue())
+        ws_msg = PrintNannyMonitoringFrameMessage(
+            ts=now,
+            event_type=MONITORING_FRAME_EVENT,
+            data=b64_image,
         )
 
-        mqtt_msg = msg.copy()
         # publish bounding box prediction to mqtt telemetry topic
-        # del mqtt_msg["original_image"]
-        mqtt_msg.update(
-            {
-                "event_type": BOUNDING_BOX_PREDICT_EVENT,
-            }
+        mqtt_msg = BoundingBoxMessage(
+            ts=now, event_type=RAW_IMAGE_PREDICT_EVENT, data=b64_image
         )
-        mqtt_msg.update(prediction)
 
         return ws_msg, mqtt_msg
 
     async def _active_learning_loop(self, loop, pool):
         now = datetime.now(pytz.utc).timestamp()
-        image_msg = await self.load_url_buffer()
+        image = await self.load_url_buffer()
 
-        ws_msg, mqtt_msg = self._create_active_learning_msgs(image_msg)
+        ws_msg, mqtt_msg = self._create_active_learning_msgs(now, image)
+
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-            payload={"image": base64.b64encode(msg.getvalue())},
+            payload={"image": ws_msg["data"]},
         )
-        if self._plugin.settings.webcam_upload:
-            self._pn_ws_queue.put_nowait(ws_msg)
+        self._pn_ws_queue.put_nowait(ws_msg)
         self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._create_lite_msgs")
