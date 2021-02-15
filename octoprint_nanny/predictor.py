@@ -113,7 +113,7 @@ class ThreadLocalPredictor(threading.local):
         bb2 - detection box
         """
         detection_boxes = prediction["detection_boxes"]
-        detection_scores = (prediction["detection_scores"],)
+        detection_scores = prediction["detection_scores"]
         detection_classes = prediction["detection_classes"]
 
         aou = np.zeros(len(detection_boxes))

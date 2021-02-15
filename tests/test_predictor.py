@@ -66,7 +66,7 @@ def test_area_of_intersection_no_overlap_1():
     prediction = Prediction(
         detection_boxes=detection_boxes,
         detection_classes=detection_classes,
-        detectoin_scores=detection_scores,
+        detection_scores=detection_scores,
         num_detections=len(detection_classes),
     )
 
