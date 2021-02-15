@@ -111,7 +111,7 @@ DEFAULT_SETTINGS = dict(
     snapshot_url=DEFAULT_SNAPSHOT_URL,
     ca_cert=None,
     auto_start=True,
-    share_camera=True,
+    webcam_upload=True,
     monitoring_mode=MonitoringModes.ACTIVE_LEARNING.value,
 )
 
@@ -465,7 +465,7 @@ class OctoPrintNannyPlugin(
         res.raise_for_status()
         if res.status_code == 200:
             self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+                Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
                 payload={"image": base64.b64encode(res.content)},
             )
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START)
@@ -545,7 +545,7 @@ class OctoPrintNannyPlugin(
     def register_custom_events(self):
         return [
             # events from octoprint plugin
-            "predict_done",
+            "frame_done",
             "device_register_start",
             "device_register_done",
             "device_register_failed",

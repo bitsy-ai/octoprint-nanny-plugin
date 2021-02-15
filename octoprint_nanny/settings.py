@@ -3,8 +3,8 @@ from datetime import datetime
 import logging
 import pytz
 
-from octoprint_nanny.predictor import (
-    PredictWorker,
+from octoprint_nanny.workers.monitoring import (
+    MonitoringWorker,
 )
 
 import beeline
@@ -24,11 +24,11 @@ class PluginSettingsMemoize:
         self.plugin = plugin
         self.mqtt_receive_queue = mqtt_receive_queue
         # stateful clients and computed settings that require re-initialization when settings change
-        self._calibration = None
         self._mqtt_client = None
         self._telemetry_events = None
         self._device_info = None
         self._rest_client = None
+        self._calibration = None
 
         self.environment = {}
 
@@ -119,7 +119,7 @@ class PluginSettingsMemoize:
     @property
     def calibration(self):
         if self._calibration is None:
-            self._calibration = PredictWorker.calc_calibration(
+            self._calibration = MonitoringWorker.calc_calibration(
                 self.plugin.get_setting("calibrate_x0"),
                 self.plugin.get_setting("calibrate_y0"),
                 self.plugin.get_setting("calibrate_x1"),

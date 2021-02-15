@@ -53,9 +53,6 @@ class WorkerManager:
 
         self.monitoring_active = False
 
-        # images streamed to octoprint front-end over websocket
-        octo_ws_queue = self.manager.AioQueue()
-        self.octo_ws_queue = octo_ws_queue
         # images streamed to webapp asgi over websocket
         pn_ws_queue = self.manager.AioQueue()
         self.pn_ws_queue = pn_ws_queue
@@ -71,7 +68,6 @@ class WorkerManager:
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
-            octo_ws_queue,
             pn_ws_queue,
             mqtt_send_queue,
             plugin,
