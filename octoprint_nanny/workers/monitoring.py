@@ -179,7 +179,8 @@ class MonitoringWorker:
             Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
             payload={"image": base64.b64encode(viz_buffer.getvalue())},
         )
-        self._pn_ws_queue.put_nowait(ws_msg)
+        if self._plugin.settings.webcam_upload:
+            self._pn_ws_queue.put_nowait(ws_msg)
         self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
@@ -199,7 +200,6 @@ class MonitoringWorker:
         """
         logger.info("Started MonitoringWorker.consumer thread")
         loop = asyncio.get_running_loop()
-        logger.info(f"Initialized predictor {predictor}")
         with concurrent.futures.ProcessPoolExecutor() as pool:
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
