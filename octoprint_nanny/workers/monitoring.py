@@ -215,8 +215,6 @@ class MonitoringWorker:
             ts=now, event_type=BOUNDING_BOX_PREDICT_EVENT, data=prediction
         )
 
-        del mqtt_msg["data"]["image_tensor"]
-
         return ws_msg, mqtt_msg
 
     async def _lite_loop(self, loop, pool):

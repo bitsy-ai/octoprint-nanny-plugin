@@ -193,7 +193,6 @@ class ThreadLocalPredictor(threading.local):
         ma = np.ma.masked_greater(prediction["detection_scores"], self.min_score_thresh)
         num_detections = np.count_nonzero(ma.mask)
         return Prediction(
-            image_tensor=prediction["image_tensor"],
             detection_boxes=prediction["detection_boxes"][ma.mask],
             detection_classes=prediction["detection_classes"][ma.mask],
             detection_scores=prediction["detection_scores"][ma.mask],
@@ -210,7 +209,6 @@ class ThreadLocalPredictor(threading.local):
             num_detections = np.count_nonzero(included_mask)
             return (
                 Prediction(
-                    image_tensor=prediction["image_tensor"],
                     detection_boxes=prediction["detection_boxes"][included_mask],
                     detection_scores=prediction["detection_scores"][included_mask],
                     detection_classes=prediction["detection_classes"][included_mask],
@@ -240,7 +238,6 @@ class ThreadLocalPredictor(threading.local):
         num_detections = np.squeeze(num_detections, axis=0)
 
         return Prediction(
-            image_tensor=tensor,
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,

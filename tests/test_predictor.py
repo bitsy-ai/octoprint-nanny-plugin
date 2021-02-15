@@ -19,10 +19,14 @@ def test_area_of_intersection_overlap():
     detection_scores = np.array([1])
 
     detection_classes = np.array([4])
-
-    percent_area = predictor.percent_intersection(
-        detection_boxes, detection_scores, detection_classes, calibration_box
+    prediction = Prediction(
+        detection_boxes=detection_boxes,
+        detection_scores=detection_scores,
+        detection_classes=detection_classes,
+        num_detections=len(detection_boxes),
     )
+
+    percent_area = predictor.percent_intersection(prediction, calibration_box)
     expected = (0.5 ** 2) / (0.6 ** 2)
     np.testing.assert_almost_equal(percent_area[0], expected)
 
@@ -37,9 +41,14 @@ def test_area_of_intersection_no_overlap_0():
 
     detection_classes = np.array([4])
 
-    percent_area = predictor.percent_intersection(
-        detection_boxes, detection_scores, detection_classes, calibration_box
+    prediction = Prediction(
+        detection_boxes=detection_boxes,
+        detection_scores=detection_scores,
+        detection_classes=detection_classes,
+        num_detections=len(detection_classes),
     )
+
+    percent_area = predictor.percent_intersection(prediction, calibration_box)
     expected = 0.0
     np.testing.assert_almost_equal(percent_area[0], expected)
 
@@ -54,9 +63,14 @@ def test_area_of_intersection_no_overlap_1():
 
     detection_classes = np.array([4])
 
-    percent_area = predictor.percent_intersection(
-        detection_boxes, detection_scores, detection_classes, calibration_box
+    prediction = Prediction(
+        detection_boxes=detection_boxes,
+        detection_classes=detection_classes,
+        detectoin_scores=detection_scores,
+        num_detections=len(detection_classes),
     )
+
+    percent_area = predictor.percent_intersection(prediction, calibration_box)
     expected = 0.0
     np.testing.assert_almost_equal(percent_area[0], expected)
 
@@ -72,8 +86,13 @@ def test_area_of_intersection_prediction_contained_0():
 
     detection_classes = np.array([4])
 
-    percent_area = predictor.percent_intersection(
-        detection_boxes, detection_scores, detection_classes, calibration_box
+    prediction = Prediction(
+        detection_boxes=detection_boxes,
+        detection_classes=detection_classes,
+        detection_scores=detection_scores,
+        num_detections=len(detection_classes),
     )
+
+    percent_area = predictor.percent_intersection(prediction, calibration_box)
     expected = 1.0
     np.testing.assert_almost_equal(percent_area[0], expected)
