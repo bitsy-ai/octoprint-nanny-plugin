@@ -8,6 +8,8 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringWorker,
     MonitoringManager,
     MonitoringModes,
+    BOUNDING_BOX_PREDICT_EVENT,
+    RAW_IMAGE_PREDICT_EVENT,
 )
 
 
@@ -27,8 +29,9 @@ def mock_response():
 @pytest.mark.asyncio
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
+@patch("octoprint_nanny.workers.monitoring.base64")
 async def test_share_lite_webcam_enabled(
-    mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -51,18 +54,29 @@ async def test_share_lite_webcam_enabled(
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await predict_worker._loop(loop, pool)
 
-    assert predict_worker._plugin._event_bus.fire.called
-    assert predict_worker._pn_ws_queue.put_nowait.called
-    assert predict_worker._mqtt_send_queue.put_nowait.called
+    predict_worker._plugin._event_bus.fire.assert_called_once_with(
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
+        payload={"image": mock_base64.b64encode.return_value},
+    )
+    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
+
+    kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
+    _, args, kwargs = kall
+
+    assert args[0].get("event_type") == BOUNDING_BOX_PREDICT_EVENT
 
 
 @pytest.mark.asyncio
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
+@patch("octoprint_nanny.workers.monitoring.base64")
 async def test_share_lite_webcam_disabled(
-    mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
+
+    payload = {}
 
     plugin = mocker.Mock()
 
@@ -83,6 +97,14 @@ async def test_share_lite_webcam_disabled(
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await predict_worker._loop(loop, pool)
 
-    assert predict_worker._plugin._event_bus.fire.called
-    assert predict_worker._pn_ws_queue.put_nowait.called is False
-    assert predict_worker._mqtt_send_queue.put_nowait.called
+    predict_worker._plugin._event_bus.fire.assert_called_once_with(
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
+        payload={"image": mock_base64.b64encode.return_value},
+    )
+    predict_worker._pn_ws_queue.put_nowait.assert_not_called()
+    predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
+
+    kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
+    _, args, kwargs = kall
+
+    assert args[0].get("event_type") == BOUNDING_BOX_PREDICT_EVENT

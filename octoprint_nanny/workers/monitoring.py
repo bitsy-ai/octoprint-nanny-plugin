@@ -23,6 +23,7 @@ from octoprint.events import Events
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
 BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
+RAW_IMAGE_PREDICT_EVENT = "raw_image_predict"
 ANNOTATED_IMAGE_EVENT = "annotated_image"
 
 
@@ -112,12 +113,7 @@ class MonitoringWorker:
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
             value = (
                 1
-                if (
-                    h / height >= y0
-                    and h / height <= y1
-                    and w / width >= x0
-                    and w / width <= x1
-                )
+                if (h / height >= y0 and h / height <= y1 and w / width >= x0args)
                 else 0
             )
             mask[h][w] = value
@@ -161,7 +157,7 @@ class MonitoringWorker:
         # del mqtt_msg["original_image"]
         mqtt_msg.update(
             {
-                "event_type": "bounding_box_predict",
+                "event_type": BOUNDING_BOX_PREDICT_EVENT,
             }
         )
         mqtt_msg.update(prediction)
