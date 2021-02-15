@@ -25,6 +25,7 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
 
 class Prediction(TypedDict):
+    original_image: PIL.Image.Image
     num_detections: int
     detection_scores: np.ndarray
     detection_boxes: np.ndarray
@@ -211,6 +212,7 @@ class ThreadLocalPredictor(threading.local):
         num_detections = np.squeeze(num_detections, axis=0)
 
         return Prediction(
+            original_image=image,
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,
