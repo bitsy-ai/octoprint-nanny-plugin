@@ -58,7 +58,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.workers.monitoring import MonitoringModes
+from octoprint_nanny.constants import MonitoringModes, PluginEvents, RemoteCommands
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -547,25 +547,10 @@ class OctoPrintNannyPlugin(
             )
 
     def register_custom_events(self):
-        return [
-            # events from octoprint plugin
-            "frame_done",
-            "device_register_start",
-            "device_register_done",
-            "device_register_failed",
-            "printer_profile_sync_start",
-            "printer_profile_sync_done",
-            "printer_profile_sync_failed",
-            # events from RemoteControlCommand.CommandChoices (webapp)
-            "rc_print_start",
-            "rc_print_stop",
-            "rc_print_pause",
-            "rc_print_resume",
-            "rc_snapshot",
-            "rc_move_nozzle",
-            "rc_monitoring_start",
-            "rc_monitoring_stop",
-        ]
+
+        plugin_events = [x.value for x in PluginEvents]
+        remote_commands = [x.value for x in RemoteCommands]
+        return plugin_events + remote_commands
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_shutdown(self):

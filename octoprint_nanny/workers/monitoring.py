@@ -27,34 +27,20 @@ from octoprint_nanny.workers.websocket import WebSocketWorker
 from octoprint_nanny.predictor import Prediction, ThreadLocalPredictor
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
+from octoprint_nanny.constants import PluginEvents, MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
-
-BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
-RAW_IMAGE_PREDICT_EVENT = "raw_image_predict"
-MONITORING_FRAME_EVENT = "monitoring_frame"
-
-
-class MonitoringModes(Enum):
-    ACTIVE_LEARNING = "active_learning"
-    LITE = "lite"
 
 
 class PrintNannyMonitoringFrameMessage(TypedDict):
     ts: datetime
-    event_type: str = MONITORING_FRAME_EVENT
-    data: str
-
-
-class RawImageMessage(TypedDict):
-    ts: datetime
-    event_type: str = RAW_IMAGE_PREDICT_EVENT
-    data: str
+    event_type: str = PluginEvents.MONITORING_FRAME_DONE.value
+    image: str
 
 
 class BoundingBoxMessage(TypedDict):
-    data: Prediction
-    event_type: BOUNDING_BOX_PREDICT_EVENT
+    prediction: Prediction
+    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT_DONE.value
     ts: datetime
 
 
@@ -158,35 +144,32 @@ class MonitoringWorker:
     @beeline.traced(name="MonitoringWorker._create_active_learning_msgs")
     def _create_active_learning_msgs(
         self, now, image
-    ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
+    ) -> PrintNannyMonitoringFrameMessage:
 
-        # send annotated image bytes to print nanny ui ws
+        # send annotated image bytes to print nanny ui ws and Apache Beam worker
         b64_image = base64.b64encode(image.getvalue())
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=MONITORING_FRAME_EVENT,
-            data=b64_image,
+            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            image=b64_image,
         )
-
-        # publish bounding box prediction to mqtt telemetry topic
-        mqtt_msg = BoundingBoxMessage(
-            ts=now, event_type=RAW_IMAGE_PREDICT_EVENT, data=b64_image
-        )
-
-        return ws_msg, mqtt_msg
+        return ws_msg
 
     async def _active_learning_loop(self, loop, pool):
         now = datetime.now(pytz.utc).timestamp()
         image = await self.load_url_buffer()
 
-        ws_msg, mqtt_msg = self._create_active_learning_msgs(now, image)
+        msg = self._create_active_learning_msgs(now, image)
 
-        self._plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-            payload={"image": ws_msg["data"]},
+        octoprint_event = PluginEvents.to_octoprint_event(
+            PluginEvents.MONITORING_FRAME_DONE
         )
-        self._pn_ws_queue.put_nowait(ws_msg)
-        self._mqtt_send_queue.put_nowait(mqtt_msg)
+        self._plugin._event_bus.fire(
+            octoprint_event,
+            payload=msg,
+        )
+        self._pn_ws_queue.put_nowait(msg)
+        self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._create_lite_msgs")
     def _create_lite_msgs(
@@ -196,13 +179,13 @@ class MonitoringWorker:
         # send annotated image bytes to print nanny ui ws
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=MONITORING_FRAME_EVENT,
-            data=base64.b64encode(viz_buffer.getvalue()),
+            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            image=base64.b64encode(viz_buffer.getvalue()),
         )
 
         # publish bounding box prediction to mqtt telemetry topic
         mqtt_msg = BoundingBoxMessage(
-            ts=now, event_type=BOUNDING_BOX_PREDICT_EVENT, data=prediction
+            ts=now, event_type=PluginEvents.BOUNDING_BOX_PREDICT_DONE, data=prediction
         )
 
         return ws_msg, mqtt_msg
@@ -217,9 +200,12 @@ class MonitoringWorker:
 
         ws_msg, mqtt_msg = self._create_lite_msgs(now, image, viz_buffer, prediction)
 
+        octoprint_event = PluginEvents.to_octoprint_event(
+            PluginEvents.MONITORING_FRAME_DONE
+        )
         self._plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-            payload={"image": ws_msg["data"]},
+            octoprint_event,
+            payload=ws_msg,
         )
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(ws_msg)

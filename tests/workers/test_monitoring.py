@@ -3,13 +3,12 @@ import concurrent
 import asyncio
 import threading
 from asynctest import CoroutineMock, patch
-
+import unittest.mock
+from octoprint_nanny.constants import PluginEvents, MonitoringModes
 from octoprint_nanny.workers.monitoring import (
     MonitoringWorker,
     MonitoringManager,
     MonitoringModes,
-    BOUNDING_BOX_PREDICT_EVENT,
-    RAW_IMAGE_PREDICT_EVENT,
 )
 
 
@@ -54,9 +53,16 @@ async def test_lite_mode_webcam_enabled(
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await predict_worker._loop(loop, pool)
 
+    octoprint_event = PluginEvents.to_octoprint_event(
+        PluginEvents.MONITORING_FRAME_DONE
+    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-        payload={"image": mock_base64.b64encode.return_value},
+        octoprint_event,
+        payload={
+            "image": mock_base64.b64encode.return_value,
+            "ts": unittest.mock.ANY,
+            "event_type": PluginEvents.MONITORING_FRAME_DONE,
+        },
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -64,7 +70,7 @@ async def test_lite_mode_webcam_enabled(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == BOUNDING_BOX_PREDICT_EVENT
+    assert args[0].get("event_type") == PluginEvents.BOUNDING_BOX_PREDICT_DONE
 
 
 @pytest.mark.asyncio
@@ -97,9 +103,16 @@ async def test_lite_mode_webcam_disabled(
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await predict_worker._loop(loop, pool)
 
+    octoprint_event = PluginEvents.to_octoprint_event(
+        PluginEvents.MONITORING_FRAME_DONE
+    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-        payload={"image": mock_base64.b64encode.return_value},
+        octoprint_event,
+        payload={
+            "image": mock_base64.b64encode.return_value,
+            "ts": unittest.mock.ANY,
+            "event_type": PluginEvents.MONITORING_FRAME_DONE,
+        },
     )
     predict_worker._pn_ws_queue.put_nowait.assert_not_called()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -107,7 +120,7 @@ async def test_lite_mode_webcam_disabled(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == BOUNDING_BOX_PREDICT_EVENT
+    assert args[0].get("event_type") == PluginEvents.BOUNDING_BOX_PREDICT_DONE
 
 
 @pytest.mark.asyncio
@@ -140,9 +153,16 @@ async def test_active_learning_mode(
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await predict_worker._loop(loop, pool)
 
+    octoprint_event = PluginEvents.to_octoprint_event(
+        PluginEvents.MONITORING_FRAME_DONE
+    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-        payload={"image": mock_base64.b64encode.return_value},
+        octoprint_event,
+        payload={
+            "image": mock_base64.b64encode.return_value,
+            "ts": unittest.mock.ANY,
+            "event_type": PluginEvents.MONITORING_FRAME_DONE,
+        },
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -150,4 +170,4 @@ async def test_active_learning_mode(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == RAW_IMAGE_PREDICT_EVENT
+    assert args[0].get("event_type") == PluginEvents.MONITORING_FRAME_DONE

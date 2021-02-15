@@ -8,9 +8,7 @@ import octoprint_nanny.plugins  # import DEFAULT_SETTINGS, OctoPrintNannyPlugin
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint.events import Events
-from octoprint_nanny.workers.monitoring import (
-    BOUNDING_BOX_PREDICT_EVENT,
-)
+from octoprint_nanny.constants import PluginEvents
 
 
 def get_default_setting(key):
@@ -84,7 +82,7 @@ async def test_mqtt_send_queue_bounding_box_predict(
 
     manager = WorkerManager(plugin)
 
-    event = {"event_type": BOUNDING_BOX_PREDICT_EVENT, "event_data": {}}
+    event = {"event_type": PluginEvents.BOUNDING_BOX_PREDICT_DONE, "event_data": {}}
     manager.mqtt_send_queue.put_nowait(event)
 
     mock_fn = mocker.patch.object(
