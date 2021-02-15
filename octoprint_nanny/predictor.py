@@ -25,12 +25,11 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
 
 class Prediction(TypedDict):
-    original_image: PIL.Image.Image
+    image: PIL.Image.Image
     num_detections: int
     detection_scores: np.ndarray
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
-    viz: Optional[PIL.Image.Image]
 
 
 class ThreadLocalPredictor(threading.local):
@@ -106,15 +105,17 @@ class ThreadLocalPredictor(threading.local):
 
     def percent_intersection(
         self,
-        detection_boxes: np.array,
-        detection_scores: np.array,
-        detection_classes: np.array,
+        prediction: Prediction,
         bb1: tuple,
     ) -> float:
         """
         bb1 - boundary box
         bb2 - detection box
         """
+        detection_boxes = prediction["detection_boxes"]
+        detection_scores = (prediction["detection_scores"],)
+        detection_classes = prediction["detection_classes"]
+
         aou = np.zeros(len(detection_boxes))
 
         for i, bb2 in enumerate(detection_boxes):
@@ -153,17 +154,13 @@ class ThreadLocalPredictor(threading.local):
 
         image_np = np.asarray(image).copy()
         height, width, _ = image_np.shape
+        ignored_mask = None
+
+        prediction = self.min_score_filter(prediction)
 
         if self.calibration is not None:
             detection_boundary_mask = self.calibration["mask"]
-            coords = self.calibration["coords"]
-            percent_intersection = self.percent_intersection(
-                prediction["detection_boxes"],
-                prediction["detection_scores"],
-                prediction["detection_classes"],
-                coords,
-            )
-            ignored_mask = percent_intersection <= self.min_overlap_area
+            prediction, ignored_mask = self.calibration_filter(prediction)
 
             viz = visualize_boxes_and_labels_on_image_array(
                 image_np,
@@ -190,7 +187,38 @@ class ThreadLocalPredictor(threading.local):
                 min_score_thresh=self.min_score_thresh,
                 max_boxes_to_draw=self.max_boxes_to_draw,
             )
-        return viz
+        return prediction, viz
+
+    def min_score_filter(self, prediction: Prediction) -> Prediction:
+        ma = np.ma.masked_greater(prediction["detection_scores"], self.min_score_thresh)
+        num_detections = np.count_nonzero(ma.mask)
+        return Prediction(
+            image_tensor=prediction["image_tensor"],
+            detection_boxes=prediction["detection_boxes"][ma.mask],
+            detection_classes=prediction["detection_classes"][ma.mask],
+            detection_scores=prediction["detection_scores"][ma.mask],
+            num_detections=num_detections,
+        )
+
+    def calibration_filter(self, prediction: Prediction) -> Prediction:
+        if self.calibration is not None:
+            coords = self.calibration["coords"]
+            percent_intersection = self.percent_intersection(prediction, coords)
+            ignored_mask = percent_intersection <= self.min_overlap_area
+
+            included_mask = np.invert(ignored_mask)
+            num_detections = np.count_nonzero(included_mask)
+            return (
+                Prediction(
+                    image_tensor=prediction["image_tensor"],
+                    detection_boxes=prediction["detection_boxes"][included_mask],
+                    detection_scores=prediction["detection_scores"][included_mask],
+                    detection_classes=prediction["detection_classes"][included_mask],
+                    num_detections=num_detections,
+                ),
+                ignored_mask,
+            )
+        return prediction, None
 
     def predict(self, image: PIL.Image) -> Prediction:
         tensor = self.preprocess(image)
@@ -212,7 +240,7 @@ class ThreadLocalPredictor(threading.local):
         num_detections = np.squeeze(num_detections, axis=0)
 
         return Prediction(
-            original_image=image,
+            image_tensor=tensor,
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,

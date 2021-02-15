@@ -11,6 +11,7 @@ import beeline
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
+from octoprint_nanny.workers.monitoring import MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -105,6 +106,10 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("auth_token")
 
     @property
+    def monitoring_mode(self):
+        return MonitoringModes(self.plugin.get_setting("monitoring_mode"))
+
+    @property
     def ws_url(self):
         return self.plugin.get_setting("ws_url")
 
@@ -115,6 +120,10 @@ class PluginSettingsMemoize:
     @property
     def user_id(self):
         return self.plugin.get_setting("user_id")
+
+    @property
+    def webcam_upload(self):
+        return self.plugin.get_setting("webcam_upload")
 
     @property
     def calibration(self):

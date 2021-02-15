@@ -74,11 +74,12 @@ def _get_predict_bytes(image, calibration):
     image = PREDICTOR.load_image(image)
     prediction = PREDICTOR.predict(image)
 
-    viz_np = PREDICTOR.postprocess(image, prediction)
+    prediction, viz_np = PREDICTOR.postprocess(image, prediction)
     viz_image = PIL.Image.fromarray(viz_np, "RGB")
     viz_buffer = io.BytesIO()
     viz_buffer.name = "annotated_image.jpg"
     viz_image.save(viz_buffer, format="JPEG")
+
     return viz_buffer, prediction
 
 
@@ -143,9 +144,7 @@ class MonitoringWorker:
         mask = np.zeros((height, width))
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
             value = (
-                1
-                if (h / height >= y0 and h / height <= y1 and w / width >= x0args)
-                else 0
+                1 if (h / height >= y0 and h / height <= y1 and w / width >= x0) else 0
             )
             mask[h][w] = value
 
@@ -216,6 +215,8 @@ class MonitoringWorker:
             ts=now, event_type=BOUNDING_BOX_PREDICT_EVENT, data=prediction
         )
 
+        del mqtt_msg["data"]["image_tensor"]
+
         return ws_msg, mqtt_msg
 
     async def _lite_loop(self, loop, pool):
@@ -269,14 +270,12 @@ class MonitoringWorker:
 class MonitoringManager:
     def __init__(
         self,
-        octo_ws_queue,
         pn_ws_queue,
         mqtt_send_queue,
         plugin,
     ):
 
         self.halt = threading.Event()
-        self.octo_ws_queue = octo_ws_queue
         self.pn_ws_queue = pn_ws_queue
         self.mqtt_send_queue = mqtt_send_queue
         self.plugin = plugin
@@ -294,12 +293,8 @@ class MonitoringManager:
     def _reset(self):
         self.halt = threading.Event()
         self._predict_worker = MonitoringWorker(
-            self.plugin.settings.snapshot_url,
-            self.plugin.settings.calibration,
-            self.octo_ws_queue,
             self.pn_ws_queue,
             self.mqtt_send_queue,
-            self.plugin.settings.monitoring_frames_per_minute,
             self.halt,
             self.plugin,
             trace_context=self.plugin.settings.get_device_metadata(),
