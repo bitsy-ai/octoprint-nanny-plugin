@@ -101,8 +101,8 @@ $(function() {
 
         }
     
-        startPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'startPredict'
+        startMonitoring = function(){
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'startMonitoring'
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
@@ -115,8 +115,8 @@ $(function() {
             
         }
 
-        stopPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopPredict'
+        stopMonitoring = function(){
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopMonitoring'
             self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
 
             OctoPrint.postJson(url, {})

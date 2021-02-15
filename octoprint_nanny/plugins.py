@@ -84,7 +84,6 @@ DEFAULT_SETTINGS = dict(
     device_registered=False,
     user_email=None,
     monitoring_frames_per_minute=10,
-    monitoring_active=False,
     mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
     mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
     mqtt_bridge_primary_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
@@ -138,11 +137,14 @@ class OctoPrintNannyPlugin(
         self._log_path = None
         self._environment = {}
 
+        self.monitoring_active = False
         self.worker_manager = WorkerManager(plugin=self)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def get_setting(self, key):
         return self._settings.get([key])
+    def set_setting(self, key, value):
+        return self._settings.set([key], value)
 
     @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
@@ -457,7 +459,7 @@ class OctoPrintNannyPlugin(
     ##
     # def register_custom_routes(self):
     @beeline.traced(name="OctoPrintNannyPlugin.start_predict")
-    @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/startMonitoring", methods=["POST"])
     def start_predict(self):
         # settings test#
         url = self._settings.get(["snapshot_url"])
@@ -472,7 +474,7 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
-    @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])
     def stop_predict(self):
         self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
@@ -614,69 +616,7 @@ class OctoPrintNannyPlugin(
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
         super().on_settings_save(data)
-
-        # self.worker_manager.apply_auth()
-        # self.worker_manager.apply_device_registration()
         self.worker_manager.on_settings_save()
-
-        # prev_calibration = (
-        #     self._settings.get(["calibrate_x0"]),
-        #     self._settings.get(["calibrate_y0"]),
-        #     self._settings.get(["calibrate_x1"]),
-        #     self._settings.get(["calibrate_y1"]),
-        # )
-        # prev_auth_token = self._settings.get(["auth_token"])
-        # prev_api_url = self._settings.get(["api_token"])
-        # prev_device_fingerprint = self._settings.get(["device_fingerprint"])
-        # prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
-
-        # prev_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        # prev_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        # prev_mqtt_bridge_certificate_url = self._settings.get(
-        #     ["mqtt_bridge_certificate_url"]
-        # )
-
-        # prev_share_camera = self._settings.get(["share_camera"])
-        # prev_monitoring_mode = self._settings.get(["monitoring_mode"])
-        # prev_auto_start = self._settings.get(["auto_start"])
-
-        # super().on_settings_save(data)
-
-        # new_share_camera = self._settings.get(["share_camera"])
-        # new_monitoring_mode = self._settings.get(["monitoring_mode"])
-        # new_auto_start = self._settings.get(["auto_start"])
-
-        # new_calibration = (
-        #     self._settings.get(["calibrate_x0"]),
-        #     self._settings.get(["calibrate_y0"]),
-        #     self._settings.get(["calibrate_x1"]),
-        #     self._settings.get(["calibrate_y1"]),
-        # )
-        # new_auth_token = self._settings.get(["auth_token"])
-        # new_api_url = self._settings.get(["api_url"])
-        # new_device_fingerprint = self._settings.get(["device_fingerprint"])
-        # new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
-
-        # new_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        # new_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        # new_mqtt_bridge_certificate_url = self._settings.get(
-        #     ["mqtt_bridge_certificate_url"]
-        # )
-
-        # if prev_auth_token != new_auth_token:
-        #     logger.info("Change in auth detected, applying new settings")
-        #     self.worker_manager.apply_auth()
-
-        # if (
-        #     prev_device_fingerprint != new_device_fingerprint
-        #     or prev_mqtt_bridge_hostname != new_mqtt_bridge_hostname
-        #     or prev_mqtt_bridge_port != new_mqtt_bridge_port
-        #     or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
-        # ):
-        #     logger.info(
-        #         "Change in device identity detected (did you re-register?), applying new settings"
-        #     )
-        #     self.worker_manager.apply_device_registration()
 
     ## Template plugin
 
@@ -688,7 +628,7 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "active": self.worker_manager.monitoring_active,
+            "active": self.monitoring_active,
         }
 
     ## Wizard plugin mixin

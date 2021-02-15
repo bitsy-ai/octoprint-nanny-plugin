@@ -37,6 +37,7 @@ class PluginSettingsMemoize:
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
+        self._calibration = None
 
     @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
     def reset_rest_client_state(self):

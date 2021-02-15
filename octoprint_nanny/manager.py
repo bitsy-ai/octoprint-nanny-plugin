@@ -147,13 +147,14 @@ class WorkerManager:
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
+        monitoring_was_active = bool(self.plugin.monitoring_active)
         asyncio.run_coroutine_threadsafe(self.monitoring_manager.stop(), self.loop)
         logger.info("Sending latest calibration")
         asyncio.run_coroutine_threadsafe(self.on_calibration_update(), self.loop)
 
         self.mqtt_manager.start()
 
-        if self.monitoring_active:
+        if monitoring_was_active:
             logger.info(
                 "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
             )
