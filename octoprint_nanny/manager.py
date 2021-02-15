@@ -136,26 +136,33 @@ class WorkerManager:
         self.plugin.settings.reset_device_settings_state()
         self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.apply_auth")
-    def apply_auth(self):
-        logger.info("Resetting WorkerManager user auth state")
+    # @beeline.traced("WorkerManager.apply_auth")
+    # def apply_auth(self):
+    #     logger.info("Resetting WorkerManager user auth state")
+    #     self.mqtt_manager.stop()
+    #     self.plugin.settings.reset_rest_client_state()
+    #     self.mqtt_manager.start()
+
+    @beeline.traced("WorkerManager.on_settings_save")
+    def on_settings_save(self):
         self.mqtt_manager.stop()
+        self.plugin.settings.reset_device_settings_state()
         self.plugin.settings.reset_rest_client_state()
-        self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.apply_monitoring_settings")
-    async def apply_monitoring_settings(self):
-
-        self.plugin.settings.reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
-        await self.monitoring_manager.stop()
+        asyncio.run_coroutine_threadsafe(self.monitoring_manager.stop(), self.loop)
+        logger.info("Sending latest calibration")
+        asyncio.run_coroutine_threadsafe(self.on_calibration_update(), self.loop)
+
+        self.mqtt_manager.start()
+
         if self.monitoring_active:
             logger.info(
                 "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
             )
-            await self.monitoring_manager.start()
+            asyncio.run_coroutine_threadsafe(self.monitoring_manager.start(), self.loop)
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self):
@@ -212,11 +219,10 @@ class WorkerManager:
             logger.info("Print Nanny monitoring is set to auto-start")
             self.monitoring_manager.start()
 
-    async def on_calibration_update(self, event_type, event_data, **kwargs):
+    async def on_calibration_update(self):
         logger.info(
             f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
         )
-        await self.apply_monitoring_settings()
         device_calibration = (
             await self.plugin.settings.rest_client.update_or_create_device_calibration(
                 self.plugin.settings.device_id,

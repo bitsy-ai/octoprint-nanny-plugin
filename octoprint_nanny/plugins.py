@@ -14,6 +14,7 @@ import queue
 import re
 import threading
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 import time
@@ -77,6 +78,12 @@ DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
 DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gtsltsr/gtsltsr.crt"
 BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
+
+class MonitoringModes(Enum):
+    ACTIVE_LEARNING = "active_learning"
+    LITE = "lite"
+
+
 DEFAULT_SETTINGS = dict(
     auth_token=None,
     auth_valid=False,
@@ -105,11 +112,13 @@ DEFAULT_SETTINGS = dict(
     calibrate_y0=None,
     calibrate_x1=None,
     calibrate_y1=None,
-    auto_start=False,
     api_url=DEFAULT_API_URL,
     ws_url=DEFAULT_WS_URL,
     snapshot_url=DEFAULT_SNAPSHOT_URL,
     ca_cert=None,
+    auto_start=True,
+    share_camera=True,
+    monitoring_mode=MonitoringModes.ACTIVE_LEARNING.value,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -542,7 +551,6 @@ class OctoPrintNannyPlugin(
     def register_custom_events(self):
         return [
             # events from octoprint plugin
-            "calibration_update",
             "predict_done",
             "device_register_start",
             "device_register_done",
@@ -611,68 +619,70 @@ class OctoPrintNannyPlugin(
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
-        prev_calibration = (
-            self._settings.get(["calibrate_x0"]),
-            self._settings.get(["calibrate_y0"]),
-            self._settings.get(["calibrate_x1"]),
-            self._settings.get(["calibrate_y1"]),
-        )
-        prev_auth_token = self._settings.get(["auth_token"])
-        prev_api_url = self._settings.get(["api_token"])
-        prev_device_fingerprint = self._settings.get(["device_fingerprint"])
-        prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
-
-        prev_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        prev_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        prev_mqtt_bridge_certificate_url = self._settings.get(
-            ["mqtt_bridge_certificate_url"]
-        )
-
         super().on_settings_save(data)
 
-        new_calibration = (
-            self._settings.get(["calibrate_x0"]),
-            self._settings.get(["calibrate_y0"]),
-            self._settings.get(["calibrate_x1"]),
-            self._settings.get(["calibrate_y1"]),
-        )
-        new_auth_token = self._settings.get(["auth_token"])
-        new_api_url = self._settings.get(["api_url"])
-        new_device_fingerprint = self._settings.get(["device_fingerprint"])
-        new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
+        # self.worker_manager.apply_auth()
+        # self.worker_manager.apply_device_registration()
+        self.worker_manager.on_settings_save()
 
-        new_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        new_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        new_mqtt_bridge_certificate_url = self._settings.get(
-            ["mqtt_bridge_certificate_url"]
-        )
+        # prev_calibration = (
+        #     self._settings.get(["calibrate_x0"]),
+        #     self._settings.get(["calibrate_y0"]),
+        #     self._settings.get(["calibrate_x1"]),
+        #     self._settings.get(["calibrate_y1"]),
+        # )
+        # prev_auth_token = self._settings.get(["auth_token"])
+        # prev_api_url = self._settings.get(["api_token"])
+        # prev_device_fingerprint = self._settings.get(["device_fingerprint"])
+        # prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
 
-        if (
-            prev_monitoring_fpm != new_monitoring_fpm
-            or prev_calibration != new_calibration
-        ):
-            logger.info(
-                "Change in frames per minute or calibration detected, applying new settings"
-            )
-            self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE,
-                payload={"calibration"},
-            )
+        # prev_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
+        # prev_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
+        # prev_mqtt_bridge_certificate_url = self._settings.get(
+        #     ["mqtt_bridge_certificate_url"]
+        # )
 
-        if prev_auth_token != new_auth_token:
-            logger.info("Change in auth detected, applying new settings")
-            self.worker_manager.apply_auth()
+        # prev_share_camera = self._settings.get(["share_camera"])
+        # prev_monitoring_mode = self._settings.get(["monitoring_mode"])
+        # prev_auto_start = self._settings.get(["auto_start"])
 
-        if (
-            prev_device_fingerprint != new_device_fingerprint
-            or prev_mqtt_bridge_hostname != new_mqtt_bridge_hostname
-            or prev_mqtt_bridge_port != new_mqtt_bridge_port
-            or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
-        ):
-            logger.info(
-                "Change in device identity detected (did you re-register?), applying new settings"
-            )
-            self.worker_manager.apply_device_registration()
+        # super().on_settings_save(data)
+
+        # new_share_camera = self._settings.get(["share_camera"])
+        # new_monitoring_mode = self._settings.get(["monitoring_mode"])
+        # new_auto_start = self._settings.get(["auto_start"])
+
+        # new_calibration = (
+        #     self._settings.get(["calibrate_x0"]),
+        #     self._settings.get(["calibrate_y0"]),
+        #     self._settings.get(["calibrate_x1"]),
+        #     self._settings.get(["calibrate_y1"]),
+        # )
+        # new_auth_token = self._settings.get(["auth_token"])
+        # new_api_url = self._settings.get(["api_url"])
+        # new_device_fingerprint = self._settings.get(["device_fingerprint"])
+        # new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
+
+        # new_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
+        # new_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
+        # new_mqtt_bridge_certificate_url = self._settings.get(
+        #     ["mqtt_bridge_certificate_url"]
+        # )
+
+        # if prev_auth_token != new_auth_token:
+        #     logger.info("Change in auth detected, applying new settings")
+        #     self.worker_manager.apply_auth()
+
+        # if (
+        #     prev_device_fingerprint != new_device_fingerprint
+        #     or prev_mqtt_bridge_hostname != new_mqtt_bridge_hostname
+        #     or prev_mqtt_bridge_port != new_mqtt_bridge_port
+        #     or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
+        # ):
+        #     logger.info(
+        #         "Change in device identity detected (did you re-register?), applying new settings"
+        #     )
+        #     self.worker_manager.apply_device_registration()
 
     ## Template plugin
 

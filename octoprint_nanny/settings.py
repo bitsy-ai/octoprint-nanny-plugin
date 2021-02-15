@@ -32,11 +32,6 @@ class PluginSettingsMemoize:
 
         self.environment = {}
 
-    @beeline.traced("PluginSettingsMemoize.reset_monitoring_settings")
-    def reset_monitoring_settings(self):
-        self._calibration = None
-        self._monitoring_frames_per_minute = None
-
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
         self._mqtt_client = None

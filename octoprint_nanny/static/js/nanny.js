@@ -66,14 +66,6 @@ $(function() {
             }
         });
 
-        toggleAutoStart = function(){
-            const newValue = !self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start()
-            self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start(newValue)
-            OctoPrint.settings.savePluginSettings('octoprint_nanny', {
-                auto_start: newValue
-            })
-        }
-
         calibrate = function(){
             self.calibrationActive(true);
             const calibrateImg = new Image();
@@ -267,6 +259,7 @@ $(function() {
             console.log(message)
         } 
     });
+
     registerDevice = function(){
         self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
         self.deviceRegisterProgressPercent(self.deviceRegisterProgress +'%');

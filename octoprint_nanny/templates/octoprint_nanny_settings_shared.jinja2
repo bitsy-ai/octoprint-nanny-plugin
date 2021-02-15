@@ -56,11 +56,10 @@
                     Test Connection
                 </button>
             </div>
+        <hr>
 
         {% endif %}
             
-        <hr>
-
         {% if plugin_octoprint_nanny_settings.device_registered == True %}
             <div>        
                 <h3>Device Info</h3>
@@ -140,6 +139,74 @@
         {% endif %}
 
         <hr>
+
+        <div>
+            <h3>Monitoring Settings</h3>
+            <div class="control-group">
+                <h4><label class="control-label" for="octoprint_nanny_settings_monitoring_mode"><strong>Start Automatically</strong></label></h4>
+                <p>
+                    Start Print Nanny monitoring when a print job begins.
+                </p>
+                <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" class="toggle-check-input" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start"  />
+                            <span class="toggle-check-text"></span>
+                        </label>      
+                </div>
+            </div>
+    
+            <div class="control-group">
+               <h4><label class="control-label" for="octoprint_nanny_settings_monitoring_mode"><strong>Monitoring Mode</strong></label></h4>
+               <div class="controls">
+                    <label class="radio">
+                        <input type="radio" name="monitoringMode" value="active_learning" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode"> 
+                        <strong>{{ _('Active Learning') }}</strong> {{ _(' - camera data is uploaded to continuously improve Print Nanny') }}
+                    </label>
+                    <label class="radio">
+                        <input type="radio" name="monitoringMode" value="lite" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode"> 
+                        <strong>{{ _('Lite') }}</strong>  {{ _(' - automatically apply a discount to your next billing cycle') }}
+                    </label>
+               </div>
+            </div>
+
+            <div class="control-group" data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode() == 'lite'">
+                <h4><label class="control-label" for="octoprint_nanny_settings_monitoring_mode"><strong>Upload Camera Stream</strong></label></h4>
+                <div class="controls">
+                        <label class="checkbox">
+                            <input type="checkbox" class="toggle-check-input" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.share_camera"  />
+                            <span class="toggle-check-text"></span>
+                        </label>      
+                </div>
+                <p>
+                    <strong>Enabled</strong> - watch your camera stream from <a href="https://www.print-nanny.com/dashboard/" target="_blank">Print Nanny's dashboard.</a>
+                </p>
+                <p>
+                    <strong>Disabled</strong> - camera stream is private, visible only from OctoPrint. 
+                </p>
+                <hr>
+                <p>
+                    <strong>Active Learning</strong> uploads your image data to the cloud, to contintuously re-train Print Nanny's AI. In this mode, computations are performed in the cloud (instead of on your OctoPrint Device). 
+                </p>
+                <p>
+                    Enable Active Learning to free up resources on your OctoPrint device or imporove Print Nanny's results for your specific setup.
+                </p>
+                <p>
+                    Camera sharing is required in this mode. Notifications may experience up to a 10 minute delay
+                </p>
+                <hr>
+                <p>
+                    <strong>Lite</strong> mode could also be called "privacy"  or "bandwidth saver" mode. Computations are performed on device, resulting in a closed feedback loop between your Raspberry Pi and your 3D Printer. 
+                </p>
+                <p>
+                    Activate this mode to save bandwidth and catch failures in real-time. 
+                    
+                    You can toggle camera sharing on or off in this mode, to watch Print Nanny's monitoring stream from anywhere. 
+                </p>
+            </div>
+            
+        </div>
+
+        <hr>
         <div>
             <h3>Test Webcam</h3>
             <p>Enter your webcam's <strong>snapshot url</strong> below. </p>
@@ -158,7 +225,7 @@
            <p>If the image below is broken after you click the Capture Snapshot button, double-check your snapshot url.</p>
            <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }, visible: imageData() !== undefined"/>
    
-           <hr>
+
         </div>
 
       </fieldset>
