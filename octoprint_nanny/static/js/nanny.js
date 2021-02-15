@@ -152,7 +152,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#tab_plugin_octoprint_nanny' ]
+        elements: [ '#tab_plugin_octoprint_nanny', '#navbar_plugin_octoprint_nanny' ]
 
     });
 });

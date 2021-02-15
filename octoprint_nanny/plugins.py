@@ -112,6 +112,7 @@ DEFAULT_SETTINGS = dict(
     auto_start=True,
     webcam_upload=True,
     monitoring_mode=MonitoringModes.LITE.value,
+    monitoring_active=False,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -143,6 +144,7 @@ class OctoPrintNannyPlugin(
 
     def get_setting(self, key):
         return self._settings.get([key])
+
     def set_setting(self, key, value):
         return self._settings.set([key], value)
 
@@ -628,7 +630,6 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "active": self.monitoring_active,
         }
 
     ## Wizard plugin mixin

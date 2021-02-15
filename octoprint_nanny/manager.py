@@ -51,8 +51,6 @@ class WorkerManager:
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
 
-        self.monitoring_active = False
-
         # images streamed to webapp asgi over websocket
         pn_ws_queue = self.manager.AioQueue()
         self.pn_ws_queue = pn_ws_queue
@@ -131,13 +129,6 @@ class WorkerManager:
         self.plugin.settings.reset_device_settings_state()
         self.mqtt_manager.start()
 
-    # @beeline.traced("WorkerManager.apply_auth")
-    # def apply_auth(self):
-    #     logger.info("Resetting WorkerManager user auth state")
-    #     self.mqtt_manager.stop()
-    #     self.plugin.settings.reset_rest_client_state()
-    #     self.mqtt_manager.start()
-
     @beeline.traced("WorkerManager.on_settings_save")
     def on_settings_save(self):
         self.mqtt_manager.stop()
@@ -147,7 +138,7 @@ class WorkerManager:
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
-        monitoring_was_active = bool(self.plugin.monitoring_active)
+        monitoring_was_active = bool(self.plugin.settings.monitoring_active)
         asyncio.run_coroutine_threadsafe(self.monitoring_manager.stop(), self.loop)
         logger.info("Sending latest calibration")
         asyncio.run_coroutine_threadsafe(self.on_calibration_update(), self.loop)

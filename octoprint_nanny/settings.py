@@ -73,6 +73,10 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("device_id")
 
     @property
+    def monitoring_active(self):
+        return self.plugin.get_setting("monitoring_active")
+
+    @property
     def device_info(self):
         if self._device_info is None:
             self._device_info = self.plugin.get_device_info()
