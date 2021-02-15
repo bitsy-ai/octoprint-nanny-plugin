@@ -1,35 +1,17 @@
-from time import sleep
 import base64
-from datetime import datetime
-import concurrent
-import io
 import json
 import logging
-import multiprocessing
 import numpy as np
 import os
-import queue
 import time
 import threading
-import pytz
-import aiohttp
-import asyncio
-from uuid import uuid1
-import signal
-import sys
-
-import beeline
 
 import PIL
-import requests
 import tflite_runtime.interpreter as tflite
 
-from octoprint.events import Events
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
-
 
 # python >= 3.8
 try:
