@@ -14,7 +14,6 @@ import queue
 import re
 import threading
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 
 import time
@@ -59,6 +58,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
+from octoprint_nanny.workers.monitoring import MonitoringModes
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -77,12 +77,6 @@ DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
 )
 DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gtsltsr/gtsltsr.crt"
 BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
-
-
-class MonitoringModes(Enum):
-    ACTIVE_LEARNING = "active_learning"
-    LITE = "lite"
-
 
 DEFAULT_SETTINGS = dict(
     auth_token=None,
