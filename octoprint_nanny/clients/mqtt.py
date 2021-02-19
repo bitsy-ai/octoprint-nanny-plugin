@@ -10,7 +10,7 @@ import io
 import random
 import paho.mqtt.client as mqtt
 from typing import List
-
+import sys
 import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -284,10 +284,15 @@ class MQTTClient:
     @beeline.traced("MQTTClient.publish_bounding_boxes")
     def publish_bounding_boxes(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
+
         outfile = io.BytesIO()
         with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
             f.write(payload)
         payload = outfile.getvalue()
+
+        logger.debug(
+            f"Publishing msg size={sys.getsizeof(payload)} topic={self.mqtt_bounding_boxes_topic}"
+        )
         return self.publish(
             payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
         )

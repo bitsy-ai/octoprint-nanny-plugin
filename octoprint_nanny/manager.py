@@ -51,11 +51,6 @@ class WorkerManager:
         self.manager = aioprocessing.AioManager()
         self.shared = self.manager.Namespace()
 
-        self.monitoring_active = False
-
-        # images streamed to octoprint front-end over websocket
-        octo_ws_queue = self.manager.AioQueue()
-        self.octo_ws_queue = octo_ws_queue
         # images streamed to webapp asgi over websocket
         pn_ws_queue = self.manager.AioQueue()
         self.pn_ws_queue = pn_ws_queue
@@ -71,7 +66,6 @@ class WorkerManager:
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
-            octo_ws_queue,
             pn_ws_queue,
             mqtt_send_queue,
             plugin,
@@ -113,7 +107,6 @@ class WorkerManager:
         callbacks = {
             Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START: self.monitoring_manager.start,
             Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP: self.monitoring_manager.stop,
-            Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE: self.on_calibration_update,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(callbacks)
         logger.info(f"Registered callbacks {callbacks} on publisher worker")
@@ -136,26 +129,27 @@ class WorkerManager:
         self.plugin.settings.reset_device_settings_state()
         self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.apply_auth")
-    def apply_auth(self):
-        logger.info("Resetting WorkerManager user auth state")
+    @beeline.traced("WorkerManager.on_settings_save")
+    def on_settings_save(self):
         self.mqtt_manager.stop()
+        self.plugin.settings.reset_device_settings_state()
         self.plugin.settings.reset_rest_client_state()
-        self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.apply_monitoring_settings")
-    async def apply_monitoring_settings(self):
-
-        self.plugin.settings.reset_monitoring_settings()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
-        await self.monitoring_manager.stop()
-        if self.monitoring_active:
+        monitoring_was_active = bool(self.plugin.settings.monitoring_active)
+        asyncio.run_coroutine_threadsafe(self.monitoring_manager.stop(), self.loop)
+        logger.info("Sending latest calibration")
+        asyncio.run_coroutine_threadsafe(self.on_calibration_update(), self.loop)
+
+        self.mqtt_manager.start()
+
+        if monitoring_was_active:
             logger.info(
                 "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
             )
-            await self.monitoring_manager.start()
+            asyncio.run_coroutine_threadsafe(self.monitoring_manager.start(), self.loop)
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self):
@@ -165,7 +159,7 @@ class WorkerManager:
             self.plugin.settings.device_id, monitoring_active=False
         )
 
-        await self.mqtt_manager.stop()
+        self.mqtt_manager.stop()
         self._honeycomb_tracer.on_shutdown()
 
     ##
@@ -212,11 +206,10 @@ class WorkerManager:
             logger.info("Print Nanny monitoring is set to auto-start")
             self.monitoring_manager.start()
 
-    async def on_calibration_update(self, event_type, event_data, **kwargs):
+    async def on_calibration_update(self):
         logger.info(
             f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
         )
-        await self.apply_monitoring_settings()
         device_calibration = (
             await self.plugin.settings.rest_client.update_or_create_device_calibration(
                 self.plugin.settings.device_id,

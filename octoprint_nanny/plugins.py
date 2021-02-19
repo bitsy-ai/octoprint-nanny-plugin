@@ -58,6 +58,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
+from octoprint_nanny.constants import MonitoringModes, PluginEvents, RemoteCommands
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -82,8 +83,7 @@ DEFAULT_SETTINGS = dict(
     auth_valid=False,
     device_registered=False,
     user_email=None,
-    monitoring_frames_per_minute=30,
-    monitoring_active=False,
+    monitoring_frames_per_minute=10,
     mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
     mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
     mqtt_bridge_primary_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
@@ -105,11 +105,14 @@ DEFAULT_SETTINGS = dict(
     calibrate_y0=None,
     calibrate_x1=None,
     calibrate_y1=None,
-    auto_start=False,
     api_url=DEFAULT_API_URL,
     ws_url=DEFAULT_WS_URL,
     snapshot_url=DEFAULT_SNAPSHOT_URL,
     ca_cert=None,
+    auto_start=True,
+    webcam_upload=True,
+    monitoring_mode=MonitoringModes.LITE.value,
+    monitoring_active=False,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -135,11 +138,15 @@ class OctoPrintNannyPlugin(
         self._log_path = None
         self._environment = {}
 
+        self.monitoring_active = False
         self.worker_manager = WorkerManager(plugin=self)
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def get_setting(self, key):
         return self._settings.get([key])
+
+    def set_setting(self, key, value):
+        return self._settings.set([key], value)
 
     @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
@@ -454,7 +461,7 @@ class OctoPrintNannyPlugin(
     ##
     # def register_custom_routes(self):
     @beeline.traced(name="OctoPrintNannyPlugin.start_predict")
-    @octoprint.plugin.BlueprintPlugin.route("/startPredict", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/startMonitoring", methods=["POST"])
     def start_predict(self):
         # settings test#
         url = self._settings.get(["snapshot_url"])
@@ -462,14 +469,14 @@ class OctoPrintNannyPlugin(
         res.raise_for_status()
         if res.status_code == 200:
             self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
+                Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
                 payload={"image": base64.b64encode(res.content)},
             )
             self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START)
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
-    @octoprint.plugin.BlueprintPlugin.route("/stopPredict", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])
     def stop_predict(self):
         self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
@@ -540,26 +547,10 @@ class OctoPrintNannyPlugin(
             )
 
     def register_custom_events(self):
-        return [
-            # events from octoprint plugin
-            "calibration_update",
-            "predict_done",
-            "device_register_start",
-            "device_register_done",
-            "device_register_failed",
-            "printer_profile_sync_start",
-            "printer_profile_sync_done",
-            "printer_profile_sync_failed",
-            # events from RemoteControlCommand.CommandChoices (webapp)
-            "rc_print_start",
-            "rc_print_stop",
-            "rc_print_pause",
-            "rc_print_resume",
-            "rc_snapshot",
-            "rc_move_nozzle",
-            "rc_monitoring_start",
-            "rc_monitoring_stop",
-        ]
+
+        plugin_events = [x.value for x in PluginEvents]
+        remote_commands = [x.value for x in RemoteCommands]
+        return plugin_events + remote_commands
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_shutdown(self):
@@ -611,68 +602,8 @@ class OctoPrintNannyPlugin(
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
-        prev_calibration = (
-            self._settings.get(["calibrate_x0"]),
-            self._settings.get(["calibrate_y0"]),
-            self._settings.get(["calibrate_x1"]),
-            self._settings.get(["calibrate_y1"]),
-        )
-        prev_auth_token = self._settings.get(["auth_token"])
-        prev_api_url = self._settings.get(["api_token"])
-        prev_device_fingerprint = self._settings.get(["device_fingerprint"])
-        prev_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
-
-        prev_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        prev_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        prev_mqtt_bridge_certificate_url = self._settings.get(
-            ["mqtt_bridge_certificate_url"]
-        )
-
         super().on_settings_save(data)
-
-        new_calibration = (
-            self._settings.get(["calibrate_x0"]),
-            self._settings.get(["calibrate_y0"]),
-            self._settings.get(["calibrate_x1"]),
-            self._settings.get(["calibrate_y1"]),
-        )
-        new_auth_token = self._settings.get(["auth_token"])
-        new_api_url = self._settings.get(["api_url"])
-        new_device_fingerprint = self._settings.get(["device_fingerprint"])
-        new_monitoring_fpm = self._settings.get(["monitoring_frames_per_minute"])
-
-        new_mqtt_bridge_hostname = self._settings.get(["mqtt_bridge_hostname"])
-        new_mqtt_bridge_port = self._settings.get(["mqtt_bridge_port"])
-        new_mqtt_bridge_certificate_url = self._settings.get(
-            ["mqtt_bridge_certificate_url"]
-        )
-
-        if (
-            prev_monitoring_fpm != new_monitoring_fpm
-            or prev_calibration != new_calibration
-        ):
-            logger.info(
-                "Change in frames per minute or calibration detected, applying new settings"
-            )
-            self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_CALIBRATION_UPDATE,
-                payload={"calibration"},
-            )
-
-        if prev_auth_token != new_auth_token:
-            logger.info("Change in auth detected, applying new settings")
-            self.worker_manager.apply_auth()
-
-        if (
-            prev_device_fingerprint != new_device_fingerprint
-            or prev_mqtt_bridge_hostname != new_mqtt_bridge_hostname
-            or prev_mqtt_bridge_port != new_mqtt_bridge_port
-            or prev_mqtt_bridge_certificate_url != new_mqtt_bridge_certificate_url
-        ):
-            logger.info(
-                "Change in device identity detected (did you re-register?), applying new settings"
-            )
-            self.worker_manager.apply_device_registration()
+        self.worker_manager.on_settings_save()
 
     ## Template plugin
 
@@ -684,7 +615,6 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "active": self.worker_manager.monitoring_active,
         }
 
     ## Wizard plugin mixin

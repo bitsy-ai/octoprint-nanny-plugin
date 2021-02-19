@@ -24,7 +24,7 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.settings import PluginSettingsMemoize
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.predictor import BOUNDING_BOX_PREDICT_EVENT
+from octoprint_nanny.constants import PluginEvents
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -75,7 +75,7 @@ class MQTTManager:
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join(10)
+            worker.join(2)
 
     @beeline.traced("MQTTManager._reset")
     def _reset(self):
@@ -141,7 +141,7 @@ class MQTTPublisherWorker:
         Events.PRINT_STARTED,
     ]
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_predict_done"]
+    MUTED_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, halt, queue, plugin):
 
@@ -224,7 +224,7 @@ class MQTTPublisherWorker:
 
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
 
-            if event_type == BOUNDING_BOX_PREDICT_EVENT:
+            if event_type == PluginEvents.BOUNDING_BOX_PREDICT_DONE:
                 await self._publish_bounding_box_telemetry(event)
                 return
 

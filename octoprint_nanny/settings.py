@@ -3,14 +3,15 @@ from datetime import datetime
 import logging
 import pytz
 
-from octoprint_nanny.predictor import (
-    PredictWorker,
+from octoprint_nanny.workers.monitoring import (
+    MonitoringWorker,
 )
 
 import beeline
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
+from octoprint_nanny.workers.monitoring import MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -24,23 +25,19 @@ class PluginSettingsMemoize:
         self.plugin = plugin
         self.mqtt_receive_queue = mqtt_receive_queue
         # stateful clients and computed settings that require re-initialization when settings change
-        self._calibration = None
         self._mqtt_client = None
         self._telemetry_events = None
         self._device_info = None
         self._rest_client = None
+        self._calibration = None
 
         self.environment = {}
-
-    @beeline.traced("PluginSettingsMemoize.reset_monitoring_settings")
-    def reset_monitoring_settings(self):
-        self._calibration = None
-        self._monitoring_frames_per_minute = None
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
+        self._calibration = None
 
     @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
     def reset_rest_client_state(self):
@@ -74,6 +71,10 @@ class PluginSettingsMemoize:
     @property
     def device_id(self):
         return self.plugin.get_setting("device_id")
+
+    @property
+    def monitoring_active(self):
+        return self.plugin.get_setting("monitoring_active")
 
     @property
     def device_info(self):
@@ -110,6 +111,10 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("auth_token")
 
     @property
+    def monitoring_mode(self):
+        return MonitoringModes(self.plugin.get_setting("monitoring_mode"))
+
+    @property
     def ws_url(self):
         return self.plugin.get_setting("ws_url")
 
@@ -122,9 +127,13 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("user_id")
 
     @property
+    def webcam_upload(self):
+        return self.plugin.get_setting("webcam_upload")
+
+    @property
     def calibration(self):
         if self._calibration is None:
-            self._calibration = PredictWorker.calc_calibration(
+            self._calibration = MonitoringWorker.calc_calibration(
                 self.plugin.get_setting("calibrate_x0"),
                 self.plugin.get_setting("calibrate_y0"),
                 self.plugin.get_setting("calibrate_x1"),

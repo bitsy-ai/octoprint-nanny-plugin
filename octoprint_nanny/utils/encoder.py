@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from io import BytesIO
 import base64
+import PIL
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -19,4 +20,8 @@ class NumpyEncoder(json.JSONEncoder):
             obj.seek(0)
             obj = obj.read()
             return base64.b64encode(obj).decode()
+        elif isinstance(obj, PIL.Image.Image):
+            buffered = BytesIO()
+            obj.save(buffered, format="JPEG")
+            return base64.b64encode(buffered.getvalue())
         return json.JSONEncoder.default(self, obj)
