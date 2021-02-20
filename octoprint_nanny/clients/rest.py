@@ -103,24 +103,6 @@ class RestAPIClient:
             )
             return command
 
-    @beeline.traced("RestAPIClient.get_telemetry_events")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-    )
-    async def get_telemetry_events(self):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_client.client_side_validation = False
-            telemetry_events = await EventsApi(
-                api_client
-            ).octoprint_events_telemetry_retrieve()
-            logger.info(
-                f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}"
-            )
-            return telemetry_events
-
     @beeline.traced("RestAPIClient.get_user")
     @backoff.on_exception(
         backoff.expo,

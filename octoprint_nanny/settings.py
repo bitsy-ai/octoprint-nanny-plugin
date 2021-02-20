@@ -8,6 +8,11 @@ from octoprint_nanny.workers.monitoring import (
 )
 
 import beeline
+
+from print_nanny_client.models.octo_print_event_event_type_enum import (
+    OctoPrintEventEventTypeEnum,
+)
+
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -181,12 +186,5 @@ class PluginSettingsMemoize:
             )
         return self._mqtt_client
 
-    async def get_telemetry_events(self):
-        if self.auth_token is None:
-            raise PluginSettingsRequired(f"auth_token is not set")
-        if self._telemetry_events is None:
-            self._telemetry_events = await self.rest_client.get_telemetry_events()
-        return self._telemetry_events
-
-    async def event_in_tracked_telemetry(self, event_type):
-        return event_type in await self.get_telemetry_events()
+    def event_is_tracked(self, event_type):
+        return event_type in OctoPrintEventEventTypeEnum.allowable_values

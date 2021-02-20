@@ -1,4 +1,5 @@
 from enum import Enum
+from print_nanny_client.models import command_enum
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
@@ -51,7 +52,6 @@ class PluginEvents(ClassMemberMixin, Enum):
     """
 
     BOUNDING_BOX_PREDICT_DONE = "bounding_box_predict_done"
-    RAW_IMAGE_DONE = "raw_image_done"
     MONITORING_FRAME_DONE = "monitoring_frame_done"
 
     DEVICE_REGISTER_START = "device_register_start"

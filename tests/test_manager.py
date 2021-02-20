@@ -33,17 +33,14 @@ def test_default_settings_client_states(mocker):
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.get_telemetry_events")
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_in_tracked_telemetry")
-async def test_mqtt_send_queue_valid_octoprint_event(
-    mock_event_in_tracked_telemetry, mock_get_telemetry_events, mocker
-):
+@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
+async def test_mqtt_send_queue_valid_octoprint_event(mock_event_is_tracked, mocker):
     plugin = mocker.Mock()
     plugin.get_setting = get_default_setting
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
-    mock_event_in_tracked_telemetry.return_value = True
+    mock_event_is_tracked.return_value = True
 
     mock_on_print_start = mocker.patch.object(WorkerManager, "on_print_start")
 
@@ -68,17 +65,14 @@ async def test_mqtt_send_queue_valid_octoprint_event(
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.get_telemetry_events")
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_in_tracked_telemetry")
-async def test_mqtt_send_queue_bounding_box_predict(
-    mock_event_in_tracked_telemetry, mock_get_telemetry_events, mocker
-):
+@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
+async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocker):
     plugin = mocker.Mock()
     plugin.get_setting = get_default_setting
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
-    mock_event_in_tracked_telemetry.return_value = False
+    mock_event_is_tracked.return_value = False
 
     manager = WorkerManager(plugin)
 
@@ -98,15 +92,12 @@ async def test_mqtt_send_queue_bounding_box_predict(
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.get_telemetry_events")
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_in_tracked_telemetry")
-async def test_mqtt_receive_queue_valid_octoprint_event(
-    mock_event_in_tracked_telemetry, mock_get_telemetry_events, mocker
-):
+@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
+async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, mocker):
     plugin = mocker.Mock()
     plugin.get_setting = get_default_setting
 
-    mock_event_in_tracked_telemetry.return_value = True
+    mock_event_is_tracked.return_value = True
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
