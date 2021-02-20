@@ -228,7 +228,7 @@ class MQTTPublisherWorker:
                 await self._publish_bounding_box_telemetry(event)
                 return
 
-            tracked = await self.plugin.settings.event_is_tracked(event_type)
+            tracked = self.plugin.settings.event_is_tracked(event_type)
             if tracked:
                 await self._publish_octoprint_event_telemetry(event)
 
