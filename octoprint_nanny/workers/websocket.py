@@ -103,7 +103,10 @@ class WebSocketWorker:
         self._honeycomb_tracer.finish_span(span)
 
         event_type = msg.get("event_type")
-        if event_type == PluginEvents.MONITORING_FRAME_DONE:
+        if (
+            event_type == PluginEvents.MONITORING_FRAME_POST
+            or event_type == PluginEvents.MONITORING_FRAME_RAW
+        ):
             encoded_msg = self.encode(msg=msg)
             await websocket.send(encoded_msg)
         else:

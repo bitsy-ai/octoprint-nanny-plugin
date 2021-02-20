@@ -16,7 +16,11 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.workers.monitoring import MonitoringModes
+from octoprint_nanny.constants import (
+    MonitoringModes,
+    TrackedOctoPrintEvents,
+    RemoteCommands,
+)
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -187,4 +191,6 @@ class PluginSettingsMemoize:
         return self._mqtt_client
 
     def event_is_tracked(self, event_type):
-        return event_type in OctoPrintEventEventTypeEnum.allowable_values
+        return TrackedOctoPrintEvents.is_member(event_type) or RemoteCommands.is_member(
+            event_type
+        )

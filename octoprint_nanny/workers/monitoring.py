@@ -21,6 +21,8 @@ except:
     from typing import Optional
 
 import beeline
+
+import print_nanny_message
 from octoprint.events import Events
 
 from octoprint_nanny.workers.websocket import WebSocketWorker
@@ -34,13 +36,13 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring
 
 class PrintNannyMonitoringFrameMessage(TypedDict):
     ts: datetime
-    event_type: str = PluginEvents.MONITORING_FRAME_DONE.value
+    event_type: str = PluginEvents.MONITORING_FRAME_POST
     image: str
 
 
 class BoundingBoxMessage(TypedDict):
     prediction: Prediction
-    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT_DONE.value
+    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
     ts: datetime
 
 
@@ -148,9 +150,10 @@ class MonitoringWorker:
 
         # send annotated image bytes to print nanny ui ws and Apache Beam worker
         b64_image = base64.b64encode(image.getvalue())
+
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            event_type=PluginEvents.MONITORING_FRAME_RAW,
             image=b64_image,
         )
         return ws_msg
@@ -162,7 +165,7 @@ class MonitoringWorker:
         msg = self._create_active_learning_msgs(now, image)
 
         octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_DONE
+            PluginEvents.MONITORING_FRAME_RAW
         )
         self._plugin._event_bus.fire(
             octoprint_event,
@@ -177,15 +180,16 @@ class MonitoringWorker:
     ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
 
         # send annotated image bytes to print nanny ui ws
+
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            event_type=PluginEvents.MONITORING_FRAME_POST,
             image=base64.b64encode(viz_buffer.getvalue()),
         )
 
         # publish bounding box prediction to mqtt telemetry topic
         mqtt_msg = BoundingBoxMessage(
-            ts=now, event_type=PluginEvents.BOUNDING_BOX_PREDICT_DONE, data=prediction
+            ts=now, event_type=PluginEvents.BOUNDING_BOX_PREDICT, data=prediction
         )
 
         return ws_msg, mqtt_msg
@@ -201,7 +205,7 @@ class MonitoringWorker:
         ws_msg, mqtt_msg = self._create_lite_msgs(now, image, viz_buffer, prediction)
 
         octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_DONE
+            PluginEvents.MONITORING_FRAME_POST
         )
         self._plugin._event_bus.fire(
             octoprint_event,

@@ -224,7 +224,7 @@ class MQTTPublisherWorker:
 
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
 
-            if event_type == PluginEvents.BOUNDING_BOX_PREDICT_DONE:
+            if event_type == PluginEvents.BOUNDING_BOX_PREDICT:
                 await self._publish_bounding_box_telemetry(event)
                 return
 

@@ -1,5 +1,12 @@
 from enum import Enum
-from print_nanny_client.models import command_enum
+
+from print_nanny_client.models.plugin_event_event_type_enum import (
+    PluginEventEventTypeEnum as PluginEventTypes,
+)
+from print_nanny_client.models.octo_print_event_event_type_enum import (
+    OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
+)
+from print_nanny_client.models.command_enum import CommandEnum
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
@@ -36,46 +43,51 @@ class ClassMemberMixin(object):
         return cls(value)
 
     @classmethod
+    def is_member(cls, value):
+        return value in cls._value2member_map_
+
+    @classmethod
     def member(cls, value: str):
         """
         Returns Member if event string matches value (with or without plugin prefix)
         """
+        import pdb
+
+        pdb.set_trace()
+
         if PLUGIN_PREFIX in value:
             return cls._octoprint_event_member(value)
 
         return cls(value)
 
 
-class PluginEvents(ClassMemberMixin, Enum):
-    """
-    Events originating from OctoPrint Nanny plugin code
-    """
-
-    BOUNDING_BOX_PREDICT_DONE = "bounding_box_predict_done"
-    MONITORING_FRAME_DONE = "monitoring_frame_done"
-
-    DEVICE_REGISTER_START = "device_register_start"
-    DEVICE_REGISTER_DONE = "device_register_done"
-    DEVICE_REGISTER_FAILED = "device_register_failed"
-
-    PRINTER_PROFILE_SYNC_START = "printer_profile_sync_start"
-    PRINTER_PROFILE_SYNC_DONE = "printer_profile_sync_done"
-    PRINTER_PROFILE_SYNC_FAILED = "printer_profile_sync_failed"
+class EnumBase(ClassMemberMixin, Enum):
+    pass
 
 
-class RemoteCommands(ClassMemberMixin, Enum):
-    """
-    Events originating from MQTT command topic
-    """
+PluginEvents = EnumBase(
+    "PluginEvents",
+    {
+        attr: getattr(PluginEventTypes, attr)
+        for attr in dir(PluginEventTypes)
+        if getattr(PluginEventTypes, attr) in PluginEventTypes.allowable_values
+    },
+)
 
-    PRINT_START = "print_start"
-    PRINT_STOP = "print_stop"
-    PRINT_PAUSE = "print_pause"
-    PRINT_RESUME = "print_resume"
+RemoteCommands = EnumBase(
+    "RemoteCommands",
+    {
+        attr: getattr(CommandEnum, attr)
+        for attr in dir(CommandEnum)
+        if getattr(CommandEnum, attr) in CommandEnum.allowable_values
+    },
+)
 
-    SNAPSHOT = "snapshot"
-
-    MOVE_NOZZLE = "move_nozzle"
-
-    MONITORING_START = "monitoring_start"
-    MONITORING_STOP = "monitoring_stop"
+TrackedOctoPrintEvents = EnumBase(
+    "TrackedOctoPrintEvents",
+    {
+        attr: getattr(OctoPrintEventTypes, attr)
+        for attr in dir(OctoPrintEventTypes)
+        if getattr(OctoPrintEventTypes, attr) in OctoPrintEventTypes.allowable_values
+    },
+)

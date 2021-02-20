@@ -76,7 +76,7 @@ async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocke
 
     manager = WorkerManager(plugin)
 
-    event = {"event_type": PluginEvents.BOUNDING_BOX_PREDICT_DONE, "event_data": {}}
+    event = {"event_type": PluginEvents.BOUNDING_BOX_PREDICT, "event_data": {}}
     manager.mqtt_send_queue.put_nowait(event)
 
     mock_fn = mocker.patch.object(
