@@ -284,6 +284,7 @@ def predict_threadsafe(
         viz_buffer = io.BytesIO()
         viz_buffer.name = "annotated_image.jpg"
         viz_image.save(viz_buffer, format="JPEG")
+
         post_frame = octoprint_nanny.types.Image(
             height=vh, width=vw, data=viz_buffer.getvalue()
         )

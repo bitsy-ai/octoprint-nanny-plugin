@@ -228,17 +228,15 @@ class MonitoringWorker:
         )
 
         raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
-
-        ws_msg = self._create_lite_fb_ws_msg(
-            ts=ts, image=post_frame if post_frame else raw_frame
-        )
+        video_frame = post_frame if post_frame is not None else raw_frame
+        ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
 
         octoprint_event = PluginEvents.to_octoprint_event(
             PluginEvents.MONITORING_FRAME_POST
         )
         self._plugin._event_bus.fire(
             octoprint_event,
-            payload=base64.b64encode(post_frame.data if post_frame else raw_frame.data),
+            payload=base64.b64encode(video_frame.data),
         )
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(ws_msg)

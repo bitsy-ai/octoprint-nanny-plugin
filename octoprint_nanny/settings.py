@@ -121,7 +121,7 @@ class PluginSettingsMemoize:
 
     @property
     def min_score_thresh(self):
-        return self.plugin.get_settings("min_score_thresh")
+        return self.plugin.get_setting("min_score_thresh")
 
     @property
     def monitoring_mode(self):

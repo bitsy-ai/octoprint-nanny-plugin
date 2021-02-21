@@ -66,14 +66,14 @@ def build_monitoring_frame_post_message(
     # begin byte array
     Image.ImageStartDataVector(builder, len(image.data))
     builder.Bytes[builder.head : (builder.head + len(image.data))] = image.data
-    image.data = builder.EndVector(len(image.data))
+    image_data = builder.EndVector(len(image.data))
     # end byte array
 
     # begin image
     Image.ImageStart(builder)
     Image.ImageAddHeight(builder, image.height)
     Image.ImageAddWidth(builder, image.width)
-    Image.ImageAddData(builder, image.data)
+    Image.ImageAddData(builder, image_data)
     image = Image.ImageEnd(builder)
     # end image
 
