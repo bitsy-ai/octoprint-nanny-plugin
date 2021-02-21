@@ -1,5 +1,5 @@
 import pytest
-
+from octoprint_nanny.workers.monitoring import MonitoringWorker
 
 class MockResponse(object):
     headers = {"content-type": "image/jpeg"}
@@ -13,6 +13,14 @@ class MockResponse(object):
 def mock_response():
     return MockResponse()
 
+@pytest.fixture
+def calibration():
+    return MonitoringWorker.calc_calibration(
+        0.2,
+        0.2,
+        0.8,
+        0.8,
+    )
 
 def pytest_addoption(parser):
     parser.addoption(

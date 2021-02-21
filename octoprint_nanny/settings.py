@@ -118,9 +118,11 @@ class PluginSettingsMemoize:
     @property
     def auth_token(self):
         return self.plugin.get_setting("auth_token")
+
     @property
     def min_score_thresh(self):
         return self.plugin.get_settings("min_score_thresh")
+
     @property
     def monitoring_mode(self):
         return MonitoringModes(self.plugin.get_setting("monitoring_mode"))

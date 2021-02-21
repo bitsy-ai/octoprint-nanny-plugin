@@ -182,7 +182,7 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
 
 @pytest.mark.benchmark(group="lite-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_lite_flatbuffer_calibrated_serialize(benchmark, mocker):
+async def test_lite_flatbuffer_calibrated_serialize(calibration, benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -191,14 +191,7 @@ async def test_lite_flatbuffer_calibrated_serialize(benchmark, mocker):
     mock_plugin.get_setting = get_default_setting
     mock_plugin.settings.monitoring_frames_per_minute = 10
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
-
-    calibration = MonitoringWorker.calc_calibration(
-        0.2,
-        0.2,
-        0.8,
-        0.8,
-    )
-    mock_plugin.settings.calibration = None
+    mock_plugin.settings.calibration = calibration
 
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()

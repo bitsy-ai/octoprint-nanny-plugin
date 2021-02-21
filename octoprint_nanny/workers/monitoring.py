@@ -80,7 +80,7 @@ class MonitoringWorker:
 
         self._predictor_kwargs = {
             "calibration": plugin.settings.calibration,
-            "min_score_thresh": plugin.settings.min_score_thresh
+            "min_score_thresh": plugin.settings.min_score_thresh,
         }
         self._fpm = plugin.settings.monitoring_frames_per_minute
         self._sleep_interval = 60 / int(self._fpm)

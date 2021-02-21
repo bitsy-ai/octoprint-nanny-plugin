@@ -9,6 +9,7 @@ from octoprint_nanny.predictor import (
     predict_threadsafe,
 )
 
+
 def test_area_of_intersection_overlap():
     predictor = ThreadLocalPredictor()
     detection_boxes = np.array([[0.3, 0.3, 0.9, 0.9]])

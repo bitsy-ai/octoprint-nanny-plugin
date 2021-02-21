@@ -289,7 +289,7 @@ def predict_threadsafe(
         )
     else:
         post_frame = None
-    
+
     return (
         original_frame,
         post_frame,
