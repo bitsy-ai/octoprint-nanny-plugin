@@ -24,7 +24,7 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.settings import PluginSettingsMemoize
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.constants import PluginEvents
+from octoprint_nanny.types import PluginEvents
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 

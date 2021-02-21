@@ -19,7 +19,7 @@ import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.constants import PluginEvents
+from octoprint_nanny.types import PluginEvents
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")

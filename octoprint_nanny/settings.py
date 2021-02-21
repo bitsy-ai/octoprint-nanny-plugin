@@ -16,7 +16,7 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.constants import (
+from octoprint_nanny.types import (
     MonitoringModes,
     TrackedOctoPrintEvents,
     RemoteCommands,

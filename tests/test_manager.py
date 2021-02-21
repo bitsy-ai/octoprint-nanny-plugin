@@ -8,7 +8,7 @@ import octoprint_nanny.plugins  # import DEFAULT_SETTINGS, OctoPrintNannyPlugin
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint.events import Events
-from octoprint_nanny.constants import PluginEvents
+from octoprint_nanny.types import PluginEvents
 
 
 def get_default_setting(key):

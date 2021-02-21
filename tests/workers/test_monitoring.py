@@ -4,7 +4,7 @@ import asyncio
 import threading
 from asynctest import CoroutineMock, patch
 import unittest.mock
-from octoprint_nanny.constants import PluginEvents, MonitoringModes
+from octoprint_nanny.types import PluginEvents, MonitoringModes
 from octoprint_nanny.workers.monitoring import (
     MonitoringWorker,
     MonitoringManager,

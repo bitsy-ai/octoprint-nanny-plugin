@@ -35,7 +35,7 @@ from octoprint_nanny.predictor import (
 )
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
-from octoprint_nanny.constants import PluginEvents, MonitoringModes
+from octoprint_nanny.types import PluginEvents, MonitoringModes
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import octoprint_nanny.clients.flatbuffers
 

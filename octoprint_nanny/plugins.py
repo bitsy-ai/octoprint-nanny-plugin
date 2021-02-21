@@ -58,7 +58,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.constants import MonitoringModes, PluginEvents, RemoteCommands
+from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
 
 
 DEFAULT_API_URL = os.environ.get(
