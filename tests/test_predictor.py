@@ -5,10 +5,6 @@ import numpy as np
 
 from octoprint_nanny.predictor import ThreadLocalPredictor, Prediction
 
-TEST_PARAMS = [
-    (f"data/images/{i}.pre.jpg", f"data/images/{i}.post.jpg") for i in range(0, 7)
-]
-
 
 def test_area_of_intersection_overlap():
     predictor = ThreadLocalPredictor()
