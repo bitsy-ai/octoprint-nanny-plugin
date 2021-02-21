@@ -12,41 +12,47 @@ from PrintNannyMessage.Telemetry import (
 )
 
 
-def build_monitoring_frame_raw_message(
-    ts: int, image_bytes: bytes, image_height: int, image_width: int
-) -> bytes:
-    builder = flatbuffers.Builder(1024)
-
-    # begin message body
-    MonitoringFrame.MonitoringFrameStart(builder)
-    MonitoringFrame.MonitoringFrameAddTs(builder, ts)
-    MonitoringFrame.MonitoringFrameAddImage(builder, image_bytes)
-    MonitoringFrame.MonitoringFrameEventType(
-        builder,
-        PluginEvent.PluginEvent.monitoring_frame_raw,
-    )
-    message = MonitoringFrame.MonitoringFrameEnd(builder)
-    # end message body
-
-    # begin message
-    TelemetryMessage.TelemetryMessageStart(builder)
-    message_type = MessageType.MessageType.MonitoringFrame
-    TelemetryMessage.TelemetryMessageAddMessageType(builder, message_type)
-    TelemetryMessage.TelemetryMessageAddMessage(builder, message)
-    message = TelemetryMessage.TelemetryMessageEnd(builder)
-    # end message
-    return message
-
-
 def build_telemetry_message(builder, message, message_type):
     TelemetryMessage.TelemetryMessageStart(builder)
-    message_type = MessageType.MessageType.MonitoringFrame
     TelemetryMessage.TelemetryMessageAddMessageType(builder, message_type)
     TelemetryMessage.TelemetryMessageAddMessage(builder, message)
     message = TelemetryMessage.TelemetryMessageEnd(builder)
     builder.Finish(message)
     # end message
     return builder.Output()
+
+
+def build_monitoring_frame_raw_message(
+    ts: int,
+    image_height: int,
+    image_width: int,
+    image_bytes: io.BytesIO,
+) -> bytes:
+    builder = flatbuffers.Builder(1024)
+
+    image_bytes.seek(0)
+    image_bytes = image_bytes.read()
+
+    # begin byte array
+    Image.ImageStartDataVector(builder, len(image_bytes))
+    builder.Bytes[builder.head : (builder.head + len(image_bytes))] = image_bytes
+    image_bytes = builder.EndVector(len(image_bytes))
+    # end byte array
+
+    # begin message body
+    MonitoringFrame.MonitoringFrameStart(builder)
+    MonitoringFrame.MonitoringFrameAddTs(builder, ts)
+    MonitoringFrame.MonitoringFrameAddImage(builder, image_bytes)
+    MonitoringFrame.MonitoringFrameAddEventType(
+        builder,
+        PluginEvent.PluginEvent.monitoring_frame_raw,
+    )
+    message = MonitoringFrame.MonitoringFrameEnd(builder)
+    # end message body
+
+    return build_telemetry_message(
+        builder, message, MessageType.MessageType.MonitoringFrame
+    )
 
 
 def build_monitoring_frame_post_message(
