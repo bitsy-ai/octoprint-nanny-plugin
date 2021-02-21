@@ -1,6 +1,6 @@
 import io
 import flatbuffers
-
+from typing import Optional
 from PrintNannyMessage.Telemetry import (
     MonitoringFrame,
     Image,
@@ -26,12 +26,9 @@ def build_monitoring_frame_raw_message(
     ts: int,
     image_height: int,
     image_width: int,
-    image_bytes: io.BytesIO,
+    image_bytes: bytes,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
-
-    image_bytes.seek(0)
-    image_bytes = image_bytes.read()
 
     # begin byte array
     Image.ImageStartDataVector(builder, len(image_bytes))
@@ -56,12 +53,9 @@ def build_monitoring_frame_raw_message(
 
 
 def build_monitoring_frame_post_message(
-    ts: int, image_height: int, image_width: int, image_bytes: io.BytesIO
+    ts: int, image_height: int, image_width: int, image_bytes: bytes
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
-
-    image_bytes.seek(0)
-    image_bytes = image_bytes.read()
 
     # begin byte array
     Image.ImageStartDataVector(builder, len(image_bytes))
@@ -92,12 +86,34 @@ def build_monitoring_frame_post_message(
     )
 
 
-def build_bounding_boxes_message(ts: int, prediction):
+def build_bounding_boxes_message(
+    ts: int,
+    prediction,
+    image_height: Optional[int] = None,
+    image_width: Optional[int] = None,
+    image_bytes: Optional[bytes] = None,
+) -> bytes:
     builder = flatbuffers.Builder(1024)
     boxes = prediction.get("detection_boxes")
     scores = prediction.get("detection_scores")
     classes = prediction.get("detection_classes")
     num_detections = prediction.get("num_detections")
+
+    # begin byte array
+    image = None
+    if image_height is not None and image_width is not None and image_bytes is not None:
+        Image.ImageStartDataVector(builder, len(image_bytes))
+        builder.Bytes[builder.head : (builder.head + len(image_bytes))] = image_bytes
+        image_bytes = builder.EndVector(len(image_bytes))
+        # end byte array
+
+        # begin image
+        Image.ImageStart(builder)
+        Image.ImageAddHeight(builder, image_height)
+        Image.ImageAddWidth(builder, image_width)
+        Image.ImageAddData(builder, image_bytes)
+        image = Image.ImageEnd(builder)
+        # end image
 
     # begin boxes builder
     BoundingBoxes.BoundingBoxesStartBoxesVector(builder, len(boxes))
@@ -106,17 +122,13 @@ def build_bounding_boxes_message(ts: int, prediction):
     boxes = builder.EndVector(len(boxes))
     # end boxes
 
-    # begin scores builder
-    BoundingBoxes.BoundingBoxesStartScoresVector(builder, len(scores))
-    builder.Bytes[builder.head : (builder.head + len(scores))] = scores.tobytes()
-    scores = builder.EndVector(len(scores))
+    # begin scores
+    scores = builder.CreateNumpyVector(scores)
     # end scores
 
     # begin classes builder
-    BoundingBoxes.BoundingBoxesStartScoresVector(builder, len(classes))
-    builder.Bytes[builder.head : (builder.head + len(classes))] = classes.tobytes()
-    classes = builder.EndVector(len(classes))
-    # end scores
+    classes = builder.CreateNumpyVector(classes)
+    # end classes
 
     # begin message body
     BoundingBoxes.BoundingBoxesStart(builder)
@@ -128,6 +140,9 @@ def build_bounding_boxes_message(ts: int, prediction):
     BoundingBoxes.BoundingBoxesAddEventType(
         builder, PluginEvent.PluginEvent.bounding_box_predict
     )
+
+    if image is not None:
+        BoundingBoxes.BoundingBoxesAddImage(builder, image)
     message = BoundingBoxes.BoundingBoxesEnd(builder)
     # end message body
 

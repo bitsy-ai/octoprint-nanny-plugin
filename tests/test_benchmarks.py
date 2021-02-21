@@ -3,11 +3,14 @@ import pytest
 import asyncio
 import json
 import threading
+import io
 from octoprint_nanny.workers.monitoring import MonitoringWorker, get_predict_bytes
 import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
 import PIL
+from PrintNannyMessage.Telemetry import TelemetryMessage, MonitoringFrame, MessageType
+from datetime import datetime
 
 
 def get_default_setting(key):
@@ -16,7 +19,7 @@ def get_default_setting(key):
 
 @pytest.mark.benchmark(group="active-learning-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_active_learning_msg_json_serialize(benchmark, mocker):
+async def test_active_learning_json_serialize(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -30,19 +33,20 @@ async def test_benchmark_active_learning_msg_json_serialize(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    def predict_and_serialize(buffer):
+    def serialize(buffer):
         ws_msg = worker._create_active_learning_json_msgs(12345, buffer)
         ws_msg = json.dumps(ws_msg, cls=NumpyEncoder)
         return ws_msg
 
-    ws_msg = benchmark(predict_and_serialize, buffer)
+    ws_msg = benchmark(serialize, buffer)
     benchmark.extra_info["ws_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(ws_msg)
+    benchmark.extra_info["serializer"] = "json"
 
 
 @pytest.mark.benchmark(group="active-learning-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_active_learning_msg_flatbuffer_serialize(benchmark, mocker):
+async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -55,23 +59,25 @@ async def test_benchmark_active_learning_msg_flatbuffer_serialize(benchmark, moc
 
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
-    buffer.seek(0)
-    (image_width, image_height) = PIL.Image.open(buffer).size
+    (image_width, image_height) = PIL.Image.open(io.BytesIO(buffer)).size
 
-    def predict_and_serialize(buffer):
+    ts = int(datetime.now().timestamp())
+
+    def serialize(ts, buffer, image_height, image_width):
         ws_msg = worker._create_active_learning_flatbuffer_msgs(
-            12345, image_height, image_width, buffer
+            ts, image_height, image_width, buffer
         )
         return ws_msg
 
-    ws_msg = benchmark(predict_and_serialize, buffer)
+    ws_msg = benchmark(serialize, ts, buffer, image_height, image_width)
     benchmark.extra_info["ws_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(ws_msg)
+    benchmark.extra_info["serializer"] = "fb"
 
 
 @pytest.mark.benchmark(group="lite-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_lite_msg_json_serialize(benchmark, mocker):
+async def test_lite_json_serialize(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -85,23 +91,27 @@ async def test_benchmark_lite_msg_json_serialize(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
     (_, _), (viz_buffer, h, w), prediction = get_predict_bytes(
-        buffer, calibration=None, min_score_thresh=0.1
+        buffer, calibration=None, min_score_thresh=0.001
     )
+    ts = int(datetime.now().timestamp())
 
-    def predict_and_serialize(buffer):
-        ws_msg, mqtt_msg = worker._create_lite_json_msgs(12345, viz_buffer, prediction)
+    def serialize(ts, buffer, viz_buffer, prediction):
+        ws_msg, mqtt_msg = worker._create_lite_json_msgs(
+            ts, buffer, viz_buffer, prediction
+        )
         ws_msg = json.dumps(ws_msg, cls=NumpyEncoder)
         mqtt_msg = json.dumps(mqtt_msg, cls=NumpyEncoder)
         return ws_msg, mqtt_msg
 
-    ws_msg, mqtt_msg = benchmark(predict_and_serialize, buffer)
+    ws_msg, mqtt_msg = benchmark(serialize, ts, buffer, viz_buffer, prediction)
     benchmark.extra_info["ws_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(mqtt_msg)
+    benchmark.extra_info["serializer"] = "json"
 
 
 @pytest.mark.benchmark(group="lite-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_lite_msg_flatbuffer_serialize(benchmark, mocker):
+async def test_lite_flatbuffer_serialize(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -114,24 +124,52 @@ async def test_benchmark_lite_msg_flatbuffer_serialize(benchmark, mocker):
 
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
-    (_, _), (viz_buffer, h, w), prediction = get_predict_bytes(
-        buffer, calibration=None, min_score_thresh=0.1
+    (oh, ow), (viz_buffer, vh, vw), prediction = get_predict_bytes(
+        buffer, calibration=None, min_score_thresh=0.001
     )
 
-    def predict_and_serialize(buffer):
+    ts = int(datetime.now().timestamp())
+
+    def serialize(ts, oh, ow, buffer, vh, vw, viz_buffer, prediction):
         ws_msg, mqtt_msg = worker._create_lite_flatbuffer_msgs(
-            12345, viz_buffer, h, w, prediction
+            ts,
+            prediction,
+            vh,
+            vw,
+            viz_buffer,
+            # oh, ow, buffer,
         )
         return ws_msg, mqtt_msg
 
-    ws_msg, mqtt_msg = benchmark(predict_and_serialize, buffer)
+    ws_msg, mqtt_msg = benchmark(
+        serialize, ts, oh, ow, buffer, vh, vw, viz_buffer, prediction
+    )
     benchmark.extra_info["ws_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(mqtt_msg)
+    benchmark.extra_info["serializer"] = "fb"
+
+    deserialized_ws_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        ws_msg, 0
+    )
+    ws_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_ws_msg)
+    assert ws_msg_obj.message.ts == ts
+    assert ws_msg_obj.message.image.width == 640
+    assert ws_msg_obj.message.image.height == 480
+
+    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        mqtt_msg, 0
+    )
+    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    assert mqtt_msg_obj.message.ts == ts
+
+    assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.scores)
+    assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.classes)
+    assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.boxes)
 
 
 @pytest.mark.benchmark(group="predict", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_uncalibrated_predict(benchmark, mocker):
+async def test_uncalibrated_predict(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -145,12 +183,12 @@ async def test_benchmark_uncalibrated_predict(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    benchmark(get_predict_bytes, buffer, calibration=None, min_score_thresh=0.5)
+    benchmark(get_predict_bytes, buffer, calibration=None, min_score_thresh=0.01)
 
 
 @pytest.mark.benchmark(group="predict", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
-async def test_benchmark_calibrated_predict(benchmark, mocker):
+async def test_calibrated_predict(benchmark, mocker):
 
     mock_pn_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
@@ -170,4 +208,4 @@ async def test_benchmark_calibrated_predict(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    benchmark(get_predict_bytes, buffer, calibration=calibration, min_score_thresh=0.5)
+    benchmark(get_predict_bytes, buffer, calibration=calibration, min_score_thresh=0.01)

@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os
 import time
+import io
 import threading
 
 import PIL
@@ -83,8 +84,8 @@ class ThreadLocalPredictor(threading.local):
 
         self.calibration = calibration
 
-    def load_image(self, bytes):
-        return PIL.Image.open(bytes)
+    def load_image(self, image_bytes):
+        return PIL.Image.open(io.BytesIO(image_bytes))
 
     def load_file(self, filepath: str):
         return PIL.Image.open(filepath)

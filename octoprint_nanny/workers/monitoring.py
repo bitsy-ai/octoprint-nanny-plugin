@@ -121,7 +121,7 @@ class MonitoringWorker:
             async with session.get(self._snapshot_url) as res:
                 assert res.headers["content-type"] == "image/jpeg"
                 b = await res.read()
-                return io.BytesIO(b)
+                return b
 
     @staticmethod
     def calc_calibration(x0, y0, x1, y1, height=480, width=640):
@@ -160,7 +160,7 @@ class MonitoringWorker:
     ) -> PrintNannyMonitoringFrameMessage:
 
         # send annotated image bytes to print nanny ui ws and Apache Beam worker
-        b64_image = base64.b64encode(image.getvalue())
+        b64_image = base64.b64encode(image)
 
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
@@ -185,8 +185,8 @@ class MonitoringWorker:
     async def _active_learning_loop(self, loop, pool):
         now = datetime.now(pytz.utc).timestamp()
         image_bytes = await self.load_url_buffer()
-        image_bytes.seek(0)
-        (image_width, image_height) = PIL.Image.open(image_bytes)
+
+        (image_width, image_height) = PIL.Image.open(io.BytesIO(image_bytes))
         msg = self._create_active_learning_flatbuffer_msgs(
             now, image_height, image_width, image_bytes
         )
@@ -194,17 +194,16 @@ class MonitoringWorker:
         octoprint_event = PluginEvents.to_octoprint_event(
             PluginEvents.MONITORING_FRAME_RAW
         )
-        image_bytes.seek(0)
         self._plugin._event_bus.fire(
             octoprint_event,
-            payload=base64.b64encode(image_bytes.read()),
+            payload=base64.b64encode(image_bytes),
         )
         self._pn_ws_queue.put_nowait(msg)
         self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._create_lite_json_msgs")
     def _create_lite_json_msgs(
-        self, now, viz_buffer, prediction
+        self, now, original_image, viz_buffer, prediction
     ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
 
         # send annotated image bytes to print nanny ui ws
@@ -217,7 +216,9 @@ class MonitoringWorker:
 
         # publish bounding box prediction to mqtt telemetry topic
         mqtt_msg = BoundingBoxMessage(
-            ts=now, event_type=PluginEvents.BOUNDING_BOX_PREDICT, data=prediction
+            ts=now,
+            event_type=PluginEvents.BOUNDING_BOX_PREDICT,
+            data=prediction,
         )
 
         return ws_msg, mqtt_msg
@@ -226,21 +227,23 @@ class MonitoringWorker:
     def _create_lite_flatbuffer_msgs(
         self,
         ts: int,
-        image_bytes: io.BytesIO,
-        image_height: int,
-        image_width: int,
         prediction: Prediction,
+        viz_image_height: int,
+        viz_image_width: int,
+        viz_image_bytes: bytes,
+        image_height: Optional[int] = None,
+        image_width: Optional[int] = None,
+        image_bytes: Optional[bytes] = None,
     ) -> Tuple[bytes, bytes]:
 
         ws_msg = (
             octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
-                ts, image_height, image_width, image_bytes
+                ts, viz_image_height, viz_image_width, viz_image_bytes.getvalue()
             )
         )
         mqtt_msg = octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
             ts, prediction
         )
-
         return ws_msg, mqtt_msg
 
     async def _lite_loop(self, loop, pool):
