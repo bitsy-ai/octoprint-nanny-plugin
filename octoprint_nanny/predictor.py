@@ -99,9 +99,8 @@ class ThreadLocalPredictor(threading.local):
         return image
 
     def write_image(self, outfile: str, image_np: np.ndarray):
-
         img = PIL.Image.fromarray(image_np)
-        img.save(outfile)
+        return img.save(outfile)
 
     def percent_intersection(
         self,

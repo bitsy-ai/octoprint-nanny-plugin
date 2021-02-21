@@ -85,7 +85,6 @@ class WebSocketWorker:
         ) as websocket:
             if msg is None:
                 msg = {"event_type": "ping"}
-            msg = self.encode(msg)
             await websocket.send(msg)
 
     def run(self):

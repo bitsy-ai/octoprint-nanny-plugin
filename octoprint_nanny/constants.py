@@ -51,10 +51,6 @@ class ClassMemberMixin(object):
         """
         Returns Member if event string matches value (with or without plugin prefix)
         """
-        import pdb
-
-        pdb.set_trace()
-
         if PLUGIN_PREFIX in value:
             return cls._octoprint_event_member(value)
 
