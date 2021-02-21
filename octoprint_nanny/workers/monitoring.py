@@ -183,12 +183,12 @@ class MonitoringWorker:
         return msg
 
     async def _active_learning_loop(self, loop, pool):
-        now = datetime.now(pytz.utc).timestamp()
+        ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
-        (image_width, image_height) = PIL.Image.open(io.BytesIO(image_bytes))
+        (image_width, image_height) = PIL.Image.open(io.BytesIO(image_bytes)).size
         msg = self._create_active_learning_flatbuffer_msgs(
-            now, image_height, image_width, image_bytes
+            ts, image_height, image_width, image_bytes
         )
 
         octoprint_event = PluginEvents.to_octoprint_event(
@@ -251,15 +251,15 @@ class MonitoringWorker:
         image_bytes = await self.load_url_buffer()
 
         (
-            viz_buffer,
+            (original_h, original_w),
+            (viz_buffer, viz_h, viz_w),
             prediction,
-            (image_height, image_width),
         ) = await loop.run_in_executor(
             pool, get_predict_bytes, image_bytes, self._calibration
         )
 
         ws_msg, mqtt_msg = self._create_lite_flatbuffer_msgs(
-            now, viz_buffer, image_height, image_width, prediction
+            now, prediction, viz_buffer, viz_h, viz_w
         )
 
         octoprint_event = PluginEvents.to_octoprint_event(

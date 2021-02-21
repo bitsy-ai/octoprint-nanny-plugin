@@ -70,6 +70,16 @@ async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
         return ws_msg
 
     ws_msg = benchmark(serialize, ts, buffer, image_height, image_width)
+
+    deserialized_ws_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        ws_msg, 0
+    )
+    ws_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_ws_msg)
+
+    assert ws_msg_obj.message.ts == ts
+    assert ws_msg_obj.message.image.width == 640
+    assert ws_msg_obj.message.image.height == 480
+
     benchmark.extra_info["ws_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(ws_msg)
     benchmark.extra_info["serializer"] = "fb"

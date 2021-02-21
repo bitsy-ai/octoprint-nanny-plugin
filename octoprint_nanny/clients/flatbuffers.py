@@ -36,10 +36,18 @@ def build_monitoring_frame_raw_message(
     image_bytes = builder.EndVector(len(image_bytes))
     # end byte array
 
+    # begin image
+    Image.ImageStart(builder)
+    Image.ImageAddHeight(builder, image_height)
+    Image.ImageAddWidth(builder, image_width)
+    Image.ImageAddData(builder, image_bytes)
+    image = Image.ImageEnd(builder)
+    # end image
+
     # begin message body
     MonitoringFrame.MonitoringFrameStart(builder)
     MonitoringFrame.MonitoringFrameAddTs(builder, ts)
-    MonitoringFrame.MonitoringFrameAddImage(builder, image_bytes)
+    MonitoringFrame.MonitoringFrameAddImage(builder, image)
     MonitoringFrame.MonitoringFrameAddEventType(
         builder,
         PluginEvent.PluginEvent.monitoring_frame_raw,
