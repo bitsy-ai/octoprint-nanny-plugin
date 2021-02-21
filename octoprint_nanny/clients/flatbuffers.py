@@ -96,10 +96,10 @@ def build_bounding_boxes_message(
     ts: int, prediction, image: Optional[octoprint_nanny.types.Image] = None
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
-    boxes = prediction.get("detection_boxes")
-    scores = prediction.get("detection_scores")
-    classes = prediction.get("detection_classes")
-    num_detections = prediction.get("num_detections")
+    boxes = prediction.detection_boxes
+    scores = prediction.detection_scores
+    classes = prediction.detection_classes
+    num_detections = prediction.num_detections
 
     # begin byte array
     if image:

@@ -1,5 +1,8 @@
 from enum import Enum
 from dataclasses import dataclass
+from PIL.Image import Image as PillowImage
+import numpy as np
+from typing import Optional
 
 from print_nanny_client.models.plugin_event_event_type_enum import (
     PluginEventEventTypeEnum as PluginEventTypes,
@@ -18,6 +21,13 @@ class Image:
     width: int
     data: bytes
 
+@dataclass
+class BoundingBoxPrediction:
+    num_detections: int
+    detection_scores: np.ndarray
+    detection_boxes: np.ndarray
+    detection_classes: np.ndarray
+    image: Image = None
 
 class MonitoringModes(Enum):
     ACTIVE_LEARNING = "active_learning"

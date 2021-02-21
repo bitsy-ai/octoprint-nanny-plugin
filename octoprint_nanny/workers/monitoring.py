@@ -29,7 +29,6 @@ from octoprint.events import Events
 import octoprint_nanny.types
 from octoprint_nanny.workers.websocket import WebSocketWorker
 from octoprint_nanny.predictor import (
-    Prediction,
     ThreadLocalPredictor,
     predict_threadsafe,
 )
@@ -49,7 +48,7 @@ class PrintNannyMonitoringFrameMessage(TypedDict):
 
 
 class BoundingBoxMessage(TypedDict):
-    prediction: Prediction
+    prediction: octoprint_nanny.types.BoundingBoxPrediction
     event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
     ts: datetime
 
@@ -188,7 +187,7 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_mqtt_msg(
-        self, ts: int, image: octoprint_nanny.types.Image, prediction: Prediction
+        self, ts: int, image: octoprint_nanny.types.Image, prediction: octoprint_nanny.types.BoundingBoxPrediction
     ) -> Tuple[bytes, Optional[bytes]]:
         return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
             ts, prediction
