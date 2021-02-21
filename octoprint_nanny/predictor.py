@@ -155,8 +155,9 @@ class ThreadLocalPredictor(threading.local):
         image_np = np.asarray(image).copy()
         height, width, _ = image_np.shape
         ignored_mask = None
-
+        logger.info(f'prediction scores prefilter {prediction.get("detection_scores")}')
         prediction = self.min_score_filter(prediction)
+        logger.info(f'prediction scores postfilter {prediction.get("detection_scores")}')
 
         if self.calibration is not None:
             detection_boundary_mask = self.calibration["mask"]

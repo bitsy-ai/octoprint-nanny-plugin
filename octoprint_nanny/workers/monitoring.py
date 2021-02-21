@@ -54,6 +54,8 @@ PREDICTOR = None
 @beeline.traced(name="MonitoringWorker.get_predict_bytes")
 @beeline.traced_thread
 def get_predict_bytes(image, calibration, min_score_thresh=0.50):
+
+    logger.info(f'get_predict_bytes received calibration={calibration}')
     global PREDICTOR
     if PREDICTOR is None:
         PREDICTOR = ThreadLocalPredictor(
@@ -247,7 +249,7 @@ class MonitoringWorker:
         return ws_msg, mqtt_msg
 
     async def _lite_loop(self, loop, pool):
-        now = datetime.now(pytz.utc).timestamp()
+        ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
         (
@@ -259,7 +261,7 @@ class MonitoringWorker:
         )
 
         ws_msg, mqtt_msg = self._create_lite_flatbuffer_msgs(
-            now, prediction, viz_buffer, viz_h, viz_w
+            ts, prediction,  viz_h, viz_w,viz_buffer
         )
 
         octoprint_event = PluginEvents.to_octoprint_event(
@@ -275,6 +277,7 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._loop")
     async def _loop(self, loop, pool):
+
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
             await self._active_learning_loop(loop, pool)
         elif self._monitoring_mode == MonitoringModes.LITE:
