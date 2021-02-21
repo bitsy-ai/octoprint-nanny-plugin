@@ -3,7 +3,17 @@ import os
 from PIL import Image as PImage
 import numpy as np
 
-from octoprint_nanny.predictor import ThreadLocalPredictor, Prediction
+from octoprint_nanny.predictor import (
+    ThreadLocalPredictor,
+    Prediction,
+    predict_threadsafe,
+)
+
+
+@pytest.mark.syncio
+async def test_zero_results(mock_response):
+
+    (oh, ow), (vb, vh, vw), prediction = await predict_threadsafe(predict_bytes)
 
 
 def test_area_of_intersection_overlap():

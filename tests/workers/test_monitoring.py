@@ -10,19 +10,12 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringManager,
     MonitoringModes,
 )
-
-
-class MockResponse(object):
-    headers = {"content-type": "image/jpeg"}
-
-    async def read(self):
-        with open("octoprint_nanny/data/images/0.pre.jpg", "rb") as f:
-            return f.read()
-
-
-@pytest.fixture
-def mock_response():
-    return MockResponse()
+from PrintNannyMessage.Telemetry import (
+    TelemetryMessage,
+    MonitoringFrame,
+    MessageType,
+    PluginEvent,
+)
 
 
 @pytest.mark.asyncio
@@ -58,11 +51,7 @@ async def test_lite_mode_webcam_enabled(
     )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
         octoprint_event,
-        payload={
-            "image": mock_base64.b64encode.return_value,
-            "ts": unittest.mock.ANY,
-            "event_type": PluginEvents.MONITORING_FRAME_POST,
-        },
+        payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -70,7 +59,14 @@ async def test_lite_mode_webcam_enabled(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == PluginEvents.BOUNDING_BOX_PREDICT
+    mqtt_msg = args[0]
+    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        mqtt_msg, 0
+    )
+    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    assert (
+        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.bounding_box_predict
+    )
 
 
 @pytest.mark.asyncio
@@ -108,11 +104,7 @@ async def test_lite_mode_webcam_disabled(
     )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
         octoprint_event,
-        payload={
-            "image": mock_base64.b64encode.return_value,
-            "ts": unittest.mock.ANY,
-            "event_type": PluginEvents.MONITORING_FRAME_POST,
-        },
+        payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_not_called()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -120,7 +112,14 @@ async def test_lite_mode_webcam_disabled(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == PluginEvents.BOUNDING_BOX_PREDICT
+    mqtt_msg = args[0]
+    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        mqtt_msg, 0
+    )
+    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    assert (
+        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.bounding_box_predict
+    )
 
 
 @pytest.mark.asyncio
@@ -156,11 +155,7 @@ async def test_active_learning_mode(
     octoprint_event = PluginEvents.to_octoprint_event(PluginEvents.MONITORING_FRAME_RAW)
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
         octoprint_event,
-        payload={
-            "image": mock_base64.b64encode.return_value,
-            "ts": unittest.mock.ANY,
-            "event_type": PluginEvents.MONITORING_FRAME_RAW,
-        },
+        payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
@@ -168,4 +163,12 @@ async def test_active_learning_mode(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    assert args[0].get("event_type") == PluginEvents.MONITORING_FRAME_RAW
+    mqtt_msg = args[0]
+    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+        mqtt_msg, 0
+    )
+    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+
+    assert (
+        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.monitoring_frame_raw
+    )

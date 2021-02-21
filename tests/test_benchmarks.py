@@ -4,7 +4,8 @@ import asyncio
 import json
 import threading
 import io
-from octoprint_nanny.workers.monitoring import MonitoringWorker, get_predict_bytes
+from octoprint_nanny.workers.monitoring import MonitoringWorker
+from octoprint_nanny.predictor import predict_threadsafe
 import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
@@ -64,7 +65,7 @@ async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
     ts = int(datetime.now().timestamp())
 
     def serialize(ts, buffer, image_height, image_width):
-        ws_msg = worker._create_active_learning_flatbuffer_msgs(
+        ws_msg = worker._create_active_learning_flatbuffer_msg(
             ts, image_height, image_width, buffer
         )
         return ws_msg
@@ -101,7 +102,7 @@ async def test_lite_json_serialize(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    (_, _), (viz_buffer, h, w), prediction = get_predict_bytes(
+    (_, _), (viz_buffer, h, w), prediction = predict_threadsafe(
         buffer, calibration=None, min_score_thresh=0.001
     )
 
@@ -136,7 +137,7 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
 
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
-    (oh, ow), (viz_buffer, vh, vw), prediction = get_predict_bytes(
+    (oh, ow), (viz_buffer, vh, vw), prediction = predict_threadsafe(
         buffer, calibration=None, min_score_thresh=0.001
     )
 
@@ -178,6 +179,7 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.classes)
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.boxes)
 
+
 @pytest.mark.benchmark(group="lite-serializer", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
 async def test_lite_flatbuffer_calibrated_serialize(benchmark, mocker):
@@ -200,8 +202,9 @@ async def test_lite_flatbuffer_calibrated_serialize(benchmark, mocker):
 
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
-    (oh, ow), (viz_buffer, vh, vw), prediction = get_predict_bytes(
-        buffer, calibration=calibration,
+    (oh, ow), (viz_buffer, vh, vw), prediction = predict_threadsafe(
+        buffer,
+        calibration=calibration,
     )
 
     ts = int(datetime.now().timestamp())
@@ -242,6 +245,7 @@ async def test_lite_flatbuffer_calibrated_serialize(benchmark, mocker):
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.classes)
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.boxes)
 
+
 @pytest.mark.benchmark(group="predict", max_time=2.0, warmup=True)
 @pytest.mark.asyncio
 async def test_uncalibrated_predict(benchmark, mocker):
@@ -258,7 +262,7 @@ async def test_uncalibrated_predict(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    benchmark(get_predict_bytes, buffer, calibration=None, min_score_thresh=0.01)
+    benchmark(predict_threadsafe, buffer, calibration=None, min_score_thresh=0.01)
 
 
 @pytest.mark.benchmark(group="predict", max_time=2.0, warmup=True)
@@ -283,4 +287,6 @@ async def test_calibrated_predict(benchmark, mocker):
     worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
     buffer = await worker.load_url_buffer()
 
-    benchmark(get_predict_bytes, buffer, calibration=calibration, min_score_thresh=0.01)
+    benchmark(
+        predict_threadsafe, buffer, calibration=calibration, min_score_thresh=0.01
+    )

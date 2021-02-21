@@ -6,6 +6,7 @@ import aiohttp
 import logging
 import io
 import PIL
+import functools
 from datetime import datetime
 import numpy as np
 import json
@@ -25,8 +26,13 @@ import beeline
 import PrintNannyMessage
 from octoprint.events import Events
 
+import octoprint_nanny.types
 from octoprint_nanny.workers.websocket import WebSocketWorker
-from octoprint_nanny.predictor import Prediction, ThreadLocalPredictor
+from octoprint_nanny.predictor import (
+    Prediction,
+    ThreadLocalPredictor,
+    predict_threadsafe,
+)
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.constants import PluginEvents, MonitoringModes
@@ -46,38 +52,6 @@ class BoundingBoxMessage(TypedDict):
     prediction: Prediction
     event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
     ts: datetime
-
-
-PREDICTOR = None
-
-
-@beeline.traced(name="MonitoringWorker.get_predict_bytes")
-@beeline.traced_thread
-def get_predict_bytes(image, calibration, min_score_thresh=0.50):
-
-    logger.info(f'get_predict_bytes received calibration={calibration}')
-    global PREDICTOR
-    if PREDICTOR is None:
-        PREDICTOR = ThreadLocalPredictor(
-            calibration=calibration, min_score_thresh=min_score_thresh
-        )
-    image = PREDICTOR.load_image(image)
-    prediction = PREDICTOR.predict(image)
-
-    prediction, viz_np = PREDICTOR.postprocess(image, prediction)
-    viz_image = PIL.Image.fromarray(viz_np, "RGB")
-    viz_im_w, viz_im_h = viz_image.size
-    viz_buffer = io.BytesIO()
-    viz_buffer.name = "annotated_image.jpg"
-    viz_image.save(viz_buffer, format="JPEG")
-
-    # NOTE: PIL.Image.size returns (w, h) where most TensorFlow interfaces expect (h, w)
-    (original_image_width, original_image_height) = image.size
-    return (
-        (original_image_height, original_image_width),
-        (viz_buffer, viz_im_h, viz_im_w),
-        prediction,
-    )
 
 
 class MonitoringWorker:
@@ -171,37 +145,14 @@ class MonitoringWorker:
         )
         return ws_msg
 
-    @beeline.traced(name="MonitoringWorker._create_active_learning_msgs")
-    def _create_active_learning_flatbuffer_msgs(
-        self,
-        ts,
-        image_height,
-        image_width,
-        image_bytes,
+    @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
+    def _create_active_learning_flatbuffer_msg(
+        self, ts: int, image: octoprint_nanny.types.Image
     ) -> bytes:
         msg = octoprint_nanny.clients.flatbuffers.build_monitoring_frame_raw_message(
-            ts, image_height, image_width, image_bytes
+            ts, image
         )
         return msg
-
-    async def _active_learning_loop(self, loop, pool):
-        ts = int(datetime.now(pytz.utc).timestamp())
-        image_bytes = await self.load_url_buffer()
-
-        (image_width, image_height) = PIL.Image.open(io.BytesIO(image_bytes)).size
-        msg = self._create_active_learning_flatbuffer_msgs(
-            ts, image_height, image_width, image_bytes
-        )
-
-        octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_RAW
-        )
-        self._plugin._event_bus.fire(
-            octoprint_event,
-            payload=base64.b64encode(image_bytes),
-        )
-        self._pn_ws_queue.put_nowait(msg)
-        self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._create_lite_json_msgs")
     def _create_lite_json_msgs(
@@ -225,43 +176,55 @@ class MonitoringWorker:
 
         return ws_msg, mqtt_msg
 
-    @beeline.traced(name="MonitoringWorker._create_lite_flatbuffer_msgs")
-    def _create_lite_flatbuffer_msgs(
+    @beeline.traced(name="MonitoringWorker._create_lite_fb_ws_msg")
+    def _create_lite_fb_ws_msg(
         self,
         ts: int,
-        prediction: Prediction,
-        viz_image_height: int,
-        viz_image_width: int,
-        viz_image_bytes: bytes,
-        image_height: Optional[int] = None,
-        image_width: Optional[int] = None,
-        image_bytes: Optional[bytes] = None,
-    ) -> Tuple[bytes, bytes]:
-
-        ws_msg = (
-            octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
-                ts, viz_image_height, viz_image_width, viz_image_bytes.getvalue()
-            )
+        image: octoprint_nanny.types.Image,
+    ) -> Tuple[bytes, Optional[bytes]]:
+        return octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
+            ts, image
         )
-        mqtt_msg = octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
+
+    @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
+    def _create_lite_fb_mqtt_msg(
+        self, ts: int, image: octoprint_nanny.types.Image, prediction: Prediction
+    ) -> Tuple[bytes, Optional[bytes]]:
+        return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
             ts, prediction
         )
-        return ws_msg, mqtt_msg
 
-    async def _lite_loop(self, loop, pool):
+    @beeline.traced(name="MonitoringWorker._active_learning_loop")
+    async def _active_learning_loop(self, loop, pool):
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
-        (
-            (original_h, original_w),
-            (viz_buffer, viz_h, viz_w),
-            prediction,
-        ) = await loop.run_in_executor(
-            pool, get_predict_bytes, image_bytes, self._calibration
+        (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
+        image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
+        msg = self._create_active_learning_flatbuffer_msg(ts, image)
+
+        octoprint_event = PluginEvents.to_octoprint_event(
+            PluginEvents.MONITORING_FRAME_RAW
+        )
+        self._plugin._event_bus.fire(
+            octoprint_event,
+            payload=base64.b64encode(image_bytes),
+        )
+        self._pn_ws_queue.put_nowait(msg)
+        self._mqtt_send_queue.put_nowait(msg)
+
+    @beeline.traced(name="MonitoringWorker._lite_loop")
+    async def _lite_loop(self, loop, pool):
+        ts = int(datetime.now(pytz.utc).timestamp())
+        image_bytes = await self.load_url_buffer()
+        func = functools.partial(
+            predict_threadsafe, image_bytes, calibration=self._calibration
         )
 
-        ws_msg, mqtt_msg = self._create_lite_flatbuffer_msgs(
-            ts, prediction,  viz_h, viz_w,viz_buffer
+        raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
+
+        ws_msg = self._create_lite_fb_ws_msg(
+            ts=ts, image=post_frame if post_frame else raw_frame
         )
 
         octoprint_event = PluginEvents.to_octoprint_event(
@@ -269,11 +232,16 @@ class MonitoringWorker:
         )
         self._plugin._event_bus.fire(
             octoprint_event,
-            payload=base64.b64encode(viz_buffer.getvalue()),
+            payload=base64.b64encode(post_frame.data if post_frame else raw_frame.data),
         )
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(ws_msg)
-        self._mqtt_send_queue.put_nowait(mqtt_msg)
+
+        if prediction and post_frame:
+            mqtt_msg = self._create_lite_fb_mqtt_msg(
+                ts=ts, image=post_frame, prediction=prediction
+            )
+            self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
     async def _loop(self, loop, pool):

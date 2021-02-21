@@ -10,6 +10,7 @@ from PrintNannyMessage.Telemetry import (
     TelemetryMessage,
     MessageType,
 )
+import octoprint_nanny.types
 
 
 def build_telemetry_message(builder, message, message_type):
@@ -23,24 +24,21 @@ def build_telemetry_message(builder, message, message_type):
 
 
 def build_monitoring_frame_raw_message(
-    ts: int,
-    image_height: int,
-    image_width: int,
-    image_bytes: bytes,
+    ts: int, image: octoprint_nanny.types.Image
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     # begin byte array
-    Image.ImageStartDataVector(builder, len(image_bytes))
-    builder.Bytes[builder.head : (builder.head + len(image_bytes))] = image_bytes
-    image_bytes = builder.EndVector(len(image_bytes))
+    Image.ImageStartDataVector(builder, len(image.data))
+    builder.Bytes[builder.head : (builder.head + len(image.data))] = image.data
+    image.data = builder.EndVector(len(image.data))
     # end byte array
 
     # begin image
     Image.ImageStart(builder)
-    Image.ImageAddHeight(builder, image_height)
-    Image.ImageAddWidth(builder, image_width)
-    Image.ImageAddData(builder, image_bytes)
+    Image.ImageAddHeight(builder, image.height)
+    Image.ImageAddWidth(builder, image.width)
+    Image.ImageAddData(builder, image.data)
     image = Image.ImageEnd(builder)
     # end image
 
@@ -61,21 +59,21 @@ def build_monitoring_frame_raw_message(
 
 
 def build_monitoring_frame_post_message(
-    ts: int, image_height: int, image_width: int, image_bytes: bytes
+    ts: int, image: octoprint_nanny.types.Image
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     # begin byte array
-    Image.ImageStartDataVector(builder, len(image_bytes))
-    builder.Bytes[builder.head : (builder.head + len(image_bytes))] = image_bytes
-    image_bytes = builder.EndVector(len(image_bytes))
+    Image.ImageStartDataVector(builder, len(image.data))
+    builder.Bytes[builder.head : (builder.head + len(image.data))] = image.data
+    image.data = builder.EndVector(len(image.data))
     # end byte array
 
     # begin image
     Image.ImageStart(builder)
-    Image.ImageAddHeight(builder, image_height)
-    Image.ImageAddWidth(builder, image_width)
-    Image.ImageAddData(builder, image_bytes)
+    Image.ImageAddHeight(builder, image.height)
+    Image.ImageAddWidth(builder, image.width)
+    Image.ImageAddData(builder, image.data)
     image = Image.ImageEnd(builder)
     # end image
 
@@ -95,11 +93,7 @@ def build_monitoring_frame_post_message(
 
 
 def build_bounding_boxes_message(
-    ts: int,
-    prediction,
-    image_height: Optional[int] = None,
-    image_width: Optional[int] = None,
-    image_bytes: Optional[bytes] = None,
+    ts: int, prediction, image: Optional[octoprint_nanny.types.Image] = None
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
     boxes = prediction.get("detection_boxes")
@@ -108,18 +102,17 @@ def build_bounding_boxes_message(
     num_detections = prediction.get("num_detections")
 
     # begin byte array
-    image = None
-    if image_height is not None and image_width is not None and image_bytes is not None:
-        Image.ImageStartDataVector(builder, len(image_bytes))
-        builder.Bytes[builder.head : (builder.head + len(image_bytes))] = image_bytes
-        image_bytes = builder.EndVector(len(image_bytes))
+    if image:
+        Image.ImageStartDataVector(builder, len(image.data))
+        builder.Bytes[builder.head : (builder.head + len(image.data))] = image.data
+        image.data = builder.EndVector(len(image.data))
         # end byte array
 
         # begin image
         Image.ImageStart(builder)
-        Image.ImageAddHeight(builder, image_height)
-        Image.ImageAddWidth(builder, image_width)
-        Image.ImageAddData(builder, image_bytes)
+        Image.ImageAddHeight(builder, image.height)
+        Image.ImageAddWidth(builder, image.width)
+        Image.ImageAddData(builder, image.data)
         image = Image.ImageEnd(builder)
         # end image
 
@@ -149,7 +142,7 @@ def build_bounding_boxes_message(
         builder, PluginEvent.PluginEvent.bounding_box_predict
     )
 
-    if image is not None:
+    if image:
         BoundingBoxes.BoundingBoxesAddImage(builder, image)
     message = BoundingBoxes.BoundingBoxesEnd(builder)
     # end message body
