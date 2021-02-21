@@ -77,7 +77,11 @@ class MonitoringWorker:
         """
         self._monitoring_mode = plugin.settings.monitoring_mode
         self._plugin = plugin
-        self._calibration = plugin.settings.calibration
+
+        self._predictor_kwargs = {
+            "calibration": plugin.settings.calibration,
+            "min_score_thresh": plugin.settings.min_score_thresh
+        }
         self._fpm = plugin.settings.monitoring_frames_per_minute
         self._sleep_interval = 60 / int(self._fpm)
         self._snapshot_url = plugin.settings.snapshot_url
@@ -187,7 +191,10 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_mqtt_msg(
-        self, ts: int, image: octoprint_nanny.types.Image, prediction: octoprint_nanny.types.BoundingBoxPrediction
+        self,
+        ts: int,
+        image: octoprint_nanny.types.Image,
+        prediction: octoprint_nanny.types.BoundingBoxPrediction,
     ) -> Tuple[bytes, Optional[bytes]]:
         return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
             ts, prediction
@@ -217,7 +224,7 @@ class MonitoringWorker:
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
         func = functools.partial(
-            predict_threadsafe, image_bytes, calibration=self._calibration
+            predict_threadsafe, image_bytes, **self._predictor_kwargs
         )
 
         raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)

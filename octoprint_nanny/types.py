@@ -21,6 +21,7 @@ class Image:
     width: int
     data: bytes
 
+
 @dataclass
 class BoundingBoxPrediction:
     num_detections: int
@@ -28,6 +29,7 @@ class BoundingBoxPrediction:
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
     image: Image = None
+
 
 class MonitoringModes(Enum):
     ACTIVE_LEARNING = "active_learning"

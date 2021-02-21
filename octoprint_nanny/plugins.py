@@ -83,6 +83,7 @@ DEFAULT_SETTINGS = dict(
     auth_valid=False,
     device_registered=False,
     user_email=None,
+    min_score_thresh=0.50,
     monitoring_frames_per_minute=10,
     mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
     mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
