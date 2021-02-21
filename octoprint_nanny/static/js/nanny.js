@@ -53,7 +53,7 @@ $(function() {
 
 
         OctoPrint.socket.onMessage("*", function(message) {
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_frame_done'){
+            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_monitoring_frame'){
 
                 if (self.previewActive() == false) {
                     self.previewActive(true);

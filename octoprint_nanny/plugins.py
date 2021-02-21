@@ -469,10 +469,10 @@ class OctoPrintNannyPlugin(
         res.raise_for_status()
         if res.status_code == 200:
             self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
                 payload={"image": base64.b64encode(res.content)},
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START)
+            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
