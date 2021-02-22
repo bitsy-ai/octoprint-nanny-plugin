@@ -9,14 +9,24 @@ from PrintNannyMessage.Telemetry import (
     PluginEvent,
     TelemetryMessage,
     MessageType,
+    Metadata,
 )
 import octoprint_nanny.types
 
 
-def build_telemetry_message(builder, message, message_type):
+def build_telemetry_message(builder, message, metadata, message_type):
+    # begin metadata
+    Metadata.MetadataStart(builder)
+    Metadata.MetadataAddUserId(builder, metadata.user_id)
+    Metadata.MetadataAddDeviceCloudiotId(builder, metadata.device_cloudiot_id)
+    Metadata.MetadataAddDeviceId(builder, metadata.device_id)
+    metadata = Metadata.MetadataEnd(builder)
+    # end metadata
+    # begin telemetry message
     TelemetryMessage.TelemetryMessageStart(builder)
     TelemetryMessage.TelemetryMessageAddMessageType(builder, message_type)
     TelemetryMessage.TelemetryMessageAddMessage(builder, message)
+    TelemetryMessage.TelemetryMessageAddMetadata(builder, metadata)
     message = TelemetryMessage.TelemetryMessageEnd(builder)
     builder.Finish(message)
     # end message
@@ -24,7 +34,9 @@ def build_telemetry_message(builder, message, message_type):
 
 
 def build_monitoring_frame_raw_message(
-    ts: int, image: octoprint_nanny.types.Image
+    ts: int,
+    image: octoprint_nanny.types.Image,
+    metadata: octoprint_nanny.types.Metadata,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
@@ -54,12 +66,14 @@ def build_monitoring_frame_raw_message(
     # end message body
 
     return build_telemetry_message(
-        builder, message, MessageType.MessageType.MonitoringFrame
+        builder, message, metadata, MessageType.MessageType.MonitoringFrame
     )
 
 
 def build_monitoring_frame_post_message(
-    ts: int, image: octoprint_nanny.types.Image
+    ts: int,
+    image: octoprint_nanny.types.Image,
+    metadata: octoprint_nanny.types.Metadata,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
@@ -88,12 +102,15 @@ def build_monitoring_frame_post_message(
     message = MonitoringFrame.MonitoringFrameEnd(builder)
     # end message body
     return build_telemetry_message(
-        builder, message, MessageType.MessageType.MonitoringFrame
+        builder, message, metadata, MessageType.MessageType.MonitoringFrame
     )
 
 
 def build_bounding_boxes_message(
-    ts: int, prediction, image: Optional[octoprint_nanny.types.Image] = None
+    ts: int,
+    prediction: octoprint_nanny.types.BoundingBoxPrediction,
+    metadata: octoprint_nanny.types.Metadata,
+    image: Optional[octoprint_nanny.types.Image] = None,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
     boxes = prediction.detection_boxes
@@ -148,5 +165,5 @@ def build_bounding_boxes_message(
     # end message body
 
     return build_telemetry_message(
-        builder, message, MessageType.MessageType.BoundingBoxes
+        builder, message, metadata, MessageType.MessageType.BoundingBoxes
     )

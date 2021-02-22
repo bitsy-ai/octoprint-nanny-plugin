@@ -23,6 +23,13 @@ class Image:
 
 
 @dataclass
+class Metadata:
+    user_id: int
+    device_id: int
+    device_cloudiot_id: int
+
+
+@dataclass
 class BoundingBoxPrediction:
     num_detections: int
     detection_scores: np.ndarray

@@ -13,6 +13,7 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum,
 )
 
+import octoprint_nanny.types
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -39,7 +40,7 @@ class PluginSettingsMemoize:
         self._device_info = None
         self._rest_client = None
         self._calibration = None
-
+        self._metadata = None
         self.environment = {}
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
@@ -142,6 +143,16 @@ class PluginSettingsMemoize:
     @property
     def webcam_upload(self):
         return self.plugin.get_setting("webcam_upload")
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            self._metadata = octoprint_nanny.types.Metadata(
+                user_id=self.user_id,
+                device_id=self.device_id,
+                device_cloudiot_name=self.device_cloudiot_id,
+            )
+        return self._metadata
 
     @property
     def calibration(self):

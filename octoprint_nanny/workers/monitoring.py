@@ -153,7 +153,7 @@ class MonitoringWorker:
         self, ts: int, image: octoprint_nanny.types.Image
     ) -> bytes:
         msg = octoprint_nanny.clients.flatbuffers.build_monitoring_frame_raw_message(
-            ts, image
+            ts, image, self._plugin.settings.metadata
         )
         return msg
 
@@ -185,8 +185,9 @@ class MonitoringWorker:
         ts: int,
         image: octoprint_nanny.types.Image,
     ) -> Tuple[bytes, Optional[bytes]]:
+
         return octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
-            ts, image
+            ts, image, self._plugin.settings.metadata
         )
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
@@ -197,7 +198,7 @@ class MonitoringWorker:
         prediction: octoprint_nanny.types.BoundingBoxPrediction,
     ) -> Tuple[bytes, Optional[bytes]]:
         return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
-            ts, prediction
+            ts, prediction, self._plugin.settings.metadata
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -245,6 +246,9 @@ class MonitoringWorker:
             mqtt_msg = self._create_lite_fb_mqtt_msg(
                 ts=ts, image=post_frame, prediction=prediction
             )
+            octoprint_event = PluginEvents.to_octoprint_event(
+                PluginEvents.BOUNDING_BOX_PREDICT
+            )
             self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
@@ -275,7 +279,7 @@ class MonitoringWorker:
     def run(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._producer())
+        return loop.run_until_complete(self._producer())
 
 
 class MonitoringManager:

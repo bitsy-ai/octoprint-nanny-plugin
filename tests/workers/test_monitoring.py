@@ -24,7 +24,7 @@ from PrintNannyMessage.Telemetry import (
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
-    mock_base64, mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -34,6 +34,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
+    plugin.settings.metadata = metadata
     plugin.settings.calibration = None
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.50
@@ -75,7 +76,13 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
-    mock_base64, mock_events_enum, mock_get, calibration, mock_response, mocker
+    mock_base64,
+    mock_events_enum,
+    mock_get,
+    calibration,
+    mock_response,
+    mocker,
+    metadata,
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -90,6 +97,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     plugin.settings.min_score_thresh = 0.50
     plugin.settings.webcam_upload = True
     plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.metadata = metadata
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
@@ -126,7 +134,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
-    mock_base64, mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -139,6 +147,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     plugin.settings.calibration = None
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.999
+    plugin.settings.metadata = metadata
 
     plugin.settings.webcam_upload = True
     plugin.settings.monitoring_mode = MonitoringModes.LITE
@@ -166,7 +175,13 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
-    mock_base64, mock_events_enum, mock_get, calibration, mock_response, mocker
+    mock_base64,
+    mock_events_enum,
+    mock_get,
+    calibration,
+    mock_response,
+    mocker,
+    metadata,
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -179,6 +194,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
     plugin.settings.calibration = calibration
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.999
+    plugin.settings.metadata = metadata
 
     plugin.settings.webcam_upload = True
     plugin.settings.monitoring_mode = MonitoringModes.LITE
@@ -206,7 +222,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_lite_mode_webcam_disabled(
-    mock_base64, mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -223,6 +239,7 @@ async def test_lite_mode_webcam_disabled(
     plugin.settings.min_score_thresh = 0.50
     plugin.settings.webcam_upload = False
     plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.metadata = metadata
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
@@ -259,7 +276,7 @@ async def test_lite_mode_webcam_disabled(
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
 async def test_active_learning_mode(
-    mock_base64, mock_events_enum, mock_get, mock_response, mocker
+    mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
 
@@ -273,6 +290,7 @@ async def test_active_learning_mode(
     plugin.settings.snapshot_url = "http://localhost:8080"
     plugin.settings.calibration = None
     plugin.settings.monitoring_frames_per_minute = 30
+    plugin.settings.metadata = metadata
 
     plugin.settings.webcam_upload = True
     plugin.settings.monitoring_mode = MonitoringModes.ACTIVE_LEARNING

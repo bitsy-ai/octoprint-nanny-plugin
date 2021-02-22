@@ -1,4 +1,5 @@
 import pytest
+import octoprint_nanny.types
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 
 
@@ -22,6 +23,13 @@ def calibration():
         0.2,
         0.8,
         0.8,
+    )
+
+
+@pytest.fixture
+def metadata():
+    return octoprint_nanny.types.Metadata(
+        user_id=1234, device_id=1234, device_cloudiot_id=1234
     )
 
 

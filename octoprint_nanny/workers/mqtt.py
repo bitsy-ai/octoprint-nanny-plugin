@@ -213,6 +213,10 @@ class MQTTPublisherWorker:
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
+            if isinstance(event, bytes):
+                await self._publish_bounding_box_telemetry(event)
+                return
+
             event_type = event.get("event_type")
             if event_type is None:
                 logger.warning(
@@ -223,11 +227,6 @@ class MQTTPublisherWorker:
                 return
 
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
-
-            if event_type == PluginEvents.BOUNDING_BOX_PREDICT:
-                await self._publish_bounding_box_telemetry(event)
-                return
-
             tracked = self.plugin.settings.event_is_tracked(event_type)
             if tracked:
                 await self._publish_octoprint_event_telemetry(event)
