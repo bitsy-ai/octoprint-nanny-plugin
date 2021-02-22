@@ -210,11 +210,8 @@ class MonitoringWorker:
         image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
         msg = self._create_active_learning_flatbuffer_msg(ts, image)
 
-        octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_RAW
-        )
         self._plugin._event_bus.fire(
-            octoprint_event,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
             payload=base64.b64encode(image_bytes),
         )
         self._pn_ws_queue.put_nowait(msg)
@@ -232,11 +229,8 @@ class MonitoringWorker:
         video_frame = post_frame if post_frame is not None else raw_frame
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
 
-        octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_POST
-        )
         self._plugin._event_bus.fire(
-            octoprint_event,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
             payload=base64.b64encode(video_frame.data),
         )
         if self._plugin.settings.webcam_upload:

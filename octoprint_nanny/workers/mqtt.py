@@ -205,7 +205,10 @@ class MQTTPublisherWorker:
             if isinstance(event, bytearray):
                 if self.plugin.settings.monitoring_mode == MonitoringModes.LITE:
                     self.plugin.settings.mqtt_client.publish_bounding_boxes(event)
-                elif self.plugin.settings.monitoring_mode == MonitoringModes.ACTIVE_LEARNING    :
+                elif (
+                    self.plugin.settings.monitoring_mode
+                    == MonitoringModes.ACTIVE_LEARNING
+                ):
                     self.plugin.settings.mqtt_client.publish_monitoring_raw(event)
                 return
             event_type = event.get("event_type")
