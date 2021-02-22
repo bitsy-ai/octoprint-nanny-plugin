@@ -150,7 +150,7 @@ class PluginSettingsMemoize:
             self._metadata = octoprint_nanny.types.Metadata(
                 user_id=self.user_id,
                 device_id=self.device_id,
-                device_cloudiot_name=self.device_cloudiot_id,
+                device_cloudiot_id=self.device_cloudiot_id,
             )
         return self._metadata
 
