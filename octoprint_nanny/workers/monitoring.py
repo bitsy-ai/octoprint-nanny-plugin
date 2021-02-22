@@ -6,9 +6,10 @@ import aiohttp
 import logging
 import io
 import PIL
+import functools
 from datetime import datetime
 import numpy as np
-
+import json
 import threading
 from enum import Enum
 
@@ -21,48 +22,35 @@ except:
     from typing import Optional
 
 import beeline
+
+import PrintNannyMessage
 from octoprint.events import Events
 
+import octoprint_nanny.types
 from octoprint_nanny.workers.websocket import WebSocketWorker
-from octoprint_nanny.predictor import Prediction, ThreadLocalPredictor
+from octoprint_nanny.predictor import (
+    ThreadLocalPredictor,
+    predict_threadsafe,
+)
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
-from octoprint_nanny.constants import PluginEvents, MonitoringModes
+from octoprint_nanny.types import PluginEvents, MonitoringModes
+from octoprint_nanny.utils.encoder import NumpyEncoder
+import octoprint_nanny.clients.flatbuffers
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
 
 class PrintNannyMonitoringFrameMessage(TypedDict):
     ts: datetime
-    event_type: str = PluginEvents.MONITORING_FRAME_DONE.value
+    event_type: str = PluginEvents.MONITORING_FRAME_POST
     image: str
 
 
 class BoundingBoxMessage(TypedDict):
-    prediction: Prediction
-    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT_DONE.value
+    prediction: octoprint_nanny.types.BoundingBoxPrediction
+    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
     ts: datetime
-
-
-PREDICTOR = None
-
-
-@beeline.traced(name="MonitoringWorker.get_predict_bytes")
-@beeline.traced_thread
-def _get_predict_bytes(image, calibration):
-    global PREDICTOR
-    if PREDICTOR is None:
-        PREDICTOR = ThreadLocalPredictor(calibration=calibration)
-    image = PREDICTOR.load_image(image)
-    prediction = PREDICTOR.predict(image)
-
-    prediction, viz_np = PREDICTOR.postprocess(image, prediction)
-    viz_image = PIL.Image.fromarray(viz_np, "RGB")
-    viz_buffer = io.BytesIO()
-    viz_buffer.name = "annotated_image.jpg"
-    viz_image.save(viz_buffer, format="JPEG")
-
-    return viz_buffer, prediction
 
 
 class MonitoringWorker:
@@ -89,7 +77,11 @@ class MonitoringWorker:
         """
         self._monitoring_mode = plugin.settings.monitoring_mode
         self._plugin = plugin
-        self._calibration = plugin.settings.calibration
+
+        self._predictor_kwargs = {
+            "calibration": plugin.settings.calibration,
+            "min_score_thresh": plugin.settings.min_score_thresh,
+        }
         self._fpm = plugin.settings.monitoring_frames_per_minute
         self._sleep_interval = 60 / int(self._fpm)
         self._snapshot_url = plugin.settings.snapshot_url
@@ -108,7 +100,7 @@ class MonitoringWorker:
             async with session.get(self._snapshot_url) as res:
                 assert res.headers["content-type"] == "image/jpeg"
                 b = await res.read()
-                return io.BytesIO(b)
+                return b
 
     @staticmethod
     def calc_calibration(x0, y0, x1, y1, height=480, width=640):
@@ -142,77 +134,120 @@ class MonitoringWorker:
         loop.close()
 
     @beeline.traced(name="MonitoringWorker._create_active_learning_msgs")
-    def _create_active_learning_msgs(
+    def _create_active_learning_json_msgs(
         self, now, image
     ) -> PrintNannyMonitoringFrameMessage:
 
         # send annotated image bytes to print nanny ui ws and Apache Beam worker
-        b64_image = base64.b64encode(image.getvalue())
+        b64_image = base64.b64encode(image)
+
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            event_type=PluginEvents.MONITORING_FRAME_RAW,
             image=b64_image,
         )
         return ws_msg
 
-    async def _active_learning_loop(self, loop, pool):
-        now = datetime.now(pytz.utc).timestamp()
-        image = await self.load_url_buffer()
-
-        msg = self._create_active_learning_msgs(now, image)
-
-        octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_DONE
+    @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
+    def _create_active_learning_flatbuffer_msg(
+        self, ts: int, image: octoprint_nanny.types.Image
+    ) -> bytes:
+        msg = octoprint_nanny.clients.flatbuffers.build_monitoring_frame_raw_message(
+            ts, image, self._plugin.settings.metadata
         )
-        self._plugin._event_bus.fire(
-            octoprint_event,
-            payload=msg,
-        )
-        self._pn_ws_queue.put_nowait(msg)
-        self._mqtt_send_queue.put_nowait(msg)
+        return msg
 
-    @beeline.traced(name="MonitoringWorker._create_lite_msgs")
-    def _create_lite_msgs(
-        self, now, image, viz_buffer, prediction
+    @beeline.traced(name="MonitoringWorker._create_lite_json_msgs")
+    def _create_lite_json_msgs(
+        self, now, original_image, viz_buffer, prediction
     ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
 
         # send annotated image bytes to print nanny ui ws
+
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_DONE,
+            event_type=PluginEvents.MONITORING_FRAME_POST,
             image=base64.b64encode(viz_buffer.getvalue()),
         )
 
         # publish bounding box prediction to mqtt telemetry topic
         mqtt_msg = BoundingBoxMessage(
-            ts=now, event_type=PluginEvents.BOUNDING_BOX_PREDICT_DONE, data=prediction
+            ts=now,
+            event_type=PluginEvents.BOUNDING_BOX_PREDICT,
+            data=prediction,
         )
 
         return ws_msg, mqtt_msg
 
-    async def _lite_loop(self, loop, pool):
-        now = datetime.now(pytz.utc).timestamp()
-        image = await self.load_url_buffer()
+    @beeline.traced(name="MonitoringWorker._create_lite_fb_ws_msg")
+    def _create_lite_fb_ws_msg(
+        self,
+        ts: int,
+        image: octoprint_nanny.types.Image,
+    ) -> Tuple[bytes, Optional[bytes]]:
 
-        viz_buffer, prediction = await loop.run_in_executor(
-            pool, _get_predict_bytes, image, self._calibration
+        return octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
+            ts, image, self._plugin.settings.metadata
         )
 
-        ws_msg, mqtt_msg = self._create_lite_msgs(now, image, viz_buffer, prediction)
-
-        octoprint_event = PluginEvents.to_octoprint_event(
-            PluginEvents.MONITORING_FRAME_DONE
+    @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
+    def _create_lite_fb_mqtt_msg(
+        self,
+        ts: int,
+        image: octoprint_nanny.types.Image,
+        prediction: octoprint_nanny.types.BoundingBoxPrediction,
+    ) -> Tuple[bytes, Optional[bytes]]:
+        return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
+            ts, prediction, self._plugin.settings.metadata
         )
+
+    @beeline.traced(name="MonitoringWorker._active_learning_loop")
+    async def _active_learning_loop(self, loop, pool):
+        ts = int(datetime.now(pytz.utc).timestamp())
+        image_bytes = await self.load_url_buffer()
+
+        (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
+        image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
+        msg = self._create_active_learning_flatbuffer_msg(ts, image)
+
         self._plugin._event_bus.fire(
-            octoprint_event,
-            payload=ws_msg,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+            payload=base64.b64encode(image_bytes),
+        )
+        self._pn_ws_queue.put_nowait(msg)
+        self._mqtt_send_queue.put_nowait(msg)
+
+    @beeline.traced(name="MonitoringWorker._lite_loop")
+    async def _lite_loop(self, loop, pool):
+        ts = int(datetime.now(pytz.utc).timestamp())
+        image_bytes = await self.load_url_buffer()
+        func = functools.partial(
+            predict_threadsafe, image_bytes, **self._predictor_kwargs
+        )
+
+        raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
+        video_frame = post_frame if post_frame is not None else raw_frame
+        ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
+
+        self._plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+            payload=base64.b64encode(video_frame.data),
         )
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(ws_msg)
-        self._mqtt_send_queue.put_nowait(mqtt_msg)
+
+        if prediction and post_frame:
+            mqtt_msg = self._create_lite_fb_mqtt_msg(
+                ts=ts, image=post_frame, prediction=prediction
+            )
+            octoprint_event = PluginEvents.to_octoprint_event(
+                PluginEvents.BOUNDING_BOX_PREDICT
+            )
+            self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
     async def _loop(self, loop, pool):
+
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
             await self._active_learning_loop(loop, pool)
         elif self._monitoring_mode == MonitoringModes.LITE:
@@ -238,7 +273,7 @@ class MonitoringWorker:
     def run(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._producer())
+        return loop.run_until_complete(self._producer())
 
 
 class MonitoringManager:

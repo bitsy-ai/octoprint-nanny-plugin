@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os
 import time
+import io
 import threading
 
 import PIL
@@ -12,24 +13,12 @@ import tflite_runtime.interpreter as tflite
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
+import octoprint_nanny.types
+import beeline
 
-# python >= 3.8
-try:
-    from typing import TypedDict, Optional
-# python <= 3.7
-except:
-    from typing_extensions import TypedDict
-    from typing import Optional
+from typing import Optional, Tuple
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
-
-
-class Prediction(TypedDict):
-    image: PIL.Image.Image
-    num_detections: int
-    detection_scores: np.ndarray
-    detection_boxes: np.ndarray
-    detection_classes: np.ndarray
 
 
 class ThreadLocalPredictor(threading.local):
@@ -83,8 +72,8 @@ class ThreadLocalPredictor(threading.local):
 
         self.calibration = calibration
 
-    def load_image(self, bytes):
-        return PIL.Image.open(bytes)
+    def load_image(self, image_bytes):
+        return PIL.Image.open(io.BytesIO(image_bytes))
 
     def load_file(self, filepath: str):
         return PIL.Image.open(filepath)
@@ -99,22 +88,21 @@ class ThreadLocalPredictor(threading.local):
         return image
 
     def write_image(self, outfile: str, image_np: np.ndarray):
-
         img = PIL.Image.fromarray(image_np)
-        img.save(outfile)
+        return img.save(outfile)
 
     def percent_intersection(
         self,
-        prediction: Prediction,
+        prediction: octoprint_nanny.types.BoundingBoxPrediction,
         bb1: tuple,
     ) -> float:
         """
         bb1 - boundary box
         bb2 - detection box
         """
-        detection_boxes = prediction["detection_boxes"]
-        detection_scores = prediction["detection_scores"]
-        detection_classes = prediction["detection_classes"]
+        detection_boxes = prediction.detection_boxes
+        detection_scores = prediction.detection_scores
+        detection_classes = prediction.detection_classes
 
         aou = np.zeros(len(detection_boxes))
 
@@ -150,23 +138,29 @@ class ThreadLocalPredictor(threading.local):
 
         return aou
 
-    def postprocess(self, image: PIL.Image, prediction: Prediction) -> np.array:
+    def postprocess(
+        self, image: PIL.Image, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> np.array:
 
         image_np = np.asarray(image).copy()
         height, width, _ = image_np.shape
         ignored_mask = None
 
         prediction = self.min_score_filter(prediction)
-
+        if prediction is None:
+            logger.info(
+                f"No detections exceeding min_score_thresh={self.min_score_thresh}"
+            )
+            return prediction, None
         if self.calibration is not None:
             detection_boundary_mask = self.calibration["mask"]
             prediction, ignored_mask = self.calibration_filter(prediction)
 
             viz = visualize_boxes_and_labels_on_image_array(
                 image_np,
-                prediction["detection_boxes"],
-                prediction["detection_classes"],
-                prediction["detection_scores"],
+                prediction.detection_boxes,
+                prediction.detection_classes,
+                prediction.detection_scores,
                 self.category_index,
                 use_normalized_coordinates=True,
                 line_thickness=4,
@@ -178,9 +172,9 @@ class ThreadLocalPredictor(threading.local):
         else:
             viz = visualize_boxes_and_labels_on_image_array(
                 image_np,
-                prediction["detection_boxes"],
-                prediction["detection_classes"],
-                prediction["detection_scores"],
+                prediction.detection_boxes,
+                prediction.detection_classes,
+                prediction.detection_scores,
                 self.category_index,
                 use_normalized_coordinates=True,
                 line_thickness=4,
@@ -189,36 +183,51 @@ class ThreadLocalPredictor(threading.local):
             )
         return prediction, viz
 
-    def min_score_filter(self, prediction: Prediction) -> Prediction:
-        ma = np.ma.masked_greater(prediction["detection_scores"], self.min_score_thresh)
-        num_detections = np.count_nonzero(ma.mask)
-        return Prediction(
-            detection_boxes=prediction["detection_boxes"][ma.mask],
-            detection_classes=prediction["detection_classes"][ma.mask],
-            detection_scores=prediction["detection_scores"][ma.mask],
+    def min_score_filter(
+        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> octoprint_nanny.types.BoundingBoxPrediction:
+        ma = np.ma.masked_greater(prediction.detection_scores, self.min_score_thresh)
+        # No detections exceeding threshold
+        if isinstance(ma.mask, np.bool_) and ma.mask == False:
+            return
+        num_detections = int(np.count_nonzero(ma.mask))
+        detection_boxes = prediction.detection_boxes[ma.mask]
+        detection_classes = prediction.detection_classes[ma.mask]
+        detection_scores = prediction.detection_scores[ma.mask]
+        return octoprint_nanny.types.BoundingBoxPrediction(
+            detection_boxes=detection_boxes,
+            detection_classes=detection_classes,
+            detection_scores=detection_scores,
             num_detections=num_detections,
         )
 
-    def calibration_filter(self, prediction: Prediction) -> Prediction:
+    def calibration_filter(
+        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> octoprint_nanny.types.BoundingBoxPrediction:
         if self.calibration is not None:
             coords = self.calibration["coords"]
             percent_intersection = self.percent_intersection(prediction, coords)
             ignored_mask = percent_intersection <= self.min_overlap_area
 
             included_mask = np.invert(ignored_mask)
-            num_detections = np.count_nonzero(included_mask)
+            detection_boxes = np.squeeze(prediction.detection_boxes[included_mask])
+            detection_scores = np.squeeze(prediction.detection_scores[included_mask])
+            detection_classes = np.squeeze(prediction.detection_classes[included_mask])
+
+            num_detections = int(np.count_nonzero(included_mask))
+
             return (
-                Prediction(
-                    detection_boxes=prediction["detection_boxes"][included_mask],
-                    detection_scores=prediction["detection_scores"][included_mask],
-                    detection_classes=prediction["detection_classes"][included_mask],
+                octoprint_nanny.types.BoundingBoxPrediction(
+                    detection_boxes=detection_boxes,
+                    detection_scores=detection_scores,
+                    detection_classes=detection_classes,
                     num_detections=num_detections,
                 ),
                 ignored_mask,
             )
         return prediction, None
 
-    def predict(self, image: PIL.Image) -> Prediction:
+    def predict(self, image: PIL.Image) -> octoprint_nanny.types.BoundingBoxPrediction:
         tensor = self.preprocess(image)
 
         self.tflite_interpreter.set_tensor(self.input_details[0]["index"], tensor)
@@ -237,9 +246,53 @@ class ThreadLocalPredictor(threading.local):
         score_data = np.squeeze(score_data, axis=0)
         num_detections = np.squeeze(num_detections, axis=0)
 
-        return Prediction(
+        return octoprint_nanny.types.BoundingBoxPrediction(
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,
             num_detections=num_detections,
         )
+
+
+PREDICTOR = None
+
+
+@beeline.traced(name="predict_threadsafe")
+@beeline.traced_thread
+def predict_threadsafe(
+    image_bytes: bytes, **kwargs
+) -> Tuple[
+    octoprint_nanny.types.Image,
+    Optional[octoprint_nanny.types.Image],
+    Optional[octoprint_nanny.types.BoundingBoxPrediction],
+]:
+
+    global PREDICTOR
+    if PREDICTOR is None:
+        PREDICTOR = ThreadLocalPredictor(**kwargs)
+    image = PREDICTOR.load_image(image_bytes)
+    # NOTE: PIL.Image.size returns (w, h) where most TensorFlow interfaces expect (h, w)
+    (ow, oh) = image.size
+    original_frame = octoprint_nanny.types.Image(height=oh, width=ow, data=image_bytes)
+
+    prediction = PREDICTOR.predict(image)
+
+    prediction, viz_np = PREDICTOR.postprocess(image, prediction)
+    if viz_np is not None:
+        viz_image = PIL.Image.fromarray(viz_np, "RGB")
+        vw, vh = viz_image.size
+        viz_buffer = io.BytesIO()
+        viz_buffer.name = "annotated_image.jpg"
+        viz_image.save(viz_buffer, format="JPEG")
+
+        post_frame = octoprint_nanny.types.Image(
+            height=vh, width=vw, data=viz_buffer.getvalue()
+        )
+    else:
+        post_frame = None
+
+    return (
+        original_frame,
+        post_frame,
+        prediction,
+    )

@@ -3,11 +3,11 @@ import os
 from PIL import Image as PImage
 import numpy as np
 
-from octoprint_nanny.predictor import ThreadLocalPredictor, Prediction
-
-TEST_PARAMS = [
-    (f"data/images/{i}.pre.jpg", f"data/images/{i}.post.jpg") for i in range(0, 7)
-]
+import octoprint_nanny.types
+from octoprint_nanny.predictor import (
+    ThreadLocalPredictor,
+    predict_threadsafe,
+)
 
 
 def test_area_of_intersection_overlap():
@@ -19,7 +19,7 @@ def test_area_of_intersection_overlap():
     detection_scores = np.array([1])
 
     detection_classes = np.array([4])
-    prediction = Prediction(
+    prediction = octoprint_nanny.types.BoundingBoxPrediction(
         detection_boxes=detection_boxes,
         detection_scores=detection_scores,
         detection_classes=detection_classes,
@@ -41,7 +41,7 @@ def test_area_of_intersection_no_overlap_0():
 
     detection_classes = np.array([4])
 
-    prediction = Prediction(
+    prediction = octoprint_nanny.types.BoundingBoxPrediction(
         detection_boxes=detection_boxes,
         detection_scores=detection_scores,
         detection_classes=detection_classes,
@@ -63,7 +63,7 @@ def test_area_of_intersection_no_overlap_1():
 
     detection_classes = np.array([4])
 
-    prediction = Prediction(
+    prediction = octoprint_nanny.types.BoundingBoxPrediction(
         detection_boxes=detection_boxes,
         detection_classes=detection_classes,
         detection_scores=detection_scores,
@@ -86,7 +86,7 @@ def test_area_of_intersection_prediction_contained_0():
 
     detection_classes = np.array([4])
 
-    prediction = Prediction(
+    prediction = octoprint_nanny.types.BoundingBoxPrediction(
         detection_boxes=detection_boxes,
         detection_classes=detection_classes,
         detection_scores=detection_scores,

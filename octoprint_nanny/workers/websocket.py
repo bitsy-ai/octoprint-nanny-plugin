@@ -19,7 +19,7 @@ import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.constants import PluginEvents
+from octoprint_nanny.types import PluginEvents
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
@@ -85,7 +85,6 @@ class WebSocketWorker:
         ) as websocket:
             if msg is None:
                 msg = {"event_type": "ping"}
-            msg = self.encode(msg)
             await websocket.send(msg)
 
     def run(self):
@@ -95,20 +94,8 @@ class WebSocketWorker:
 
     @beeline.traced("WebSocketWorker._loop")
     async def _loop(self, websocket):
-        trace = self._honeycomb_tracer.start_trace()
-        span = self._honeycomb_tracer.start_span(
-            context={"name": "WebSocketWorker._producer.coro_get"}
-        )
         msg = await self._producer.coro_get()
-        self._honeycomb_tracer.finish_span(span)
-
-        event_type = msg.get("event_type")
-        if event_type == PluginEvents.MONITORING_FRAME_DONE:
-            encoded_msg = self.encode(msg=msg)
-            await websocket.send(encoded_msg)
-        else:
-            logger.warning(f"Invalid event_type {event_type}, msg ignored")
-        self._honeycomb_tracer.finish_trace(trace)
+        return await websocket.send(msg)
 
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")

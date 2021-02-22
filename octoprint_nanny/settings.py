@@ -8,10 +8,20 @@ from octoprint_nanny.workers.monitoring import (
 )
 
 import beeline
+
+from print_nanny_client.models.octo_print_event_event_type_enum import (
+    OctoPrintEventEventTypeEnum,
+)
+
+import octoprint_nanny.types
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.workers.monitoring import MonitoringModes
+from octoprint_nanny.types import (
+    MonitoringModes,
+    TrackedOctoPrintEvents,
+    RemoteCommands,
+)
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -30,7 +40,7 @@ class PluginSettingsMemoize:
         self._device_info = None
         self._rest_client = None
         self._calibration = None
-
+        self._metadata = None
         self.environment = {}
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
@@ -111,6 +121,10 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("auth_token")
 
     @property
+    def min_score_thresh(self):
+        return self.plugin.get_setting("min_score_thresh")
+
+    @property
     def monitoring_mode(self):
         return MonitoringModes(self.plugin.get_setting("monitoring_mode"))
 
@@ -129,6 +143,16 @@ class PluginSettingsMemoize:
     @property
     def webcam_upload(self):
         return self.plugin.get_setting("webcam_upload")
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            self._metadata = octoprint_nanny.types.Metadata(
+                user_id=self.user_id,
+                device_id=self.device_id,
+                device_cloudiot_id=self.device_cloudiot_id,
+            )
+        return self._metadata
 
     @property
     def calibration(self):
@@ -181,12 +205,7 @@ class PluginSettingsMemoize:
             )
         return self._mqtt_client
 
-    async def get_telemetry_events(self):
-        if self.auth_token is None:
-            raise PluginSettingsRequired(f"auth_token is not set")
-        if self._telemetry_events is None:
-            self._telemetry_events = await self.rest_client.get_telemetry_events()
-        return self._telemetry_events
-
-    async def event_in_tracked_telemetry(self, event_type):
-        return event_type in await self.get_telemetry_events()
+    def event_is_tracked(self, event_type):
+        return TrackedOctoPrintEvents.is_member(event_type) or RemoteCommands.is_member(
+            event_type
+        )

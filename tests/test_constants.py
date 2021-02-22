@@ -1,11 +1,10 @@
 import pytest
-from octoprint_nanny.constants import PluginEvents, RemoteCommands
+from octoprint_nanny.types import PluginEvents, RemoteCommands
 
 
 def test_octoprint_event_member_in_plugin_events():
 
     event = "octoprint_nanny_device_register_start"
-
     assert PluginEvents.member(event) == PluginEvents.DEVICE_REGISTER_START
 
 

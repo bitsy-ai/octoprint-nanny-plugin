@@ -50,7 +50,7 @@ def test_wrong_queue_type_raises():
         )
 
 
-@pytest.mark.webapp
-@pytest.mark.asyncio
-async def test_ws_ping(ws_client):
-    assert await ws_client.ping() == "pong"
+# @pytest.mark.webapp
+# @pytest.mark.asyncio
+# async def test_ws_ping(ws_client):
+#     assert await ws_client.ping() == "pong"

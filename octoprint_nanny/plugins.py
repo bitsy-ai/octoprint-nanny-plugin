@@ -58,7 +58,7 @@ import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.constants import MonitoringModes, PluginEvents, RemoteCommands
+from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -83,6 +83,7 @@ DEFAULT_SETTINGS = dict(
     auth_valid=False,
     device_registered=False,
     user_email=None,
+    min_score_thresh=0.50,
     monitoring_frames_per_minute=10,
     mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
     mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
@@ -469,16 +470,16 @@ class OctoPrintNannyPlugin(
         res.raise_for_status()
         if res.status_code == 200:
             self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_FRAME_DONE,
-                payload={"image": base64.b64encode(res.content)},
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+                payload=base64.b64encode(res.content),
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_START)
+            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
     @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])
     def stop_predict(self):
-        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_RC_MONITORING_STOP)
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.register_device")

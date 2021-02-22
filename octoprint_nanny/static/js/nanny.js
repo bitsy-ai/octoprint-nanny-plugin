@@ -53,12 +53,17 @@ $(function() {
 
 
         OctoPrint.socket.onMessage("*", function(message) {
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_frame_done'){
+            console.log(message)
+            if (message && message.data && (
+                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_raw' || 
+                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_post'
+            ) 
+            ){
 
                 if (self.previewActive() == false) {
                     self.previewActive(true);
                 }
-                self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
+                self.imageData("data:image/jpeg;base64,"+message.data.payload);
             }
             if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline'){
                 console.log(message)
