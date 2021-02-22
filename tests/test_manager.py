@@ -71,19 +71,17 @@ async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocke
     plugin.get_setting = get_default_setting
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
+    mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client")
 
     mock_event_is_tracked.return_value = False
 
     manager = WorkerManager(plugin)
 
-    event = "testing".encode()
+    event = bytearray("testing".encode())
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_fn = mocker.patch.object(
-        manager.mqtt_manager.publisher_worker,
-        "_publish_bounding_box_telemetry",
-        return_value=asyncio.Future(),
-    )
+    mock_fn = plugin.settings.mqtt_client.publish_bounding_boxes
+    mock_fn.return_value = asyncio.Future()
     mock_fn.return_value.set_result("foo")
 
     await manager.mqtt_manager.publisher_worker._loop()

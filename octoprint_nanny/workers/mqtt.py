@@ -24,7 +24,7 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.settings import PluginSettingsMemoize
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import PluginEvents
+from octoprint_nanny.types import PluginEvents, MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -190,17 +190,6 @@ class MQTTPublisherWorker:
             event.update(self.plugin.settings.get_print_job_metadata())
         self.plugin.settings.mqtt_client.publish_octoprint_event(event)
 
-    @beeline.traced("MQTTPublisherWorker._publish_bounding_box_telemetry")
-    async def _publish_bounding_box_telemetry(self, event):
-        event.update(
-            dict(
-                user_id=self.plugin.settings.user_id,
-                device_id=self.plugin.settings.device_id,
-                device_cloudiot_name=self.plugin.settings.device_cloudiot_name,
-            )
-        )
-        self.plugin.settings.mqtt_client.publish_bounding_boxes(event)
-
     @beeline.traced("MQTTPublisherWorker._loop")
     async def _loop(self):
         try:
@@ -213,10 +202,12 @@ class MQTTPublisherWorker:
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
-            if isinstance(event, bytes):
-                await self._publish_bounding_box_telemetry(event)
+            if isinstance(event, bytearray):
+                if self.plugin.settings.monitoring_mode == MonitoringModes.LITE:
+                    self.plugin.settings.mqtt_client.publish_bounding_boxes(event)
+                elif self.plugin.settings.monitoring_mode == MonitoringModes.ACTIVE_LEARNING    :
+                    self.plugin.settings.mqtt_client.publish_monitoring_raw(event)
                 return
-
             event_type = event.get("event_type")
             if event_type is None:
                 logger.warning(

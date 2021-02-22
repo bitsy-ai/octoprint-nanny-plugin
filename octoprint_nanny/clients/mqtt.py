@@ -33,6 +33,7 @@ IOT_DEVICE_REGISTRY_REGION = os.environ.get(
 
 OCTOPRINT_EVENT_FOLDER = "octoprint-events"
 BOUNDING_BOX_EVENT_FOLDER = "bounding-boxes"
+ACTIVE_LEARNING_EVENT_FOLDER = "active-learning"
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.mqtt")
 device_logger = logging.getLogger(
@@ -120,15 +121,19 @@ class MQTTClient:
         # /devices/{self.device_cloudiot_id}/commands/my_app_name
 
         # default telemetry topic
-        self.mqtt_default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
+        self.default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
 
         # octoprint event telemetry topic
-        self.mqtt_octoprint_event_topic = os.path.join(
-            self.mqtt_default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
+        self.octoprint_event_topic = os.path.join(
+            self.default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
         )
         # bounding box telemetry topic
-        self.mqtt_bounding_boxes_topic = os.path.join(
-            self.mqtt_default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
+        self.bounding_boxes_topic = os.path.join(
+            self.default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
+        )
+        # active learning telemetry topic
+        self.active_learning_topic = os.path.join(
+            self.default_telemetry_topic, ACTIVE_LEARNING_EVENT_FOLDER
         )
 
     ###
@@ -270,7 +275,7 @@ class MQTTClient:
         if set to True, the message will be set as the "last known good"/retained message for the topic.
         """
         if topic is None:
-            topic = self.mqtt_default_telemetry_topic
+            topic = self.default_telemetry_topic
 
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
@@ -278,23 +283,35 @@ class MQTTClient:
     def publish_octoprint_event(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
-            payload, topic=self.mqtt_octoprint_event_topic, retain=retain, qos=qos
+            payload, topic=self.octoprint_event_topic, retain=retain, qos=qos
         )
 
     @beeline.traced("MQTTClient.publish_bounding_boxes")
     def publish_bounding_boxes(self, event, retain=False, qos=1):
-        payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
-
-        outfile = io.BytesIO()
-        with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-            f.write(payload)
-        payload = outfile.getvalue()
+        # outfile = io.BytesIO()
+        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+        #     f.write(payload)
+        # payload = outfile.getvalue()
 
         logger.debug(
-            f"Publishing msg size={sys.getsizeof(payload)} topic={self.mqtt_bounding_boxes_topic}"
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.bounding_boxes_topic}"
         )
         return self.publish(
-            payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
+            event, topic=self.bounding_boxes_topic, retain=retain, qos=qos
+        )
+
+    @beeline.traced("MQTTClient.publish_monitoring_raw")
+    def publish_active_learning(self, event, retain=False, qos=1):
+        # outfile = io.BytesIO()
+        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+        #     f.write(payload)
+        # payload = outfile.getvalue()
+
+        logger.debug(
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.active_learning_topic}"
+        )
+        return self.publish(
+            event, topic=self.active_learning_topic, retain=retain, qos=qos
         )
 
     @beeline.traced("MQTTClient.run")
