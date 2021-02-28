@@ -86,6 +86,7 @@ class WorkerManager:
             Events.PRINT_PAUSED: self.monitoring_manager.stop,
             Events.PRINT_RESUMED: self.monitoring_manager.start,
             Events.SHUTDOWN: self.shutdown,
+            Events.USER_LOGGED_IN: self.plugin.sync_printer_profiles,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(
             self._mqtt_send_queue_callbacks
