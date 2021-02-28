@@ -123,7 +123,7 @@ plugin_requires = [
     "pillow",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
-    "aiohttp",
+    "aiohttp>=3.7.4",
     "print-nanny-client>=0.5.0.dev29",
     "websockets",
     "backoff>=1.10.0",
