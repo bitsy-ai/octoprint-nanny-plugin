@@ -133,6 +133,7 @@ plugin_requires = [
     "honeycomb-beeline",
     "aiofiles>=0.6.0",
     "flatbuffers>=1.12",
+    "pandas>=1.2.2",
 ]
 
 extra_requires = {

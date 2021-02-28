@@ -9,6 +9,7 @@ import PIL
 import functools
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import json
 import threading
 from enum import Enum
@@ -89,10 +90,12 @@ class MonitoringWorker:
         self._pn_ws_queue = pn_ws_queue
         self._mqtt_send_queue = mqtt_send_queue
 
+        self._trace_context = trace_context
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
 
         self._halt = halt
+        self._df = pd.DataFrame()
 
     @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
@@ -225,7 +228,16 @@ class MonitoringWorker:
             predict_threadsafe, image_bytes, **self._predictor_kwargs
         )
 
+        # trace predict latency, including serialization in/out of process pool
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "predict_pooled",
+            }
+        )
         raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
+        self._honeycomb_tracer.add_context({"prediction": prediction})
+        self._honeycomb_tracer.finish_span(span)
+
         video_frame = post_frame if post_frame is not None else raw_frame
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
 
@@ -256,7 +268,6 @@ class MonitoringWorker:
             logger.error(f"Unsupported monitoring_mode={self._monitoring_mode}")
             return
 
-    @beeline.traced(name="MonitoringWorker._producer")
     async def _producer(self):
         """
         Calculates prediction and publishes result to subscriber queues

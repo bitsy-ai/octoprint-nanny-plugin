@@ -94,47 +94,42 @@ class ThreadLocalPredictor(threading.local):
     def percent_intersection(
         self,
         prediction: octoprint_nanny.types.BoundingBoxPrediction,
-        bb1: tuple,
+        area_of_interest: np,
     ) -> float:
         """
-        bb1 - boundary box
-        bb2 - detection box
+        Returns intersection-over-union area, normalized between 0 and 1
         """
-        detection_boxes = prediction.detection_boxes
-        detection_scores = prediction.detection_scores
-        detection_classes = prediction.detection_classes
 
+        detection_boxes = prediction.detection_boxes
+        # initialize array of zeroes
         aou = np.zeros(len(detection_boxes))
 
-        for i, bb2 in enumerate(detection_boxes):
-
-            # assert bb1[0] < bb1[2]
-            # assert bb1[1] < bb1[3]
-            # assert bb2[0] < bb2[2]
-            # assert bb2[1] < bb2[3]
-
+        # for each bounding box, calculate the intersection-over-area
+        for i, box in enumerate(detection_boxes):
             # determine the coordinates of the intersection rectangle
-            x_left = max(bb1[0], bb2[0])
-            y_top = max(bb1[1], bb2[1])
-            x_right = min(bb1[2], bb2[2])
-            y_bottom = min(bb1[3], bb2[3])
+            x_left = max(area_of_interest[0], box[0])
+            y_top = max(area_of_interest[1], box[1])
+            x_right = min(area_of_interest[2], box[2])
+            y_bottom = min(area_of_interest[3], box[3])
 
-            # boxes do not intersect
+            # boxes do not intersect, area is 0
             if x_right < x_left or y_bottom < y_top:
                 aou[i] = 0.0
                 continue
+
+            # calculate
             # The intersection of two axis-aligned bounding boxes is always an
             # axis-aligned bounding box
             intersection_area = (x_right - x_left) * (y_bottom - y_top)
 
             # compute the area of detection box
-            bb2_area = (bb2[2] - bb2[0]) * (bb2[3] - bb2[1])
+            box_area = (box[2] - box[0]) * (box[3] - box[1])
 
-            if (intersection_area / bb2_area) == 1.0:
+            if (intersection_area / box_area) == 1.0:
                 aou[i] = 1.0
                 continue
 
-            aou[i] = intersection_area / bb2_area
+            aou[i] = intersection_area / box_area
 
         return aou
 
@@ -258,7 +253,6 @@ PREDICTOR = None
 
 
 @beeline.traced(name="predict_threadsafe")
-@beeline.traced_thread
 def predict_threadsafe(
     image_bytes: bytes, **kwargs
 ) -> Tuple[
