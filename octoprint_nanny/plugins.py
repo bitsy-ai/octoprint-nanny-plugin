@@ -248,7 +248,7 @@ class OctoPrintNannyPlugin(
             id_map["octoprint"][profile_id] = created_profile.id
             id_map["octoprint_nanny"][created_profile.id] = profile_id
 
-        logger.info(f"Synced {len(printer_profiles)}")
+        logger.info(f"Synced {len(printer_profiles)} printer_profile")
 
         filename = os.path.join(
             self.get_plugin_data_folder(), "printer_profile_id_map.json"
