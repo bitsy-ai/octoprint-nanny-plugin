@@ -231,15 +231,17 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
-    @beeline.traced("OctoPrintNannyPlugin._sync_printer_profiles")
-    @beeline.traced_thread
-    async def _sync_printer_profiles(self, device_id):
+    @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
+    async def sync_printer_profiles(self, **kwargs):
+        device_id = self.get_setting("device_id")
+        if device_id is None:
+            return
+        logger.info(f"Syncing printer profiles for device_id={device_id}")
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
         id_map = {"octoprint": {}, "octoprint_nanny": {}}
         for profile_id, profile in printer_profiles.items():
-            logger.info("Syncing profile")
             created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
                 profile, device_id
             )
@@ -434,7 +436,7 @@ class OctoPrintNannyPlugin(
             payload={"msg": "Syncing printer profiles..."},
         )
         try:
-            printers = await self._sync_printer_profiles(device.id)
+            printers = await self.sync_printer_profiles()
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
