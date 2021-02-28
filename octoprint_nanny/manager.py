@@ -86,7 +86,7 @@ class WorkerManager:
             Events.PRINT_PAUSED: self.monitoring_manager.stop,
             Events.PRINT_RESUMED: self.monitoring_manager.start,
             Events.SHUTDOWN: self.shutdown,
-            Events.USER_LOGGED_IN: self.plugin.sync_printer_profiles,
+            Events.USER_LOGGED_IN: self.on_user_logged_in,
         }
         self.mqtt_manager.publisher_worker.register_callbacks(
             self._mqtt_send_queue_callbacks
@@ -151,6 +151,10 @@ class WorkerManager:
                 "Monitoring was active when new calibration was applied. Re-initializing monitoring processes"
             )
             asyncio.run_coroutine_threadsafe(self.monitoring_manager.start(), self.loop)
+
+    async def on_user_logged_in(self, **kwargs):
+        await self.plugin.sync_printer_profiles()
+        await self.plugin.sync_device_metadata()
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self):
