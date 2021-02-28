@@ -375,6 +375,18 @@ class OctoPrintNannyPlugin(
         self._settings.set(["ca_cert"], primary_ca_filename)
         self._settings.set(["backup_ca_cert"], backup_ca_filename)
 
+    @beeline.traced("OctoPrintNannyPlugin.sync_device_metadata")
+    async def sync_device_metadata(self):
+        device_id = self.get_setting("device_id")
+        if device_id is None:
+            return
+        logger.info(f"Syncing metadata for device_id={device_id}")
+
+        device_info = self.get_device_info()
+        return await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
+            device_id, **device_info
+        )
+
     @beeline.traced("OctoPrintNannyPlugin._register_device")
     @beeline.traced_thread
     async def _register_device(self, device_name):
