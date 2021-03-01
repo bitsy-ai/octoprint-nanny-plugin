@@ -256,7 +256,12 @@ class MonitoringWorker:
             }
         )
         func = functools.partial(print_is_healthy)
-        await loop.run_in_executor(pool, func)
+        healthy = await loop.run_in_executor(pool, func)
+        if healthy is False:
+            alert = await self._plugin.settings.rest_client.create_defect_alert(
+                octoprint_device=self._plugin.settings.device_id
+            )
+            logger.warning(f"Created DefectAlert with id={alert.id}")
 
         video_frame = post_frame if post_frame is not None else raw_frame
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
