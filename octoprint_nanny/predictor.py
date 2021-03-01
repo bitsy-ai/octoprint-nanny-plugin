@@ -7,6 +7,7 @@ import os
 import time
 import io
 import threading
+from dataclasses import asdict
 
 import PIL
 import tflite_runtime.interpreter as tflite
@@ -21,7 +22,7 @@ from typing import Optional, Tuple
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
-LABELS = {
+DETECTION_LABELS = {
     1: "nozzle",
     2: "adhesion",
     3: "spaghetti",
@@ -272,6 +273,28 @@ class ThreadLocalPredictor(threading.local):
 PREDICTOR = None
 
 
+def explode_prediction_df(
+    ts: int, prediction: octoprint_nanny.types.BoundingBoxPrediction
+) -> pd.DataFrame:
+    data = {"frame_id": ts, **asdict(prediction)}
+    df = pd.DataFrame.from_records([data])
+
+    df = df[["frame_id", "detection_classes", "detection_scores"]]
+    df = df.reset_index()
+
+    NUM_FRAMES = len(df)
+
+    # explode nested detection_scores and detection_classes series
+    df = df.set_index(["frame_id"]).apply(pd.Series.explode).reset_index()
+    assert len(df) == NUM_FRAMES * prediction.num_detections
+
+    # add string labels
+    df["label"] = df["detection_classes"].map(DETECTION_LABELS)
+
+    # create a hierarchal index from exploded data, append to dataframe state
+    return df.set_index(["frame_id", "label"])
+
+
 def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
     df = pd.concat(
         {
@@ -281,18 +304,22 @@ def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
     ).reset_index()
 
     mask = df.level_0 == "unhealthy"
-    xy = (
-        df[~mask]
-        .groupby("frame_id")["detection_scores"]
-        .sum()
-        .subtract(
-            np.log10(df[mask].groupby("frame_id")["detection_scores"].sum().cumsum()),
-            fill_value=0,
-        )
-    ).reset_index()
-    trend = np.polynomial.Polynomial.fit(xy.index, xy["detection_scores"], degree)
-    c = np.array(list(trend))
-    if any(c < 0):
+    healthy_cumsum = np.log10(
+        df[~mask].groupby("frame_id")["detection_scores"].sum().cumsum()
+    )
+
+    unhealthy_cumsum = np.log10(
+        df[mask].groupby("frame_id")["detection_scores"].sum().cumsum()
+    )
+
+    xy = healthy_cumsum.subtract(unhealthy_cumsum, fill_value=0)
+
+    if len(xy) == 1:
+        return True
+
+    trend = np.polynomial.polynomial.Polynomial.fit(xy.index, xy, degree)
+    slope, intercept = list(trend)
+    if slope < 0:
         return False
     return True
 

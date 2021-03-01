@@ -2,11 +2,13 @@ import pytest
 import os
 from PIL import Image as PImage
 import numpy as np
-
+import pandas as pd
 import octoprint_nanny.types
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
     predict_threadsafe,
+    print_is_healthy,
+    explode_prediction_df,
 )
 
 
@@ -96,3 +98,77 @@ def test_area_of_intersection_prediction_contained_0():
     percent_area = predictor.percent_intersection(prediction, calibration_box)
     expected = 1.0
     np.testing.assert_almost_equal(percent_area[0], expected)
+
+
+def test_print_health_trend_increasing():
+    num_detections = 40
+    prediction1 = octoprint_nanny.types.BoundingBoxPrediction(
+        detection_classes=np.repeat(4, num_detections),
+        detection_scores=np.linspace(0, 0.6, num=num_detections),
+        num_detections=num_detections,
+        detection_boxes=np.repeat([0.1, 0.1, 0.8, 0.8], num_detections),
+    )
+    prediction2 = octoprint_nanny.types.BoundingBoxPrediction(
+        detection_classes=np.repeat(4, num_detections),
+        detection_scores=np.linspace(0.7, 1, num=num_detections),
+        num_detections=num_detections,
+        detection_boxes=np.repeat([0.1, 0.1, 0.8, 0.8], num_detections),
+    )
+    df = explode_prediction_df(1234, prediction1)
+    df = df.append(explode_prediction_df(2345, prediction2))
+
+    assert print_is_healthy(df) == True
+
+
+def test_print_health_trend_decreasing():
+    num_detections = 40
+    classes = np.concatenate(
+        [
+            np.repeat(4, num_detections // 2),  # print
+            np.repeat(3, num_detections // 2),  # spaghetti
+        ]
+    )
+
+    scores1 = np.concatenate(
+        [
+            np.linspace(0, 0.6, num=num_detections // 2),  # print
+            np.linspace(0.4, 0.8, num=num_detections // 2),  # spaghetti
+        ]
+    )
+
+    scores2 = np.concatenate(
+        [
+            np.linspace(0, 0.7, num=num_detections // 2),  # print
+            np.linspace(0.6, 0.9, num=num_detections // 2),  # spaghetti
+        ]
+    )
+
+    prediction1 = octoprint_nanny.types.BoundingBoxPrediction(
+        detection_classes=classes,
+        detection_scores=scores1,
+        num_detections=num_detections,
+        detection_boxes=np.repeat([0.1, 0.1, 0.8, 0.8], num_detections),
+    )
+    prediction2 = octoprint_nanny.types.BoundingBoxPrediction(
+        detection_classes=classes,
+        detection_scores=scores2,
+        num_detections=num_detections,
+        detection_boxes=np.repeat([0.1, 0.1, 0.8, 0.8], num_detections),
+    )
+    df = explode_prediction_df(1234, prediction1)
+    df = df.append(explode_prediction_df(2345, prediction2))
+
+    assert print_is_healthy(df) == False
+
+
+def test_print_health_trend_initial():
+    num_detections = 40
+    prediction = octoprint_nanny.types.BoundingBoxPrediction(
+        detection_classes=np.repeat(4, num_detections),
+        detection_scores=np.linspace(0, 1, num=num_detections),
+        num_detections=num_detections,
+        detection_boxes=np.repeat([0.1, 0.1, 0.8, 0.8], num_detections),
+    )
+    df = explode_prediction_df(1234, prediction)
+
+    assert print_is_healthy(df) == True
