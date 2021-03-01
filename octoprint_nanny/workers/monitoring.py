@@ -9,6 +9,7 @@ import PIL
 import functools
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import json
 import threading
 from enum import Enum
@@ -31,6 +32,9 @@ from octoprint_nanny.workers.websocket import WebSocketWorker
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
     predict_threadsafe,
+    print_is_healthy,
+    DETECTION_LABELS,
+    explode_prediction_df,
 )
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
@@ -89,10 +93,12 @@ class MonitoringWorker:
         self._pn_ws_queue = pn_ws_queue
         self._mqtt_send_queue = mqtt_send_queue
 
+        self._trace_context = trace_context
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
 
         self._halt = halt
+        self._df = pd.DataFrame()
 
     @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
@@ -126,6 +132,11 @@ class MonitoringWorker:
         logger.info(f"Calibration set")
 
         return {"mask": mask, "coords": (x0, y0, x1, y1)}
+
+    @beeline.traced(name="MonitoringWorker.update_dataframe")
+    def update_dataframe(self, ts, prediction):
+        self._df = self._df.append(explode_prediction_df(ts, prediction))
+        return self._df
 
     def _producer_worker(self):
         loop = asyncio.new_event_loop()
@@ -225,7 +236,33 @@ class MonitoringWorker:
             predict_threadsafe, image_bytes, **self._predictor_kwargs
         )
 
+        # trace predict latency, including serialization in/out of process pool
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "predict_pooled",
+            }
+        )
         raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
+        self._honeycomb_tracer.add_context({"prediction": prediction})
+        self._honeycomb_tracer.finish_span(span)
+
+        # trace metrics calculations in/out of process pool
+        self.update_dataframe(ts, prediction)
+
+        # trace polyfit curve
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "print_is_healthy",
+            }
+        )
+        func = functools.partial(print_is_healthy)
+        healthy = await loop.run_in_executor(pool, func)
+        if healthy is False:
+            alert = await self._plugin.settings.rest_client.create_defect_alert(
+                octoprint_device=self._plugin.settings.device_id
+            )
+            logger.warning(f"Created DefectAlert with id={alert.id}")
+
         video_frame = post_frame if post_frame is not None else raw_frame
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
 
@@ -256,7 +293,6 @@ class MonitoringWorker:
             logger.error(f"Unsupported monitoring_mode={self._monitoring_mode}")
             return
 
-    @beeline.traced(name="MonitoringWorker._producer")
     async def _producer(self):
         """
         Calculates prediction and publishes result to subscriber queues
