@@ -32,6 +32,7 @@ from octoprint_nanny.workers.websocket import WebSocketWorker
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
     predict_threadsafe,
+    print_is_healthy,
 )
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
@@ -129,6 +130,26 @@ class MonitoringWorker:
         logger.info(f"Calibration set")
 
         return {"mask": mask, "coords": (x0, y0, x1, y1)}
+
+    @beeline.traced(name="MonitoringWorker.update_dataframe")
+    def update_dataframe(self, ts, prediction):
+        data = {"frame_id": ts, **prediction.todict()}
+        df = pd.DataFrame(data.values(), index=data.keys())
+
+        df = df[["detection_classes", "detection_scores"]]
+        df = df.reset_index()
+        NUM_FRAMES = len(df)
+        # explode nested detection_scores and detection_classes series
+        df = df.set_index(["frame_id"]).apply(pd.Series.explode).reset_index()
+        assert len(df) == NUM_FRAMES * prediction.num_detections
+
+        # add string labels
+        df["label"] = df["detection_classes"].map(self.LABELS)
+
+        # create a hierarchal index from exploded data, append to dataframe state
+        df = df.set_index(["frame_id", "label"])
+        self._df = self._df.append(df)
+        return self._df
 
     def _producer_worker(self):
         loop = asyncio.new_event_loop()
@@ -237,6 +258,18 @@ class MonitoringWorker:
         raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
         self._honeycomb_tracer.add_context({"prediction": prediction})
         self._honeycomb_tracer.finish_span(span)
+
+        # trace metrics calculations in/out of process pool
+        self.update_dataframe(ts, prediction)
+
+        # trace polyfit curve
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "print_is_healthy",
+            }
+        )
+        func = functools.partial(print_is_healthy)
+        await loop.run_in_executor(pool, func)
 
         video_frame = post_frame if post_frame is not None else raw_frame
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)

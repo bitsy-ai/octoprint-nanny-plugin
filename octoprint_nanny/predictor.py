@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import numpy as np
+import pandas as pd
 import os
 import time
 import io
@@ -19,6 +20,25 @@ import beeline
 from typing import Optional, Tuple
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
+
+LABELS = {
+    1: "nozzle",
+    2: "adhesion",
+    3: "spaghetti",
+    4: "print",
+    5: "raft",
+}
+
+NEUTRAL_LABELS = {1: "nozzle", 5: "raft"}
+
+NEGATIVE_LABELS = {
+    2: "adhesion",
+    3: "spaghetti",
+}
+
+POSITIVE_LABELS = {
+    4: "print",
+}
 
 
 class ThreadLocalPredictor(threading.local):
@@ -252,7 +272,31 @@ class ThreadLocalPredictor(threading.local):
 PREDICTOR = None
 
 
-@beeline.traced(name="predict_threadsafe")
+def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
+    df = pd.concat(
+        {
+            "unhealthy": df[df["detection_classes"].isin(NEGATIVE_LABELS)],
+            "healthy": df[df["detection_classes"].isin(POSITIVE_LABELS)],
+        }
+    ).reset_index()
+
+    mask = df.level_0 == "unhealthy"
+    xy = (
+        df[~mask]
+        .groupby("frame_id")["detection_scores"]
+        .sum()
+        .subtract(
+            np.log10(df[mask].groupby("frame_id")["detection_scores"].sum().cumsum()),
+            fill_value=0,
+        )
+    ).reset_index()
+    trend = np.polynomial.Polynomial.fit(xy.index, xy["detection_scores"], degree)
+    c = np.array(list(trend))
+    if any(c < 0):
+        return False
+    return True
+
+
 def predict_threadsafe(
     image_bytes: bytes, **kwargs
 ) -> Tuple[
