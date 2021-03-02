@@ -258,8 +258,11 @@ class MonitoringWorker:
         func = functools.partial(print_is_healthy)
         healthy = await loop.run_in_executor(pool, func)
         if healthy is False:
+            octoprint_device = self._plugin.settings.device_id
+            dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
+            self._df.to_parquet(dataframe, engine="pyarrow")
             alert = await self._plugin.settings.rest_client.create_defect_alert(
-                octoprint_device=self._plugin.settings.device_id
+                octoprint_device=octoprint_device, dataframe=self._df
             )
             logger.warning(f"Created DefectAlert with id={alert.id}")
 
