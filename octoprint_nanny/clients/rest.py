@@ -30,7 +30,7 @@ API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = 16
+MAX_BACKOFF_TIME = 120
 
 
 class RestAPIClient:
@@ -58,6 +58,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -74,6 +75,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -91,6 +93,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_remote_control_command(self, command_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -109,6 +112,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -122,6 +126,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_octoprint_event(self, event_type, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -141,6 +146,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_print_progress(self, print_job_id, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -161,6 +167,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_gcode_file(
         self, event_data, gcode_file_path, octoprint_device_id
@@ -188,6 +195,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_snapshot(self, image, command):
         image.name = str(command) + ".jpg"
@@ -209,6 +217,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_print_job(
         self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
@@ -230,6 +239,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_printer_profile(
         self, printer_profile, octoprint_device_id
@@ -284,6 +294,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_device_calibration(
         self, octoprint_device_id, coordinates, mask
@@ -306,6 +317,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_defect_alert(self, octoprint_device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:

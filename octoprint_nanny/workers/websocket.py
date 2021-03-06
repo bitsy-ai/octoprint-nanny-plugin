@@ -25,6 +25,7 @@ from octoprint_nanny.types import PluginEvents
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
 
+
 class WebSocketWorker:
     """
     Relays prediction and image buffers from PredictWorker
@@ -100,7 +101,8 @@ class WebSocketWorker:
     @backoff.on_exception(
         backoff.expo,
         websockets.exceptions.ConnectionClosedError,
-        jitter=backoff.random_jitter
+        jitter=backoff.random_jitter,
+        logger=logger,
     )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
