@@ -14,17 +14,15 @@ import octoprint_nanny.types
 
 
 def build_bounding_boxes_message(
-    builder,
-    ts: int,
-    prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None,
+    builder, monitoring_frame: octoprint_nanny.types.MonitoringFrame
 ) -> bytes:
-    if prediction is None:
-        return prediction
+    if monitoring_frame.bounding_boxes is None:
+        return
 
-    boxes = prediction.detection_boxes
-    scores = prediction.detection_scores
-    classes = prediction.detection_classes
-    num_detections = prediction.num_detections
+    boxes = monitoring_frame.bounding_boxes.detection_boxes
+    scores = monitoring_frame.bounding_boxes.detection_scores
+    classes = monitoring_frame.bounding_boxes.detection_classes
+    num_detections = monitoring_frame.bounding_boxes.num_detections
 
     # begin boxes builder
     BoundingBoxes.BoundingBoxesStartBoxesVector(builder, len(boxes))
@@ -54,33 +52,33 @@ def build_bounding_boxes_message(
 
 
 def build_telemetry_event_message(
-    ts: int,
+    event_type: int,
     metadata: octoprint_nanny.types.Metadata,
-    image: octoprint_nanny.types.Image,
-    event_type: TelemetryEventEnum.TelemetryEventEnum,
-    prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None,
+    monitoring_frame: octoprint_nanny.types.MonitoringFrame,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     # begin image
-    Image.ImageStartDataVector(builder, len(image.data))
-    builder.Bytes[builder.head : (builder.head + len(image.data))] = image.data
-    image.data = builder.EndVector(len(image.data))
+    Image.ImageStartDataVector(builder, len(monitoring_frame.image.data))
+    builder.Bytes[
+        builder.head : (builder.head + len(monitoring_frame.image.data))
+    ] = monitoring_frame.image.data
+    image_data = builder.EndVector(len(monitoring_frame.image.data))
     Image.ImageStart(builder)
-    Image.ImageAddHeight(builder, image.height)
-    Image.ImageAddWidth(builder, image.width)
-    Image.ImageAddData(builder, image.data)
+    Image.ImageAddHeight(builder, monitoring_frame.image.height)
+    Image.ImageAddWidth(builder, monitoring_frame.image.width)
+    Image.ImageAddData(builder, image_data)
     image = Image.ImageEnd(builder)
     # end image
 
     # begin event data
     # prediction is optional; if not provided, inference will run in beam pipeline
-    bounding_boxes = build_bounding_boxes_message(builder, ts, prediction)
+    bounding_boxes = build_bounding_boxes_message(builder, monitoring_frame)
     MonitoringFrame.MonitoringFrameStart(builder)
     MonitoringFrame.MonitoringFrameAddImage(builder, image)
     if bounding_boxes:
         MonitoringFrame.MonitoringFrameAddBoundingBoxes(builder, bounding_boxes)
-    MonitoringFrame.MonitoringFrameAddTs(builder, ts)
+    MonitoringFrame.MonitoringFrameAddTs(builder, monitoring_frame.ts)
     event_data = MonitoringFrame.MonitoringFrameEnd(builder)
 
     # end event data

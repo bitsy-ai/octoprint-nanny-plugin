@@ -161,13 +161,12 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
     def _create_active_learning_flatbuffer_msg(
-        self, ts: int, image: octoprint_nanny.types.Image
+        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
     ) -> bytes:
         msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            ts=ts,
-            metadata=self._plugin.settings.metadata,
-            image=image,
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
+            metadata=self._plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
         )
         return msg
 
@@ -193,33 +192,14 @@ class MonitoringWorker:
 
         return ws_msg, mqtt_msg
 
-    # @beeline.traced(name="MonitoringWorker._create_lite_fb_ws_msg")
-    # def _create_lite_fb_ws_msg(
-    #     self,
-    #     ts: int,
-    #     image: octoprint_nanny.types.Image,
-    # ) -> Tuple[bytes, Optional[bytes]]:
-
-    #     return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-    #         ts=ts,
-    #         metadata=self._plugin.settings.metadata,
-    #         image=image,
-    #         event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw
-    #     )
-
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_msg(
-        self,
-        ts: int,
-        image: octoprint_nanny.types.Image,
-        prediction: octoprint_nanny.types.BoundingBoxPrediction,
+        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
         return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            ts=ts,
-            metadata=self._plugin.settings.metadata,
-            image=image,
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
-            prediction=prediction,
+            metadata=self._plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -229,7 +209,9 @@ class MonitoringWorker:
 
         (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
         image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
-        msg = self._create_active_learning_flatbuffer_msg(ts, image)
+        monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
+
+        msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
 
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
@@ -241,11 +223,11 @@ class MonitoringWorker:
     @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
     async def _lite_predict_and_calc_health(
         self, ts
-    ) -> Tuple[bytes, Optional[octoprint_nanny.types.BoundingBoxPrediction]]:
+    ) -> octoprint_nanny.types.MonitoringFrame:
 
         image_bytes = await self.load_url_buffer()
         func = functools.partial(
-            predict_threadsafe, image_bytes, **self._predictor_kwargs
+            predict_threadsafe, ts, image_bytes, **self._predictor_kwargs
         )
 
         # trace predict latency, including serialization in/out of process pool
@@ -254,15 +236,16 @@ class MonitoringWorker:
                 "name": "predict_pooled",
             }
         )
-        raw_frame, post_frame, prediction = await self.loop.run_in_executor(
-            self.pool, func
+
+        monitoring_frame = await self.loop.run_in_executor(self.pool, func)
+        self._honeycomb_tracer.add_context(
+            {"bounding_boxes": monitoring_frame.bounding_boxes}
         )
-        self._honeycomb_tracer.add_context({"prediction": prediction})
         self._honeycomb_tracer.finish_span(span)
 
         # trace metrics calculations in/out of process pool
-        if prediction is not None:
-            self.update_dataframe(ts, prediction)
+        if monitoring_frame.bounding_boxes is not None:
+            self.update_dataframe(ts, monitoring_frame.bounding_boxes)
 
         # trace polyfit curve
         span = self._honeycomb_tracer.start_span(
@@ -281,22 +264,24 @@ class MonitoringWorker:
                 octoprint_device=octoprint_device, dataframe=self._df
             )
             logger.warning(f"Created DefectAlert with id={alert.id}")
-        return post_frame if post_frame is not None else raw_frame, prediction
+
+        return monitoring_frame
 
     @beeline.traced(name="MonitoringWorker._lite_loop")
     async def _lite_loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
 
-        video_frame, prediction = await self._lite_predict_and_calc_health(ts)
-        msg = self._create_lite_fb_msg(ts=ts, image=video_frame, prediction=prediction)
+        monitoring_frame = await self._lite_predict_and_calc_health(ts)
+
+        msg = self._create_lite_fb_msg(monitoring_frame=monitoring_frame)
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
-            payload=base64.b64encode(video_frame.data),
+            payload=base64.b64encode(monitoring_frame.image.data),
         )
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(msg)
 
-        if prediction is not None:
+        if monitoring_frame.bounding_boxes is not None:
             self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
@@ -316,6 +301,7 @@ class MonitoringWorker:
         """
         logger.info("Started MonitoringWorker.consumer thread")
         loop = asyncio.get_running_loop()
+        self.loop = loop
         with concurrent.futures.ProcessPoolExecutor() as pool:
             self.pool = pool
             while not self._halt.is_set():

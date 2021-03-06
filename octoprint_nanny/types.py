@@ -39,6 +39,13 @@ class BoundingBoxPrediction:
     image: Image = None
 
 
+@dataclass
+class MonitoringFrame:
+    ts: int
+    image: Image
+    bounding_boxes: BoundingBoxPrediction = None
+
+
 class MonitoringModes(Enum):
     ACTIVE_LEARNING = "active_learning"
     LITE = "lite"

@@ -328,12 +328,8 @@ def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
 
 
 def predict_threadsafe(
-    image_bytes: bytes, **kwargs
-) -> Tuple[
-    octoprint_nanny.types.Image,
-    Optional[octoprint_nanny.types.Image],
-    Optional[octoprint_nanny.types.BoundingBoxPrediction],
-]:
+    ts: int, image_bytes: bytes, **kwargs
+) -> octoprint_nanny.types.MonitoringFrame:
 
     global PREDICTOR
     if PREDICTOR is None:
@@ -359,8 +355,6 @@ def predict_threadsafe(
     else:
         post_frame = None
 
-    return (
-        original_frame,
-        post_frame,
-        prediction,
+    return octoprint_nanny.types.MonitoringFrame(
+        ts=ts, image=post_frame or original_frame, bounding_boxes=prediction
     )
