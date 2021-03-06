@@ -113,7 +113,7 @@ third_party_wheel_map = {
 hardware_arch = os.uname().machine
 software_arch, _ = platform.architecture()
 
-if hardware_arch in third_party_wheels.keys():
+if hardware_arch in third_party_wheels_map.keys():
     third_party_wheels = third_party_wheel_map[hardware_arch][software_arch]
 else:
     raise CPUNotSupported(
