@@ -24,7 +24,7 @@ except:
 
 import beeline
 
-import PrintNannyMessage
+import PrintNannyEvent
 from octoprint.events import Events
 
 import octoprint_nanny.types
@@ -228,9 +228,11 @@ class MonitoringWorker:
         self._pn_ws_queue.put_nowait(msg)
         self._mqtt_send_queue.put_nowait(msg)
 
-    @beeline.traced(name="MonitoringWorker._lite_loop")
-    async def _lite_loop(self, loop, pool):
-        ts = int(datetime.now(pytz.utc).timestamp())
+    @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
+    async def _lite_predict_and_calc_health(
+        self, ts
+    ) -> Tuple[bytes, Optional[octoprint_nanny.types.BoundingBoxPrediction]]:
+
         image_bytes = await self.load_url_buffer()
         func = functools.partial(
             predict_threadsafe, image_bytes, **self._predictor_kwargs
@@ -242,12 +244,15 @@ class MonitoringWorker:
                 "name": "predict_pooled",
             }
         )
-        raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
+        raw_frame, post_frame, prediction = await self.loop.run_in_executor(
+            self.pool, func
+        )
         self._honeycomb_tracer.add_context({"prediction": prediction})
         self._honeycomb_tracer.finish_span(span)
 
         # trace metrics calculations in/out of process pool
-        self.update_dataframe(ts, prediction)
+        if prediction is not None:
+            self.update_dataframe(ts, prediction)
 
         # trace polyfit curve
         span = self._honeycomb_tracer.start_span(
@@ -256,7 +261,7 @@ class MonitoringWorker:
             }
         )
         func = functools.partial(print_is_healthy)
-        healthy = await loop.run_in_executor(pool, func)
+        healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:
             octoprint_device = self._plugin.settings.device_id
             dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
@@ -265,8 +270,13 @@ class MonitoringWorker:
                 octoprint_device=octoprint_device, dataframe=self._df
             )
             logger.warning(f"Created DefectAlert with id={alert.id}")
+        return tuple(post_frame if post_frame is not None else raw_frame, prediction)
 
-        video_frame = post_frame if post_frame is not None else raw_frame
+    @beeline.traced(name="MonitoringWorker._lite_loop")
+    async def _lite_loop(self):
+        ts = int(datetime.now(pytz.utc).timestamp())
+
+        video_frame, prediction = await self._lite_predict_and_calc_health(ts)
         ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
 
         self._plugin._event_bus.fire(
@@ -276,9 +286,9 @@ class MonitoringWorker:
         if self._plugin.settings.webcam_upload:
             self._pn_ws_queue.put_nowait(ws_msg)
 
-        if prediction and post_frame:
+        if prediction is not None:
             mqtt_msg = self._create_lite_fb_mqtt_msg(
-                ts=ts, image=post_frame, prediction=prediction
+                ts=ts, image=video_frame, prediction=prediction, dataframe=self._df
             )
             octoprint_event = PluginEvents.to_octoprint_event(
                 PluginEvents.BOUNDING_BOX_PREDICT
@@ -286,12 +296,12 @@ class MonitoringWorker:
             self._mqtt_send_queue.put_nowait(mqtt_msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
-    async def _loop(self, loop, pool):
+    async def _loop(self):
 
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
-            await self._active_learning_loop(loop, pool)
+            await self._active_learning_loop()
         elif self._monitoring_mode == MonitoringModes.LITE:
-            await self._lite_loop(loop, pool)
+            await self._lite_loop()
         else:
             logger.error(f"Unsupported monitoring_mode={self._monitoring_mode}")
             return
@@ -303,14 +313,16 @@ class MonitoringWorker:
         logger.info("Started MonitoringWorker.consumer thread")
         loop = asyncio.get_running_loop()
         with concurrent.futures.ProcessPoolExecutor() as pool:
+            self.pool = pool
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
-                await self._loop(loop, pool)
+                await self._loop()
 
             logger.warning("Halt event set, worker will exit soon")
 
     def run(self):
         loop = asyncio.new_event_loop()
+        self.loop = loop
         asyncio.set_event_loop(loop)
         return loop.run_until_complete(self._producer())
 

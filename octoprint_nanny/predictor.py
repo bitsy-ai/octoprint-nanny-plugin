@@ -276,6 +276,7 @@ PREDICTOR = None
 def explode_prediction_df(
     ts: int, prediction: octoprint_nanny.types.BoundingBoxPrediction
 ) -> pd.DataFrame:
+
     data = {"frame_id": ts, **asdict(prediction)}
     df = pd.DataFrame.from_records([data])
 

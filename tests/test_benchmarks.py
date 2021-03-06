@@ -10,7 +10,11 @@ import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
 import PIL
-from PrintNannyMessage.Telemetry import TelemetryMessage, MonitoringFrame, MessageType
+from PrintNannyEvent.TelemetrySchema import (
+    TelemetryMessage,
+    MonitoringFrame,
+    MessageType,
+)
 from datetime import datetime
 
 

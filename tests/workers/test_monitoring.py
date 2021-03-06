@@ -11,7 +11,7 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringModes,
 )
 from octoprint_nanny.predictor import predict_threadsafe
-from PrintNannyMessage.Telemetry import (
+from PrintNannyEvent.TelemetrySchema import (
     TelemetryMessage,
     MonitoringFrame,
     MessageType,
