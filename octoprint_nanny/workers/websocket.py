@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import backoff
 import hashlib
 import json
 import logging
@@ -97,6 +98,12 @@ class WebSocketWorker:
         msg = await self._producer.coro_get()
         return await websocket.send(msg)
 
+    @backoff.on_exception(
+        backoff.expo,
+        websockets.exceptions.ConnectionClosedError,
+        jitter=backoff.random_jitter,
+        logger=logger,
+    )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with websockets.connect(
