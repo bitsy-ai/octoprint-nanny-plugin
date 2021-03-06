@@ -11,9 +11,8 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
 import PIL
 from PrintNannyEvent.TelemetrySchema import (
-    TelemetryMessage,
+    TelemetryEvent,
     MonitoringFrame,
-    MessageType,
 )
 from datetime import datetime
 
@@ -76,10 +75,8 @@ async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
 
     ws_msg = benchmark(serialize, ts, buffer, image_height, image_width)
 
-    deserialized_ws_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        ws_msg, 0
-    )
-    ws_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_ws_msg)
+    deserialized_ws_msg = TelmetryEvent.TelmetryEvent.GetRootAsTelmetryEvent(ws_msg, 0)
+    ws_msg_obj = TelmetryEvent.TelmetryEventT.InitFromObj(deserialized_ws_msg)
 
     assert ws_msg_obj.message.ts == ts
     assert ws_msg_obj.message.image.width == 640
@@ -165,18 +162,16 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(mqtt_msg)
     benchmark.extra_info["serializer"] = "fb"
 
-    deserialized_ws_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        ws_msg, 0
-    )
-    ws_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_ws_msg)
+    deserialized_ws_msg = TelmetryEvent.TelmetryEvent.GetRootAsTelmetryEvent(ws_msg, 0)
+    ws_msg_obj = TelmetryEvent.TelmetryEventT.InitFromObj(deserialized_ws_msg)
     assert ws_msg_obj.message.ts == ts
     assert ws_msg_obj.message.image.width == 640
     assert ws_msg_obj.message.image.height == 480
 
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+    deserialized_mqtt_msg = TelmetryEvent.TelmetryEvent.GetRootAsTelmetryEvent(
         mqtt_msg, 0
     )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    mqtt_msg_obj = TelmetryEvent.TelmetryEventT.InitFromObj(deserialized_mqtt_msg)
     assert mqtt_msg_obj.message.ts == ts
 
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.scores)
@@ -224,18 +219,16 @@ async def test_lite_flatbuffer_calibrated_serialize(calibration, benchmark, mock
     benchmark.extra_info["mqtt_msg_size"] = sys.getsizeof(mqtt_msg)
     benchmark.extra_info["serializer"] = "fb"
 
-    deserialized_ws_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        ws_msg, 0
-    )
-    ws_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_ws_msg)
+    deserialized_ws_msg = TelmetryEvent.TelmetryEvent.GetRootAsTelmetryEvent(ws_msg, 0)
+    ws_msg_obj = TelmetryEvent.TelmetryEventT.InitFromObj(deserialized_ws_msg)
     assert ws_msg_obj.message.ts == ts
     assert ws_msg_obj.message.image.width == 640
     assert ws_msg_obj.message.image.height == 480
 
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
+    deserialized_mqtt_msg = TelmetryEvent.TelmetryEvent.GetRootAsTelmetryEvent(
         mqtt_msg, 0
     )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    mqtt_msg_obj = TelmetryEvent.TelmetryEventT.InitFromObj(deserialized_mqtt_msg)
     assert mqtt_msg_obj.message.ts == ts
 
     assert mqtt_msg_obj.message.numDetections == len(mqtt_msg_obj.message.scores)

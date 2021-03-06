@@ -270,7 +270,7 @@ class MonitoringWorker:
                 "name": "print_is_healthy",
             }
         )
-        
+
         func = functools.partial(print_is_healthy, self._df)
         healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:

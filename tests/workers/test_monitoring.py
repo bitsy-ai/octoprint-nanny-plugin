@@ -116,9 +116,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
-        msg, 0
-    )
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
     msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
@@ -244,7 +242,6 @@ async def test_lite_mode_webcam_disabled(
         predict_worker.pool = pool
         await predict_worker._loop()
 
-
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
@@ -256,9 +253,7 @@ async def test_lite_mode_webcam_disabled(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
-        msg, 0
-    )
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
     msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
@@ -309,9 +304,7 @@ async def test_active_learning_mode(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
-        msg, 0
-    )
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
     msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
     assert (
