@@ -4,6 +4,7 @@ import asyncio
 import threading
 from asynctest import CoroutineMock, patch
 import unittest.mock
+
 from octoprint_nanny.types import PluginEvents, MonitoringModes
 from octoprint_nanny.workers.monitoring import (
     MonitoringWorker,
@@ -12,10 +13,9 @@ from octoprint_nanny.workers.monitoring import (
 )
 from octoprint_nanny.predictor import predict_threadsafe
 from PrintNannyEvent.TelemetrySchema import (
-    TelemetryMessage,
     MonitoringFrame,
-    MessageType,
-    PluginEvent,
+    TelemetryEvent,
+    TelemetryEventEnum,
 )
 
 
@@ -45,14 +45,13 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(
-        PluginEvents.MONITORING_FRAME_POST
-    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -61,13 +60,11 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    mqtt_msg = args[0]
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        mqtt_msg, 0
-    )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    msg = args[0]
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
+    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
-        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.bounding_box_predict
+        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
 
 
@@ -103,14 +100,13 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(
-        PluginEvents.MONITORING_FRAME_POST
-    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -119,13 +115,13 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    mqtt_msg = args[0]
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        mqtt_msg, 0
+    msg = args[0]
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
+        msg, 0
     )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
-        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.bounding_box_predict
+        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
 
 
@@ -156,14 +152,13 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(
-        PluginEvents.MONITORING_FRAME_POST
-    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -203,14 +198,13 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(
-        PluginEvents.MONITORING_FRAME_POST
-    )
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -245,14 +239,14 @@ async def test_lite_mode_webcam_disabled(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(
-        PluginEvents.MONITORING_FRAME_POST
-    )
+
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_not_called()
@@ -261,13 +255,13 @@ async def test_lite_mode_webcam_disabled(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    mqtt_msg = args[0]
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        mqtt_msg, 0
+    msg = args[0]
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
+        msg, 0
     )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
-        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.bounding_box_predict
+        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
 
 
@@ -299,12 +293,13 @@ async def test_active_learning_mode(
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
     loop = asyncio.get_running_loop()
+    predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        await predict_worker._loop(loop, pool)
+        predict_worker.pool = pool
+        await predict_worker._loop()
 
-    octoprint_event = PluginEvents.to_octoprint_event(PluginEvents.MONITORING_FRAME_RAW)
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        octoprint_event,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -313,12 +308,12 @@ async def test_active_learning_mode(
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
     _, args, kwargs = kall
 
-    mqtt_msg = args[0]
-    deserialized_mqtt_msg = TelemetryMessage.TelemetryMessage.GetRootAsTelemetryMessage(
-        mqtt_msg, 0
+    msg = args[0]
+    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(
+        msg, 0
     )
-    mqtt_msg_obj = TelemetryMessage.TelemetryMessageT.InitFromObj(deserialized_mqtt_msg)
+    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
     assert (
-        mqtt_msg_obj.message.eventType == PluginEvent.PluginEvent.monitoring_frame_raw
+        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
     )

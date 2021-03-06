@@ -297,6 +297,8 @@ def explode_prediction_df(
 
 
 def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
+    if df.empty:
+        return True
     df = pd.concat(
         {
             "unhealthy": df[df["detection_classes"].isin(NEGATIVE_LABELS)],

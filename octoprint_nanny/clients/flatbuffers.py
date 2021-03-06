@@ -14,7 +14,9 @@ import octoprint_nanny.types
 
 
 def build_bounding_boxes_message(
-    builder, ts: int, prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None
+    builder,
+    ts: int,
+    prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None,
 ) -> bytes:
     if prediction is None:
         return prediction

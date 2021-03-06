@@ -164,10 +164,10 @@ class MonitoringWorker:
         self, ts: int, image: octoprint_nanny.types.Image
     ) -> bytes:
         msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            ts=ts, 
+            ts=ts,
             metadata=self._plugin.settings.metadata,
             image=image,
-            event_type=PluginEvents.MONITORING_FRAME_POST
+            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
         )
         return msg
 
@@ -201,11 +201,11 @@ class MonitoringWorker:
     # ) -> Tuple[bytes, Optional[bytes]]:
 
     #     return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-    #         ts=ts, 
+    #         ts=ts,
     #         metadata=self._plugin.settings.metadata,
     #         image=image,
     #         event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw
-    #     )   
+    #     )
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_msg(
@@ -219,7 +219,7 @@ class MonitoringWorker:
             metadata=self._plugin.settings.metadata,
             image=image,
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
-            prediction=prediction, 
+            prediction=prediction,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -270,6 +270,7 @@ class MonitoringWorker:
                 "name": "print_is_healthy",
             }
         )
+        
         func = functools.partial(print_is_healthy, self._df)
         healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:
@@ -287,9 +288,7 @@ class MonitoringWorker:
         ts = int(datetime.now(pytz.utc).timestamp())
 
         video_frame, prediction = await self._lite_predict_and_calc_health(ts)
-        msg = self._create_lite_fb_msg(
-            ts=ts, image=video_frame, prediction=prediction
-        )
+        msg = self._create_lite_fb_msg(ts=ts, image=video_frame, prediction=prediction)
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
             payload=base64.b64encode(video_frame.data),
