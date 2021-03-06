@@ -279,7 +279,7 @@ class MonitoringWorker:
             payload=base64.b64encode(monitoring_frame.image.data),
         )
         if self._plugin.settings.webcam_upload:
-            self._pn_ws_queue.put_nowait(msg)
+            self._pn_ws_queue.put_nowait(monitoring_frame.image.data)
 
         if monitoring_frame.bounding_boxes is not None:
             self._mqtt_send_queue.put_nowait(msg)

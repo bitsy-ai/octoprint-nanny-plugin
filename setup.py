@@ -137,7 +137,7 @@ plugin_requires = [
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
     "aiofiles>=0.6.0",
-    "flatbuffers>=1.12",
+    "flatbuffers==1.12",
     "pandas>=1.2.2",
 ] + third_party_wheels
 
