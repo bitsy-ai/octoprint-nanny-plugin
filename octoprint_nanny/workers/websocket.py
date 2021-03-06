@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import backoff
 import hashlib
 import json
 import logging
@@ -23,7 +24,6 @@ from octoprint_nanny.types import PluginEvents
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
-
 
 class WebSocketWorker:
     """
@@ -97,6 +97,11 @@ class WebSocketWorker:
         msg = await self._producer.coro_get()
         return await websocket.send(msg)
 
+    @backoff.on_exception(
+        backoff.expo,
+        websockets.exceptions.ConnectionClosedError,
+        jitter=backoff.random_jitter
+    )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with websockets.connect(
