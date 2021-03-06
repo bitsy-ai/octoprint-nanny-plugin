@@ -276,6 +276,7 @@ PREDICTOR = None
 def explode_prediction_df(
     ts: int, prediction: octoprint_nanny.types.BoundingBoxPrediction
 ) -> pd.DataFrame:
+
     data = {"frame_id": ts, **asdict(prediction)}
     df = pd.DataFrame.from_records([data])
 
@@ -296,6 +297,8 @@ def explode_prediction_df(
 
 
 def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
+    if df.empty:
+        return True
     df = pd.concat(
         {
             "unhealthy": df[df["detection_classes"].isin(NEGATIVE_LABELS)],
@@ -325,12 +328,8 @@ def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
 
 
 def predict_threadsafe(
-    image_bytes: bytes, **kwargs
-) -> Tuple[
-    octoprint_nanny.types.Image,
-    Optional[octoprint_nanny.types.Image],
-    Optional[octoprint_nanny.types.BoundingBoxPrediction],
-]:
+    ts: int, image_bytes: bytes, **kwargs
+) -> octoprint_nanny.types.MonitoringFrame:
 
     global PREDICTOR
     if PREDICTOR is None:
@@ -356,8 +355,6 @@ def predict_threadsafe(
     else:
         post_frame = None
 
-    return (
-        original_frame,
-        post_frame,
-        prediction,
+    return octoprint_nanny.types.MonitoringFrame(
+        ts=ts, image=post_frame or original_frame, bounding_boxes=prediction
     )

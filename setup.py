@@ -87,28 +87,34 @@ if sys.version_info.major == 2:
 ###
 
 # hardware layer : software layer : wheel
-tensorflow_wheel_map = {
+third_party_wheel_map = {
     "armv7l": {
-        # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl"
-        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl"
+        "32bit": [
+            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
+            "pyarrow @ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl",
+        ]
     },
     "aarch64": {
-        # "32bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_armv7l.whl",
-        # "64bit": "tensorflow @ https://github.com/bitsy-ai/tensorflow-arm-bin/releases/download/v2.4.0/tensorflow-2.4.0-cp37-none-linux_aarch64.whl",
-        "32bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
-        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl",
+        "32bit": [
+            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl"
+        ],
+        "64bit": [
+            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl"
+        ],
     },
     "x86_64": {
-        # "64bit": "tensorflow==2.4.0"
-        "64bit": "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl"
+        "64bit": [
+            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl",
+            "pyarrow==3.0.0",
+        ]
     },
 }
 
 hardware_arch = os.uname().machine
 software_arch, _ = platform.architecture()
 
-if hardware_arch in tensorflow_wheel_map.keys():
-    tensorflow = tensorflow_wheel_map[hardware_arch][software_arch]
+if hardware_arch in third_party_wheels.keys():
+    third_party_wheels = third_party_wheel_map[hardware_arch][software_arch]
 else:
     raise CPUNotSupported(
         "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
@@ -118,7 +124,6 @@ else:
     sys.exit(1)
 
 plugin_requires = [
-    tensorflow,
     "numpy",
     "pillow",
     "typing_extensions ; python_version < '3.8'",
@@ -134,7 +139,7 @@ plugin_requires = [
     "aiofiles>=0.6.0",
     "flatbuffers>=1.12",
     "pandas>=1.2.2",
-]
+] + third_party_wheels
 
 extra_requires = {
     "dev": ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio", "twine"]

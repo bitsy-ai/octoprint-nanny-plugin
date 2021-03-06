@@ -24,7 +24,7 @@ except:
 
 import beeline
 
-import PrintNannyMessage
+import PrintNannyEvent
 from octoprint.events import Events
 
 import octoprint_nanny.types
@@ -144,7 +144,7 @@ class MonitoringWorker:
         loop.run_until_complete(asyncio.ensure_future(self._producer()))
         loop.close()
 
-    @beeline.traced(name="MonitoringWorker._create_active_learning_msgs")
+    @beeline.traced(name="MonitoringWorker._create_active_learning_json_msgs")
     def _create_active_learning_json_msgs(
         self, now, image
     ) -> PrintNannyMonitoringFrameMessage:
@@ -154,17 +154,19 @@ class MonitoringWorker:
 
         ws_msg = PrintNannyMonitoringFrameMessage(
             ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_RAW,
+            event_type=PluginEvents.MONITORING_FRAME_POST,
             image=b64_image,
         )
         return ws_msg
 
     @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
     def _create_active_learning_flatbuffer_msg(
-        self, ts: int, image: octoprint_nanny.types.Image
+        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
     ) -> bytes:
-        msg = octoprint_nanny.clients.flatbuffers.build_monitoring_frame_raw_message(
-            ts, image, self._plugin.settings.metadata
+        msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
+            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
+            metadata=self._plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
         )
         return msg
 
@@ -190,36 +192,26 @@ class MonitoringWorker:
 
         return ws_msg, mqtt_msg
 
-    @beeline.traced(name="MonitoringWorker._create_lite_fb_ws_msg")
-    def _create_lite_fb_ws_msg(
-        self,
-        ts: int,
-        image: octoprint_nanny.types.Image,
-    ) -> Tuple[bytes, Optional[bytes]]:
-
-        return octoprint_nanny.clients.flatbuffers.build_monitoring_frame_post_message(
-            ts, image, self._plugin.settings.metadata
-        )
-
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
-    def _create_lite_fb_mqtt_msg(
-        self,
-        ts: int,
-        image: octoprint_nanny.types.Image,
-        prediction: octoprint_nanny.types.BoundingBoxPrediction,
+    def _create_lite_fb_msg(
+        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
-        return octoprint_nanny.clients.flatbuffers.build_bounding_boxes_message(
-            ts, prediction, self._plugin.settings.metadata
+        return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
+            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
+            metadata=self._plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
-    async def _active_learning_loop(self, loop, pool):
+    async def _active_learning_loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
         (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
         image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
-        msg = self._create_active_learning_flatbuffer_msg(ts, image)
+        monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
+
+        msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
 
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
@@ -228,12 +220,14 @@ class MonitoringWorker:
         self._pn_ws_queue.put_nowait(msg)
         self._mqtt_send_queue.put_nowait(msg)
 
-    @beeline.traced(name="MonitoringWorker._lite_loop")
-    async def _lite_loop(self, loop, pool):
-        ts = int(datetime.now(pytz.utc).timestamp())
+    @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
+    async def _lite_predict_and_calc_health(
+        self, ts
+    ) -> octoprint_nanny.types.MonitoringFrame:
+
         image_bytes = await self.load_url_buffer()
         func = functools.partial(
-            predict_threadsafe, image_bytes, **self._predictor_kwargs
+            predict_threadsafe, ts, image_bytes, **self._predictor_kwargs
         )
 
         # trace predict latency, including serialization in/out of process pool
@@ -242,12 +236,16 @@ class MonitoringWorker:
                 "name": "predict_pooled",
             }
         )
-        raw_frame, post_frame, prediction = await loop.run_in_executor(pool, func)
-        self._honeycomb_tracer.add_context({"prediction": prediction})
+
+        monitoring_frame = await self.loop.run_in_executor(self.pool, func)
+        self._honeycomb_tracer.add_context(
+            {"bounding_boxes": monitoring_frame.bounding_boxes}
+        )
         self._honeycomb_tracer.finish_span(span)
 
         # trace metrics calculations in/out of process pool
-        self.update_dataframe(ts, prediction)
+        if monitoring_frame.bounding_boxes is not None:
+            self.update_dataframe(ts, monitoring_frame.bounding_boxes)
 
         # trace polyfit curve
         span = self._honeycomb_tracer.start_span(
@@ -255,40 +253,44 @@ class MonitoringWorker:
                 "name": "print_is_healthy",
             }
         )
-        func = functools.partial(print_is_healthy)
-        healthy = await loop.run_in_executor(pool, func)
+
+        func = functools.partial(print_is_healthy, self._df)
+        healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:
+            octoprint_device = self._plugin.settings.device_id
+            dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
+            self._df.to_parquet(dataframe, engine="pyarrow")
             alert = await self._plugin.settings.rest_client.create_defect_alert(
-                octoprint_device=self._plugin.settings.device_id
+                octoprint_device=octoprint_device, dataframe=self._df
             )
             logger.warning(f"Created DefectAlert with id={alert.id}")
 
-        video_frame = post_frame if post_frame is not None else raw_frame
-        ws_msg = self._create_lite_fb_ws_msg(ts=ts, image=video_frame)
+        return monitoring_frame
 
+    @beeline.traced(name="MonitoringWorker._lite_loop")
+    async def _lite_loop(self):
+        ts = int(datetime.now(pytz.utc).timestamp())
+
+        monitoring_frame = await self._lite_predict_and_calc_health(ts)
+
+        msg = self._create_lite_fb_msg(monitoring_frame=monitoring_frame)
         self._plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
-            payload=base64.b64encode(video_frame.data),
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+            payload=base64.b64encode(monitoring_frame.image.data),
         )
         if self._plugin.settings.webcam_upload:
-            self._pn_ws_queue.put_nowait(ws_msg)
+            self._pn_ws_queue.put_nowait(msg)
 
-        if prediction and post_frame:
-            mqtt_msg = self._create_lite_fb_mqtt_msg(
-                ts=ts, image=post_frame, prediction=prediction
-            )
-            octoprint_event = PluginEvents.to_octoprint_event(
-                PluginEvents.BOUNDING_BOX_PREDICT
-            )
-            self._mqtt_send_queue.put_nowait(mqtt_msg)
+        if monitoring_frame.bounding_boxes is not None:
+            self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
-    async def _loop(self, loop, pool):
+    async def _loop(self):
 
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
-            await self._active_learning_loop(loop, pool)
+            await self._active_learning_loop()
         elif self._monitoring_mode == MonitoringModes.LITE:
-            await self._lite_loop(loop, pool)
+            await self._lite_loop()
         else:
             logger.error(f"Unsupported monitoring_mode={self._monitoring_mode}")
             return
@@ -299,15 +301,18 @@ class MonitoringWorker:
         """
         logger.info("Started MonitoringWorker.consumer thread")
         loop = asyncio.get_running_loop()
+        self.loop = loop
         with concurrent.futures.ProcessPoolExecutor() as pool:
+            self.pool = pool
             while not self._halt.is_set():
                 await asyncio.sleep(self._sleep_interval)
-                await self._loop(loop, pool)
+                await self._loop()
 
             logger.warning("Halt event set, worker will exit soon")
 
     def run(self):
         loop = asyncio.new_event_loop()
+        self.loop = loop
         asyncio.set_event_loop(loop)
         return loop.run_until_complete(self._producer())
 

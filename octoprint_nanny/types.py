@@ -11,6 +11,7 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
+from PrintNannyEvent.TelemetrySchema.TelemetryEventEnum import TelemetryEventEnum
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
@@ -36,6 +37,13 @@ class BoundingBoxPrediction:
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
     image: Image = None
+
+
+@dataclass
+class MonitoringFrame:
+    ts: int
+    image: Image
+    bounding_boxes: BoundingBoxPrediction = None
 
 
 class MonitoringModes(Enum):

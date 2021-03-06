@@ -1,6 +1,7 @@
 import pytest
 import octoprint_nanny.types
 from octoprint_nanny.workers.monitoring import MonitoringWorker
+from octoprint_nanny.plugins import OctoPrintNannyPlugin
 
 
 class MockResponse(object):
