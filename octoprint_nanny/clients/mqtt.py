@@ -9,17 +9,18 @@ import json
 import io
 import random
 import paho.mqtt.client as mqtt
-
+from typing import List
+import sys
 import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 
-JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 600)
+JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 1380)
 GCP_PROJECT_ID = os.environ.get("OCTOPRINT_NANNY_GCP_PROJECT_ID", "print-nanny")
 MQTT_BRIDGE_HOSTNAME = os.environ.get(
-    "OCTOPRINT_NANNY_MQTT_BRIDGE_HOSTNAME", "mqtt.googleapis.com"
+    "OCTOPRINT_NANNY_MQTT_BRIDGE_HOSTNAME", "mqtt.2030.ltsapis.goog"
 )
 
 MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
@@ -32,6 +33,7 @@ IOT_DEVICE_REGISTRY_REGION = os.environ.get(
 
 OCTOPRINT_EVENT_FOLDER = "octoprint-events"
 BOUNDING_BOX_EVENT_FOLDER = "bounding-boxes"
+ACTIVE_LEARNING_EVENT_FOLDER = "active-learning"
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.mqtt")
 device_logger = logging.getLogger(
@@ -54,9 +56,9 @@ class MQTTClient:
         device_id: str,
         device_cloudiot_id: str,
         private_key_file: str,
-        ca_certs,
-        algorithm="RS256",
-        remote_control_queue=None,
+        ca_cert: str,
+        algorithm="ES256",
+        mqtt_receive_queue=None,
         mqtt_bridge_hostname=MQTT_BRIDGE_HOSTNAME,
         mqtt_bridge_port=MQTT_BRIDGE_PORT,
         on_connect=None,
@@ -69,7 +71,7 @@ class MQTTClient:
         project_id=GCP_PROJECT_ID,
         region=IOT_DEVICE_REGISTRY_REGION,
         registry_id=IOT_DEVICE_REGISTRY,
-        tls_version=ssl.PROTOCOL_TLSv1_2,
+        keepalive=900,
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
@@ -83,18 +85,19 @@ class MQTTClient:
         self.project_id = project_id
         self.mqtt_bridge_hostname = mqtt_bridge_hostname
         self.mqtt_bridge_port = mqtt_bridge_port
-        self.ca_certs = ca_certs
         self.region = region
         self.registry_id = registry_id
+        self.keepalive = keepalive
 
-        self.tls_version = tls_version
+        self.ca_cert = ca_cert
+
         self.region = region
         self.algorithm = algorithm
 
-        self.remote_control_queue = remote_control_queue
+        self.mqtt_receive_queue = mqtt_receive_queue
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-        self.client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311)
+        self.client = mqtt.Client(client_id=client_id)
         logger.info(f"Initializing MQTTClient from {locals()}")
 
         # register callback functions
@@ -106,44 +109,61 @@ class MQTTClient:
         self.client.on_unsubscribe = self._on_unsubscribe
 
         # device receives configuration updates on this topic
-        self.mqtt_config_topic = f"/devices/{self.device_cloudiot_id}/config"
+        self.config_topic = f"/devices/{self.device_cloudiot_id}/config"
 
         # device receives commands on this topic
-        self.mqtt_command_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
+        self.commands_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
         # remote_control app commmands are routed to this subfolder
-        self.remote_control_command_topic = (
+        self.remote_control_commands_topic = (
             f"/devices/{self.device_cloudiot_id}/commands/remote_control"
         )
         # this permits routing on a per-app basis, e.g.
         # /devices/{self.device_cloudiot_id}/commands/my_app_name
 
         # default telemetry topic
-        self.mqtt_default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
+        self.default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
 
         # octoprint event telemetry topic
-        self.mqtt_octoprint_event_topic = os.path.join(
-            self.mqtt_default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
+        self.octoprint_event_topic = os.path.join(
+            self.default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
         )
         # bounding box telemetry topic
-        self.mqtt_bounding_boxes_topic = os.path.join(
-            self.mqtt_default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
+        self.bounding_boxes_topic = os.path.join(
+            self.default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
         )
-
-        # configure tls
-        self.client.tls_set(ca_certs=ca_certs, tls_version=tls_version)
+        # active learning telemetry topic
+        self.active_learning_topic = os.path.join(
+            self.default_telemetry_topic, ACTIVE_LEARNING_EVENT_FOLDER
+        )
 
     ###
     #   callbacks
     ##
     @beeline.traced("MQTTClient._on_message")
     def _on_message(self, client, userdata, message):
-        if message.topic == self.remote_control_command_topic:
+        if message.topic == self.remote_control_commands_topic:
             parsed_message = json.loads(message.payload.decode("utf-8"))
             logger.info(
                 f"Received remote control command on topic={message.topic} payload={parsed_message}"
             )
-            self.remote_control_queue.put_nowait(parsed_message)
+            self.mqtt_receive_queue.put_nowait(
+                {"topic": self.remote_control_commands_topic, "message": parsed_message}
+            )
             # callback to api to indicate command was received
+        elif message.topic == self.config_topic:
+            try:
+                parsed_message = message.payload.decode("utf-8")
+                parsed_message = json.loads(parsed_message)
+                logger.info(
+                    f"Received config update on topic={message.topic} payload={parsed_message}"
+                )
+                self.mqtt_receive_queue.put_nowait(
+                    {"topic": self.config_topic, "message": parsed_message}
+                )
+            except json.decoder.JSONDecodeError:
+                logger.error(
+                    f"Failed to decode message on topic={message.topic} payload={message.payload} message={parsed_message}"
+                )
         else:
             logger.info(
                 f"MQTTClient._on_message called with userdata={userdata} topic={message.topic} payload={message}"
@@ -190,13 +210,13 @@ class MQTTClient:
             should_backoff = False
             minimum_backoff_time = 1
             logger.info("Device successfully connected to MQTT broker")
-            self.client.subscribe(self.mqtt_config_topic, qos=1)
+            self.client.subscribe(self.config_topic, qos=1)
             logger.info(
-                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.config_topic}"
             )
-            self.client.subscribe(self.mqtt_command_topic, qos=1)
+            self.client.subscribe(self.commands_topic, qos=1)
             logger.info(
-                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.mqtt_command_topic}"
+                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.commands_topic}"
             )
         else:
             logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")
@@ -223,15 +243,23 @@ class MQTTClient:
                 time.sleep(delay)
                 if minimum_backoff_time <= MAXIMUM_BACKOFF_TIME:
                     minimum_backoff_time *= 2
-            self.connect()
+            self.client.reconnect()
 
     @beeline.traced("MQTTClient.connect")
     def connect(self):
+        # configure tls
+        self.client.tls_set(
+            ca_certs=self.ca_cert,
+            ciphers="ECDHE-RSA-AES128-GCM-SHA256",
+            tls_version=ssl.PROTOCOL_TLS,
+        )
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
         )
-        self.client.connect(self.mqtt_bridge_hostname, self.mqtt_bridge_port)
+        self.client.connect(
+            self.mqtt_bridge_hostname, self.mqtt_bridge_port, keepalive=self.keepalive
+        )
         logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
 
     def publish(self, payload, topic=None, retain=False, qos=1):
@@ -247,7 +275,7 @@ class MQTTClient:
         if set to True, the message will be set as the "last known good"/retained message for the topic.
         """
         if topic is None:
-            topic = self.mqtt_default_telemetry_topic
+            topic = self.default_telemetry_topic
 
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
@@ -255,18 +283,35 @@ class MQTTClient:
     def publish_octoprint_event(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
-            payload, topic=self.mqtt_octoprint_event_topic, retain=retain, qos=qos
+            payload, topic=self.octoprint_event_topic, retain=retain, qos=qos
         )
 
     @beeline.traced("MQTTClient.publish_bounding_boxes")
     def publish_bounding_boxes(self, event, retain=False, qos=1):
-        payload = json.dumps(event, cls=NumpyEncoder).encode("utf-8")
-        outfile = io.BytesIO()
-        with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-            f.write(payload)
-        payload = outfile.getvalue()
+        # outfile = io.BytesIO()
+        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+        #     f.write(payload)
+        # payload = outfile.getvalue()
+
+        logger.debug(
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.bounding_boxes_topic}"
+        )
         return self.publish(
-            payload, topic=self.mqtt_bounding_boxes_topic, retain=retain, qos=qos
+            event, topic=self.bounding_boxes_topic, retain=retain, qos=qos
+        )
+
+    @beeline.traced("MQTTClient.publish_monitoring_raw")
+    def publish_active_learning(self, event, retain=False, qos=1):
+        # outfile = io.BytesIO()
+        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
+        #     f.write(payload)
+        # payload = outfile.getvalue()
+
+        logger.debug(
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.active_learning_topic}"
+        )
+        return self.publish(
+            event, topic=self.active_learning_topic, retain=retain, qos=qos
         )
 
     @beeline.traced("MQTTClient.run")
@@ -287,17 +332,15 @@ def create_jwt(
      algorithm: The encryption algorithm to use. Either 'RS256' or 'ES256'
     Returns:
         A JWT generated from the given project_id and private key, which
-        expires in 20 minutes. After 20 minutes, your client will be
+        expires in JWT_EXPIRES_MINUTES minutes. After JWT_EXPIRES_MINUTES minutes, your client will be
         disconnected, and a new JWT will have to be generated.
     Raises:
         ValueError: If the private_key_file does not contain a known key.
     """
-    _jwt = jwt.JWT()
 
-    exp = jwt.utils.get_int_from_datetime(
-        datetime.utcnow() + timedelta(minutes=jwt_expires_minutes)
-    )
-    iat = jwt.utils.get_int_from_datetime(datetime.utcnow())
+    exp = datetime.utcnow() + timedelta(minutes=jwt_expires_minutes)
+
+    iat = datetime.utcnow()
     token = {
         # The time that the token was issued at
         "iat": iat,
@@ -309,7 +352,7 @@ def create_jwt(
 
     # Read the private key file.
     with open(private_key_file, "rb") as f:
-        signing_key = jwt.jwk_from_pem(f.read())
+        signing_key = f.read()
 
     logger.info(
         "Creating JWT using {} from private key file {}".format(
@@ -317,4 +360,4 @@ def create_jwt(
         )
     )
 
-    return _jwt.encode(token, signing_key, alg=algorithm)
+    return jwt.encode(token, signing_key, algorithm=algorithm)

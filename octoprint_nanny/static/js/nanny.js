@@ -53,26 +53,23 @@ $(function() {
 
 
         OctoPrint.socket.onMessage("*", function(message) {
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_done'){
+            console.log(message)
+            if (message && message.data && (
+                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_raw' || 
+                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_post'
+            ) 
+            ){
 
                 if (self.previewActive() == false) {
                     self.previewActive(true);
                 }
-                self.imageData("data:image/jpeg;base64,"+message.data.payload.image);
+                self.imageData("data:image/jpeg;base64,"+message.data.payload);
             }
             if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline'){
                 console.log(message)
                 self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
         });
-
-        toggleAutoStart = function(){
-            const newValue = !self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start()
-            self.settingsViewModel.settings.plugins.octoprint_nanny.auto_start(newValue)
-            OctoPrint.settings.savePluginSettings('octoprint_nanny', {
-                auto_start: newValue
-            })
-        }
 
         calibrate = function(){
             self.calibrationActive(true);
@@ -109,8 +106,8 @@ $(function() {
 
         }
     
-        startPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'startPredict'
+        startMonitoring = function(){
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'startMonitoring'
 
             OctoPrint.postJson(url, {})
             .done((res) =>{
@@ -123,8 +120,8 @@ $(function() {
             
         }
 
-        stopPredict = function(){
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopPredict'
+        stopMonitoring = function(){
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopMonitoring'
             self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
 
             OctoPrint.postJson(url, {})
@@ -160,7 +157,7 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ "loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: [ '#tab_plugin_octoprint_nanny' ]
+        elements: [ '#tab_plugin_octoprint_nanny', '#navbar_plugin_octoprint_nanny' ]
 
     });
 });
@@ -267,6 +264,7 @@ $(function() {
             console.log(message)
         } 
     });
+
     registerDevice = function(){
         self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
         self.deviceRegisterProgressPercent(self.deviceRegisterProgress +'%');

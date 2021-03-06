@@ -3,7 +3,7 @@ import logging
 import urllib
 import hashlib
 import backoff
-
+import json
 import beeline
 
 from octoprint.events import Events
@@ -21,6 +21,7 @@ from print_nanny_client.models.printer_profile_request import PrinterProfileRequ
 from print_nanny_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
 )
+from octoprint_nanny.utils.encoder import NumpyEncoder
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
@@ -29,7 +30,7 @@ API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = 16
+MAX_BACKOFF_TIME = 120
 
 
 class RestAPIClient:
@@ -57,6 +58,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -73,6 +75,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -90,6 +93,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_remote_control_command(self, command_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -102,30 +106,13 @@ class RestAPIClient:
             )
             return command
 
-    @beeline.traced("RestAPIClient.get_telemetry_events")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-    )
-    async def get_telemetry_events(self):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_client.client_side_validation = False
-            telemetry_events = await EventsApi(
-                api_client
-            ).octoprint_events_telemetry_retrieve()
-            logger.info(
-                f"OctoPrint events forwarded to mqtt telemetry topic {telemetry_events}"
-            )
-            return telemetry_events
-
     @beeline.traced("RestAPIClient.get_user")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -139,6 +126,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_octoprint_event(self, event_type, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -158,6 +146,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_print_progress(self, print_job_id, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -178,6 +167,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_gcode_file(
         self, event_data, gcode_file_path, octoprint_device_id
@@ -205,6 +195,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_snapshot(self, image, command):
         image.name = str(command) + ".jpg"
@@ -226,6 +217,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def create_print_job(
         self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
@@ -247,6 +239,7 @@ class RestAPIClient:
         aiohttp.ClientConnectionError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
     )
     async def update_or_create_printer_profile(
         self, printer_profile, octoprint_device_id
@@ -294,3 +287,44 @@ class RestAPIClient:
                 request
             )
             return printer_profile
+
+    @beeline.traced("RestAPIClient.update_or_create_device_calibration")
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
+    )
+    async def update_or_create_device_calibration(
+        self, octoprint_device_id, coordinates, mask
+    ):
+        mask = json.dumps(mask, cls=NumpyEncoder)
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = print_nanny_client.MlOpsApi(api_client=api_client)
+
+            request = print_nanny_client.DeviceCalibrationRequest(
+                octoprint_device=octoprint_device_id, coordinates=coordinates, mask=mask
+            )
+            device_calibration = await api_instance.device_calibration_update_or_create(
+                request
+            )
+            return device_calibration
+
+    @beeline.traced("RestAPIClient.create_alert")
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
+    )
+    async def create_defect_alert(self, octoprint_device_id, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = print_nanny_client.AlertsApi(api_client=api_client)
+
+            request = print_nanny_client.DefectAlertRequest(
+                octoprint_device=octoprint_device_id, **kwargs
+            )
+            defect_alert = await api_instance.defect_alerts_create(request)
+            return defect_alert

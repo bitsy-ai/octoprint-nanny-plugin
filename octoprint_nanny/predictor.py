@@ -1,56 +1,45 @@
-from time import sleep
 import base64
-from datetime import datetime
-import concurrent
-import io
 import json
 import logging
-import multiprocessing
 import numpy as np
+import pandas as pd
 import os
-import queue
 import time
+import io
 import threading
-import pytz
-import aiohttp
-import asyncio
-from uuid import uuid1
-import signal
-import sys
+from dataclasses import asdict
 
-import beeline
-from PIL import Image as PImage
-import requests
-import tensorflow as tf
+import PIL
+import tflite_runtime.interpreter as tflite
 
-from octoprint.events import Events
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
+import octoprint_nanny.types
+import beeline
 
+from typing import Optional, Tuple
 
-# python >= 3.8
-try:
-    from typing import TypedDict, Optional
-# python <= 3.7
-except:
-    from typing_extensions import TypedDict
-    from typing import Optional
-
-# @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 
-BOUNDING_BOX_PREDICT_EVENT = "bounding_box_predict"
-ANNOTATED_IMAGE_EVENT = "annotated_image"
+DETECTION_LABELS = {
+    1: "nozzle",
+    2: "adhesion",
+    3: "spaghetti",
+    4: "print",
+    5: "raft",
+}
 
+NEUTRAL_LABELS = {1: "nozzle", 5: "raft"}
 
-class Prediction(TypedDict):
-    num_detections: int
-    detection_scores: np.ndarray
-    detection_boxes: np.ndarray
-    detection_classes: np.ndarray
-    viz: Optional[PImage.Image]
+NEGATIVE_LABELS = {
+    2: "adhesion",
+    3: "spaghetti",
+}
+
+POSITIVE_LABELS = {
+    4: "print",
+}
 
 
 class ThreadLocalPredictor(threading.local):
@@ -81,7 +70,7 @@ class ThreadLocalPredictor(threading.local):
             self.base_path, model_version, metadata_filename
         )
 
-        self.tflite_interpreter = tf.lite.Interpreter(model_path=self.model_path)
+        self.tflite_interpreter = tflite.Interpreter(model_path=self.model_path)
         self.tflite_interpreter.allocate_tensors()
         self.input_details = self.tflite_interpreter.get_input_details()
         self.output_details = self.tflite_interpreter.get_output_details()
@@ -93,6 +82,8 @@ class ThreadLocalPredictor(threading.local):
         with open(self.metadata_path) as f:
             self.metadata = json.load(f)
 
+        self.input_shape = self.metadata["inputShape"]
+
         with open(self.label_path) as f:
             self.category_index = [l.strip() for l in f.readlines()]
             self.category_index = {
@@ -102,90 +93,90 @@ class ThreadLocalPredictor(threading.local):
 
         self.calibration = calibration
 
-    def load_image(self, bytes):
-        return PImage.open(bytes)
+    def load_image(self, image_bytes):
+        return PIL.Image.open(io.BytesIO(image_bytes))
 
     def load_file(self, filepath: str):
-        return PImage.open(filepath)
+        return PIL.Image.open(filepath)
 
-    def preprocess(self, image: PImage):
+    def preprocess(self, image: PIL.Image):
+        # resize to input shape provided by model metadata.json
+        _, target_height, target_width, _ = self.input_shape
+        image = image.resize((target_width, target_height), resample=PIL.Image.BILINEAR)
         image = np.asarray(image)
-        image = tf.convert_to_tensor(image, dtype=tf.uint8)
-        image = tf.image.resize(image, self.input_shape[1:-1], method="nearest")
-        image = image[tf.newaxis, ...]
+        # expand dimensions to batch size = 1
+        image = np.expand_dims(image, 0)
         return image
 
     def write_image(self, outfile: str, image_np: np.ndarray):
-
-        img = PImage.fromarray(image_np)
-        img.save(outfile)
+        img = PIL.Image.fromarray(image_np)
+        return img.save(outfile)
 
     def percent_intersection(
         self,
-        detection_boxes: np.array,
-        detection_scores: np.array,
-        detection_classes: np.array,
-        bb1: tuple,
+        prediction: octoprint_nanny.types.BoundingBoxPrediction,
+        area_of_interest: np,
     ) -> float:
         """
-        bb1 - boundary box
-        bb2 - detection box
+        Returns intersection-over-union area, normalized between 0 and 1
         """
+
+        detection_boxes = prediction.detection_boxes
+        # initialize array of zeroes
         aou = np.zeros(len(detection_boxes))
 
-        for i, bb2 in enumerate(detection_boxes):
-
-            # assert bb1[0] < bb1[2]
-            # assert bb1[1] < bb1[3]
-            # assert bb2[0] < bb2[2]
-            # assert bb2[1] < bb2[3]
-
+        # for each bounding box, calculate the intersection-over-area
+        for i, box in enumerate(detection_boxes):
             # determine the coordinates of the intersection rectangle
-            x_left = max(bb1[0], bb2[0])
-            y_top = max(bb1[1], bb2[1])
-            x_right = min(bb1[2], bb2[2])
-            y_bottom = min(bb1[3], bb2[3])
+            x_left = max(area_of_interest[0], box[0])
+            y_top = max(area_of_interest[1], box[1])
+            x_right = min(area_of_interest[2], box[2])
+            y_bottom = min(area_of_interest[3], box[3])
 
-            # boxes do not intersect
+            # boxes do not intersect, area is 0
             if x_right < x_left or y_bottom < y_top:
                 aou[i] = 0.0
                 continue
+
+            # calculate
             # The intersection of two axis-aligned bounding boxes is always an
             # axis-aligned bounding box
             intersection_area = (x_right - x_left) * (y_bottom - y_top)
 
             # compute the area of detection box
-            bb2_area = (bb2[2] - bb2[0]) * (bb2[3] - bb2[1])
+            box_area = (box[2] - box[0]) * (box[3] - box[1])
 
-            if (intersection_area / bb2_area) == 1.0:
+            if (intersection_area / box_area) == 1.0:
                 aou[i] = 1.0
                 continue
 
-            aou[i] = intersection_area / bb2_area
+            aou[i] = intersection_area / box_area
 
         return aou
 
-    def postprocess(self, image: PImage, prediction: Prediction) -> np.array:
+    def postprocess(
+        self, image: PIL.Image, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> np.array:
 
         image_np = np.asarray(image).copy()
         height, width, _ = image_np.shape
+        ignored_mask = None
 
+        prediction = self.min_score_filter(prediction)
+        if prediction is None:
+            logger.info(
+                f"No detections exceeding min_score_thresh={self.min_score_thresh}"
+            )
+            return prediction, None
         if self.calibration is not None:
             detection_boundary_mask = self.calibration["mask"]
-            coords = self.calibration["coords"]
-            percent_intersection = self.percent_intersection(
-                prediction["detection_boxes"],
-                prediction["detection_scores"],
-                prediction["detection_classes"],
-                coords,
-            )
-            ignored_mask = percent_intersection <= self.min_overlap_area
+            prediction, ignored_mask = self.calibration_filter(prediction)
 
             viz = visualize_boxes_and_labels_on_image_array(
                 image_np,
-                prediction["detection_boxes"],
-                prediction["detection_classes"],
-                prediction["detection_scores"],
+                prediction.detection_boxes,
+                prediction.detection_classes,
+                prediction.detection_scores,
                 self.category_index,
                 use_normalized_coordinates=True,
                 line_thickness=4,
@@ -197,18 +188,62 @@ class ThreadLocalPredictor(threading.local):
         else:
             viz = visualize_boxes_and_labels_on_image_array(
                 image_np,
-                prediction["detection_boxes"],
-                prediction["detection_classes"],
-                prediction["detection_scores"],
+                prediction.detection_boxes,
+                prediction.detection_classes,
+                prediction.detection_scores,
                 self.category_index,
                 use_normalized_coordinates=True,
                 line_thickness=4,
                 min_score_thresh=self.min_score_thresh,
                 max_boxes_to_draw=self.max_boxes_to_draw,
             )
-        return viz
+        return prediction, viz
 
-    def predict(self, image: PImage) -> Prediction:
+    def min_score_filter(
+        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> octoprint_nanny.types.BoundingBoxPrediction:
+        ma = np.ma.masked_greater(prediction.detection_scores, self.min_score_thresh)
+        # No detections exceeding threshold
+        if isinstance(ma.mask, np.bool_) and ma.mask == False:
+            return
+        num_detections = int(np.count_nonzero(ma.mask))
+        detection_boxes = prediction.detection_boxes[ma.mask]
+        detection_classes = prediction.detection_classes[ma.mask]
+        detection_scores = prediction.detection_scores[ma.mask]
+        return octoprint_nanny.types.BoundingBoxPrediction(
+            detection_boxes=detection_boxes,
+            detection_classes=detection_classes,
+            detection_scores=detection_scores,
+            num_detections=num_detections,
+        )
+
+    def calibration_filter(
+        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
+    ) -> octoprint_nanny.types.BoundingBoxPrediction:
+        if self.calibration is not None:
+            coords = self.calibration["coords"]
+            percent_intersection = self.percent_intersection(prediction, coords)
+            ignored_mask = percent_intersection <= self.min_overlap_area
+
+            included_mask = np.invert(ignored_mask)
+            detection_boxes = np.squeeze(prediction.detection_boxes[included_mask])
+            detection_scores = np.squeeze(prediction.detection_scores[included_mask])
+            detection_classes = np.squeeze(prediction.detection_classes[included_mask])
+
+            num_detections = int(np.count_nonzero(included_mask))
+
+            return (
+                octoprint_nanny.types.BoundingBoxPrediction(
+                    detection_boxes=detection_boxes,
+                    detection_scores=detection_scores,
+                    detection_classes=detection_classes,
+                    num_detections=num_detections,
+                ),
+                ignored_mask,
+            )
+        return prediction, None
+
+    def predict(self, image: PIL.Image) -> octoprint_nanny.types.BoundingBoxPrediction:
         tensor = self.preprocess(image)
 
         self.tflite_interpreter.set_tensor(self.input_details[0]["index"], tensor)
@@ -227,7 +262,7 @@ class ThreadLocalPredictor(threading.local):
         score_data = np.squeeze(score_data, axis=0)
         num_detections = np.squeeze(num_detections, axis=0)
 
-        return Prediction(
+        return octoprint_nanny.types.BoundingBoxPrediction(
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,
@@ -235,186 +270,91 @@ class ThreadLocalPredictor(threading.local):
         )
 
 
-predictor = None
+PREDICTOR = None
 
 
-def _get_predict_bytes(msg):
-    global predictor
-    image = predictor.load_image(msg["original_image"])
-    prediction = predictor.predict(image)
+def explode_prediction_df(
+    ts: int, prediction: octoprint_nanny.types.BoundingBoxPrediction
+) -> pd.DataFrame:
 
-    viz_np = predictor.postprocess(image, prediction)
-    viz_image = PImage.fromarray(viz_np, "RGB")
-    viz_buffer = io.BytesIO()
-    viz_buffer.name = "annotated_image.jpg"
-    viz_image.save(viz_buffer, format="JPEG")
-    return viz_buffer, prediction
+    data = {"frame_id": ts, **asdict(prediction)}
+    df = pd.DataFrame.from_records([data])
+
+    df = df[["frame_id", "detection_classes", "detection_scores"]]
+    df = df.reset_index()
+
+    NUM_FRAMES = len(df)
+
+    # explode nested detection_scores and detection_classes series
+    df = df.set_index(["frame_id"]).apply(pd.Series.explode).reset_index()
+    assert len(df) == NUM_FRAMES * prediction.num_detections
+
+    # add string labels
+    df["label"] = df["detection_classes"].map(DETECTION_LABELS)
+
+    # create a hierarchal index from exploded data, append to dataframe state
+    return df.set_index(["frame_id", "label"])
 
 
-class PredictWorker:
-    """
-    Coordinates frame buffer sampling and prediction work
-    Publishes results to websocket and main octoprint event bus
-    """
+def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
+    if df.empty:
+        return True
+    df = pd.concat(
+        {
+            "unhealthy": df[df["detection_classes"].isin(NEGATIVE_LABELS)],
+            "healthy": df[df["detection_classes"].isin(POSITIVE_LABELS)],
+        }
+    ).reset_index()
 
-    def __init__(
-        self,
-        webcam_url: str,
-        calibration: dict,
-        octoprint_ws_queue,
-        pn_ws_queue,
-        telemetry_queue,
-        fpm,
-        halt,
-        plugin_event_bus,
-        trace_context={},
-    ):
-        """
-        webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
-        octoprint_ws_queue - consumer relay to octoprint's main event bus
-        pn_ws_queue - consumer relay to websocket upload proc
-        calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
-        fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
-        halt - threading.Event()
-        """
-        self._plugin_event_bus = plugin_event_bus
-        self._calibration = calibration
-        self._fpm = fpm
-        self._sleep_interval = 60 / int(fpm)
-        self._webcam_url = webcam_url
+    mask = df.level_0 == "unhealthy"
+    healthy_cumsum = np.log10(
+        df[~mask].groupby("frame_id")["detection_scores"].sum().cumsum()
+    )
 
-        self._octoprint_ws_queue = octoprint_ws_queue
-        self._pn_ws_queue = pn_ws_queue
-        self._telemetry_queue = telemetry_queue
+    unhealthy_cumsum = np.log10(
+        df[mask].groupby("frame_id")["detection_scores"].sum().cumsum()
+    )
 
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
-        self._honeycomb_tracer.add_global_context(trace_context)
+    xy = healthy_cumsum.subtract(unhealthy_cumsum, fill_value=0)
 
-        self._halt = halt
+    if len(xy) == 1:
+        return True
 
-    @beeline.traced(name="PredictWorker.load_url_buffer")
-    async def load_url_buffer(self, session):
-        res = await session.get(self._webcam_url)
-        assert res.headers["content-type"] == "image/jpeg"
-        return io.BytesIO(await res.read())
+    trend = np.polynomial.polynomial.Polynomial.fit(xy.index, xy, degree)
+    slope, intercept = list(trend)
+    if slope < 0:
+        return False
+    return True
 
-    @staticmethod
-    def calc_calibration(x0, y0, x1, y1, height=480, width=640):
-        if (
-            x0 is None
-            or y0 is None
-            or x1 is None
-            or y1 is None
-            or height is None
-            or width is None
-        ):
-            logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
-            return None
 
-        mask = np.zeros((height, width))
-        for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
-            value = (
-                1
-                if (
-                    h / height >= y0
-                    and h / height <= y1
-                    and w / width >= x0
-                    and w / width <= x1
-                )
-                else 0
-            )
-            mask[h][w] = value
+def predict_threadsafe(
+    ts: int, image_bytes: bytes, **kwargs
+) -> octoprint_nanny.types.MonitoringFrame:
 
-        mask = mask.astype(np.uint8)
-        logger.info(f"Calibration set")
+    global PREDICTOR
+    if PREDICTOR is None:
+        PREDICTOR = ThreadLocalPredictor(**kwargs)
+    image = PREDICTOR.load_image(image_bytes)
+    # NOTE: PIL.Image.size returns (w, h) where most TensorFlow interfaces expect (h, w)
+    (ow, oh) = image.size
+    original_frame = octoprint_nanny.types.Image(height=oh, width=ow, data=image_bytes)
 
-        return {"mask": mask, "coords": (x0, y0, x1, y1)}
+    prediction = PREDICTOR.predict(image)
 
-    def _producer_worker(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(asyncio.ensure_future(self._producer()))
-        loop.close()
+    prediction, viz_np = PREDICTOR.postprocess(image, prediction)
+    if viz_np is not None:
+        viz_image = PIL.Image.fromarray(viz_np, "RGB")
+        vw, vh = viz_image.size
+        viz_buffer = io.BytesIO()
+        viz_buffer.name = "annotated_image.jpg"
+        viz_image.save(viz_buffer, format="JPEG")
 
-    @beeline.traced(name="PredictWorker._image_msg")
-    async def _image_msg(self, ts):
-        async with aiohttp.ClientSession() as session:
-            original_image = await self.load_url_buffer(session)
-            return dict(
-                ts=ts,
-                original_image=original_image,
-            )
-
-    @beeline.traced(name="PredictWorker._create_msgs")
-    def _create_msgs(self, msg, viz_buffer, prediction):
-        # send annotated image bytes to octoprint ui ws
-        # viz_bytes = viz_buffer.getvalue()
-        # self._octoprint_ws_queue.put_nowait(viz_bytes)
-
-        # send annotated image bytes to print nanny ui ws
-        ws_msg = msg.copy()
-        # send only annotated image data
-        # del ws_msg["original_image"]
-        ws_msg.update(
-            {
-                "event_type": "annotated_image",
-                "annotated_image": viz_buffer,
-            }
+        post_frame = octoprint_nanny.types.Image(
+            height=vh, width=vw, data=viz_buffer.getvalue()
         )
+    else:
+        post_frame = None
 
-        mqtt_msg = msg.copy()
-        # publish bounding box prediction to mqtt telemetry topic
-        # del mqtt_msg["original_image"]
-
-        calibration = (
-            self._calibration
-            if self._calibration is None
-            else self._calibration.get("coords")
-        )
-        mqtt_msg.update(
-            {
-                "calibration": calibration,
-                "event_type": "bounding_box_predict",
-                "fpm": self._fpm,
-            }
-        )
-        mqtt_msg.update(prediction)
-
-        return ws_msg, mqtt_msg
-
-    @beeline.traced(name="PredictWorker._producer")
-    async def _producer(self):
-        """
-        Calculates prediction and publishes result to subscriber queues
-        """
-        logger.info("Started PredictWorker.consumer thread")
-        loop = asyncio.get_running_loop()
-        global predictor
-        predictor = ThreadLocalPredictor(calibration=self._calibration)
-        logger.info(f"Initialized predictor {predictor}")
-        with concurrent.futures.ProcessPoolExecutor() as pool:
-            while not self._halt.is_set():
-                await asyncio.sleep(self._sleep_interval)
-                trace = self._honeycomb_tracer.start_trace()
-
-                now = datetime.now(pytz.timezone("America/Los_Angeles")).timestamp()
-                msg = await self._image_msg(now)
-                viz_buffer, prediction = await loop.run_in_executor(
-                    pool, _get_predict_bytes, msg
-                )
-                ws_msg, mqtt_msg = self._create_msgs(msg, viz_buffer, prediction)
-                self._plugin_event_bus.fire(
-                    Events.PLUGIN_OCTOPRINT_NANNY_PREDICT_DONE,
-                    payload={"image": base64.b64encode(viz_buffer.getvalue())},
-                )
-                self._pn_ws_queue.put_nowait(ws_msg)
-                self._telemetry_queue.put_nowait(mqtt_msg)
-
-                self._honeycomb_tracer.finish_trace(trace)
-
-            logger.warning("Halt event set, worker will exit soon")
-
-    def run(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._producer())
+    return octoprint_nanny.types.MonitoringFrame(
+        ts=ts, image=post_frame or original_frame, bounding_boxes=prediction
+    )
