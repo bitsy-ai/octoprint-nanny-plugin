@@ -11,6 +11,7 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
+from PrintNannyEvent.TelemetrySchema.TelemetryEventEnum import TelemetryEventEnum
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 

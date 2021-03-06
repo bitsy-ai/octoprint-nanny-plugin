@@ -14,7 +14,7 @@ import octoprint_nanny.types
 
 
 def build_bounding_boxes_message(
-    builder, prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None
+    builder, ts: int, prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None
 ) -> bytes:
     if prediction is None:
         return prediction
@@ -41,7 +41,6 @@ def build_bounding_boxes_message(
 
     # begin bounding boxes
     BoundingBoxes.BoundingBoxesStart(builder)
-    BoundingBoxes.BoundingBoxesAddTs(builder, ts)
     BoundingBoxes.BoundingBoxesAddBoxes(builder, boxes)
     BoundingBoxes.BoundingBoxesAddScores(builder, scores)
     BoundingBoxes.BoundingBoxesAddClasses(builder, classes)
@@ -56,7 +55,7 @@ def build_telemetry_event_message(
     ts: int,
     metadata: octoprint_nanny.types.Metadata,
     image: octoprint_nanny.types.Image,
-    event_type: int,
+    event_type: TelemetryEventEnum.TelemetryEventEnum,
     prediction: Optional[octoprint_nanny.types.BoundingBoxPrediction] = None,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
@@ -74,12 +73,12 @@ def build_telemetry_event_message(
 
     # begin event data
     # prediction is optional; if not provided, inference will run in beam pipeline
-    bounding_boxes = build_bounding_boxes_message(builder, prediction)
+    bounding_boxes = build_bounding_boxes_message(builder, ts, prediction)
     MonitoringFrame.MonitoringFrameStart(builder)
-    MonitoringFrame.MonitoringFrameAddImage(image)
+    MonitoringFrame.MonitoringFrameAddImage(builder, image)
     if bounding_boxes:
-        MonitoringFrame.MonitoringFrameAddBoundingBoxes(bounding_boxes)
-    MonitoringFrame.MonitoringFrameAddTs(ts)
+        MonitoringFrame.MonitoringFrameAddBoundingBoxes(builder, bounding_boxes)
+    MonitoringFrame.MonitoringFrameAddTs(builder, ts)
     event_data = MonitoringFrame.MonitoringFrameEnd(builder)
 
     # end event data
@@ -94,9 +93,9 @@ def build_telemetry_event_message(
 
     # begin telemetry event
     TelemetryEvent.TelemetryEventStart(builder)
-    TelemetryEvent.TelemetryEventAddEventData(event_data)
-    TelemetryEvent.TelemetryEventAddEventType(event_type)
-    telemetry_event = TelemetryEvent.TelemetrySchemaEnd(builder)
+    TelemetryEvent.TelemetryEventAddEventData(builder, event_data)
+    TelemetryEvent.TelemetryEventAddEventType(builder, event_type)
+    telemetry_event = TelemetryEvent.TelemetryEventEnd(builder)
     builder.Finish(telemetry_event)
 
     # end tlemetry event
