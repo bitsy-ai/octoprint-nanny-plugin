@@ -286,8 +286,8 @@ class MQTTClient:
             payload, topic=self.octoprint_event_topic, retain=retain, qos=qos
         )
 
-    @beeline.traced("MQTTClient.publish_bounding_boxes")
-    def publish_bounding_boxes(self, event, retain=False, qos=1):
+    @beeline.traced("MQTTClient.publish_monitoring_frame_post")
+    def publish_monitoring_frame_post(self, event, retain=False, qos=1):
         # outfile = io.BytesIO()
         # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
         #     f.write(payload)
@@ -300,7 +300,7 @@ class MQTTClient:
             event, topic=self.bounding_boxes_topic, retain=retain, qos=qos
         )
 
-    @beeline.traced("MQTTClient.publish_monitoring_raw")
+    @beeline.traced("MQTTClient.publish_monitoring_frame_raw")
     def publish_active_learning(self, event, retain=False, qos=1):
         # outfile = io.BytesIO()
         # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
