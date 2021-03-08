@@ -12,7 +12,7 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringModes,
 )
 from octoprint_nanny.predictor import predict_threadsafe
-from PrintNannyEvent.TelemetrySchema import (
+from print_nanny_client.telemetry_event import (
     MonitoringFrame,
     TelemetryEvent,
     TelemetryEventEnum,

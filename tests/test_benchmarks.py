@@ -10,7 +10,7 @@ import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
 import PIL
-from PrintNannyEvent.TelemetrySchema import (
+from print_nanny_client.telemetry_event import (
     TelemetryEvent,
     MonitoringFrame,
 )

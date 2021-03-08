@@ -1,7 +1,9 @@
 import io
 import flatbuffers
 from typing import Optional
-from PrintNannyEvent.TelemetrySchema import (
+
+import print_nanny_client
+from print_nanny_client.telemetry_event import (
     MonitoringFrame,
     Image,
     Box,
@@ -92,9 +94,11 @@ def build_telemetry_event_message(
     # end metadata
 
     # begin telemetry event
+    version = builder.CreateString(print_nanny_client.__version__)
     TelemetryEvent.TelemetryEventStart(builder)
     TelemetryEvent.TelemetryEventAddEventData(builder, event_data)
     TelemetryEvent.TelemetryEventAddEventType(builder, event_type)
+    TelemetryEvent.TelemetryEventAddVersion(builder, version)
     telemetry_event = TelemetryEvent.TelemetryEventEnd(builder)
     builder.Finish(telemetry_event)
 
