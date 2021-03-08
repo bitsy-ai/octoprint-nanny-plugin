@@ -66,9 +66,6 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
     deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
-    import pdb
-
-    pdb.set_trace()
     assert (
         deserialized_msg.EventType()
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
@@ -127,7 +124,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
     assert (
-        deserialized_msg.Version()
+        deserialized_msg.EventType()
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
     assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
