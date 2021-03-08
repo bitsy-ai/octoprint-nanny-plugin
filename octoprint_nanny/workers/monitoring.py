@@ -24,7 +24,6 @@ except:
 
 import beeline
 
-import PrintNannyEvent
 from octoprint.events import Events
 
 import octoprint_nanny.types

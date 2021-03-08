@@ -12,7 +12,9 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringModes,
 )
 from octoprint_nanny.predictor import predict_threadsafe
-from PrintNannyEvent.TelemetrySchema import (
+
+import print_nanny_client
+from print_nanny_client.telemetry_event import (
     MonitoringFrame,
     TelemetryEvent,
     TelemetryEventEnum,
@@ -62,10 +64,14 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+
     assert (
-        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
+        deserialized_msg.EventType()
+        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
+
+    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
 
 
 @pytest.mark.asyncio
@@ -117,10 +123,11 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
-        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
+        deserialized_msg.EventType()
+        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
+    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
 
 
 @pytest.mark.asyncio
@@ -254,10 +261,11 @@ async def test_lite_mode_webcam_disabled(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
     assert (
-        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
+        deserialized_msg.EventType()
+        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
+    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
 
 
 @pytest.mark.asyncio
@@ -305,8 +313,9 @@ async def test_active_learning_mode(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    msg_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
     assert (
-        msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
+        deserialized_msg.EventType()
+        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
     )
+    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__

@@ -80,7 +80,7 @@ async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocke
     event = bytearray("testing".encode())
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_fn = plugin.settings.mqtt_client.publish_bounding_boxes
+    mock_fn = plugin.settings.mqtt_client.publish_monitoring_frame_post
     mock_fn.return_value = asyncio.Future()
     mock_fn.return_value.set_result("foo")
 
