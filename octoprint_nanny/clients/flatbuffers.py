@@ -97,6 +97,10 @@ def build_telemetry_event_message(
     version = builder.CreateString(print_nanny_client.__version__)
     TelemetryEvent.TelemetryEventStart(builder)
     TelemetryEvent.TelemetryEventAddEventData(builder, event_data)
+    TelemetryEvent.TelemetryEventAddEventDataType(
+        builder, print_nanny_client.telemetry_event.EventData.EventData.MonitoringFrame
+    )
+    TelemetryEvent.TelemetryEventAddMetadata(builder, metadata)
     TelemetryEvent.TelemetryEventAddEventType(builder, event_type)
     TelemetryEvent.TelemetryEventAddVersion(builder, version)
     telemetry_event = TelemetryEvent.TelemetryEventEnd(builder)
