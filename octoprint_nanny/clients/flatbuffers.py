@@ -80,7 +80,6 @@ def build_telemetry_event_message(
     MonitoringFrame.MonitoringFrameAddImage(builder, image)
     if bounding_boxes:
         MonitoringFrame.MonitoringFrameAddBoundingBoxes(builder, bounding_boxes)
-    MonitoringFrame.MonitoringFrameAddTs(builder, monitoring_frame.ts)
     event_data = MonitoringFrame.MonitoringFrameEnd(builder)
 
     # end event data
@@ -90,6 +89,7 @@ def build_telemetry_event_message(
     Metadata.MetadataAddUserId(builder, metadata.user_id)
     Metadata.MetadataAddDeviceCloudiotId(builder, metadata.device_cloudiot_id)
     Metadata.MetadataAddDeviceId(builder, metadata.device_id)
+    Metadata.MetadataAddTs(builder, monitoring_frame.ts)
     metadata = Metadata.MetadataEnd(builder)
     # end metadata
 
