@@ -12,6 +12,8 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringModes,
 )
 from octoprint_nanny.predictor import predict_threadsafe
+
+import print_nanny_client
 from print_nanny_client.telemetry_event import (
     MonitoringFrame,
     TelemetryEvent,
@@ -67,6 +69,8 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
 
+    assert msg_obj.version.decode("utf-8") == print_nanny_client.__version__
+
 
 @pytest.mark.asyncio
 @patch("aiohttp.ClientSession.get")
@@ -121,6 +125,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     assert (
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
+    assert msg_obj.version.decode("utf-8") == print_nanny_client.__version__
 
 
 @pytest.mark.asyncio
@@ -258,6 +263,7 @@ async def test_lite_mode_webcam_disabled(
     assert (
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
+    assert msg_obj.version.decode("utf-8") == print_nanny_client.__version__
 
 
 @pytest.mark.asyncio
@@ -310,3 +316,4 @@ async def test_active_learning_mode(
     assert (
         msg_obj.eventType == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
     )
+    assert msg_obj.version.decode("utf-8") == print_nanny_client.__version__
