@@ -66,16 +66,13 @@ class MQTTManager:
 
         try:
             logger.info("Waiting for MQTTManager.mqtt_client network loop to finish")
-            while self.plugin.settings.mqtt_client.client.is_connected():
-                self.plugin.settings.plugin.settings.mqtt_client.client.disconnect()
-            logger.info("Stopping MQTTManager.mqtt_client network loop")
-            self.plugin.settings.mqtt_client.client.loop_stop()
+            self.client_worker.stop()
         except PluginSettingsRequired:
             pass
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join(2)
+            worker.join(1)
 
     @beeline.traced("MQTTManager._reset")
     def _reset(self):
@@ -113,6 +110,9 @@ class MQTTClientWorker:
 
         self.plugin = plugin
         self.halt = halt
+
+    def stop(self):
+        return self.plugin.settings.mqtt_client.stop()
 
     @beeline.traced("MQTTClientWorker.run")
     def run(self):

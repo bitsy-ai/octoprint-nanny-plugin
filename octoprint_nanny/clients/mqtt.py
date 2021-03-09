@@ -306,11 +306,15 @@ class MQTTClient:
             event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
         )
 
+    @beeline.traced("MQTTClient.stop")
+    def stop(self):
+        return self.client.loop_stop()
+
     @beeline.traced("MQTTClient.run")
     def run(self, halt):
         self._thread_halt = halt
         self.connect()
-        return self.client.loop_forever()
+        return self.client.loop_start()
 
 
 def create_jwt(
