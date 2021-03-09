@@ -289,11 +289,6 @@ class MQTTClient:
 
     @beeline.traced("MQTTClient.publish_monitoring_frame_post")
     def publish_monitoring_frame_post(self, event, retain=False, qos=1):
-        # outfile = io.BytesIO()
-        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-        #     f.write(payload)
-        # payload = outfile.getvalue()
-
         logger.debug(
             f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_post_topic}"
         )
@@ -303,10 +298,6 @@ class MQTTClient:
 
     @beeline.traced("MQTTClient.publish_monitoring_frame_raw")
     def publish_monitoring_frame_raw(self, event, retain=False, qos=1):
-        # outfile = io.BytesIO()
-        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-        #     f.write(payload)
-        # payload = outfile.getvalue()
 
         logger.debug(
             f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_raw_topic}"
