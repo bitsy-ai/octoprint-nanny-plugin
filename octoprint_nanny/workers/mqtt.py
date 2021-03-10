@@ -331,7 +331,9 @@ class MQTTSubscriberWorker:
         if handler_fns is not None:
             for handler_fn in handler_fns:
                 try:
-                    if inspect.isawaitable(handler_fn):
+                    if inspect.isawaitable(handler_fn) or inspect.iscoroutinefunction(
+                        handler_fn
+                    ):
                         await handler_fn(event=message, event_type=event_type)
                     else:
                         handler_fn(event=message, event_type=event_type)
@@ -370,7 +372,7 @@ class MQTTSubscriberWorker:
         if topic is None:
             logger.warning("Ignoring received message where topic=None")
 
-        elif topic == self.plugin.settings.mqtt_client.commands_topic:
+        elif topic == self.plugin.settings.mqtt_client.remote_control_commands_topic:
             await self._handle_remote_control_command(**payload)
 
         elif topic == self.plugin.settings.mqtt_client.config_topic:
