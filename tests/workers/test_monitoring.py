@@ -53,7 +53,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -112,7 +112,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -163,7 +163,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -209,7 +209,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
@@ -250,7 +250,7 @@ async def test_lite_mode_webcam_disabled(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_not_called()
@@ -302,7 +302,7 @@ async def test_active_learning_mode(
         await predict_worker._loop()
 
     predict_worker._plugin._event_bus.fire.assert_called_once_with(
-        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+        mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
     predict_worker._pn_ws_queue.put_nowait.assert_called_once()
