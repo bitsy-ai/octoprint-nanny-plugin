@@ -328,6 +328,7 @@ class MQTTSubscriberWorker:
         logger.info(
             f"Got handler_fn={handler_fns} from WorkerManager._callbacks for octoprint_event_type={event_type}"
         )
+
         if handler_fns is not None:
             for handler_fn in handler_fns:
                 try:
