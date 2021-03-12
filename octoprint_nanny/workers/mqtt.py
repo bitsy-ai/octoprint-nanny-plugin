@@ -141,7 +141,7 @@ class MQTTPublisherWorker:
         Events.PRINT_STARTED,
     ]
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE]
+    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
 
     def __init__(self, halt, queue, plugin):
 
