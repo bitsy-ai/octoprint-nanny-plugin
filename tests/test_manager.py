@@ -120,7 +120,7 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, m
     )
     mock_topic = "mock_command_topic"
     mock_mqtt_client.remote_control_commands_topic = mock_topic
-    topic =  mock_topic
+    topic = mock_topic
     type(mock_mqtt_client).commands_topic = PropertyMock(return_value=topic)
     mocker.patch(
         "octoprint_nanny.settings.PluginSettingsMemoize.get_device_metadata",
