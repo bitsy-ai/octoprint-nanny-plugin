@@ -46,6 +46,8 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
@@ -71,7 +73,11 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
 
-    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
+    assert (
+        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        == print_nanny_client.__version__
+    )
+    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
 
 
 @pytest.mark.asyncio
@@ -104,6 +110,8 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -123,11 +131,17 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
+    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+
     assert (
         deserialized_msg.EventType()
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
-    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
+    assert (
+        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        == print_nanny_client.__version__
+    )
+    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
 
 
 @pytest.mark.asyncio
@@ -155,6 +169,8 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -201,6 +217,8 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -242,6 +260,8 @@ async def test_lite_mode_webcam_disabled(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -261,11 +281,17 @@ async def test_lite_mode_webcam_disabled(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
+    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+
     assert (
         deserialized_msg.EventType()
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
     )
-    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
+    assert (
+        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        == print_nanny_client.__version__
+    )
+    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
 
 
 @pytest.mark.asyncio
@@ -294,6 +320,8 @@ async def test_active_learning_mode(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    fake_session = "test-session-134"
+    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -313,9 +341,14 @@ async def test_active_learning_mode(
 
     msg = args[0]
     deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
+    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
     assert (
         deserialized_msg.EventType()
         == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
     )
-    assert deserialized_msg.Version().decode("utf-8") == print_nanny_client.__version__
+    assert (
+        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        == print_nanny_client.__version__
+    )
+    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session

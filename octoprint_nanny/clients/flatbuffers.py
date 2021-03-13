@@ -88,17 +88,20 @@ def build_telemetry_event_message(
     # end event data
 
     # begin metadata
+    client_version = builder.CreateString(print_nanny_client.__version__)
+    session = builder.CreateString(session)
+
     Metadata.MetadataStart(builder)
     Metadata.MetadataAddUserId(builder, metadata.user_id)
     Metadata.MetadataAddDeviceCloudiotId(builder, metadata.device_cloudiot_id)
     Metadata.MetadataAddDeviceId(builder, metadata.device_id)
     Metadata.MetadataAddTs(builder, monitoring_frame.ts)
+    Metadata.MetadataAddClientVersion(builder, client_version)
     Metadata.MetadataAddSession(builder, session)
     metadata = Metadata.MetadataEnd(builder)
     # end metadata
 
     # begin telemetry event
-    version = builder.CreateString(print_nanny_client.__version__)
     TelemetryEvent.TelemetryEventStart(builder)
     TelemetryEvent.TelemetryEventAddEventData(builder, event_data)
     TelemetryEvent.TelemetryEventAddEventDataType(
@@ -106,7 +109,6 @@ def build_telemetry_event_message(
     )
     TelemetryEvent.TelemetryEventAddMetadata(builder, metadata)
     TelemetryEvent.TelemetryEventAddEventType(builder, event_type)
-    TelemetryEvent.TelemetryEventAddVersion(builder, version)
     telemetry_event = TelemetryEvent.TelemetryEventEnd(builder)
     builder.Finish(telemetry_event)
 

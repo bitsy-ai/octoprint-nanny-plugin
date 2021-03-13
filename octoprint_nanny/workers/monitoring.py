@@ -99,6 +99,8 @@ class MonitoringWorker:
         self._halt = halt
         self._df = pd.DataFrame()
 
+        self._session = None
+
     @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
         async with aiohttp.ClientSession() as session:
@@ -151,7 +153,7 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
-            session=self.session,
+            session=self._session,
         )
         return msg
 
@@ -163,7 +165,7 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
-            session=self.session,
+            session=self._session,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -275,7 +277,8 @@ class MonitoringWorker:
 
             logger.warning("Halt event set, worker will exit soon")
 
-    def run(self):
+    def run(self, session):
+        self._session = session
         loop = asyncio.new_event_loop()
         self.loop = loop
         asyncio.set_event_loop(loop)
@@ -331,9 +334,10 @@ class MonitoringManager:
         self._reset()
         if session is None:
             session = uuid4()
-        self.session = session
         for worker in self._workers:
-            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
+            thread = threading.Thread(
+                target=worker.run, name=str(worker.__class__), args=(session,)
+            )
             thread.daemon = True
             self._worker_threads.append(thread)
             logger.info(f"Starting thread {thread.name}")
