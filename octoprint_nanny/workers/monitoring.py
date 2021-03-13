@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import threading
 from enum import Enum
+from uuid import uuid4
 
 # python >= 3.8
 try:
@@ -150,6 +151,7 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
+            session=self.session,
         )
         return msg
 
@@ -161,6 +163,7 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
+            session=self.session,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -168,7 +171,8 @@ class MonitoringWorker:
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
-        (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
+        pimage = PIL.Image.open(io.BytesIO(image_bytes))
+        (w, h) = pimage.size
         image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
         monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
 
@@ -323,9 +327,11 @@ class MonitoringManager:
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self, **kwargs):
+    async def start(self, session=None):
         self._reset()
-
+        if session is None:
+            session = uuid4()
+        self.session = session
         for worker in self._workers:
             thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True

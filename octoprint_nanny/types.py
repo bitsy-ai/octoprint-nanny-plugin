@@ -21,6 +21,7 @@ class Image:
     height: int
     width: int
     data: bytes
+    # ndarray: np.ndarray
 
 
 @dataclass

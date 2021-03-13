@@ -13,6 +13,7 @@ import platform
 import queue
 import re
 import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -487,7 +488,10 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                 payload=base64.b64encode(res.content),
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
+            session = uuid.uuid4()
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START, {"session": session}
+            )
             return flask.json.jsonify({"ok": 1})
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")

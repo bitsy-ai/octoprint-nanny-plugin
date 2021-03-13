@@ -57,11 +57,14 @@ def build_telemetry_event_message(
     event_type: int,
     metadata: octoprint_nanny.types.Metadata,
     monitoring_frame: octoprint_nanny.types.MonitoringFrame,
+    session: sr,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     # begin image
     Image.ImageStartDataVector(builder, len(monitoring_frame.image.data))
+    # builder.head = builder.head - len(monitoring_frame.image.data)
+
     builder.Bytes[
         builder.head : (builder.head + len(monitoring_frame.image.data))
     ] = monitoring_frame.image.data
@@ -90,6 +93,7 @@ def build_telemetry_event_message(
     Metadata.MetadataAddDeviceCloudiotId(builder, metadata.device_cloudiot_id)
     Metadata.MetadataAddDeviceId(builder, metadata.device_id)
     Metadata.MetadataAddTs(builder, monitoring_frame.ts)
+    Metadata.MetadataAddSession(builder, session)
     metadata = Metadata.MetadataEnd(builder)
     # end metadata
 
