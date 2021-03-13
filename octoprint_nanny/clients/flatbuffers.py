@@ -57,7 +57,7 @@ def build_telemetry_event_message(
     event_type: int,
     metadata: octoprint_nanny.types.Metadata,
     monitoring_frame: octoprint_nanny.types.MonitoringFrame,
-    session: sr,
+    session: str,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
