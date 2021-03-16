@@ -29,6 +29,10 @@ class Metadata:
     user_id: int
     device_id: int
     device_cloudiot_id: int
+    ts: int
+    session: str
+    client_version: str
+    model_version: str = None
 
 
 @dataclass
@@ -37,7 +41,6 @@ class BoundingBoxPrediction:
     detection_scores: np.ndarray
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
-    image: Image = None
 
 
 @dataclass

@@ -46,8 +46,6 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
 
-    fake_session = "test-session-134"
-    predict_worker._session = fake_session
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
     with concurrent.futures.ProcessPoolExecutor() as pool:
@@ -77,7 +75,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
         deserialized_obj.metadata.clientVersion.decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
+    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
 
 
 @pytest.mark.asyncio
@@ -110,8 +108,6 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
-    fake_session = "test-session-134"
-    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -141,7 +137,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
         deserialized_obj.metadata.clientVersion.decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
+    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
 
 
 @pytest.mark.asyncio
@@ -260,8 +256,6 @@ async def test_lite_mode_webcam_disabled(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
-    fake_session = "test-session-134"
-    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -291,7 +285,7 @@ async def test_lite_mode_webcam_disabled(
         deserialized_obj.metadata.clientVersion.decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
+    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
 
 
 @pytest.mark.asyncio
@@ -320,8 +314,6 @@ async def test_active_learning_mode(
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
-    fake_session = "test-session-134"
-    predict_worker._session = fake_session
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -351,4 +343,4 @@ async def test_active_learning_mode(
         deserialized_obj.metadata.clientVersion.decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == fake_session
+    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session

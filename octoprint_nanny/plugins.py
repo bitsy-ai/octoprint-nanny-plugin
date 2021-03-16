@@ -488,11 +488,13 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                 payload=base64.b64encode(res.content),
             )
-            session = uuid.uuid4()
+            session = uuid.uuid4().hex
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START, {"session": session}
             )
             return flask.json.jsonify({"ok": 1})
+        else:
+            return res
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
     @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])

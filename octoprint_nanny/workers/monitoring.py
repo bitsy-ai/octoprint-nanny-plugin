@@ -44,18 +44,6 @@ import octoprint_nanny.clients.flatbuffers
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
 
-class PrintNannyMonitoringFrameMessage(TypedDict):
-    ts: datetime
-    event_type: str = PluginEvents.MONITORING_FRAME_POST
-    image: str
-
-
-class BoundingBoxMessage(TypedDict):
-    prediction: octoprint_nanny.types.BoundingBoxPrediction
-    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
-    ts: datetime
-
-
 class MonitoringWorker:
     """
     Coordinates frame buffer sampling and prediction work
@@ -98,8 +86,6 @@ class MonitoringWorker:
 
         self._halt = halt
         self._df = pd.DataFrame()
-
-        self._session = None
 
     @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
@@ -153,7 +139,6 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
-            session=self._session,
         )
         return msg
 
@@ -165,7 +150,6 @@ class MonitoringWorker:
             event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
-            session=self._session,
         )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
@@ -277,8 +261,7 @@ class MonitoringWorker:
 
             logger.warning("Halt event set, worker will exit soon")
 
-    def run(self, session):
-        self._session = session
+    def run(self):
         loop = asyncio.new_event_loop()
         self.loop = loop
         asyncio.set_event_loop(loop)
@@ -330,14 +313,10 @@ class MonitoringManager:
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self, session=None):
+    async def start(self, session=None, **kwargs):
         self._reset()
-        if session is None:
-            session = uuid4()
         for worker in self._workers:
-            thread = threading.Thread(
-                target=worker.run, name=str(worker.__class__), args=(session,)
-            )
+            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True
             self._worker_threads.append(thread)
             logger.info(f"Starting thread {thread.name}")

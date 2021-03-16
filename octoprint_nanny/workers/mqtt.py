@@ -82,7 +82,7 @@ class MQTTManager:
         self._worker_threads = []
 
     @beeline.traced("MQTTManager.start")
-    def start(self):
+    def start(self, **kwargs):
         """
         (re)initialize and start worker threads
         """

@@ -8,6 +8,7 @@ from octoprint_nanny.workers.monitoring import (
 )
 
 import beeline
+import uuid
 
 from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum,
@@ -22,6 +23,7 @@ from octoprint_nanny.types import (
     TrackedOctoPrintEvents,
     RemoteCommands,
 )
+import print_nanny_client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -42,6 +44,9 @@ class PluginSettingsMemoize:
         self._calibration = None
         self._metadata = None
         self.environment = {}
+
+    def reset_session(self):
+        self._session = None
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
@@ -145,12 +150,20 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("webcam_upload")
 
     @property
+    def session(self):
+        if self._session is None:
+            self._session = uuid.uuid4().hex
+        return self._session
+
+    @property
     def metadata(self):
         if self._metadata is None:
             self._metadata = octoprint_nanny.types.Metadata(
                 user_id=self.user_id,
                 device_id=self.device_id,
                 device_cloudiot_id=self.device_cloudiot_id,
+                session=self.session,
+                client_version=print_nanny_client.__version__,
             )
         return self._metadata
 

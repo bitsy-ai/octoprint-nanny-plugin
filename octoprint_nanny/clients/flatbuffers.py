@@ -27,7 +27,7 @@ def build_bounding_boxes_message(
     num_detections = monitoring_frame.bounding_boxes.num_detections
 
     # begin boxes builder
-    BoundingBoxes.BoundingBoxesStartBoxesVector(builder, len(boxes))
+    BoundingBoxes.BoundingBoxesStartDetectionBoxesVector(builder, len(boxes))
     for box in boxes:
         Box.CreateBox(builder, *box)
     boxes = builder.EndVector(len(boxes))
@@ -43,9 +43,9 @@ def build_bounding_boxes_message(
 
     # begin bounding boxes
     BoundingBoxes.BoundingBoxesStart(builder)
-    BoundingBoxes.BoundingBoxesAddBoxes(builder, boxes)
-    BoundingBoxes.BoundingBoxesAddScores(builder, scores)
-    BoundingBoxes.BoundingBoxesAddClasses(builder, classes)
+    BoundingBoxes.BoundingBoxesAddDetectionBoxes(builder, boxes)
+    BoundingBoxes.BoundingBoxesAddDetectionScores(builder, scores)
+    BoundingBoxes.BoundingBoxesAddDetectionClasses(builder, classes)
     BoundingBoxes.BoundingBoxesAddNumDetections(builder, num_detections)
     bounding_boxes = BoundingBoxes.BoundingBoxesEnd(builder)
     # end bounding boxes
@@ -57,7 +57,6 @@ def build_telemetry_event_message(
     event_type: int,
     metadata: octoprint_nanny.types.Metadata,
     monitoring_frame: octoprint_nanny.types.MonitoringFrame,
-    session: str,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 
@@ -89,7 +88,7 @@ def build_telemetry_event_message(
 
     # begin metadata
     client_version = builder.CreateString(print_nanny_client.__version__)
-    session = builder.CreateString(session)
+    session = builder.CreateString(metadata.session)
 
     Metadata.MetadataStart(builder)
     Metadata.MetadataAddUserId(builder, metadata.user_id)
