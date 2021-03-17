@@ -43,6 +43,7 @@ class PluginSettingsMemoize:
         self._rest_client = None
         self._calibration = None
         self._metadata = None
+        self._session = None
         self.environment = {}
 
     def reset_session(self):
@@ -157,15 +158,15 @@ class PluginSettingsMemoize:
 
     @property
     def metadata(self):
-        if self._metadata is None:
-            self._metadata = octoprint_nanny.types.Metadata(
-                user_id=self.user_id,
-                device_id=self.device_id,
-                device_cloudiot_id=self.device_cloudiot_id,
-                session=self.session,
-                client_version=print_nanny_client.__version__,
-            )
-        return self._metadata
+        ts = datetime.now(pytz.timezone("UTC")).timestamp()
+        return octoprint_nanny.types.Metadata(
+            user_id=self.user_id,
+            device_id=self.device_id,
+            device_cloudiot_id=self.device_cloudiot_id,
+            session=self.session,
+            client_version=print_nanny_client.__version__,
+            ts=ts,
+        )
 
     @property
     def calibration(self):
