@@ -331,6 +331,7 @@ class MonitoringManager:
     async def stop(self, **kwargs):
         self._drain()
         self.plugin._settings.set(["monitoring_active"], False)
+        self.plugin._settings.reset_session()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False
         )
