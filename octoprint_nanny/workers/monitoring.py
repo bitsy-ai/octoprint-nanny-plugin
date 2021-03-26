@@ -315,6 +315,10 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.start")
     async def start(self, session=None, **kwargs):
         self._reset()
+        self.plugin.settings.reset_session()
+        logger.info(
+            f"Initializing monitoring workers with session={self.plugin.settings.session}"
+        )
         for worker in self._workers:
             thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True
@@ -330,8 +334,10 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
         self._drain()
-        self.plugin._settings.set(["monitoring_active"], False)
-        self.plugin._settings.reset_session()
+        self.plugin._settings.set(
+            ["monitoring_active"], False
+        )  # @todo fix setting iface
+        self.plugin.settings.reset_session()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False
         )
