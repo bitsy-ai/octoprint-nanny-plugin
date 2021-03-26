@@ -13,6 +13,7 @@ import platform
 import queue
 import re
 import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -484,11 +485,16 @@ class OctoPrintNannyPlugin(
         res.raise_for_status()
         if res.status_code == 200:
             self._event_bus.fire(
-                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                 payload=base64.b64encode(res.content),
             )
-            self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START)
+            session = uuid.uuid4().hex
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_START, {"session": session}
+            )
             return flask.json.jsonify({"ok": 1})
+        else:
+            return res
 
     @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
     @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])
@@ -565,7 +571,8 @@ class OctoPrintNannyPlugin(
 
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
-        return plugin_events + remote_commands
+        local_only = ["monitoring_frame_b64"]
+        return plugin_events + remote_commands + local_only
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
     def on_shutdown(self):

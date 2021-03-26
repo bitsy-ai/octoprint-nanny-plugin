@@ -66,16 +66,13 @@ class MQTTManager:
 
         try:
             logger.info("Waiting for MQTTManager.mqtt_client network loop to finish")
-            while self.plugin.settings.mqtt_client.client.is_connected():
-                self.plugin.settings.plugin.settings.mqtt_client.client.disconnect()
-            logger.info("Stopping MQTTManager.mqtt_client network loop")
-            self.plugin.settings.mqtt_client.client.loop_stop()
+            self.client_worker.stop()
         except PluginSettingsRequired:
             pass
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join(2)
+            worker.join(1)
 
     @beeline.traced("MQTTManager._reset")
     def _reset(self):
@@ -85,7 +82,7 @@ class MQTTManager:
         self._worker_threads = []
 
     @beeline.traced("MQTTManager.start")
-    def start(self):
+    def start(self, **kwargs):
         """
         (re)initialize and start worker threads
         """
@@ -114,6 +111,9 @@ class MQTTClientWorker:
         self.plugin = plugin
         self.halt = halt
 
+    def stop(self):
+        return self.plugin.settings.mqtt_client.stop()
+
     @beeline.traced("MQTTClientWorker.run")
     def run(self):
 
@@ -141,7 +141,7 @@ class MQTTPublisherWorker:
         Events.PRINT_STARTED,
     ]
     # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE]
+    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
 
     def __init__(self, halt, queue, plugin):
 
@@ -328,10 +328,13 @@ class MQTTSubscriberWorker:
         logger.info(
             f"Got handler_fn={handler_fns} from WorkerManager._callbacks for octoprint_event_type={event_type}"
         )
+
         if handler_fns is not None:
             for handler_fn in handler_fns:
                 try:
-                    if inspect.isawaitable(handler_fn):
+                    if inspect.isawaitable(handler_fn) or inspect.iscoroutinefunction(
+                        handler_fn
+                    ):
                         await handler_fn(event=message, event_type=event_type)
                     else:
                         handler_fn(event=message, event_type=event_type)
@@ -370,7 +373,7 @@ class MQTTSubscriberWorker:
         if topic is None:
             logger.warning("Ignoring received message where topic=None")
 
-        elif topic == self.plugin.settings.mqtt_client.commands_topic:
+        elif topic == self.plugin.settings.mqtt_client.remote_control_commands_topic:
             await self._handle_remote_control_command(**payload)
 
         elif topic == self.plugin.settings.mqtt_client.config_topic:

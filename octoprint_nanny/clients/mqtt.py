@@ -32,7 +32,8 @@ IOT_DEVICE_REGISTRY_REGION = os.environ.get(
 )
 
 OCTOPRINT_EVENT_FOLDER = "octoprint-events"
-BOUNDING_BOX_EVENT_FOLDER = "bounding-boxes"
+POST_EVENT_FOLDER = "monitoring-frame-post"
+RAW_EVENT_FOLDER = "monitoring-frame-raw"
 ACTIVE_LEARNING_EVENT_FOLDER = "active-learning"
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.mqtt")
@@ -128,12 +129,12 @@ class MQTTClient:
             self.default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
         )
         # bounding box telemetry topic
-        self.bounding_boxes_topic = os.path.join(
-            self.default_telemetry_topic, BOUNDING_BOX_EVENT_FOLDER
+        self.monitoring_frame_post_topic = os.path.join(
+            self.default_telemetry_topic, POST_EVENT_FOLDER
         )
         # active learning telemetry topic
-        self.active_learning_topic = os.path.join(
-            self.default_telemetry_topic, ACTIVE_LEARNING_EVENT_FOLDER
+        self.monitoring_frame_raw_topic = os.path.join(
+            self.default_telemetry_topic, RAW_EVENT_FOLDER
         )
 
     ###
@@ -288,37 +289,32 @@ class MQTTClient:
 
     @beeline.traced("MQTTClient.publish_monitoring_frame_post")
     def publish_monitoring_frame_post(self, event, retain=False, qos=1):
-        # outfile = io.BytesIO()
-        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-        #     f.write(payload)
-        # payload = outfile.getvalue()
-
         logger.debug(
-            f"Publishing msg size={sys.getsizeof(event)} topic={self.bounding_boxes_topic}"
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_post_topic}"
         )
         return self.publish(
-            event, topic=self.bounding_boxes_topic, retain=retain, qos=qos
+            event, topic=self.monitoring_frame_post_topic, retain=retain, qos=qos
         )
 
     @beeline.traced("MQTTClient.publish_monitoring_frame_raw")
-    def publish_active_learning(self, event, retain=False, qos=1):
-        # outfile = io.BytesIO()
-        # with gzip.GzipFile(fileobj=outfile, mode="w", compresslevel=1) as f:
-        #     f.write(payload)
-        # payload = outfile.getvalue()
+    def publish_monitoring_frame_raw(self, event, retain=False, qos=1):
 
         logger.debug(
-            f"Publishing msg size={sys.getsizeof(event)} topic={self.active_learning_topic}"
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_raw_topic}"
         )
         return self.publish(
-            event, topic=self.active_learning_topic, retain=retain, qos=qos
+            event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
         )
+
+    @beeline.traced("MQTTClient.stop")
+    def stop(self):
+        return self.client.loop_stop()
 
     @beeline.traced("MQTTClient.run")
     def run(self, halt):
         self._thread_halt = halt
         self.connect()
-        return self.client.loop_forever()
+        return self.client.loop_start()
 
 
 def create_jwt(

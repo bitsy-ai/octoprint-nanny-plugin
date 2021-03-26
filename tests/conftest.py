@@ -2,6 +2,9 @@ import pytest
 import octoprint_nanny.types
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 from octoprint_nanny.plugins import OctoPrintNannyPlugin
+import uuid
+import print_nanny_client
+from datetime import datetime
 
 
 class MockResponse(object):
@@ -30,7 +33,12 @@ def calibration():
 @pytest.fixture
 def metadata():
     return octoprint_nanny.types.Metadata(
-        user_id=1234, device_id=1234, device_cloudiot_id=1234
+        user_id=1234,
+        device_id=1234,
+        device_cloudiot_id=1234,
+        session=uuid.uuid4().hex,
+        client_version=print_nanny_client.__version__,
+        ts=datetime.now().timestamp(),
     )
 
 

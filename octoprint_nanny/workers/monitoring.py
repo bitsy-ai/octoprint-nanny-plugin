@@ -10,9 +10,9 @@ import functools
 from datetime import datetime
 import numpy as np
 import pandas as pd
-import json
 import threading
 from enum import Enum
+from uuid import uuid4
 
 # python >= 3.8
 try:
@@ -42,18 +42,6 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 import octoprint_nanny.clients.flatbuffers
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
-
-
-class PrintNannyMonitoringFrameMessage(TypedDict):
-    ts: datetime
-    event_type: str = PluginEvents.MONITORING_FRAME_POST
-    image: str
-
-
-class BoundingBoxMessage(TypedDict):
-    prediction: octoprint_nanny.types.BoundingBoxPrediction
-    event_type: str = PluginEvents.BOUNDING_BOX_PREDICT
-    ts: datetime
 
 
 class MonitoringWorker:
@@ -143,21 +131,6 @@ class MonitoringWorker:
         loop.run_until_complete(asyncio.ensure_future(self._producer()))
         loop.close()
 
-    @beeline.traced(name="MonitoringWorker._create_active_learning_json_msgs")
-    def _create_active_learning_json_msgs(
-        self, now, image
-    ) -> PrintNannyMonitoringFrameMessage:
-
-        # send annotated image bytes to print nanny ui ws and Apache Beam worker
-        b64_image = base64.b64encode(image)
-
-        ws_msg = PrintNannyMonitoringFrameMessage(
-            ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_POST,
-            image=b64_image,
-        )
-        return ws_msg
-
     @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
@@ -168,28 +141,6 @@ class MonitoringWorker:
             monitoring_frame=monitoring_frame,
         )
         return msg
-
-    @beeline.traced(name="MonitoringWorker._create_lite_json_msgs")
-    def _create_lite_json_msgs(
-        self, now, original_image, viz_buffer, prediction
-    ) -> Tuple[PrintNannyMonitoringFrameMessage, BoundingBoxMessage]:
-
-        # send annotated image bytes to print nanny ui ws
-
-        ws_msg = PrintNannyMonitoringFrameMessage(
-            ts=now,
-            event_type=PluginEvents.MONITORING_FRAME_POST,
-            image=base64.b64encode(viz_buffer.getvalue()),
-        )
-
-        # publish bounding box prediction to mqtt telemetry topic
-        mqtt_msg = BoundingBoxMessage(
-            ts=now,
-            event_type=PluginEvents.BOUNDING_BOX_PREDICT,
-            data=prediction,
-        )
-
-        return ws_msg, mqtt_msg
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_msg(
@@ -206,14 +157,15 @@ class MonitoringWorker:
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
 
-        (w, h) = PIL.Image.open(io.BytesIO(image_bytes)).size
+        pimage = PIL.Image.open(io.BytesIO(image_bytes))
+        (w, h) = pimage.size
         image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
         monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
 
         msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
 
         self._plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_RAW,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
             payload=base64.b64encode(image_bytes),
         )
         self._pn_ws_queue.put_nowait(msg)
@@ -274,7 +226,7 @@ class MonitoringWorker:
 
         msg = self._create_lite_fb_msg(monitoring_frame=monitoring_frame)
         self._plugin._event_bus.fire(
-            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_POST,
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
             payload=base64.b64encode(monitoring_frame.image.data),
         )
         if self._plugin.settings.webcam_upload:
@@ -361,9 +313,12 @@ class MonitoringManager:
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self, **kwargs):
+    async def start(self, session=None, **kwargs):
         self._reset()
-
+        self.plugin.settings.reset_session()
+        logger.info(
+            f"Initializing monitoring workers with session={self.plugin.settings.session}"
+        )
         for worker in self._workers:
             thread = threading.Thread(target=worker.run, name=str(worker.__class__))
             thread.daemon = True
@@ -379,7 +334,10 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
         self._drain()
-        self.plugin._settings.set(["monitoring_active"], False)
+        self.plugin._settings.set(
+            ["monitoring_active"], False
+        )  # @todo fix setting iface
+        self.plugin.settings.reset_session()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False
         )
