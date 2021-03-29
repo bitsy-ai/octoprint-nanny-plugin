@@ -191,14 +191,14 @@ class WorkerManager:
                 )
             )
 
-            print_job = await self.plugin.settings.rest_client.create_print_job(
-                event_data,
-                gcode_file.id,
-                printer_profile.id,
-                self.plugin.settings.device_id,
-            )
+            # print_job = await self.plugin.settings.rest_client.create_print_job(
+            #     event_data,
+            #     gcode_file.id,
+            #     printer_profile.id,
+            #     self.plugin.settings.device_id,
+            # )
 
-            self.shared.print_job_id = print_job.id
+            # self.shared.print_job_id = print_job.id
 
         except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"on_print_start API called failed {e}", exc_info=True)

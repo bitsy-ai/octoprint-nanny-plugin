@@ -43,11 +43,11 @@ class PluginSettingsMemoize:
         self._rest_client = None
         self._calibration = None
         self._metadata = None
-        self._session = None
+        self._print_session = None
         self.environment = {}
 
-    def reset_session(self):
-        self._session = None
+    def reset_print_session(self):
+        self._print_session = None
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
@@ -68,13 +68,169 @@ class PluginSettingsMemoize:
         metadata.update(self.device_info)
         return metadata
 
-    @beeline.traced("PluginSettingsMemoize.get_print_job_metadata")
-    def get_print_job_metadata(self):
-        return dict(
-            printer_data=self.plugin._printer.get_current_data(),
-            printer_profile_data=self.plugin._printer_profile_manager.get_current_or_default(),
-            temperatures=self.plugin._printer.get_current_temperatures(),
-        )
+    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_job")
+    def get_current_octoprint_job(self):
+        """
+        GET /api/job HTTP/1.1
+            {
+            "job": {
+                "file": {
+                "name": "whistle_v2.gcode",
+                "origin": "local",
+                "size": 1468987,
+                "date": 1378847754
+                },
+                "estimatedPrintTime": 8811,
+                "filament": {
+                "tool0": {
+                    "length": 810,
+                    "volume": 5.36
+                }
+                }
+            },
+            "progress": {
+                "completion": 0.2298468264184775,
+                "filepos": 337942,
+                "printTime": 276,
+                "printTimeLeft": 912
+            },
+            "state": "Printing"
+            }
+        """
+        return self.plugin._printer.get_current_job()
+
+    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_profile")
+    def get_current_octoprint_profile(self):
+        """
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+        {
+            "profile": {
+                "id": "some_profile",
+                "name": "Some profile",
+                "color": "default",
+                "model": "Some cool model",
+                "default": false,
+                "current": false,
+                "resource": "http://example.com/api/printerprofiles/some_profile",
+                "volume": {
+                "formFactor": "rectangular",
+                "origin": "lowerleft",
+                "width": 200,
+                "depth": 200,
+                "height": 200
+                },
+                "heatedBed": true,
+                "heatedChamber": false,
+                "axes": {
+                "x": {
+                    "speed": 6000,
+                    "inverted": false
+                },
+                "y": {
+                    "speed": 6000,
+                    "inverted": false
+                },
+                "z": {
+                    "speed": 200,
+                    "inverted": false
+                },
+                "e": {
+                    "speed": 300,
+                    "inverted": false
+                }
+                },
+                "extruder": {
+                "count": 1,
+                "offsets": [
+                    {"x": 0.0, "y": 0.0}
+                ]
+                }
+            }
+        }
+        """
+        return self.plugin._printer_profile_manager.get_current_or_default()
+
+    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_temperatures")
+    def get_current_octoprint_temperatures(self):
+        return self.plugin._printer.get_current_temperatures()
+
+    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_printer_state")
+    def get_current_octoprint_printer_state(self):
+        """
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "temperature": {
+                "tool0": {
+                "actual": 214.8821,
+                "target": 220.0,
+                "offset": 0
+                },
+                "tool1": {
+                "actual": 25.3,
+                "target": null,
+                "offset": 0
+                },
+                "bed": {
+                "actual": 50.221,
+                "target": 70.0,
+                "offset": 5
+                },
+                "history": [
+                {
+                    "time": 1395651928,
+                    "tool0": {
+                    "actual": 214.8821,
+                    "target": 220.0
+                    },
+                    "tool1": {
+                    "actual": 25.3,
+                    "target": null
+                    },
+                    "bed": {
+                    "actual": 50.221,
+                    "target": 70.0
+                    }
+                },
+                {
+                    "time": 1395651926,
+                    "tool0": {
+                    "actual": 212.32,
+                    "target": 220.0
+                    },
+                    "tool1": {
+                    "actual": 25.1,
+                    "target": null
+                    },
+                    "bed": {
+                    "actual": 49.1123,
+                    "target": 70.0
+                    }
+                }
+                ]
+            },
+            "sd": {
+                "ready": true
+            },
+            "state": {
+                "text": "Operational",
+                "flags": {
+                "operational": true,
+                "paused": false,
+                "printing": false,
+                "cancelling": false,
+                "pausing": false,
+                "sdReady": true,
+                "error": false,
+                "ready": true,
+                "closedOrError": false
+                }
+            }
+        }
+        """
+        return self.plugin._printer.get_current_data()
 
     @beeline.traced("PluginSettingsMemoize.on_environment_detected")
     def on_environment_detected(self, environment):
@@ -151,10 +307,33 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("webcam_upload")
 
     @property
-    def session(self):
-        if self._session is None:
-            self._session = uuid.uuid4().hex
-        return self._session
+    def print_session(self):
+        return self._print_session
+
+    async def create_print_session(self):
+        session = uuid.uuid4().hex
+        octoprint_job = self.get_current_octoprint_job()
+
+        gcode_filename = None
+        if octoprint_job.get("job") and octoprint_job.get("job").get("file"):
+            gcode_filename = gcode_filename
+
+        # @todo sync gcode file to remote
+
+        printer_profile = self.get_current_octoprint_profile()
+        printer_profile = await self.rest_client.update_or_create_printer_profile(
+            printer_profile, self.device_id
+        )
+
+        print_session = await self.rest_client.create_print_session(
+            gcode_filename=gcode_filename,
+            user_id=self.user_id,
+            session=session,
+            printer_profile_id=printer_profile.id,
+            octoprint_device_id=self.device_id,
+        )
+        self._print_session = print_session
+        return self._print_session
 
     @property
     def metadata(self):
@@ -163,7 +342,7 @@ class PluginSettingsMemoize:
             user_id=self.user_id,
             device_id=self.device_id,
             device_cloudiot_id=self.device_cloudiot_id,
-            session=self.session,
+            session=self.print_session.session,
             client_version=print_nanny_client.__version__,
             ts=ts,
         )

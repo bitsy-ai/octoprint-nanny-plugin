@@ -16,7 +16,7 @@ from print_nanny_client.api.events_api import EventsApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.models.print_job_request import PrintJobRequest
+from print_nanny_client.models.print_session_request import PrintSessionRequest
 from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
 from print_nanny_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
@@ -148,18 +148,16 @@ class RestAPIClient:
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
     )
-    async def update_print_progress(self, print_job_id, event_data):
+    async def update_print_progress(self, print_session_id, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = (
-                print_nanny_client.models.print_job_request.PatchedPrintJobRequest(
-                    progress=event_data["progress"]
-                )
+            request = print_nanny_client.models.print_session_request.PatchedPrintSessionRequest(
+                progress=event_data["progress"]
             )
             api_instance = RemoteControlApi(api_client=api_client)
-            print_job = await api_instance.print_jobs_partial_update(
-                print_job_id, patched_print_job_request=request
+            print_session = await api_instance.print_sessions_partial_update(
+                print_session_id, patched_print_session_request=request
             )
-            return print_job
+            return print_session
 
     @beeline.traced("RestAPIClient.update_or_create_gcode_file")
     @backoff.on_exception(
@@ -211,7 +209,7 @@ class RestAPIClient:
             logger.info(f"Created snapshot {snapshot}")
             return snapshot
 
-    @beeline.traced("RestAPIClient.create_print_job")
+    @beeline.traced("RestAPIClient.create_print_session")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -219,19 +217,16 @@ class RestAPIClient:
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
     )
-    async def create_print_job(
-        self, event_data, gcode_file_id, printer_profile_id, octoprint_device_id
-    ):
+    async def create_print_session(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
-            request = print_nanny_client.models.print_job_request.PrintJobRequest(
-                gcode_file=gcode_file_id,
-                name=event_data["name"],
-                printer_profile=printer_profile_id,
-                octoprint_device=octoprint_device_id,
+            request = (
+                print_nanny_client.models.print_session_request.PrintSessionRequest(
+                    **kwargs
+                )
             )
-            print_job = await api_instance.print_jobs_create(request)
-            return print_job
+            print_session = await api_instance.print_sessions_create(request)
+            return print_session
 
     @beeline.traced("RestAPIClient.update_or_create_printer_profile")
     @backoff.on_exception(
