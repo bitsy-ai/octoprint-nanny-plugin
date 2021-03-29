@@ -327,10 +327,9 @@ class PluginSettingsMemoize:
 
         print_session = await self.rest_client.create_print_session(
             gcode_filename=gcode_filename,
-            user_id=self.user_id,
             session=session,
-            printer_profile_id=printer_profile.id,
-            octoprint_device_id=self.device_id,
+            printer_profile=printer_profile.id,
+            octoprint_device=self.device_id,
         )
         self._print_session = print_session
         return self._print_session
