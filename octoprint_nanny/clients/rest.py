@@ -225,7 +225,7 @@ class RestAPIClient:
                     **kwargs
                 )
             )
-            print_session = await api_instance.print_session_create(request)
+            print_session = await api_instance.print_sessions_create(request)
             return print_session
 
     @beeline.traced("RestAPIClient.update_or_create_printer_profile")
