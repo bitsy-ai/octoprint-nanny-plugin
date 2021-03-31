@@ -113,7 +113,7 @@ DEFAULT_SETTINGS = dict(
     ca_cert=None,
     auto_start=True,
     webcam_upload=True,
-    monitoring_mode=MonitoringModes.LITE.value,
+    monitoring_mode=MonitoringModes.ACTIVE_LEARNING.value,
     monitoring_active=False,
 )
 
