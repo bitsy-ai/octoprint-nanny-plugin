@@ -92,7 +92,7 @@ DEFAULT_SETTINGS = dict(
     mqtt_bridge_backup_root_certificate_url=BACKUP_MQTT_ROOT_CERTIFICATE_URL,
     user_id=None,
     user_url=None,
-    device_url=None,
+    device_manage_url=None,
     device_fingerprint=None,
     device_cloudiot_name=None,
     device_cloudiot_id=None,
@@ -436,7 +436,7 @@ class OctoPrintNannyPlugin(
         # await self._download_root_certificates()
 
         self._settings.set(["device_serial"], device.serial)
-        self._settings.set(["device_url"], device.manage_url)
+        self._settings.set(["device_manage_url"], device.manage_url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
@@ -657,7 +657,7 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_id"]) is None,
                 self._settings.get(["device_serial"]) is None,
                 self._settings.get(["device_registered"]) is False,
-                self._settings.get(["device_url"]) is None,
+                self._settings.get(["device_manage_url"]) is None,
                 self._settings.get(["device_cloudiot_name"]) is None,
                 self._settings.get(["device_cloudiot_id"]) is None,
                 self._settings.get(["user_email"]) is None,
