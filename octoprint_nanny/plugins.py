@@ -436,7 +436,7 @@ class OctoPrintNannyPlugin(
         # await self._download_root_certificates()
 
         self._settings.set(["device_serial"], device.serial)
-        self._settings.set(["device_url"], device.url)
+        self._settings.set(["device_url"], device.manage_url)
         self._settings.set(["device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
