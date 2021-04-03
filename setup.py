@@ -129,7 +129,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp>=3.7.4",
-    "print-nanny-client>=0.5.0-dev65",
+    "print-nanny-client==0.5.0-dev65",
     "websockets",
     "backoff>=1.10.0",
     "aioprocessing>=1.1.0",
@@ -154,7 +154,7 @@ extra_requires = {
 # already be installed automatically if they exist. Note that if you add something here you'll also need to update
 # MANIFEST.in to match to ensure that python setup.py sdist produces a source distribution that contains all your
 # files. This is sadly due to how python's setup.py works, see also http://stackoverflow.com/a/14159430/2028598
-plugin_additional_data = []
+plugin_additional_data = ["data"]
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
 plugin_additional_packages = []
 

@@ -1,8 +1,7 @@
 <!-- hero -->
 <div class="row-fluid">
     <a href="https://print-nanny.com"><img src="/plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
-    <h2>Real-time defect and safety monitoring ✨</h2>
-    <p>Automated alerts for anyone tired of babysitting their 3D printer.</p>
+    <h2>Real-time failure monitoring ✨</h2>
     <p><a href="https://discord.gg/YK7qnv5KjB">Join the Discord server </a> or email support@print-nanny.com to report issues.</p>
 
 </div>
@@ -61,7 +60,7 @@
         {% endif %}
             
         {% if plugin_octoprint_nanny_settings.device_registered == True %}
-            <div>        
+            <div class="col-sm">        
                 <h2>Device Info</h2>
                 <div class="control-group">
                     <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Name</strong></label>
@@ -72,33 +71,29 @@
                             data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" type="text" />
                     </div>
                     <label class="control-label" for="octoprint_nanny_settings_device_fingerprint"><strong>Fingerprint</strong></label>
-                    <div class="controls">
-                        <input 
-                            readonly
-                            id="octoprint_nanny_settings_device_fingerprint" 
-                            class="input-xxlarge"
-                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint" type="text" />
-                    </div>
-                    <label class="control-label" for="octoprint_nanny_settings_device_url"><strong>Dashboard</strong></label>
-                    <div class="controls">
-                        <input 
-                            readonly
-                            id="octoprint_nanny_settings_device_urlt" 
-                            class="input-xxlarge"
-                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_url" type="text" />
-                    </div>
+                    <pre id="octoprint_nanny_settings_device_fingerprint" data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint">
+                    </pre>
                 </div>
+                <a class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
+                    Manage Device
+                </a>
                 <button 
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
                 type="submit" 
-                class="btn btn-primary btn-large">
-                Renew Device Registration
+                class="btn btn-secondary btn">
+                    Reset Device Identity
                 </button>
-                <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
+            </div>
+            <br>
+            <div class="col-sm">
+                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">🆔 Requesting a new device identity...</4>
+                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Your device was issued a new identity.</h4>
+                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">Refresh the page to see your new fingerprint.</h4>
+
+                <div class="progress progress-striped" data-bind="visible: deviceRegisterProgressPercent() !== undefined, css: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !== '100%' ? 'active': 'inactive'">
                     <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
                 </div> 
             </div>
-
         {% else %}
         <div>            
             <h2>Device Registration</h2>
@@ -131,76 +126,6 @@
         </div>
 
         {% endif %}
-
-        <hr>
-
-        <div>
-            <h2>Monitoring Settings</h2>
-            <div class="control-group">
-               <h4>Start Monitoring Automatically</h4>
-               <div class="controls">
-                    <label class="radio">
-                        <input type="radio" name="autoStart" value="true" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start"> 
-                        <strong>{{ _('Automatic') }}</strong> {{ _('- monitoring will start automatically when a print job begins') }}
-                    </label>
-                    <label class="radio">
-                        <input type="radio" name="monitoringMode" value="false" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start"> 
-                        <strong>{{ _('Manual') }}</strong>  {{ _(' - you will manually start monitoring when needed') }}
-                    </label>
-               </div>
-            </div>
-    
-            <div class="control-group">
-               <h4>Monitoring Mode</h4>
-               <div class="controls">
-                    <label class="radio">
-                        <input type="radio" name="monitoringMode" value="active_learning" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode"> 
-                        <strong>{{ _('Active Learning') }}</strong> {{ _(' - camera data is uploaded to continuously improve Print Nanny') }}
-                    </label>
-                    <label class="radio">
-                        <input type="radio" name="monitoringMode" value="lite" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode"> 
-                        <strong>{{ _('Lite') }}</strong>  {{ _(' - automatically apply a discount to your next billing cycle') }}
-                    </label>
-               </div>
-            </div>
-
-            <div class="control-group" data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_mode() == 'lite'">
-                <h3><label class="control-label" for="octoprint_nanny_settings_monitoring_mode"><strong>Upload Camera Stream</strong></label></h3>
-                <div class="controls">
-                        <label class="checkbox">
-                            <input type="checkbox" class="toggle-check-input" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.webcam_upload"  />
-                            <span class="toggle-check-text"></span>
-                        </label>      
-                </div>
-                <p>
-                    <strong>Enabled</strong> - watch your camera stream from <a href="https://www.print-nanny.com/dashboard/" target="_blank">Print Nanny's dashboard.</a>
-                </p>
-                <p>
-                    <strong>Disabled</strong> - camera stream is private, visible only from OctoPrint. 
-                </p>
-                <hr>
-                <p>
-                    <strong>Active Learning</strong> uploads your image data to the cloud, to contintuously re-train Print Nanny's AI. In this mode, computations are performed in the cloud (instead of on your OctoPrint Device). 
-                </p>
-                <p>
-                    Enable Active Learning to free up resources on your OctoPrint device or imporove Print Nanny's results for your specific setup.
-                </p>
-                <p>
-                    Camera sharing is required in this mode. Notifications may experience up to a 10 minute delay
-                </p>
-                <hr>
-                <p>
-                    <strong>Lite</strong> mode could also be called "privacy"  or "bandwidth saver" mode. Computations are performed on device, resulting in a closed feedback loop between your Raspberry Pi and your 3D Printer. 
-                </p>
-                <p>
-                    Activate this mode to save bandwidth and catch failures in real-time. 
-                    
-                    You can toggle camera sharing on or off in this mode, to watch Print Nanny's monitoring stream from anywhere. 
-                </p>
-            </div>
-            
-        </div>
-
         <hr>
         <div>
             <h2>Test Webcam</h2>
@@ -231,23 +156,7 @@
             <p>The following settings are for advanced configurations or Print Nanny developers. </p>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_monitoring_frames_per_minute">
-                    <h2>Monitoring Frames per Minute </h2>
-                    <p>Drag the slider to adjust the current value: <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute"></strong></p>
-                </label>
-                <div class="controls">
-                    <input 
-                    class="input-xxlarge" 
-                    id="octoprint_nanny_settings_monitoring_frames_per_minute" 
-                    type="range"
-                    min="1"
-                    max="60"
-                    data-bind="value: settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_url"><h2>Print Nanny API</h2></label>
+                <label class="control-label" for="octoprint_nanny_settings_api_url"><h4>Print Nanny API</h4></label>
                 
                 <div class="controls">
                     <input 
@@ -258,36 +167,19 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_ws_url"><h2>Websocket URL</h2></label>
+                <label class="control-label" for="octoprint_nanny_settings_ws_url"><h4>Websocket URL</h4></label>
                 <div class="controls">
                     <input id="octoprint_nanny_settings_ws_url" 
                     data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
                 </div>
             </div>
 
-
             <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_hostname"><h2>MQTT Bridge Host</h2></label>
-                <div class="controls">
-                    <input id="octoprint_nanny_settings_mqtt_bridge_hostname" 
-                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_hostname" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_port"><h2>MQTT Bridge Port</h2></label>
+                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_port"><h4>MQTT Bridge Port</h4></label>
                 <p>Valid ports are <strong>8883</strong> and <strong>443</strong>.</p>
                 <div class="controls">
                     <input id="octoprint_nanny_settings_mqtt_bridge_port" 
                     data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_port" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_root_certificate_url"><h2>MQTT Bridge Certificates</h2></label>
-                <div class="controls">
-                    <input id="octoprint_nanny_settings_mqtt_bridge_certificate_url" 
-                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_root_certificate_url" type="text" />
                 </div>
             </div>
 
