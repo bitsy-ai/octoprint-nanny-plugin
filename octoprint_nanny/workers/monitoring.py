@@ -338,7 +338,10 @@ class MonitoringManager:
         self.plugin._settings.set(
             ["monitoring_active"], False
         )  # @todo fix setting iface
-        self.plugin.settings.reset_print_session()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False
         )
+        logger.info(
+            f"Closing monitoring session session={self.plugin.settings.print_session.session}"
+        )
+        self.plugin.settings.reset_print_session()
