@@ -100,18 +100,9 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, m
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
     manager = WorkerManager(plugin)
-
-    mock_remote_control_snapshot = mocker.patch(
-        "octoprint_nanny.workers.mqtt.MQTTSubscriberWorker._remote_control_snapshot",
-        return_value=asyncio.Future(),
-    )
-    mock_remote_control_snapshot.return_value.set_result("foo")
-
     mock_rest_client = mocker.patch(
         "octoprint_nanny.settings.PluginSettingsMemoize.rest_client"
     )
-    mock_rest_client.create_snapshot.return_value = asyncio.Future()
-    mock_rest_client.create_snapshot.return_value.set_result("foo")
     mock_rest_client.update_remote_control_command.return_value = asyncio.Future()
     mock_rest_client.update_remote_control_command.return_value.set_result("foo")
 
@@ -145,10 +136,6 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, m
     manager.mqtt_manager.mqtt_receive_queue.put_nowait(command)
 
     await manager.mqtt_manager.subscriber_worker._loop()
-
-    mock_remote_control_snapshot.assert_called_once_with(
-        command["message"]["remote_control_command_id"]
-    )
 
     mock_rest_client.update_remote_control_command.assert_has_calls(
         [

@@ -296,16 +296,6 @@ class MQTTSubscriberWorker:
                 logger.debug(e)
         logger.info(f"Exiting soon {self.__class__}.loop_forever")
 
-    @beeline.traced("MQTTSubscriberWorker._remote_control_snapshot")
-    async def _remote_control_snapshot(self, command_id):
-        async with aiohttp.ClientSession() as session:
-            res = await session.get(self.plugin.settings.snapshot_url)
-            snapshot_io = io.BytesIO(await res.read())
-
-        return await self.plugin.settings.rest_client.create_snapshot(
-            image=snapshot_io, command=command_id
-        )
-
     @beeline.traced("MQTTSubscriberWorker._handle_remote_control_command")
     async def _handle_remote_control_command(self, topic, message):
         event_type = message.get("octoprint_event_type")
@@ -315,9 +305,6 @@ class MQTTSubscriberWorker:
             return
 
         command_id = message.get("remote_control_command_id")
-
-        await self._remote_control_snapshot(command_id)
-
         metadata = self.plugin.settings.get_device_metadata()
         await self.plugin.settings.rest_client.update_remote_control_command(
             command_id, received=True, metadata=metadata
