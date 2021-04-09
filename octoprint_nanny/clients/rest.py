@@ -187,28 +187,6 @@ class RestAPIClient:
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file
 
-    @beeline.traced("RestAPIClient.create_snapshot")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-    )
-    async def create_snapshot(self, image, command):
-        image.name = str(command) + ".jpg"
-        image.seek(0)
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = RemoteControlApi(api_client=api_client)
-            # https://github.com/aio-libs/aiohttp/issues/3652
-            # in a multi-part form request (file upload), params MUST be serialized as strings and deserialized to integers on the server-side
-            snapshot = await api_instance.snapshots_create(
-                image=image,
-                command=str(command),
-            )
-            logger.info(f"Created snapshot {snapshot}")
-            return snapshot
-
     @beeline.traced("RestAPIClient.create_print_session")
     @backoff.on_exception(
         backoff.expo,
