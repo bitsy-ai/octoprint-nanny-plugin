@@ -329,7 +329,9 @@ class MonitoringManager:
 
         self.plugin._settings.set(["monitoring_active"], True)
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, monitoring_active=True
+            self.plugin.settings.device_id,
+            monitoring_active=True,
+            last_session=self.plugin.settings.print_session.id,
         )
 
     @beeline.traced("MonitoringManager.stop")
@@ -338,7 +340,11 @@ class MonitoringManager:
         self.plugin._settings.set(
             ["monitoring_active"], False
         )  # @todo fix setting iface
-        self.plugin.settings.reset_print_session()
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.device_id, monitoring_active=False
         )
+        if self.plugin.settings.print_session:
+            logger.info(
+                f"Closing monitoring session session={self.plugin.settings.print_session.session}"
+            )
+        self.plugin.settings.reset_print_session()
