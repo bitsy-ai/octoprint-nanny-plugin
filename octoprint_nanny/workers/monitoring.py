@@ -163,12 +163,12 @@ class MonitoringWorker:
         monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
 
         msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
-
+        b64_image = base64.b64encode(image_bytes)
         self._plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
-            payload=base64.b64encode(image_bytes),
+            payload=b64_image,
         )
-        self._pn_ws_queue.put_nowait(msg)
+        self._pn_ws_queue.put_nowait(image_bytes)
         self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
