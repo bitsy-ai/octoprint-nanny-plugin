@@ -87,11 +87,31 @@ if sys.version_info.major == 2:
 ###
 
 # hardware layer : software layer : wheel
-third_party_wheel_map = {
+plugin_requires_third_party_wheel_map = {
+    "armv7l": {
+        "32bit": [
+            "pyarrow @ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl",
+        ]
+    },
+    "aarch64": {
+        "32bit": [
+            "pyarrow==3.0.0",
+        ],
+        "64bit": [
+            "pyarrow==3.0.0",
+        ],
+    },
+    "x86_64": {
+        "64bit": [
+            "pyarrow==3.0.0",
+        ]
+    },
+}
+
+offline_requires_third_party_wheel_map = {
     "armv7l": {
         "32bit": [
             "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
-            "pyarrow @ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl",
         ]
     },
     "aarch64": {
@@ -105,16 +125,21 @@ third_party_wheel_map = {
     "x86_64": {
         "64bit": [
             "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl",
-            "pyarrow==3.0.0",
         ]
     },
 }
 
+
 hardware_arch = os.uname().machine
 software_arch, _ = platform.architecture()
 
-if hardware_arch in third_party_wheel_map.keys():
-    third_party_wheels = third_party_wheel_map[hardware_arch][software_arch]
+if hardware_arch in plugin_requires_third_party_wheel_map.keys():
+    plugin_requires_third_party_wheels = plugin_requires_third_party_wheel_map[
+        hardware_arch
+    ][software_arch]
+    offline_requires_third_party_wheels = offline_requires_third_party_wheel_map[
+        hardware_arch
+    ][software_arch]
 else:
     raise CPUNotSupported(
         "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
@@ -139,12 +164,18 @@ plugin_requires = [
     "honeycomb-beeline",
     "aiofiles>=0.6.0",
     "flatbuffers==1.12",
-    "pandas>=1.2.2",
-] + third_party_wheels
+] + plugin_requires_third_party_wheels
 
-extra_requires = {
-    "dev": ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio", "twine"]
-}
+offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels
+
+dev_requires = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-asyncio",
+    "twine",
+] + offline_requires
+extra_requires = {"dev": dev_requires, "offline": offline_requires}
 
 
 ### --------------------------------------------------------------------------------------------------------------------

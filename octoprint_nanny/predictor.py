@@ -2,7 +2,6 @@ import base64
 import json
 import logging
 import numpy as np
-import pandas as pd
 import os
 import time
 import io
@@ -10,7 +9,6 @@ import threading
 from dataclasses import asdict
 
 import PIL
-import tflite_runtime.interpreter as tflite
 
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
@@ -21,7 +19,11 @@ import beeline
 from typing import Optional, Tuple
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
-
+try:
+    import pandas as pd
+    import tflite_runtime.interpreter as tflite
+except ImportError:
+    logger.warning("Imports for offline inference failed! Only online learning will be available. Please install with [offline] extras to enable offline mode.")
 DETECTION_LABELS = {
     1: "nozzle",
     2: "adhesion",
