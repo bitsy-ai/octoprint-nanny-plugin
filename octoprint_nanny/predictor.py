@@ -23,7 +23,9 @@ try:
     import pandas as pd
     import tflite_runtime.interpreter as tflite
 except ImportError:
-    logger.warning("Imports for offline inference failed! Only online learning will be available. Please install with [offline] extras to enable offline mode.")
+    logger.warning(
+        "Imports for offline inference failed! Only online learning will be available. Please install with [offline] extras to enable offline mode."
+    )
 DETECTION_LABELS = {
     1: "nozzle",
     2: "adhesion",
