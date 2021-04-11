@@ -1,0 +1,6 @@
+background
+nozzle
+adhesion
+spaghetti
+print
+raft
