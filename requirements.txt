@@ -9,7 +9,7 @@
 aiofiles==0.6.0 \
     --hash=sha256:bd3019af67f83b739f8e4053c6c0512a7f545b9a8d91aaeab55e6e0f9d123c27 \
     --hash=sha256:e0281b157d3d5d59d803e3f4557dcc9a3dff28a4dd4829a9ff478adae50ca092
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 aiohttp==3.7.4.post0 \
     --hash=sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe \
     --hash=sha256:0563c1b3826945eecd62186f3f5c7d31abb7391fedc893b7e2b26303b5a9f3fe \
@@ -49,12 +49,12 @@ aiohttp==3.7.4.post0 \
     --hash=sha256:f881853d2643a29e643609da57b96d5f9c9b93f62429dcc1cbb413c7d07f0e1a \
     --hash=sha256:fe60131d21b31fd1a14bd43e6bb88256f69dfc3188b3a89d736d6c71ed43ec95
     # via
-    #   OctoPrint-Nanny (setup.py)
+    #   Print-Nanny (setup.py)
     #   print-nanny-client
 aioprocessing==1.1.0 \
     --hash=sha256:21a61c9c3d9089349e4847206028308ba2146e081f5ecd9195cca3e12ed45345 \
     --hash=sha256:4603c86ff3fea673d4c643ad3adc519988cd778771b75079bc3be9e5ed4c5b66
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 async-timeout==3.0.1 \
     --hash=sha256:0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f \
     --hash=sha256:4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3
@@ -70,7 +70,7 @@ babel==2.9.0 \
 backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
     --hash=sha256:b8fba021fac74055ac05eb7c7bfce4723aedde6cd0a504e5326bcb0bdd6d19a4
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 blinker==1.4 \
     --hash=sha256:471aee25f3992bd325afa3772f1063dbdbbca947a041b8b89466dc00d606f8b6
     # via octoprint
@@ -130,7 +130,7 @@ flask==1.1.2 \
 flatbuffers==1.12 \
     --hash=sha256:63bb9a722d5e373701913e226135b28a6f6ac200d5cc7b4d919fa38d73b44610 \
     --hash=sha256:9e9ef47fa92625c4721036e7c4124182668dc6021d9e7c73704edd395648deb9
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 frozendict==1.2 \
     --hash=sha256:774179f22db2ef8a106e9c38d4d1f8503864603db08de2e33be5b778230f6e45
     # via octoprint
@@ -140,7 +140,7 @@ future==0.18.2 \
 honeycomb-beeline==2.16.2 \
     --hash=sha256:76490f8817bef2b93a61b8aad08cc902b46f92c6bb82fda257d74f39f0cc0032 \
     --hash=sha256:963c766cc3fea90e5ccbc42f6253e4d5c4e89f621ea2418b6409e3a3fd8cd7ae
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 idna==2.10 \
     --hash=sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6 \
     --hash=sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0
@@ -323,7 +323,7 @@ numpy==1.20.2 \
     --hash=sha256:e9459f40244bb02b2f14f6af0cd0732791d72232bbb0dc4bab57ef88e75f6935 \
     --hash=sha256:edb1f041a9146dcf02cd7df7187db46ab524b9af2515f392f337c7cbbf5b52cd
     # via
-    #   OctoPrint-Nanny (setup.py)
+    #   Print-Nanny (setup.py)
     #   pandas
     #   pyarrow
     #   tflite-runtime
@@ -338,10 +338,10 @@ octoprint-firmwarecheck==2021.2.4 \
 octoprint==1.5.3 \
     --hash=sha256:253372cf3537a1e2bcc269a022f83e0d2cae70bbc0744c4826f703eef15903d0 \
     --hash=sha256:89ae85920c005090b8adbec1fd3364873459c6f342c412375f1b60bb3496ae0d
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 paho-mqtt==1.5.1 \
     --hash=sha256:9feb068e822be7b3a116324e01fb6028eb1d66412bf98595ae72698965cb1cae
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 pandas==1.2.3 \
     --hash=sha256:09761bf5f8c741d47d4b8b9073288de1be39bbfccc281d70b889ade12b2aad29 \
     --hash=sha256:0f27fd1adfa256388dc34895ca5437eaf254832223812afd817a6f73127f969c \
@@ -359,7 +359,7 @@ pandas==1.2.3 \
     --hash=sha256:d59842a5aa89ca03c2099312163ffdd06f56486050e641a45d926a072f04d994 \
     --hash=sha256:dbb255975eb94143f2e6ec7dadda671d25147939047839cd6b8a4aff0379bb9b \
     --hash=sha256:df6f10b85aef7a5bb25259ad651ad1cc1d6bb09000595cab47e718cbac250b1d
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 pathtools==0.1.2 \
     --hash=sha256:7c35c5421a39bb82e58018febd90e3b6e5db34c5443aaaf742b3f33d4655f1c0
     # via watchdog
@@ -397,7 +397,7 @@ pillow==8.2.0 \
     --hash=sha256:dc38f57d8f20f06dd7c3161c59ca2c86893632623f33a42d592f097b00f720a9 \
     --hash=sha256:e98eca29a05913e82177b3ba3d198b1728e164869c613d76d0de4bde6768a50e \
     --hash=sha256:f217c3954ce5fd88303fc0c317af55d5e0204106d86dea17eb8205700d47dec2
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 pkginfo==1.7.0 \
     --hash=sha256:029a70cb45c6171c329dfc890cde0879f8c52d6f3922794796e06f577bb03db4 \
     --hash=sha256:9fdbea6495622e022cc72c2e5e1b735218e4ffb2a2a69cde2694a6c1f16afb75
@@ -405,7 +405,7 @@ pkginfo==1.7.0 \
 print-nanny-client==0.5.0-dev74 \
     --hash=sha256:469de008b92bef60c4ed83cf4ad0aa1164fac8779511eb022bcca6171c8afad2 \
     --hash=sha256:7588d66a22823d2adc41fb83e815245059b7530c2b44afbdce2025c57703d5df
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 psutil==5.8.0 \
     --hash=sha256:0066a82f7b1b37d334e68697faba68e5ad5e858279fd6351c8ca6024e8d6ba64 \
     --hash=sha256:02b8292609b1f7fcb34173b25e48d0da8667bc85f81d7476584d889c6e0f2131 \
@@ -438,7 +438,7 @@ psutil==5.8.0 \
     # via octoprint
 https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl \
     --hash=sha256:500c2a82fae31f49368bd0f8a8cfd7b13ea86a556d4f475a6c317ba4b0cd3895
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 pyasn1==0.4.8 \
     --hash=sha256:39c7e2ec30515947ff4e87fb6f456dfc6e84857d34be479c9d4a4ba4bf46aa5d \
     --hash=sha256:aef77c9fb94a3ac588e87841208bdec464471d9871bd5050a287cc9a475cd0ba
@@ -446,7 +446,7 @@ pyasn1==0.4.8 \
 pyjwt==2.0.1 \
     --hash=sha256:a5c70a06e1f33d81ef25eecd50d50bd30e34de1ca8b2b9fa3fe0daaabcf69bf7 \
     --hash=sha256:b70b15f89dc69b993d8a8d32c299032d5355c82f9b5b7e851d1a6d706dffe847
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 pylru==1.2.0 \
     --hash=sha256:492f934bb98dc6c8b2370c02c95c65516ddc08c8f64d27f70087eb038621d297
     # via octoprint
@@ -464,7 +464,7 @@ pytz==2021.1 \
     --hash=sha256:83a4a90894bf38e243cf052c8b58f381bfe9a7a483f6a9cab140bc7f702ac4da \
     --hash=sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798
     # via
-    #   OctoPrint-Nanny (setup.py)
+    #   Print-Nanny (setup.py)
     #   babel
     #   flask-babel
     #   pandas
@@ -581,7 +581,7 @@ statsd==3.3.0 \
     # via libhoney
 https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl \
     --hash=sha256:1b448604c3f04eea05fef02cb6fbd9377ae5875acb16d27fe029b5c51749dfde
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 tornado==5.1.1 \
     --hash=sha256:0662d28b1ca9f67108c7e3b77afabfb9c7e87bde174fbda78186ecedc2499a9d \
     --hash=sha256:4e5158d97583502a7e2739951553cbd88a72076f152b4b11b64b9a10c4c49409 \
@@ -596,7 +596,7 @@ typing-extensions==3.7.4.3 ; python_version < "3.8" \
     --hash=sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c \
     --hash=sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f
     # via
-    #   OctoPrint-Nanny (setup.py)
+    #   Print-Nanny (setup.py)
     #   aiohttp
     #   yarl
 unidecode==0.4.21 \
@@ -644,7 +644,7 @@ websockets==8.1 \
     --hash=sha256:d705f8aeecdf3262379644e4b55107a3b55860eb812b673b28d0fbc347a60c55 \
     --hash=sha256:e898a0863421650f0bebac8ba40840fc02258ef4714cb7e1fd76b6a6354bda36 \
     --hash=sha256:f8a7bff6e8664afc4e6c28b983845c5bc14965030e3fb98789734d416af77c4b
-    # via OctoPrint-Nanny (setup.py)
+    # via Print-Nanny (setup.py)
 werkzeug==1.0.1 \
     --hash=sha256:2de2a5db0baeae7b2d2664949077c2ac63fbd16d98da0ff71837f7d1dea3fd43 \
     --hash=sha256:6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c
