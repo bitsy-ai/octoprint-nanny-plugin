@@ -687,7 +687,7 @@ class OctoPrintNannyPlugin(
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html
         # for details.
         return dict(
-            octoprint_nanny=dict(
+            print_nanny=dict(
                 displayName=self._plugin_name,
                 displayVersion=self._plugin_version,
                 # version check: github repository
