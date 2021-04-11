@@ -124,6 +124,7 @@ else:
     sys.exit(1)
 
 plugin_requires = [
+    "octoprint",
     "numpy",
     "pillow",
     "typing_extensions ; python_version < '3.8'",
