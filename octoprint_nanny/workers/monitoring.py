@@ -28,14 +28,13 @@ from octoprint.events import Events
 
 import octoprint_nanny.types
 from octoprint_nanny.workers.websocket import WebSocketWorker
-
-# from octoprint_nanny.predictor import (
-#     ThreadLocalPredictor,
-#     predict_threadsafe,
-#     print_is_healthy,
-#     DETECTION_LABELS,
-#     explode_prediction_df,
-# )
+from octoprint_nanny.predictor import (
+    ThreadLocalPredictor,
+    predict_threadsafe,
+    print_is_healthy,
+    DETECTION_LABELS,
+    explode_prediction_df,
+)
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import PluginEvents, MonitoringModes
@@ -143,15 +142,15 @@ class MonitoringWorker:
         )
         return msg
 
-    # @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
-    # def _create_lite_fb_msg(
-    #     self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
-    # ) -> Tuple[bytes, Optional[bytes]]:
-    #     return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-    #         event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
-    #         metadata=self._plugin.settings.metadata,
-    #         monitoring_frame=monitoring_frame,
-    #     )
+    @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
+    def _create_lite_fb_msg(
+        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
+    ) -> Tuple[bytes, Optional[bytes]]:
+        return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
+            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
+            metadata=self._plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
+        )
 
     @beeline.traced(name="MonitoringWorker._active_learning_loop")
     async def _active_learning_loop(self):
@@ -172,77 +171,77 @@ class MonitoringWorker:
         self._pn_ws_queue.put_nowait(image_bytes)
         self._mqtt_send_queue.put_nowait(msg)
 
-    # @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
-    # async def _lite_predict_and_calc_health(
-    #     self, ts
-    # ) -> octoprint_nanny.types.MonitoringFrame:
+    @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
+    async def _lite_predict_and_calc_health(
+        self, ts
+    ) -> octoprint_nanny.types.MonitoringFrame:
 
-    #     image_bytes = await self.load_url_buffer()
-    #     func = functools.partial(
-    #         predict_threadsafe, ts, image_bytes, **self._predictor_kwargs
-    #     )
+        image_bytes = await self.load_url_buffer()
+        func = functools.partial(
+            predict_threadsafe, ts, image_bytes, **self._predictor_kwargs
+        )
 
-    #     # trace predict latency, including serialization in/out of process pool
-    #     span = self._honeycomb_tracer.start_span(
-    #         context={
-    #             "name": "predict_pooled",
-    #         }
-    #     )
+        # trace predict latency, including serialization in/out of process pool
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "predict_pooled",
+            }
+        )
 
-    #     monitoring_frame = await self.loop.run_in_executor(self.pool, func)
-    #     self._honeycomb_tracer.add_context(
-    #         {"bounding_boxes": monitoring_frame.bounding_boxes}
-    #     )
-    #     self._honeycomb_tracer.finish_span(span)
+        monitoring_frame = await self.loop.run_in_executor(self.pool, func)
+        self._honeycomb_tracer.add_context(
+            {"bounding_boxes": monitoring_frame.bounding_boxes}
+        )
+        self._honeycomb_tracer.finish_span(span)
 
-    #     # trace metrics calculations in/out of process pool
-    #     if monitoring_frame.bounding_boxes is not None:
-    #         self.update_dataframe(ts, monitoring_frame.bounding_boxes)
+        # trace metrics calculations in/out of process pool
+        if monitoring_frame.bounding_boxes is not None:
+            self.update_dataframe(ts, monitoring_frame.bounding_boxes)
 
-    #     # trace polyfit curve
-    #     span = self._honeycomb_tracer.start_span(
-    #         context={
-    #             "name": "print_is_healthy",
-    #         }
-    #     )
+        # trace polyfit curve
+        span = self._honeycomb_tracer.start_span(
+            context={
+                "name": "print_is_healthy",
+            }
+        )
 
-    #     func = functools.partial(print_is_healthy, self._df)
-    #     healthy = await self.loop.run_in_executor(self.pool, func)
-    #     if healthy is False:
-    #         octoprint_device = self._plugin.settings.device_id
-    #         dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
-    #         self._df.to_parquet(dataframe, engine="pyarrow")
-    #         alert = await self._plugin.settings.rest_client.create_defect_alert(
-    #             octoprint_device=octoprint_device, dataframe=self._df
-    #         )
-    #         logger.warning(f"Created DefectAlert with id={alert.id}")
+        func = functools.partial(print_is_healthy, self._df)
+        healthy = await self.loop.run_in_executor(self.pool, func)
+        if healthy is False:
+            octoprint_device = self._plugin.settings.device_id
+            dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
+            self._df.to_parquet(dataframe, engine="pyarrow")
+            alert = await self._plugin.settings.rest_client.create_defect_alert(
+                octoprint_device=octoprint_device, dataframe=self._df
+            )
+            logger.warning(f"Created DefectAlert with id={alert.id}")
 
-    #     return monitoring_frame
+        return monitoring_frame
 
-    # @beeline.traced(name="MonitoringWorker._lite_loop")
-    # async def _lite_loop(self):
-    #     ts = int(datetime.now(pytz.utc).timestamp())
+    @beeline.traced(name="MonitoringWorker._lite_loop")
+    async def _lite_loop(self):
+        ts = int(datetime.now(pytz.utc).timestamp())
 
-    #     monitoring_frame = await self._lite_predict_and_calc_health(ts)
+        monitoring_frame = await self._lite_predict_and_calc_health(ts)
 
-    #     msg = self._create_lite_fb_msg(monitoring_frame=monitoring_frame)
-    #     self._plugin._event_bus.fire(
-    #         Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
-    #         payload=base64.b64encode(monitoring_frame.image.data),
-    #     )
-    #     if self._plugin.settings.webcam_upload:
-    #         self._pn_ws_queue.put_nowait(monitoring_frame.image.data)
+        msg = self._create_lite_fb_msg(monitoring_frame=monitoring_frame)
+        self._plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
+            payload=base64.b64encode(monitoring_frame.image.data),
+        )
+        if self._plugin.settings.webcam_upload:
+            self._pn_ws_queue.put_nowait(monitoring_frame.image.data)
 
-    #     if monitoring_frame.bounding_boxes is not None:
-    #         self._mqtt_send_queue.put_nowait(msg)
+        if monitoring_frame.bounding_boxes is not None:
+            self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._loop")
     async def _loop(self):
 
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
             await self._active_learning_loop()
-        # elif self._monitoring_mode == MonitoringModes.LITE:
-        #     await self._lite_loop()
+        elif self._monitoring_mode == MonitoringModes.LITE:
+            await self._lite_loop()
         else:
             logger.error(f"Unsupported monitoring_mode={self._monitoring_mode}")
             return
