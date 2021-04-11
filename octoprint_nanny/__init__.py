@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import logging
 import os
 import pathlib
-from .plugins import OctoPrintNannyPlugin
+from .plugins import PrintNannyPlugin
 
 __plugin_name__ = "Print Nanny"
 
@@ -15,7 +15,7 @@ __plugin_version__ = "0.1.0"
 
 def __plugin_load__():
     global __plugin_implementation__
-    __plugin_implementation__ = OctoPrintNannyPlugin()
+    __plugin_implementation__ = PrintNannyPlugin()
 
     __plugin_implementation__.version = __plugin_version__
 

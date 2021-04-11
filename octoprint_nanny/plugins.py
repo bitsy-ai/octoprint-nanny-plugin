@@ -120,7 +120,7 @@ DEFAULT_SETTINGS = dict(
 Events.PRINT_PROGRESS = "PrintProgress"
 
 
-class OctoPrintNannyPlugin(
+class PrintNannyPlugin(
     octoprint.plugin.SettingsPlugin,
     octoprint.plugin.AssetPlugin,
     octoprint.plugin.TemplatePlugin,
@@ -150,7 +150,7 @@ class OctoPrintNannyPlugin(
     def set_setting(self, key, value):
         return self._settings.set([key], value)
 
-    @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
+    @beeline.traced("PrintNannyPlugin._test_api_auth")
     @beeline.traced_thread
     async def _test_api_auth(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
@@ -163,7 +163,7 @@ class OctoPrintNannyPlugin(
             logger.error(f"_test_api_auth API call failed {e}")
             self._settings.set(["auth_valid"], False)
 
-    @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
+    @beeline.traced("PrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
@@ -178,7 +178,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
-    @beeline.traced("OctoPrintNannyPlugin._meminfo")
+    @beeline.traced("PrintNannyPlugin._meminfo")
     def _meminfo(self) -> dict:
         """
         Dict from /proc/meminfo
@@ -198,7 +198,7 @@ class OctoPrintNannyPlugin(
             if len(x.split(":")) > 1
         }
 
-    @beeline.traced("OctoPrintNannyPlugin.get_device_info")
+    @beeline.traced("PrintNannyPlugin.get_device_info")
     @beeline.traced_thread
     def get_device_info(self):
         cpuinfo = self._cpuinfo()
@@ -232,7 +232,7 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
-    @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
+    @beeline.traced("PrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
         device_id = self.get_setting("device_id")
         if device_id is None:
@@ -260,7 +260,7 @@ class OctoPrintNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
 
-    @beeline.traced("OctoPrintNannyPlugin._write_keypair")
+    @beeline.traced("PrintNannyPlugin._write_keypair")
     @beeline.traced_thread
     async def _write_keypair(self, device):
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
@@ -294,7 +294,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_private_key"], privkey_filename)
         self._settings.set(["device_public_key"], pubkey_filename)
 
-    @beeline.traced("OctoPrintNannyPlugin._download_root_certificates")
+    @beeline.traced("PrintNannyPlugin._download_root_certificates")
     @beeline.traced_thread
     async def _download_root_certificates(self):
 
@@ -332,7 +332,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["ca_cert"], primary_root_ca_filename)
         self._settings.set(["backup_ca_cert"], backup_root_ca_filename)
 
-    @beeline.traced("OctoPrintNannyPlugin._write_ca_certs")
+    @beeline.traced("PrintNannyPlugin._write_ca_certs")
     @beeline.traced_thread
     async def _write_ca_certs(self, device):
 
@@ -376,7 +376,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["ca_cert"], primary_ca_filename)
         self._settings.set(["backup_ca_cert"], backup_ca_filename)
 
-    @beeline.traced("OctoPrintNannyPlugin.sync_device_metadata")
+    @beeline.traced("PrintNannyPlugin.sync_device_metadata")
     async def sync_device_metadata(self):
         device_id = self.get_setting("device_id")
         if device_id is None:
@@ -388,7 +388,7 @@ class OctoPrintNannyPlugin(
             device_id, **device_info
         )
 
-    @beeline.traced("OctoPrintNannyPlugin._register_device")
+    @beeline.traced("PrintNannyPlugin._register_device")
     @beeline.traced_thread
     async def _register_device(self, device_name):
 
@@ -466,7 +466,7 @@ class OctoPrintNannyPlugin(
 
         return printers
 
-    @beeline.traced("OctoPrintNannyPlugin._test_snapshot_url")
+    @beeline.traced("PrintNannyPlugin._test_snapshot_url")
     async def _test_snapshot_url(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as res:
@@ -476,7 +476,7 @@ class OctoPrintNannyPlugin(
     ## Octoprint api routes + handlers
     ##
     # def register_custom_routes(self):
-    @beeline.traced(name="OctoPrintNannyPlugin.start_predict")
+    @beeline.traced(name="PrintNannyPlugin.start_predict")
     @octoprint.plugin.BlueprintPlugin.route("/startMonitoring", methods=["POST"])
     def start_predict(self):
         # settings test#
@@ -496,13 +496,13 @@ class OctoPrintNannyPlugin(
         else:
             return res
 
-    @beeline.traced(name="OctoPrintNannyPlugin.stop_predict")
+    @beeline.traced(name="PrintNannyPlugin.stop_predict")
     @octoprint.plugin.BlueprintPlugin.route("/stopMonitoring", methods=["POST"])
     def stop_predict(self):
         self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP)
         return flask.json.jsonify({"ok": 1})
 
-    @beeline.traced(name="OctoPrintNannyPlugin.register_device")
+    @beeline.traced(name="PrintNannyPlugin.register_device")
     @octoprint.plugin.BlueprintPlugin.route("/registerDevice", methods=["POST"])
     def register_device(self):
         device_name = flask.request.json.get("device_name")
@@ -522,7 +522,7 @@ class OctoPrintNannyPlugin(
         self.worker_manager.apply_device_registration()
         return flask.jsonify(result)
 
-    @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
+    @beeline.traced(name="PrintNannyPlugin.test_snapshot_url")
     @octoprint.plugin.BlueprintPlugin.route("/testSnapshotUrl", methods=["POST"])
     def test_snapshot_url(self):
         snapshot_url = flask.request.json.get("snapshot_url")
@@ -533,7 +533,7 @@ class OctoPrintNannyPlugin(
 
         return flask.jsonify({"image": base64.b64encode(image)})
 
-    @beeline.traced(name="OctoPrintNannyPlugin.test_auth_token")
+    @beeline.traced(name="PrintNannyPlugin.test_auth_token")
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
         auth_token = flask.request.json.get("auth_token")
@@ -574,7 +574,7 @@ class OctoPrintNannyPlugin(
         local_only = ["monitoring_frame_b64"]
         return plugin_events + remote_commands + local_only
 
-    @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
+    @beeline.traced(name="PrintNannyPlugin.on_after_startup")
     def on_shutdown(self):
         logger.info("Processing shutdown event")
         asyncio.run_coroutine_threadsafe(
@@ -596,7 +596,7 @@ class OctoPrintNannyPlugin(
             {"event_type": event_type, "event_data": event_data}
         )
 
-    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
+    @beeline.traced(name="PrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
         """
         Called after plugin initialization
@@ -613,7 +613,7 @@ class OctoPrintNannyPlugin(
         )
 
     ## EnvironmentDetectionPlugin
-    @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
+    @beeline.traced(name="PrintNannyPlugin.on_environment_detected")
     def on_environment_detected(self, environment, *args, **kwargs):
         self._environment = environment
         self.worker_manager.plugin.settings.on_environment_detected(environment)
@@ -622,7 +622,7 @@ class OctoPrintNannyPlugin(
     def get_settings_defaults(self):
         return DEFAULT_SETTINGS
 
-    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
+    @beeline.traced(name="PrintNannyPlugin.on_settings_save")
     def on_settings_save(self, data):
         super().on_settings_save(data)
         self.worker_manager.on_settings_save()
@@ -681,7 +681,7 @@ class OctoPrintNannyPlugin(
         )
 
     ##~~ Softwareupdate hook
-    @beeline.traced(name="OctoPrintNannyPlugin.get_update_information")
+    @beeline.traced(name="PrintNannyPlugin.get_update_information")
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html

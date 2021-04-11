@@ -1,7 +1,6 @@
 import pytest
 import octoprint_nanny.types
 from octoprint_nanny.workers.monitoring import MonitoringWorker
-from octoprint_nanny.plugins import OctoPrintNannyPlugin
 import uuid
 import print_nanny_client
 from datetime import datetime
