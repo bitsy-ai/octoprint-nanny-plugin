@@ -43,7 +43,7 @@ POSITIVE_LABELS = {
 
 
 class ThreadLocalPredictor(threading.local):
-    base_path = os.path.join(os.path.dirname(__file__), "data")
+    base_path = "data"
 
     def __init__(
         self,
