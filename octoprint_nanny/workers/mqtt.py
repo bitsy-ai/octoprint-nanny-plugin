@@ -57,7 +57,6 @@ class MQTTManager:
         ]
         self._worker_threads = []
 
-    @beeline.traced("MQTTManager._drain")
     def _drain(self):
         """
         Halt running workers and wait pending work
@@ -74,14 +73,12 @@ class MQTTManager:
             logger.info(f"Waiting for worker={worker} thread to drain")
             worker.join(1)
 
-    @beeline.traced("MQTTManager._reset")
     def _reset(self):
         self.halt = threading.Event()
         for worker in self._workers:
             worker.halt = self.halt
         self._worker_threads = []
 
-    @beeline.traced("MQTTManager.start")
     def start(self, **kwargs):
         """
         (re)initialize and start worker threads
@@ -94,7 +91,6 @@ class MQTTManager:
             self._worker_threads.append(thread)
             thread.start()
 
-    @beeline.traced("MQTTManager.stop")
     def stop(self):
         logger.info("MQTTManager.stop was called")
         self._drain()
@@ -114,7 +110,6 @@ class MQTTClientWorker:
     def stop(self):
         return self.plugin.settings.mqtt_client.stop()
 
-    @beeline.traced("MQTTClientWorker.run")
     def run(self):
 
         try:
@@ -151,7 +146,6 @@ class MQTTPublisherWorker:
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    @beeline.traced("MQTTPublisherWorker.register_callbacks")
     def register_callbacks(self, callbacks):
         for k, v in callbacks.items():
             if self._callbacks.get(k) is None:
@@ -161,7 +155,6 @@ class MQTTPublisherWorker:
         logging.info(f"Registered MQTTSubscribeWorker._callbacks {self._callbacks}")
         return self._callbacks
 
-    @beeline.traced("MQTTPublisherWorker.run")
     def run(self):
         """
         Telemetry worker's event loop is exposed as WorkerManager.loop
@@ -173,7 +166,6 @@ class MQTTPublisherWorker:
 
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
-    @beeline.traced("MQTTPublisherWorker._publish_octoprint_event_telemetry")
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
@@ -190,7 +182,6 @@ class MQTTPublisherWorker:
             event.update(self.plugin.settings.get_print_job_metadata())
         self.plugin.settings.mqtt_client.publish_octoprint_event(event)
 
-    @beeline.traced("MQTTPublisherWorker._loop")
     async def _loop(self):
         try:
             span = self._honeycomb_tracer.start_span(
@@ -267,7 +258,6 @@ class MQTTSubscriberWorker:
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    @beeline.traced("MQTTSubscriberWorker.run")
     def run(self):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -277,7 +267,6 @@ class MQTTSubscriberWorker:
 
         return self.loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
-    @beeline.traced("MQTTSubscriberWorker.register_callbacks")
     def register_callbacks(self, callbacks):
         for k, v in callbacks.items():
             if self._callbacks.get(k) is None:
@@ -342,7 +331,6 @@ class MQTTSubscriberWorker:
                         metadata=metadata,
                     )
 
-    @beeline.traced("MQTTSubscriberWorker._loop")
     async def _loop(self):
 
         trace = self._honeycomb_tracer.start_trace()
@@ -371,7 +359,7 @@ class MQTTSubscriberWorker:
 
         self._honeycomb_tracer.finish_trace(trace)
 
-    @beeline.traced("MQTTSubscriberWorker._handle_config_updat")
+    @beeline.traced("MQTTSubscriberWorker._handle_config_update")
     async def _handle_config_update(self, topic, message):
 
         device_config = print_nanny_client.ExperimentDeviceConfig(**message)

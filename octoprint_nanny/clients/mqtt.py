@@ -140,7 +140,6 @@ class MQTTClient:
     ###
     #   callbacks
     ##
-    @beeline.traced("MQTTClient._on_message")
     def _on_message(self, client, userdata, message):
         if message.topic == self.remote_control_commands_topic:
             parsed_message = json.loads(message.payload.decode("utf-8"))
@@ -280,14 +279,12 @@ class MQTTClient:
 
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
-    @beeline.traced("MQTTClient.publish_octoprint_event")
     def publish_octoprint_event(self, event, retain=False, qos=1):
         payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
             payload, topic=self.octoprint_event_topic, retain=retain, qos=qos
         )
 
-    @beeline.traced("MQTTClient.publish_monitoring_frame_post")
     def publish_monitoring_frame_post(self, event, retain=False, qos=1):
         logger.debug(
             f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_post_topic}"
@@ -296,7 +293,6 @@ class MQTTClient:
             event, topic=self.monitoring_frame_post_topic, retain=retain, qos=qos
         )
 
-    @beeline.traced("MQTTClient.publish_monitoring_frame_raw")
     def publish_monitoring_frame_raw(self, event, retain=False, qos=1):
 
         logger.debug(
