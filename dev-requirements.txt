@@ -9,3 +9,4 @@ asyncmock
 asynctest
 pytest-benchmark
 pygal
+pip-tools
