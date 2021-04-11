@@ -582,10 +582,10 @@ class OctoPrintNannyPlugin(
         ).result()
 
     def on_startup(self, *args, **kwargs):
-        logger.info("OctoPrint Nanny starting up")
+        logger.info("Print Nanny starting up")
 
     def on_after_startup(self, *args, **kwargs):
-        logger.info("OctoPrint Nanny startup complete")
+        logger.info("Print Nanny startup complete")
 
     def on_event(self, event_type, event_data):
         # shutdown event is handled in .on_shutdown

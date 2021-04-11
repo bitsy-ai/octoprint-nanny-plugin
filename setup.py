@@ -15,7 +15,7 @@ import setuptools
 plugin_identifier = "print_nanny"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "octoprint_print_nanny"
+plugin_package = "octoprint_nanny"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
@@ -53,7 +53,7 @@ class CPUNotSupported(Exception):
 
 if sys.version_info.major == 2:
     raise Python2NotSupported(
-        "Sorry, OctoPrint Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
+        "Sorry, Print Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
     )
     sys.exit(1)
 
@@ -117,7 +117,7 @@ if hardware_arch in third_party_wheel_map.keys():
     third_party_wheels = third_party_wheel_map[hardware_arch][software_arch]
 else:
     raise CPUNotSupported(
-        "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
+        "Sorry, Print Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
             hardware_arch
         )
     )

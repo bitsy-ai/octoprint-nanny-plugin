@@ -6,7 +6,7 @@ import os
 import pathlib
 from .plugins import OctoPrintNannyPlugin
 
-__plugin_name__ = "OctoPrint Nanny"
+__plugin_name__ = "Print Nanny"
 
 __plugin_pythoncompat__ = ">=3,<4"  # only python 3
 

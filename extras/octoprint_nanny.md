@@ -2,7 +2,7 @@
 layout: plugin
 
 id: octoprint_nanny
-title: OctoPrint Nanny
+title: Print Nanny
 description: Get notified of print defects and safety hazards
 author: Leigh Johnson
 license: GNU AFFERO GENERAL PUBLIC LICENSE
@@ -127,7 +127,7 @@ Learn more about Print Nanny: https://www.print-nanny.com/
 ### Setup
 
 1. [Create an account](https://www.print-nanny.com/request-invite/)
-2. Install the OctoPrint Nanny plugin using the Plugin Manager or [clone the Github repo](https://github.com/bitsy-ai/octoprint-nanny-plugin).
+2. Install the Print Nanny plugin using the Plugin Manager or [clone the Github repo](https://github.com/bitsy-ai/octoprint-nanny-plugin).
 3. Copy your Print Nanny authentication token.
 
 ![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_4.jpg)
