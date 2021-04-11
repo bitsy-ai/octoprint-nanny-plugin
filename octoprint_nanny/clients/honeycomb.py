@@ -3,7 +3,7 @@ import beeline
 from beeline.patch.requests import *
 
 HONEYCOMB_DATASET = os.environ.get(
-    "OCTOPRINT_NANNY_HONEYCOMB_DATASET", "print_nanny_prod"
+    "OCTOPRINT_NANNY_HONEYCOMB_DATASET", "print_nanny_plugin_prod"
 )
 HONEYCOMB_API_KEY = os.environ.get(
     "OCTOPRINT_NANNY_HONEYCOMB_API_KEY", "ef843461ea1d7b2a953fa1b68e9394da"
