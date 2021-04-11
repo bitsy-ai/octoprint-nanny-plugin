@@ -98,9 +98,7 @@ netifaces==0.10.9
 numpy==1.20.2
     # via
     #   OctoPrint-Nanny (setup.py)
-    #   pandas
     #   pyarrow
-    #   tflite-runtime
 octoprint-filecheck==2021.2.23
     # via octoprint
 octoprint-firmwarecheck==2021.2.4
@@ -108,8 +106,6 @@ octoprint-firmwarecheck==2021.2.4
 octoprint==1.5.3
     # via OctoPrint-Nanny (setup.py)
 paho-mqtt==1.5.1
-    # via OctoPrint-Nanny (setup.py)
-pandas==1.2.3
     # via OctoPrint-Nanny (setup.py)
 pathtools==0.1.2
     # via watchdog
@@ -132,15 +128,12 @@ pylru==1.2.0
 pyserial==3.5
     # via octoprint
 python-dateutil==2.8.1
-    # via
-    #   pandas
-    #   print-nanny-client
+    # via print-nanny-client
 pytz==2021.1
     # via
     #   OctoPrint-Nanny (setup.py)
     #   babel
     #   flask-babel
-    #   pandas
 pyyaml==5.4.1
     # via octoprint
 regex==2021.4.4
@@ -167,8 +160,6 @@ six==1.15.0
     #   websocket-client
 statsd==3.3.0
     # via libhoney
-https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl
-    # via OctoPrint-Nanny (setup.py)
 tornado==5.1.1
     # via octoprint
 typing-extensions==3.7.4.3 ; python_version < "3.8"
