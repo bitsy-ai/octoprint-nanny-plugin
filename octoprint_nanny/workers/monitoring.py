@@ -9,7 +9,6 @@ import PIL
 import functools
 from datetime import datetime
 import numpy as np
-import pandas as pd
 import threading
 from enum import Enum
 from uuid import uuid4
@@ -42,6 +41,12 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 import octoprint_nanny.clients.flatbuffers
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
+try:
+    import pandas as pd
+except ImportError:
+    logger.warning(
+        "Imports for offline inference failed! Only online learning will be available. Please install with [offline] extras to enable offline mode."
+    )
 
 
 class MonitoringWorker:
