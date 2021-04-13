@@ -25,7 +25,6 @@ import beeline
 
 from octoprint.events import Events
 
-import octoprint_nanny.types
 from octoprint_nanny.workers.websocket import WebSocketWorker
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
@@ -36,7 +35,13 @@ from octoprint_nanny.predictor import (
 )
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
-from octoprint_nanny.types import PluginEvents, MonitoringModes
+from octoprint_nanny.types import (
+    PluginEvents,
+    MonitoringModes,
+    MonitoringFrame,
+    TelemetryEventEnum,
+    Image,
+)
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import octoprint_nanny.clients.flatbuffers
 
@@ -138,10 +143,10 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
     def _create_active_learning_flatbuffer_msg(
-        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
+        self, monitoring_frame: MonitoringFrame
     ) -> bytes:
         msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_raw,
+            event_type=TelemetryEventEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -149,10 +154,10 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_msg(
-        self, monitoring_frame: octoprint_nanny.types.MonitoringFrame
+        self, monitoring_frame: MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
         return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=octoprint_nanny.types.TelemetryEventEnum.monitoring_frame_post,
+            event_type=TelemetryEventEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -164,8 +169,8 @@ class MonitoringWorker:
 
         pimage = PIL.Image.open(io.BytesIO(image_bytes))
         (w, h) = pimage.size
-        image = octoprint_nanny.types.Image(height=h, width=w, data=image_bytes)
-        monitoring_frame = octoprint_nanny.types.MonitoringFrame(ts=ts, image=image)
+        image = Image(height=h, width=w, data=image_bytes)
+        monitoring_frame = MonitoringFrame(ts=ts, image=image)
 
         msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
         b64_image = base64.b64encode(image_bytes)
@@ -177,9 +182,7 @@ class MonitoringWorker:
         self._mqtt_send_queue.put_nowait(msg)
 
     @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
-    async def _lite_predict_and_calc_health(
-        self, ts
-    ) -> octoprint_nanny.types.MonitoringFrame:
+    async def _lite_predict_and_calc_health(self, ts) -> MonitoringFrame:
 
         image_bytes = await self.load_url_buffer()
         func = functools.partial(
