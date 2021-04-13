@@ -252,7 +252,6 @@ class MQTTClient:
 
     @beeline.traced("MQTTClient.connect")
     def connect(self):
-        # configure tls
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
