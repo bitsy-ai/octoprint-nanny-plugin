@@ -99,6 +99,11 @@ class MQTTClient:
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
         self.client = mqtt.Client(client_id=client_id)
+        self.client.tls_set(
+            ca_certs=self.ca_cert,
+            ciphers="ECDHE-RSA-AES128-GCM-SHA256",
+            tls_version=ssl.PROTOCOL_TLS,
+        )
         logger.info(f"Initializing MQTTClient from {locals()}")
 
         # register callback functions
@@ -248,11 +253,6 @@ class MQTTClient:
     @beeline.traced("MQTTClient.connect")
     def connect(self):
         # configure tls
-        self.client.tls_set(
-            ca_certs=self.ca_cert,
-            ciphers="ECDHE-RSA-AES128-GCM-SHA256",
-            tls_version=ssl.PROTOCOL_TLS,
-        )
         self.client.username_pw_set(
             username="unused",
             password=create_jwt(self.project_id, self.private_key_file, self.algorithm),
