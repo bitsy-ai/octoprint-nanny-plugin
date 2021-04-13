@@ -13,7 +13,7 @@ import PIL
 from octoprint_nanny.utils.visualization import (
     visualize_boxes_and_labels_on_image_array,
 )
-import octoprint_nanny.types
+from octoprint_nanny.types import BoundingBoxPrediction, MonitoringFrame, Image
 import beeline
 
 from typing import Optional, Tuple
@@ -118,7 +118,7 @@ class ThreadLocalPredictor(threading.local):
 
     def percent_intersection(
         self,
-        prediction: octoprint_nanny.types.BoundingBoxPrediction,
+        prediction: BoundingBoxPrediction,
         area_of_interest: np,
     ) -> float:
         """
@@ -159,7 +159,7 @@ class ThreadLocalPredictor(threading.local):
         return aou
 
     def postprocess(
-        self, image: PIL.Image, prediction: octoprint_nanny.types.BoundingBoxPrediction
+        self, image: PIL.Image, prediction: BoundingBoxPrediction
     ) -> np.array:
 
         image_np = np.asarray(image).copy()
@@ -204,8 +204,8 @@ class ThreadLocalPredictor(threading.local):
         return prediction, viz
 
     def min_score_filter(
-        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
-    ) -> octoprint_nanny.types.BoundingBoxPrediction:
+        self, prediction: BoundingBoxPrediction
+    ) -> BoundingBoxPrediction:
         ma = np.ma.masked_greater(prediction.detection_scores, self.min_score_thresh)
         # No detections exceeding threshold
         if isinstance(ma.mask, np.bool_) and ma.mask == False:
@@ -214,7 +214,7 @@ class ThreadLocalPredictor(threading.local):
         detection_boxes = prediction.detection_boxes[ma.mask]
         detection_classes = prediction.detection_classes[ma.mask]
         detection_scores = prediction.detection_scores[ma.mask]
-        return octoprint_nanny.types.BoundingBoxPrediction(
+        return BoundingBoxPrediction(
             detection_boxes=detection_boxes,
             detection_classes=detection_classes,
             detection_scores=detection_scores,
@@ -222,8 +222,8 @@ class ThreadLocalPredictor(threading.local):
         )
 
     def calibration_filter(
-        self, prediction: octoprint_nanny.types.BoundingBoxPrediction
-    ) -> octoprint_nanny.types.BoundingBoxPrediction:
+        self, prediction: BoundingBoxPrediction
+    ) -> BoundingBoxPrediction:
         if self.calibration is not None:
             coords = self.calibration["coords"]
             percent_intersection = self.percent_intersection(prediction, coords)
@@ -237,7 +237,7 @@ class ThreadLocalPredictor(threading.local):
             num_detections = int(np.count_nonzero(included_mask))
 
             return (
-                octoprint_nanny.types.BoundingBoxPrediction(
+                BoundingBoxPrediction(
                     detection_boxes=detection_boxes,
                     detection_scores=detection_scores,
                     detection_classes=detection_classes,
@@ -247,7 +247,7 @@ class ThreadLocalPredictor(threading.local):
             )
         return prediction, None
 
-    def predict(self, image: PIL.Image) -> octoprint_nanny.types.BoundingBoxPrediction:
+    def predict(self, image: PIL.Image) -> BoundingBoxPrediction:
         tensor = self.preprocess(image)
 
         self.tflite_interpreter.set_tensor(self.input_details[0]["index"], tensor)
@@ -266,7 +266,7 @@ class ThreadLocalPredictor(threading.local):
         score_data = np.squeeze(score_data, axis=0)
         num_detections = np.squeeze(num_detections, axis=0)
 
-        return octoprint_nanny.types.BoundingBoxPrediction(
+        return BoundingBoxPrediction(
             detection_boxes=box_data,
             detection_classes=class_data,
             detection_scores=score_data,
@@ -277,9 +277,7 @@ class ThreadLocalPredictor(threading.local):
 PREDICTOR = None
 
 
-def explode_prediction_df(
-    ts: int, prediction: octoprint_nanny.types.BoundingBoxPrediction
-) -> pd.DataFrame:
+def explode_prediction_df(ts: int, prediction: BoundingBoxPrediction) -> pd.DataFrame:
 
     data = {"frame_id": ts, **asdict(prediction)}
     df = pd.DataFrame.from_records([data])
@@ -331,9 +329,7 @@ def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
     return True
 
 
-def predict_threadsafe(
-    ts: int, image_bytes: bytes, **kwargs
-) -> octoprint_nanny.types.MonitoringFrame:
+def predict_threadsafe(ts: int, image_bytes: bytes, **kwargs) -> MonitoringFrame:
 
     global PREDICTOR
     if PREDICTOR is None:
@@ -341,7 +337,7 @@ def predict_threadsafe(
     image = PREDICTOR.load_image(image_bytes)
     # NOTE: PIL.Image.size returns (w, h) where most TensorFlow interfaces expect (h, w)
     (ow, oh) = image.size
-    original_frame = octoprint_nanny.types.Image(height=oh, width=ow, data=image_bytes)
+    original_frame = Image(height=oh, width=ow, data=image_bytes)
 
     prediction = PREDICTOR.predict(image)
 
@@ -353,12 +349,10 @@ def predict_threadsafe(
         viz_buffer.name = "annotated_image.jpg"
         viz_image.save(viz_buffer, format="JPEG")
 
-        post_frame = octoprint_nanny.types.Image(
-            height=vh, width=vw, data=viz_buffer.getvalue()
-        )
+        post_frame = Image(height=vh, width=vw, data=viz_buffer.getvalue())
     else:
         post_frame = None
 
-    return octoprint_nanny.types.MonitoringFrame(
+    return MonitoringFrame(
         ts=ts, image=post_frame or original_frame, bounding_boxes=prediction
     )
