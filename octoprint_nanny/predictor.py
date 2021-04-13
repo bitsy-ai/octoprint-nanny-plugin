@@ -277,7 +277,7 @@ class ThreadLocalPredictor(threading.local):
 PREDICTOR = None
 
 
-def explode_prediction_df(ts: int, prediction: BoundingBoxPrediction) -> pd.DataFrame:
+def explode_prediction_df(ts: int, prediction: BoundingBoxPrediction):
 
     data = {"frame_id": ts, **asdict(prediction)}
     df = pd.DataFrame.from_records([data])
@@ -298,7 +298,7 @@ def explode_prediction_df(ts: int, prediction: BoundingBoxPrediction) -> pd.Data
     return df.set_index(["frame_id", "label"])
 
 
-def print_is_healthy(df: pd.DataFrame, degree: int = 1) -> float:
+def print_is_healthy(df, degree: int = 1) -> float:
     if df.empty:
         return True
     df = pd.concat(

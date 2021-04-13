@@ -14,7 +14,6 @@ from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum,
 )
 
-import octoprint_nanny.types
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -22,6 +21,7 @@ from octoprint_nanny.types import (
     MonitoringModes,
     TrackedOctoPrintEvents,
     RemoteCommands,
+    Metadata,
 )
 import print_nanny_client
 
@@ -337,7 +337,7 @@ class PluginSettingsMemoize:
     @property
     def metadata(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
-        return octoprint_nanny.types.Metadata(
+        return Metadata(
             user_id=self.user_id,
             device_id=self.device_id,
             device_cloudiot_id=self.device_cloudiot_id,
