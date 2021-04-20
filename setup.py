@@ -166,7 +166,7 @@ plugin_requires = [
     "flatbuffers==1.12",
 ] + plugin_requires_third_party_wheels
 
-offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels
+offline_requires = ["pandas==1.2.4"] + offline_requires_third_party_wheels
 
 dev_requires = [
     "pytest",
