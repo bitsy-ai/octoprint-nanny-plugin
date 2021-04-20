@@ -18,6 +18,7 @@ except:
     logger.warning("Offline dependencies not found")
 
 
+@pytest.mark.offline
 def test_area_of_intersection_overlap():
     predictor = ThreadLocalPredictor()
     detection_boxes = np.array([[0.3, 0.3, 0.9, 0.9]])
@@ -39,6 +40,7 @@ def test_area_of_intersection_overlap():
     np.testing.assert_almost_equal(percent_area[0], expected)
 
 
+@pytest.mark.offline
 def test_area_of_intersection_no_overlap_0():
     predictor = ThreadLocalPredictor()
     detection_boxes = np.array([[0.3, 0.3, 0.9, 0.9]])
@@ -61,6 +63,7 @@ def test_area_of_intersection_no_overlap_0():
     np.testing.assert_almost_equal(percent_area[0], expected)
 
 
+@pytest.mark.offline
 def test_area_of_intersection_no_overlap_1():
     predictor = ThreadLocalPredictor()
     detection_boxes = np.array([[0.5, 0.2, 0.9, 0.4]])
@@ -83,6 +86,7 @@ def test_area_of_intersection_no_overlap_1():
     np.testing.assert_almost_equal(percent_area[0], expected)
 
 
+@pytest.mark.offline
 def test_area_of_intersection_prediction_contained_0():
 
     predictor = ThreadLocalPredictor()
@@ -106,6 +110,7 @@ def test_area_of_intersection_prediction_contained_0():
     np.testing.assert_almost_equal(percent_area[0], expected)
 
 
+@pytest.mark.offline
 def test_print_health_trend_increasing():
     num_detections = 40
     prediction1 = BoundingBoxPrediction(
@@ -126,6 +131,7 @@ def test_print_health_trend_increasing():
     assert print_is_healthy(df) == True
 
 
+@pytest.mark.offline
 def test_print_health_trend_decreasing():
     num_detections = 40
     classes = np.concatenate(
@@ -167,6 +173,7 @@ def test_print_health_trend_decreasing():
     assert print_is_healthy(df) == False
 
 
+@pytest.mark.offline
 def test_print_health_trend_initial():
     num_detections = 40
     prediction = BoundingBoxPrediction(

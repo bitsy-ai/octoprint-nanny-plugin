@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Installer, Unit Tests, Coverage
+name: Online Installer, Unit Tests, Coverage
 
 # Controls when the action will run. 
 on:
@@ -37,7 +37,7 @@ jobs:
       - name: Test installation
         run: |
           source .venv/bin/activate
-          pip install -e .[offline]
+          pip install -e .
       - name: Install test dependencies
         run: |
           source .venv/bin/activate
