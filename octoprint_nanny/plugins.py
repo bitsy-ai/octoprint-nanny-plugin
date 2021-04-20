@@ -1,5 +1,4 @@
 import asyncio
-import aiofiles
 import logging
 import base64
 import concurrent
@@ -268,19 +267,19 @@ class OctoPrintNannyPlugin(
             self.get_plugin_data_folder(), "private_key.pem"
         )
 
-        async with aiofiles.open(pubkey_filename, "w+") as f:
-            await f.write(device.public_key)
+        with open(pubkey_filename, "w+") as f:
+            f.write(device.public_key)
 
-        async with aiofiles.open(pubkey_filename, "rb") as f:
+        with open(pubkey_filename, "rb") as f:
             content = await f.read()
             if hashlib.sha256(content).hexdigest() != device.public_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        async with aiofiles.open(privkey_filename, "w+") as f:
-            await f.write(device.private_key)
-        async with aiofiles.open(privkey_filename, "rb") as f:
+        with open(privkey_filename, "w+") as f:
+            f.write(device.private_key)
+        with open(privkey_filename, "rb") as f:
             content = await f.read()
             if hashlib.sha256(content).hexdigest() != device.private_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
@@ -324,10 +323,10 @@ class OctoPrintNannyPlugin(
                 backup_ca = await res.read()
                 logger.info(f"Finished downloading backup root CA from {backup_ca_url}")
 
-        async with aiofiles.open(primary_root_ca_filename, "wb+") as f:
-            await f.write(root_ca)
-        async with aiofiles.open(backup_root_ca_filename, "wb+") as f:
-            await f.write(backup_ca)
+        with open(primary_root_ca_filename, "wb+") as f:
+            f.write(root_ca)
+        with open(backup_root_ca_filename, "wb+") as f:
+            f.write(backup_ca)
 
         self._settings.set(["ca_cert"], primary_root_ca_filename)
         self._settings.set(["backup_ca_cert"], backup_root_ca_filename)
@@ -346,10 +345,10 @@ class OctoPrintNannyPlugin(
 
         backup_ca_filename = os.path.join(ca_path, "backup_ca.pem")
 
-        async with aiofiles.open(primary_ca_filename, "w+") as f:
-            await f.write(device.ca_certs["primary"])
+        with open(primary_ca_filename, "w+") as f:
+            f.write(device.ca_certs["primary"])
 
-        async with aiofiles.open(primary_ca_filename, "rb") as f:
+        with open(primary_ca_filename, "rb") as f:
             content = await f.read()
 
             if (
@@ -360,10 +359,10 @@ class OctoPrintNannyPlugin(
                     f"The checksum of file {primary_ca_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        async with aiofiles.open(backup_ca_filename, "w+") as f:
-            await f.write(device.ca_certs["backup"])
+        with open(backup_ca_filename, "w+") as f:
+            f.write(device.ca_certs["backup"])
 
-        async with aiofiles.open(backup_ca_filename, "rb") as f:
+        with open(backup_ca_filename, "rb") as f:
             content = await f.read()
             if (
                 hashlib.sha256(content).hexdigest()
