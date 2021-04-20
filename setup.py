@@ -207,10 +207,14 @@ plugin_python_requires = ">=3,<4"  # Python 3+
 
 dependency_links = []
 
+install_requires = ["octoprint>=1.5.3"]
+
 additional_setup_parameters = {
     "dependency_links": dependency_links,
     "python_requires": plugin_python_requires,
+    "install_requires": install_requires,
 }
+
 
 ########################################################################################################################
 

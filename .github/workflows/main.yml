@@ -32,12 +32,12 @@ jobs:
         run: |
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install --upgrade setuptools wheel twine octoprint
+          pip install --upgrade setuptools wheel twine octoprint pip-tools
         # Runs a set of commands using the runners shell
       - name: Test installation
         run: |
           source .venv/bin/activate
-          pip install e .
+          pip install e .[offline]
       - name: Install test dependencies
         run: |
           source .venv/bin/activate
