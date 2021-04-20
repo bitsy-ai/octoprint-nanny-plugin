@@ -149,6 +149,7 @@ else:
     sys.exit(1)
 
 plugin_requires = [
+    "aiofiles",
     "octoprint",
     "numpy",
     "pillow",
