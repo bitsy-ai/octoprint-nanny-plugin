@@ -1,8 +1,8 @@
 import pytest
+import logging
 import os
 from PIL import Image as PImage
 import numpy as np
-import pandas as pd
 from octoprint_nanny.types import BoundingBoxPrediction
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
@@ -10,6 +10,12 @@ from octoprint_nanny.predictor import (
     print_is_healthy,
     explode_prediction_df,
 )
+
+logger = logging.getLogger(__name__)
+try:
+    import pandas as pd
+except:
+    logger.warning("Offline dependencies not found")
 
 
 def test_area_of_intersection_overlap():
