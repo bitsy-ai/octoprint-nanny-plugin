@@ -27,25 +27,20 @@ jobs:
       - name: Set up Python virtualenv
         run: |
           python3 -m venv .venv
-          source .venv/bin/activate
       - name: Install dependencies
         run: |
-          source .venv/bin/activate
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel twine octoprint pip-tools
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install --upgrade setuptools wheel twine octoprint pip-tools
         # Runs a set of commands using the runners shell
       - name: Test installation
         run: |
-          source .venv/bin/activate
-          python -m pip --no-cache-dir install .
+          .venv/bin/pip install --no-cache-dir install .
       - name: Install test dependencies
         run: |
-          source .venv/bin/activate
-          pip install -r dev-requirements.txt
+          .venv/bin/pip install -r dev-requirements.txt
       - name: Generate code coverage report
         run: |
-          source .venv/bin/activate
-          make ci-coverage
+          source .venv/bin/activate && make ci-coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
@@ -58,7 +53,6 @@ jobs:
           fail_ci_if_error: false
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
-      - name: Run offline / unit tests
+      - name: Run online / unit tests
         run: |
-          source .venv/bin/activate
-          make ci-test
+          source .venv/bin/activate && make ci-test
