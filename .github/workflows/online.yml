@@ -37,7 +37,7 @@ jobs:
       - name: Test installation
         run: |
           source .venv/bin/activate
-          pip install -e .
+          pip install --no-cache-dir -e .
       - name: Install test dependencies
         run: |
           source .venv/bin/activate
