@@ -6,8 +6,20 @@
 #
 --extra-index-url https://www.piwheels.org/simple
 
+aiohttp==3.7.4.post0
+    # via
+    #   OctoPrint-Nanny (setup.py)
+    #   print-nanny-client
+aioprocessing==1.1.0
+    # via OctoPrint-Nanny (setup.py)
+async-timeout==3.0.1
+    # via aiohttp
+attrs==20.3.0
+    # via aiohttp
 babel==2.9.0
     # via flask-babel
+backoff==1.10.0
+    # via OctoPrint-Nanny (setup.py)
 blinker==1.4
     # via octoprint
 cachelib==0.1.1
@@ -17,7 +29,9 @@ certifi==2020.12.5
     #   requests
     #   sentry-sdk
 chardet==4.0.0
-    # via requests
+    # via
+    #   aiohttp
+    #   requests
 click==7.1.2
     # via
     #   flask
@@ -40,12 +54,18 @@ flask==1.1.2
     #   flask-babel
     #   flask-login
     #   octoprint
+flatbuffers==1.12
+    # via OctoPrint-Nanny (setup.py)
 frozendict==1.2
     # via octoprint
 future==0.18.2
     # via octoprint
+honeycomb-beeline==2.16.2
+    # via OctoPrint-Nanny (setup.py)
 idna==2.10
-    # via requests
+    # via
+    #   requests
+    #   yarl
 ifaddr==0.1.7
     # via zeroconf
 itsdangerous==1.1.0
@@ -57,36 +77,59 @@ jinja2==2.11.3
     #   flask
     #   flask-babel
     #   octoprint
+libhoney==1.10.0
+    # via honeycomb-beeline
 markdown==3.1.1
     # via octoprint
 markupsafe==1.1.1
     # via
     #   jinja2
     #   octoprint
+multidict==5.1.0
+    # via
+    #   aiohttp
+    #   yarl
 netaddr==0.8.0
     # via octoprint
 netifaces==0.10.9
     # via octoprint
+numpy==1.20.2
+    # via
+    #   OctoPrint-Nanny (setup.py)
+    #   pyarrow
 octoprint-filecheck==2021.2.23
     # via octoprint
 octoprint-firmwarecheck==2021.2.4
     # via octoprint
 octoprint==1.5.3
     # via OctoPrint-Nanny (setup.py)
+paho-mqtt==1.5.1
+    # via OctoPrint-Nanny (setup.py)
 pathtools==0.1.2
     # via watchdog
+pillow==8.2.0
+    # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
+print-nanny-client==0.5.0
+    # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
+https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl
+    # via OctoPrint-Nanny (setup.py)
 pyasn1==0.4.8
     # via rsa
+pyjwt==2.0.1
+    # via OctoPrint-Nanny (setup.py)
 pylru==1.2.0
     # via octoprint
 pyserial==3.5
     # via octoprint
+python-dateutil==2.8.1
+    # via print-nanny-client
 pytz==2021.1
     # via
+    #   OctoPrint-Nanny (setup.py)
     #   babel
     #   flask-babel
 pyyaml==5.4.1
@@ -94,7 +137,9 @@ pyyaml==5.4.1
 regex==2021.4.4
     # via octoprint
 requests==2.25.1
-    # via octoprint
+    # via
+    #   libhoney
+    #   octoprint
 rsa==4.0
     # via octoprint
 sarge==0.1.5post0
@@ -106,13 +151,25 @@ sentry-sdk==0.20.3
 sgmllib3k==1.0.0
     # via feedparser
 six==1.15.0
-    # via websocket-client
+    # via
+    #   libhoney
+    #   print-nanny-client
+    #   python-dateutil
+    #   websocket-client
+statsd==3.3.0
+    # via libhoney
 tornado==5.1.1
     # via octoprint
+typing-extensions==3.7.4.3 ; python_version < "3.8"
+    # via
+    #   OctoPrint-Nanny (setup.py)
+    #   aiohttp
+    #   yarl
 unidecode==0.4.21
     # via octoprint
 urllib3==1.26.4
     # via
+    #   print-nanny-client
     #   requests
     #   sentry-sdk
 watchdog==0.10.4
@@ -121,12 +178,18 @@ webassets==2.0
     # via flask-assets
 websocket-client==0.58.0
     # via octoprint
+websockets==8.1
+    # via OctoPrint-Nanny (setup.py)
 werkzeug==1.0.1
     # via
     #   flask
     #   octoprint
 wrapt==1.12.1
-    # via octoprint
+    # via
+    #   honeycomb-beeline
+    #   octoprint
+yarl==1.6.3
+    # via aiohttp
 zeroconf==0.24.5
     # via octoprint
 
