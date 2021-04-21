@@ -76,11 +76,17 @@ octoprint-prod:
 test:
 	pytest -p no:warnings --log-level=INFO
 
-ci-test:
+offline-ci-test:
 	pytest -p no:warnings --log-level=INFO -m "not webapp"
 
-ci-coverage:
+online-ci-test:
+	pytest -p no:warnings --log-level=INFO -m "not webapp" -m "not offline"
+
+offline-ci-coverage:
 	pytest --cov=./ --cov-report=xml -m "not webapp"
+
+online-ci-coverage:
+	pytest --cov=./ --cov-report=xml -m "not webapp" -m "not offline"
 
 
 install-git-hooks:

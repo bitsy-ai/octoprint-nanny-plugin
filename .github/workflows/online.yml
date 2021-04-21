@@ -40,7 +40,7 @@ jobs:
           .venv/bin/pip install -r dev-requirements.txt
       - name: Generate code coverage report
         run: |
-          source .venv/bin/activate && make ci-coverage
+          source .venv/bin/activate && make online-ci-coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
@@ -55,4 +55,4 @@ jobs:
           verbose: true
       - name: Run online / unit tests
         run: |
-          source .venv/bin/activate && make ci-test
+          source .venv/bin/activate && make online-ci-test
