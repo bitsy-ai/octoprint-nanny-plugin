@@ -53,7 +53,3 @@ jobs:
           fail_ci_if_error: false
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
-          name: Online Learning Mode Coverage Report
-      - name: Run online / unit tests
-        run: |
-          source .venv/bin/activate && make online-ci-test
