@@ -696,10 +696,10 @@ class OctoPrintNannyPlugin(
                 current=self._plugin_version,
                 # update method: pip
                 pip="https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/{target_version}.zip",
-                stable_branch=dict(name="Stable", branch="main", commitish=["main"]),
+                stable_branch=dict(name="Stable Channel", branch="main", commitish=["main"]),
                 prerelease_branches=[
                     dict(
-                        name="Nightly Build",
+                        name="Prerelease Channel",
                         branch="devel",
                         commitish=["main", "devel"],
                     )

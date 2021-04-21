@@ -1,7 +1,10 @@
 on:
   push:
     branches:
-      - nightly
+      - main
+  pull_request:
+    # Only following types are handled by the action, but one can default to all as well
+    types: [opened, reopened, synchronize]
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   update_release_draft:
