@@ -299,7 +299,7 @@ def explode_prediction_df(ts: int, prediction: BoundingBoxPrediction):
 
 
 def print_is_healthy(df, degree: int = 1) -> float:
-    if df.empty:
+    if df is None:
         return True
     df = pd.concat(
         {
