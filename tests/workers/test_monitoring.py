@@ -22,10 +22,11 @@ from print_nanny_client.telemetry_event import (
 
 
 @pytest.mark.asyncio
+@pytest.mark.offline
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
-async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
+async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
     mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
@@ -41,7 +42,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.50
     plugin.settings.webcam_upload = True
-    plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.monitoring_mode = MonitoringModes.offline
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
@@ -79,10 +80,11 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_uncalibrated(
 
 
 @pytest.mark.asyncio
+@pytest.mark.offline
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
-async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
+async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
     mock_base64,
     mock_events_enum,
     mock_get,
@@ -103,7 +105,7 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.50
     plugin.settings.webcam_upload = True
-    plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.monitoring_mode = MonitoringModes.offline
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
@@ -141,10 +143,11 @@ async def test_lite_mode_webcam_enabled_with_prediction_results_calibrated(
 
 
 @pytest.mark.asyncio
+@pytest.mark.offline
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
-async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
+async def test_offline_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
@@ -161,7 +164,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     plugin.settings.metadata = metadata
 
     plugin.settings.webcam_upload = True
-    plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.monitoring_mode = MonitoringModes.offline
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
@@ -183,10 +186,11 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_uncalibrated(
 
 
 @pytest.mark.asyncio
+@pytest.mark.offline
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
-async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
+async def test_offline_mode_webcam_enabled_zero_prediction_results_calibrated(
     mock_base64,
     mock_events_enum,
     mock_get,
@@ -209,7 +213,7 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
     plugin.settings.metadata = metadata
 
     plugin.settings.webcam_upload = True
-    plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.monitoring_mode = MonitoringModes.offline
 
     halt = threading.Event()
     predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
@@ -231,10 +235,11 @@ async def test_lite_mode_webcam_enabled_zero_prediction_results_calibrated(
 
 
 @pytest.mark.asyncio
+@pytest.mark.offline
 @patch("aiohttp.ClientSession.get")
 @patch("octoprint_nanny.workers.monitoring.Events")
 @patch("octoprint_nanny.workers.monitoring.base64")
-async def test_lite_mode_webcam_disabled(
+async def test_offline_mode_webcam_disabled(
     mock_base64, mock_events_enum, mock_get, mock_response, mocker, metadata
 ):
     mock_get.return_value.__aenter__.return_value = mock_response
@@ -251,7 +256,7 @@ async def test_lite_mode_webcam_disabled(
     plugin.settings.monitoring_frames_per_minute = 30
     plugin.settings.min_score_thresh = 0.50
     plugin.settings.webcam_upload = False
-    plugin.settings.monitoring_mode = MonitoringModes.LITE
+    plugin.settings.monitoring_mode = MonitoringModes.offline
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
