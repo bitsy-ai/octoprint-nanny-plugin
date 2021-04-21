@@ -1,4 +1,3 @@
-import aiofiles
 import aiohttp
 import aioprocessing
 import asyncio
@@ -371,13 +370,13 @@ class MQTTSubscriberWorker:
 
         async def _download(session, url, filename):
             async with session.get(url) as res:
-                async with aiofiles.open(filename, "w+") as f:
+                with open(filename, "w+") as f:
                     content = await res.text()
-                    return await f.write(content)
+                    return f.write(content)
 
         async def _data_file(content, filename):
-            async with aiofiles.open(filename, "w+") as f:
-                return await f.write(content)
+            with open(filename, "w+") as f:
+                return f.write(content)
 
         async with aiohttp.ClientSession() as session:
             await _download(

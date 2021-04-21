@@ -12,12 +12,10 @@ from print_nanny_client.telemetry_event import (
     TelemetryEvent,
     Metadata,
 )
-from octoprint_nanny.types import (
-    MonitoringFrame,
-)
+from octoprint_nanny.types import MonitoringFrame as MonitoringFrameT
 
 
-def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrame) -> bytes:
+def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrameT) -> bytes:
     if monitoring_frame.bounding_boxes is None:
         return
 
@@ -56,7 +54,7 @@ def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrame) -> 
 def build_telemetry_event_message(
     event_type: int,
     metadata: Metadata,
-    monitoring_frame: MonitoringFrame,
+    monitoring_frame: MonitoringFrameT,
 ) -> bytes:
     builder = flatbuffers.Builder(1024)
 

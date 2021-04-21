@@ -38,10 +38,7 @@ async def test_handle_config_update(mocker):
     writer_mock.write.return_value = asyncio.Future()
     writer_mock.write.return_value.set_result(MagicMock())
     open_mock = MagicMock()
-    open_mock.__aenter__.return_value = writer_mock
-    mock_aiofiles = mocker.patch(
-        "octoprint_nanny.workers.mqtt.aiofiles.open", return_value=open_mock
-    )
+    mock_open = mocker.patch("octoprint_nanny.workers.mqtt.open")
 
     topic = "fake-topic"
 
@@ -62,11 +59,4 @@ async def test_handle_config_update(mocker):
     }
     await subscriber_worker._handle_config_update(topic, message)
 
-    mock_aiofiles.assert_has_calls(
-        [
-            mocker.call(os.path.join(data_folder, "labels.txt"), "w+"),
-            mocker.call(os.path.join(data_folder, "model.tflite"), "w+"),
-            mocker.call(os.path.join(data_folder, "version.txt"), "w+"),
-            mocker.call(os.path.join(data_folder, "metadata.json"), "w+"),
-        ]
-    )
+    assert mock_open.called

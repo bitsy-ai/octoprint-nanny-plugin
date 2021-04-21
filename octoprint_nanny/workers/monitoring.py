@@ -95,7 +95,7 @@ class MonitoringWorker:
         self._honeycomb_tracer.add_global_context(trace_context)
 
         self._halt = halt
-        self._df = pd.DataFrame()
+        self._df = None
 
     @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
@@ -132,6 +132,8 @@ class MonitoringWorker:
 
     @beeline.traced(name="MonitoringWorker.update_dataframe")
     def update_dataframe(self, ts, prediction):
+        if self._df is None:
+            self._df = pd.DataFrame()
         self._df = self._df.append(explode_prediction_df(ts, prediction))
         return self._df
 

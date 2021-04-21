@@ -6,8 +6,6 @@
 #
 --extra-index-url https://www.piwheels.org/simple
 
-aiofiles==0.6.0
-    # via OctoPrint-Nanny (setup.py)
 aiohttp==3.7.4.post0
     # via
     #   OctoPrint-Nanny (setup.py)
@@ -113,7 +111,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.5.0-dev74
+print-nanny-client==0.5.0
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
