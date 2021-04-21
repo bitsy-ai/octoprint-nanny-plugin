@@ -700,8 +700,8 @@ class OctoPrintNannyPlugin(
                 prerelease_branches=[
                     dict(
                         name="Nightly Build",
-                        branch="nightly",
-                        commitish=["main", "nightly"],
+                        branch="devel",
+                        commitish=["main", "devel"],
                     )
                 ],
             ),
