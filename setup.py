@@ -154,18 +154,18 @@ plugin_requires = [
     "pillow",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
-    "aiohttp",
-    "print-nanny-client==0.5.0",
+    "aiohttp>=3.7.4",
+    "print-nanny-client==0.5.1",
     "websockets",
-    "backoff",
-    "aioprocessing",
-    "pyjwt",
-    "paho-mqtt",
+    "backoff>=1.10.0",
+    "aioprocessing>=1.1.0",
+    "pyjwt>=2.0.1",
+    "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
     "flatbuffers==1.12",
 ] + plugin_requires_third_party_wheels
 
-offline_requires = ["pandas==1.2.4"] + offline_requires_third_party_wheels
+offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels
 
 dev_requires = [
     "pytest",
@@ -210,7 +210,6 @@ additional_setup_parameters = {
     "dependency_links": dependency_links,
     "python_requires": plugin_python_requires,
 }
-
 
 ########################################################################################################################
 
