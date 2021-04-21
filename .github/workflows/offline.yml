@@ -53,7 +53,7 @@ jobs:
           fail_ci_if_error: false
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
-          name: "Offline Mode Coverage Report"
+          name: Offline Mode Coverage Report
       - name: Run offline / unit tests
         run: |
           source .venv/bin/activate && make offline-ci-test
