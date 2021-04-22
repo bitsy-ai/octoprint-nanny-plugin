@@ -238,10 +238,11 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_fingerprint"], None)
         self._settings.set(["device_id"], None)
         self._settings.set(["device_serial"], None)
-        self._settings.set(["device_registered"], None)
         self._settings.set(["device_manage_url"], None)
         self._settings.set(["device_cloudiot_name"], None)
         self._settings.set(["device_cloudiot_id"], None)
+        self._settings.set(["device_registered"], False)
+        self._settings.save()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
