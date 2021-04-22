@@ -292,7 +292,7 @@ class OctoPrintNannyPlugin(
             f.write(device.public_key)
 
         with open(pubkey_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if hashlib.sha256(content).hexdigest() != device.public_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
@@ -301,7 +301,7 @@ class OctoPrintNannyPlugin(
         with open(privkey_filename, "w+") as f:
             f.write(device.private_key)
         with open(privkey_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if hashlib.sha256(content).hexdigest() != device.private_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
@@ -370,7 +370,7 @@ class OctoPrintNannyPlugin(
             f.write(device.ca_certs["primary"])
 
         with open(primary_ca_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
 
             if (
                 hashlib.sha256(content).hexdigest()
@@ -384,7 +384,7 @@ class OctoPrintNannyPlugin(
             f.write(device.ca_certs["backup"])
 
         with open(backup_ca_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if (
                 hashlib.sha256(content).hexdigest()
                 != device.ca_certs["backup_checksum"]
