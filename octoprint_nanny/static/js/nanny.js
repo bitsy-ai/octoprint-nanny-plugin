@@ -205,11 +205,6 @@ $(function () {
 
         self.deviceAlertClass = ko.observable();
         self.deviceAlerts = {
-            'warning1': {
-                header: 'Wait!',
-                text: 'You need to test your auth token before this device can be provisioned. 👆',
-                class: 'alert'
-            },
             'nameError': {
                 header: 'Hey, choose a name!',
                 text: 'Pick a nickname for this device and enter it above.',
@@ -226,8 +221,8 @@ $(function () {
                 class: 'alert-success'
             }
         };
-        self.deviceAlertHeader = ko.observable(self.deviceAlerts.warning1.header);
-        self.deviceAlertText = ko.observable(self.deviceAlerts.warning1.text);
+        self.deviceAlertHeader = ko.observable();
+        self.deviceAlertText = ko.observable();
 
         self.existingDeviceAlertClass = ko.observable();
         self.existingDeviceAlerts = {

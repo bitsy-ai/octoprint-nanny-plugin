@@ -231,6 +231,20 @@ class OctoPrintNannyPlugin(
             "print_nanny_client_version": print_nanny_client.__version__,
         }
 
+    def _reset_octoprint_device(self):
+        logger.warning("Resetting local device settings")
+        self._settings.set(["device_private_key"], None)
+        self._settings.set(["device_public_key"], None)
+        self._settings.set(["device_fingerprint"], None)
+        self._settings.set(["device_id"], None)
+        self._settings.set(["device_serial"], None)
+        self._settings.set(["device_manage_url"], None)
+        self._settings.set(["device_cloudiot_name"], None)
+        self._settings.set(["device_cloudiot_id"], None)
+        self._settings.set(["device_registered"], False)
+        self._settings.save()
+        self._worker_manager.reset_device_settings_state()
+
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
         device_id = self.get_setting("device_id")
@@ -242,11 +256,20 @@ class OctoPrintNannyPlugin(
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
         id_map = {"octoprint": {}, "octoprint_nanny": {}}
         for profile_id, profile in printer_profiles.items():
-            created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
-                profile, device_id
-            )
-            id_map["octoprint"][profile_id] = created_profile.id
-            id_map["octoprint_nanny"][created_profile.id] = profile_id
+            try:
+                created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
+                    profile, device_id
+                )
+                id_map["octoprint"][profile_id] = created_profile.id
+                id_map["octoprint_nanny"][created_profile.id] = profile_id
+            except print_nanny_client.exceptions.ApiException as e:
+                # octoprint device was deleted remotely
+                if e.status == 400:
+                    res = json.loads(e.body)
+                    if res.get("octoprint_device") is not None:
+                        self._reset_octoprint_device()
+                        break
+                raise e
 
         logger.info(f"Synced {len(printer_profiles)} printer_profile")
 
@@ -271,7 +294,7 @@ class OctoPrintNannyPlugin(
             f.write(device.public_key)
 
         with open(pubkey_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if hashlib.sha256(content).hexdigest() != device.public_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
@@ -280,7 +303,7 @@ class OctoPrintNannyPlugin(
         with open(privkey_filename, "w+") as f:
             f.write(device.private_key)
         with open(privkey_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if hashlib.sha256(content).hexdigest() != device.private_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
@@ -349,7 +372,7 @@ class OctoPrintNannyPlugin(
             f.write(device.ca_certs["primary"])
 
         with open(primary_ca_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
 
             if (
                 hashlib.sha256(content).hexdigest()
@@ -363,7 +386,7 @@ class OctoPrintNannyPlugin(
             f.write(device.ca_certs["backup"])
 
         with open(backup_ca_filename, "rb") as f:
-            content = await f.read()
+            content = f.read()
             if (
                 hashlib.sha256(content).hexdigest()
                 != device.ca_certs["backup_checksum"]
