@@ -24,9 +24,10 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
-def configure_logger(logger):
+def configure_logger(logger, logfile_path):
+
     file_logging_handler = CleaningTimedRotatingFileHandler(
-        os.path.expanduser("~/.octoprint/logs/plugin_octoprint_nanny.log"),
+        logfile_path,
         when="D",
         backupCount=7,
     )
@@ -38,9 +39,8 @@ def configure_logger(logger):
     file_logging_handler.setLevel(logging.DEBUG)
 
     logger.addHandler(file_logging_handler)
+    logger.info(f"Logger file handler added {file_logging_handler}")
 
-
-configure_logger(logger)
 
 import beeline
 import aiohttp.client_exceptions
@@ -584,7 +584,8 @@ class OctoPrintNannyPlugin(
         logger.info("OctoPrint Nanny starting up")
 
     def on_after_startup(self, *args, **kwargs):
-        logger.info("OctoPrint Nanny startup complete")
+        logger.info("OctoPrint Nanny startup complete, configuring logger")
+        configure_logger(logger, self.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
         # shutdown event is handled in .on_shutdown
