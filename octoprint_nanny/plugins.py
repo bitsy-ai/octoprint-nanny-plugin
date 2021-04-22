@@ -232,6 +232,7 @@ class OctoPrintNannyPlugin(
         }
 
     def _reset_octoprint_device(self):
+        logger.warning("Resetting local device settings")
         self._settings.set(["device_private_key"], None)
         self._settings.set(["device_public_key"], None)
         self._settings.set(["device_fingerprint"], None)
@@ -255,15 +256,17 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             try:
                 created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
-                profile, device_id
+                    profile, device_id
                 )
                 id_map["octoprint"][profile_id] = created_profile.id
                 id_map["octoprint_nanny"][created_profile.id] = profile_id
             except print_nanny_client.exceptions.ApiException as e:
                 # octoprint device was deleted remotely
-                if e.status == 400 and e.body.get("octoprint_device" is not None):
-                    self._reset_octoprint_device()
-                    break
+                if e.status == 400:
+                    res = json.loads(e.body)
+                    if res.get("octoprint_device") is not None:
+                        self._reset_octoprint_device()
+                        break
                 raise e
 
         logger.info(f"Synced {len(printer_profiles)} printer_profile")
