@@ -243,6 +243,7 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_cloudiot_id"], None)
         self._settings.set(["device_registered"], False)
         self._settings.save()
+        self._worker_manager.reset_device_settings_state()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):

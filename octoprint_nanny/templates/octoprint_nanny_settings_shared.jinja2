@@ -47,7 +47,7 @@
                 <div class="alert alert-block" data-bind="css: authAlertClass">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 
-                    <h3><span data-bind="text: authAlertHeader"></span></h3> 
+                    <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
                     <span data-bind="text: authAlertText"></span>
                 </div>
 
@@ -107,10 +107,10 @@
                         type="text" />
                 </div>
             </div>
-            <div class="alert alert-block" data-bind="css: deviceAlertClass">
+            <div class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
-                <h3><span data-bind="text: deviceAlertHeader"></span></h3> 
+                <h4 class="alert-heading"><span data-bind="text: deviceAlertHeader"></span></h4> 
                 <span data-bind="text: deviceAlertText"></span>
             </div>
 
@@ -120,6 +120,7 @@
                 class="btn btn-primary btn-large">
                 Start Registration
             </button>
+            <br>
             <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
                 <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
             </div>  
@@ -187,7 +188,7 @@
             <div class="alert alert-block" data-bind="css: authAlertClass">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
-                <h3><span data-bind="text: authAlertHeader"></span></h3> 
+                <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
                 <span data-bind="text: authAlertText"></span>
             </div>
             <button data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
