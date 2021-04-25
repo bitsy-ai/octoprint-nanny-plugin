@@ -117,7 +117,7 @@ class RestAPIClient:
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = UsersApi(api_client=api_client)
-            user = await api_instance.users_me_retrieve()
+            user = await api_instance.api_users_me_retrieve()
             return user
 
     @beeline.traced("RestAPIClient.create_octoprint_event")
