@@ -173,7 +173,7 @@ class OctoPrintNannyPlugin(
         'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
         """
         return {
-            x.split(":")[0].strip(): x.split(":")[1].strip().lowercase()
+            x.split(":")[0].strip(): x.split(":")[1].strip().lower()
             for x in open("/proc/cpuinfo").read().split("\n")
             if len(x.split(":")) > 1
         }
@@ -194,7 +194,7 @@ class OctoPrintNannyPlugin(
             'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
         """
         return {
-            x.split(":")[0].strip(): x.split(":")[1].strip().lowercase()
+            x.split(":")[0].strip(): x.split(":")[1].strip().lower()
             for x in open("/proc/meminfo").read().split("\n")
             if len(x.split(":")) > 1
         }
