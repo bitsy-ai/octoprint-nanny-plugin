@@ -172,11 +172,13 @@ class OctoPrintNannyPlugin(
         'CPU architecture': '7', 'CPU variant': '0x0', 'CPU part': '0xd08', 'CPU revision': '3', 'Hardware': 'BCM2711',
         'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
         """
-        return {
-            x.split(":")[0].strip(): x.split(":")[1].strip().lower()
+        cpuinfo = {
+            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
             for x in open("/proc/cpuinfo").read().split("\n")
             if len(x.split(":")) > 1
         }
+        logger.info(f"/proc/cpuinfo:\n {cpuinfo}")
+        return cpuinfo
 
     @beeline.traced("OctoPrintNannyPlugin._meminfo")
     def _meminfo(self) -> dict:
@@ -193,11 +195,13 @@ class OctoPrintNannyPlugin(
             'Bounce': '0 kB', 'WritebackTmp': '0 kB', 'CommitLimit': '2035980 kB', 'Committed_AS': '1755048 kB', 'VmallocTotal': '245760 kB', 'VmallocUsed': '5732 kB',
             'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
         """
-        return {
-            x.split(":")[0].strip(): x.split(":")[1].strip().lower()
+        meminfo = {
+            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
             for x in open("/proc/meminfo").read().split("\n")
             if len(x.split(":")) > 1
         }
+        logger.info(f"/proc/meminfo:\n {meminfo}")
+        return meminfo
 
     @beeline.traced("OctoPrintNannyPlugin.get_device_info")
     @beeline.traced_thread
