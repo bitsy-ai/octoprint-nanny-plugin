@@ -130,7 +130,7 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.EnvironmentDetectionPlugin,
     octoprint.plugin.ProgressPlugin,
     octoprint.plugin.ShutdownPlugin,
-    octoprint.plugin.ReloadNeedingPlugin,
+    octoprint.plugin.RestartNeedingPlugin,
 ):
     def __init__(self, *args, **kwargs):
         # User interactive
