@@ -166,13 +166,14 @@ class OctoPrintNannyPlugin(
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
+        Keys lowercased for portability
         {'processor': '3', 'model name': 'ARMv7 Processor rev 3 (v7l)', 'BogoMIPS': '270.00',
         'Features': 'half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm crc32', 'CPU implementer': '0x41',
         'CPU architecture': '7', 'CPU variant': '0x0', 'CPU part': '0xd08', 'CPU revision': '3', 'Hardware': 'BCM2711',
         'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
         """
         return {
-            x.split(":")[0].strip(): x.split(":")[1].strip()
+            x.split(":")[0].strip(): x.split(":")[1].strip().lowercase()
             for x in open("/proc/cpuinfo").read().split("\n")
             if len(x.split(":")) > 1
         }
@@ -181,6 +182,7 @@ class OctoPrintNannyPlugin(
     def _meminfo(self) -> dict:
         """
         Dict from /proc/meminfo
+        Keys lowercased for portability
 
             {'MemTotal': '3867172 kB', 'MemFree': '1241596 kB', 'MemAvailable': '3019808 kB', 'Buffers': '131336 kB', 'Cached': '1641988 kB',
             'SwapCached': '1372 kB', 'Active': '1015728 kB', 'Inactive': '1469520 kB', 'Active(anon)': '564560 kB', 'Inactive(anon)': '65344 kB', '
@@ -192,7 +194,7 @@ class OctoPrintNannyPlugin(
             'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
         """
         return {
-            x.split(":")[0].strip(): x.split(":")[1].strip()
+            x.split(":")[0].strip(): x.split(":")[1].strip().lowercase()
             for x in open("/proc/meminfo").read().split("\n")
             if len(x.split(":")) > 1
         }
@@ -203,24 +205,24 @@ class OctoPrintNannyPlugin(
         cpuinfo = self._cpuinfo()
 
         # @todo warn if neon acceleration is not supported
-        cpu_flags = cpuinfo.get("Features", "").split()
+        cpu_flags = cpuinfo.get("features", "").split()
 
         # processors are zero indexed
         cores = int(cpuinfo.get("processor")) + 1
         # covnert kB string like '3867172 kB' to int
-        ram = int(self._meminfo().get("MemTotal").split()[0])
+        ram = int(self._meminfo().get("memtotal").split()[0])
 
         python_version = self._environment.get("python", {}).get("version")
         pip_version = self._environment.get("python", {}).get("pip")
         virtualenv = self._environment.get("python", {}).get("virtualenv")
 
         return {
-            "model": cpuinfo.get("Model"),
+            "model": cpuinfo.get("model"),
             "platform": platform.platform(),
             "cpu_flags": cpu_flags,
-            "hardware": cpuinfo.get("Hardware"),
-            "revision": cpuinfo.get("Revision"),
-            "serial": cpuinfo.get("Serial"),
+            "hardware": cpuinfo.get("hardware"),
+            "revision": cpuinfo.get("revision"),
+            "serial": cpuinfo.get("serial"),
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
