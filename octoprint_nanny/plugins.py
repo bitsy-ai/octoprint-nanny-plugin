@@ -218,6 +218,7 @@ class OctoPrintNannyPlugin(
         # covnert kB string like '3867172 kB' to int
         ram = int(self._meminfo().get("memtotal").split()[0])
 
+        logger.info(f"Runtime environment:\n {self._environment}")
         python_version = self._environment.get("python", {}).get("version")
         pip_version = self._environment.get("python", {}).get("pip")
         virtualenv = self._environment.get("python", {}).get("virtualenv")
