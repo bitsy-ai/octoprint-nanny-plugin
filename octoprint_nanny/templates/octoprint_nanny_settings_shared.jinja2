@@ -51,7 +51,7 @@
                     <span data-bind="text: authAlertText"></span>
                 </div>
 
-                <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
+                <button id="octoprint_nanny_test_auth_token" data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
                     Test Connection
                 </button>
             </div>
@@ -116,6 +116,7 @@
 
             <button 
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
+                id="octoprint_nanny_device_registration"
                 type="submit" 
                 class="btn btn-primary btn-large">
                 Start Registration
@@ -191,7 +192,7 @@
                 <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
                 <span data-bind="text: authAlertText"></span>
             </div>
-            <button data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
+            <button id="octoprint_nanny_save_advanced_settings" data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
                 Save Advanced Settings
             </button>
 
