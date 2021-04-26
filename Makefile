@@ -2,6 +2,8 @@
 
 .PHONY: clean-settings
 
+PRINT_NANNY_USER ?= "leigh"
+
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
@@ -54,7 +56,22 @@ dist: clean-dist sdist bdist_wheel
 release: dist
 	twine upload dist/*
 
-octoprint-dev:
+
+octoprint-sandbox:
+	cd ~/projects/OctoPrint && \
+	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
+	OCTOPRINT_NANNY_API_URL="https://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/api/" \
+	OCTOPRINT_NANNY_WS_URL="ws://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/ws/" \
+	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="octoprint-devices" \
+	OCTOPRINT_NANNY_SNAPSHOT_URL="https://localhost:8080/?action=snapshot" \
+	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \
+	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
+	PYTHONASYNCIODEBUG=True \
+	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
+	octoprint serve
+
+octoprint-local:
 	cd ~/projects/OctoPrint && \
 	. .venv/bin/activate && \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
@@ -65,7 +82,7 @@ octoprint-dev:
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
 	PYTHONASYNCIODEBUG=True \
-	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
+	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve
 
 octoprint-prod:
