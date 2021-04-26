@@ -44,7 +44,7 @@
                             data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
                     </div>
                 </div>
-                <div class="alert alert-block" data-bind="css: authAlertClass">
+                <div id="octoprint_nanny_alert_auth" class="alert alert-block" data-bind="css: authAlertClass">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 
                     <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
@@ -107,7 +107,7 @@
                         type="text" />
                 </div>
             </div>
-            <div class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
+            <div id="octoprint_nanny_alert_device_registration" class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: deviceAlertHeader"></span></h4> 
@@ -186,7 +186,7 @@
             </div>
 
 
-            <div class="alert alert-block" data-bind="css: authAlertClass">
+            <div id="octoprint_nanny_alert_advanced_settings" class="alert alert-block" data-bind="css: authAlertClass">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
