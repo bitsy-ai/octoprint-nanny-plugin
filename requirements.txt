@@ -111,7 +111,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.5.3
+print-nanny-client==0.5.4
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
