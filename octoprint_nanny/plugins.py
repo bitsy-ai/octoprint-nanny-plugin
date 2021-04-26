@@ -209,7 +209,9 @@ class OctoPrintNannyPlugin(
         cpuinfo = self._cpuinfo()
 
         # @todo warn if neon acceleration is not supported
-        cpu_flags = cpuinfo.get("features", "").split()
+        cpu_flags = cpuinfo.get("features")
+        if isinstance(cpu_flags, str):
+            cpu_flags = cpu_flags.split()
 
         # processors are zero indexed
         cores = int(cpuinfo.get("processor")) + 1
@@ -226,7 +228,7 @@ class OctoPrintNannyPlugin(
             "cpu_flags": cpu_flags,
             "hardware": cpuinfo.get("hardware"),
             "revision": cpuinfo.get("revision"),
-            "serial": cpuinfo.get("serial"),
+            "serial": cpuinfo.get("serial", uuid.uuid4().hex),
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
