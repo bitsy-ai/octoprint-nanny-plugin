@@ -15,6 +15,7 @@ import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
+import socket
 
 import time
 import requests
@@ -229,7 +230,7 @@ class OctoPrintNannyPlugin(
             "cpu_flags": cpu_flags,
             "hardware": cpuinfo.get("hardware"),
             "revision": cpuinfo.get("revision"),
-            "serial": cpuinfo.get("serial", uuid.uuid4().hex),
+            "serial": cpuinfo.get("serial", socket.gethostname()),
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
