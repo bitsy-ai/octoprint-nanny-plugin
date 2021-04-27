@@ -179,8 +179,8 @@ $(function () {
         self.authAlertClass = ko.observable();
         self.authAlerts = {
             'warning': {
-                header: 'Hey!',
-                text: 'Test your connection 👇',
+                header: 'Link your Print Nanny account',
+                text: 'Enter your auth token and click the Test Connection button to get started.',
                 class: 'alert'
             },
             'error': {
@@ -189,8 +189,8 @@ $(function () {
                 class: 'alert-error'
             },
             'success': {
-                header: 'Nice!',
-                text: 'Your token is verified.',
+                header: 'Nice! Acount link succeeded',
+                text: 'You can now use Print Nanny on this device.',
                 class: 'alert-success'
             }
         };
@@ -200,8 +200,14 @@ $(function () {
         self.deviceRegisterProgress = 0;
         self.deviceRegisterProgressCompleted = 6;
 
-        self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
-        self.authAlertText = ko.observable(self.authAlerts.warning.text)
+
+
+        onAfterBinding(() =>{
+            if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){
+                self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
+                self.authAlertText = ko.observable(self.authAlerts.warning.text)
+            }
+        })
 
         self.deviceAlertClass = ko.observable();
         self.deviceAlerts = {
