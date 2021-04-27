@@ -28,6 +28,8 @@ certifi==2020.12.5
     # via
     #   requests
     #   sentry-sdk
+cffi==1.14.5
+    # via cryptography
 chardet==4.0.0
     # via
     #   aiohttp
@@ -36,6 +38,8 @@ click==7.1.2
     # via
     #   flask
     #   octoprint
+cryptography==3.4.7
+    # via OctoPrint-Nanny (setup.py)
 emoji==0.6.0
     # via octoprint
 feedparser==6.0.2
@@ -119,6 +123,8 @@ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0
     # via OctoPrint-Nanny (setup.py)
 pyasn1==0.4.8
     # via rsa
+pycparser==2.20
+    # via cffi
 pyjwt==2.0.1
     # via OctoPrint-Nanny (setup.py)
 pylru==1.2.0
