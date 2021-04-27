@@ -150,6 +150,7 @@ else:
 
 plugin_requires = [
     "octoprint",
+    "cryptography>=3.4.7",
     "numpy",
     "pillow",
     "typing_extensions ; python_version < '3.8'",
