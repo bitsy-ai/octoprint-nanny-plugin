@@ -177,6 +177,8 @@ $(function () {
         self.settingsViewModel = parameters[1];
 
         self.authAlertClass = ko.observable();
+        self.authAlertText = ko.observable()
+        self.authAlertHeader = ko.observable()
         self.authAlerts = {
             'warning': {
                 header: 'Link your Print Nanny account',
@@ -202,12 +204,13 @@ $(function () {
 
 
 
-        onAfterBinding(() =>{
+        self.onAfterBinding = function(){
             if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){
-                self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
-                self.authAlertText = ko.observable(self.authAlerts.warning.text)
+                self.authAlertHeader = self.authAlerts.warning.header
+                self.authAlertText = self.authAlerts.warning.text
+                self.authAlertClass = self.authAlerts.warning.class
             }
-        })
+        }
 
         self.deviceAlertClass = ko.observable();
         self.deviceAlerts = {

@@ -42,7 +42,7 @@
                         data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
                 </div>
             </div>
-            <div id="octoprint_nanny_alert_auth" class="alert alert-block" data-bind="css: authAlertClass">
+            <div id="octoprint_nanny_alert_auth" class="alert alert-block" data-bind="{css: authAlertClass, visible: authAlertClass }">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
@@ -71,10 +71,11 @@
                     <pre id="octoprint_nanny_settings_device_fingerprint" data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint">
                     </pre>
                 </div>
-                <a class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
+                <a id="octoprint_nanny_settings_manage_device" class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
                     Manage Device
                 </a>
-                <button 
+                <button
+                id="octoprint_nanny_settings_reset_device"
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
                 type="submit" 
                 class="btn btn-secondary btn">
