@@ -12,7 +12,7 @@ from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
 
-from print_nanny_client.api.events_api import EventsApi
+from print_nanny_client.api.telemetry_api import TelemetryApi
 from print_nanny_client.api.remote_control_api import RemoteControlApi
 from print_nanny_client.api.users_api import UsersApi
 from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
@@ -130,7 +130,7 @@ class RestAPIClient:
     )
     async def create_octoprint_event(self, event_type, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = EventsApi(api_client=api_client)
+            api_instance = TelemetryApi(api_client=api_client)
             request = OctoPrintEventRequest(
                 created_dt=event_data["metadata"]["created_dt"],
                 event_type=event_type,
