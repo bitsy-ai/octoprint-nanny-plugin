@@ -4,8 +4,8 @@ from PIL.Image import Image as PillowImage
 import numpy as np
 from typing import Optional
 
-from print_nanny_client.models.plugin_event_event_type_enum import (
-    PluginEventEventTypeEnum as PluginEventTypes,
+from print_nanny_client.models.octo_print_plugin_event_event_type_enum import (
+    OctoPrintPluginEventEventTypeEnum as OctoPrintPluginEventTypes,
 )
 from print_nanny_client.models.octo_print_event_event_type_enum import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
@@ -101,11 +101,12 @@ class EnumBase(ClassMemberMixin, Enum):
 
 
 PluginEvents = EnumBase(
-    "PluginEvents",
+    "OctoPrintPluginEvents",
     {
-        attr: getattr(PluginEventTypes, attr)
-        for attr in dir(PluginEventTypes)
-        if getattr(PluginEventTypes, attr) in PluginEventTypes.allowable_values
+        attr: getattr(OctoPrintPluginEventTypes, attr)
+        for attr in dir(OctoPrintPluginEventTypes)
+        if getattr(OctoPrintPluginEventTypes, attr)
+        in OctoPrintPluginEventTypes.allowable_values
     },
 )
 
