@@ -352,7 +352,11 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
+
         self._drain()
+        self.plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_RESET,
+        )
         self.plugin._settings.set(
             ["monitoring_active"], False
         )  # @todo fix setting iface

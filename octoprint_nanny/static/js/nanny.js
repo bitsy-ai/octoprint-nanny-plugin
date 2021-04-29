@@ -64,7 +64,7 @@ $(function () {
                 }
                 self.imageData("data:image/jpeg;base64," + message.data.payload);
             }
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline') {
+            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_monitoring_reset') {
                 console.log(message)
                 self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
@@ -121,8 +121,6 @@ $(function () {
 
         stopMonitoring = function () {
             const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopMonitoring'
-            self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
-
             OctoPrint.postJson(url, {})
                 .done((res) => {
                     console.log(res)

@@ -601,7 +601,7 @@ class OctoPrintNannyPlugin(
 
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
-        local_only = ["monitoring_frame_b64"]
+        local_only = ["monitoring_frame_b64", "monitoring_reset"]
         return plugin_events + remote_commands + local_only
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
