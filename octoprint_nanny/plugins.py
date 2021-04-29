@@ -34,7 +34,7 @@ def configure_logger(logger, logfile_path):
     )
     file_logging_handler.setFormatter(
         logging.Formatter(
-            "%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s"
+            "%(asctime)s - %(name)s - %(module)s - %(thread)d - %(levelname)s - %(message)s"
         )
     )
     file_logging_handler.setLevel(logging.DEBUG)

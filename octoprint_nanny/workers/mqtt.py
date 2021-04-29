@@ -70,7 +70,7 @@ class MQTTManager:
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join(1)
+            worker.join(5)
 
     def _reset(self):
         self.halt = threading.Event()
