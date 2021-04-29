@@ -98,7 +98,7 @@ class MQTTClient:
         self.mqtt_receive_queue = mqtt_receive_queue
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-        self.client = mqtt.Client(client_id=client_id)
+        self.client = mqtt.Client(client_id=client_id, clean_session=False)
         self.client.tls_set(
             ca_certs=self.ca_cert,
             ciphers="ECDHE-RSA-AES128-GCM-SHA256",
@@ -214,7 +214,9 @@ class MQTTClient:
             global minimum_backoff_time
             should_backoff = False
             minimum_backoff_time = 1
-            logger.info("Device successfully connected to MQTT broker")
+            logger.info(
+                f"Device successfully connected to MQTT broker thread={threading.get_ident()}"
+            )
             self.client.subscribe(self.config_topic, qos=1)
             logger.info(
                 f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.config_topic}"
@@ -229,7 +231,7 @@ class MQTTClient:
     @beeline.traced("MQTTClient._on_disconnect")
     def _on_disconnect(self, client, userdata, rc):
         logger.warning(
-            f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc}"
+            f"Device disconnected from MQTT bridge client={client} userdata={userdata} rc={rc} thread={threading.get_ident()}"
         )
         # Since a disconnect occurred, the next loop iteration will wait with
         # exponential backoff.
@@ -301,11 +303,9 @@ class MQTTClient:
             event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
         )
 
-    @beeline.traced("MQTTClient.stop")
     def stop(self):
         return self.client.loop_stop()
 
-    @beeline.traced("MQTTClient.run")
     def run(self, halt):
         self._thread_halt = halt
         self.connect()
