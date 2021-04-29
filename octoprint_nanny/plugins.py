@@ -585,7 +585,7 @@ class OctoPrintNannyPlugin(
             self._settings.set(["user_id"], response.id)
 
             self._settings.save()
-
+            self.worker_manager.plugin.settings.reset_rest_client_state()
             return flask.json.jsonify(response.to_dict())
         elif isinstance(response, Exception):
             e = str(response)
