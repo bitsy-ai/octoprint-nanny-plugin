@@ -102,7 +102,7 @@ class MQTTClient:
         self.client.tls_set(
             ca_certs=self.ca_cert,
             ciphers="ECDHE-RSA-AES128-GCM-SHA256",
-            tls_version=ssl.PROTOCOL_TLSv1_2,
+            tls_version=ssl.PROTOCOL_TLS,
         )
         logger.info(f"Initializing MQTTClient from {locals()}")
 
