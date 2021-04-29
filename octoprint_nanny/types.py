@@ -4,14 +4,16 @@ from PIL.Image import Image as PillowImage
 import numpy as np
 from typing import Optional
 
-from print_nanny_client.models.octo_print_plugin_event_event_type_enum import (
+from print_nanny_client import (
     OctoPrintPluginEventEventTypeEnum as OctoPrintPluginEventTypes,
 )
-from print_nanny_client.models.octo_print_event_event_type_enum import (
+from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
-from print_nanny_client.telemetry_event.TelemetryEventEnum import TelemetryEventEnum
+from print_nanny_client.flatbuffers.monitoring.EventTypeEnum import (
+    EventTypeEnum as MonitoringEventTypeEnum,
+)
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
@@ -30,7 +32,7 @@ class Metadata:
     device_id: int
     device_cloudiot_id: int
     ts: int
-    session: str
+    print_session: str
     client_version: str
     model_version: str = None
 

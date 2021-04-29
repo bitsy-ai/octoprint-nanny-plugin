@@ -341,7 +341,7 @@ class PluginSettingsMemoize:
             user_id=self.user_id,
             device_id=self.device_id,
             device_cloudiot_id=self.device_cloudiot_id,
-            session=self.print_session.session,
+            print_session=self.print_session.session,
             client_version=print_nanny_client.__version__,
             ts=ts,
         )
