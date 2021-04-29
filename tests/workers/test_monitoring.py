@@ -14,10 +14,11 @@ from octoprint_nanny.workers.monitoring import (
 from octoprint_nanny.predictor import predict_threadsafe
 
 import print_nanny_client
-from print_nanny_client.telemetry_event import (
-    MonitoringFrame,
-    TelemetryEvent,
-    TelemetryEventEnum,
+from print_nanny_client.flatbuffers.monitoring import (
+    MonitoringEvent,
+)
+from print_nanny_client.flatbuffers.monitoring.EventTypeEnum import (
+    EventTypeEnum as MonitoringEventTypeEnum,
 )
 
 
@@ -64,19 +65,18 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+    deserialized_obj = MonitoringEvent.MonitoringEvent.GetRootAsMonitoringEvent(msg, 0)
+
+    assert deserialized_obj.EventType() == MonitoringEventTypeEnum.monitoring_frame_post
 
     assert (
-        deserialized_msg.EventType()
-        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
-    )
-
-    assert (
-        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        deserialized_obj.Metadata().ClientVersion().decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
+    assert (
+        deserialized_obj.Metadata().PrintSession().decode("utf-8")
+        == metadata.print_session
+    )
 
 
 @pytest.mark.asyncio
@@ -128,18 +128,18 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
 
+    deserialized_obj = MonitoringEvent.MonitoringEvent.GetRootAsMonitoringEvent(msg, 0)
+
+    assert deserialized_obj.EventType() == MonitoringEventTypeEnum.monitoring_frame_post
     assert (
-        deserialized_msg.EventType()
-        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
-    )
-    assert (
-        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        deserialized_obj.Metadata().ClientVersion().decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
+    assert (
+        deserialized_obj.Metadata().PrintSession().decode("utf-8")
+        == metadata.print_session
+    )
 
 
 @pytest.mark.asyncio
@@ -279,18 +279,17 @@ async def test_offline_mode_webcam_disabled(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+    deserialized_obj = MonitoringEvent.MonitoringEvent.GetRootAsMonitoringEvent(msg, 0)
 
+    assert deserialized_obj.EventType() == MonitoringEventTypeEnum.monitoring_frame_post
     assert (
-        deserialized_msg.EventType()
-        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_post
-    )
-    assert (
-        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        deserialized_obj.Metadata().ClientVersion().decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
+    assert (
+        deserialized_obj.Metadata().PrintSession().decode("utf-8")
+        == metadata.print_session
+    )
 
 
 @pytest.mark.asyncio
@@ -337,15 +336,14 @@ async def test_active_learning_mode(
     _, args, kwargs = kall
 
     msg = args[0]
-    deserialized_msg = TelemetryEvent.TelemetryEvent.GetRootAsTelemetryEvent(msg, 0)
-    deserialized_obj = TelemetryEvent.TelemetryEventT.InitFromObj(deserialized_msg)
+    deserialized_obj = MonitoringEvent.MonitoringEvent.GetRootAsMonitoringEvent(msg, 0)
 
+    assert deserialized_obj.EventType() == MonitoringEventTypeEnum.monitoring_frame_raw
     assert (
-        deserialized_msg.EventType()
-        == TelemetryEventEnum.TelemetryEventEnum.monitoring_frame_raw
-    )
-    assert (
-        deserialized_obj.metadata.clientVersion.decode("utf-8")
+        deserialized_obj.Metadata().ClientVersion().decode("utf-8")
         == print_nanny_client.__version__
     )
-    assert deserialized_obj.metadata.session.decode("utf-8") == metadata.session
+    assert (
+        deserialized_obj.Metadata().PrintSession().decode("utf-8")
+        == metadata.print_session
+    )

@@ -39,7 +39,7 @@ from octoprint_nanny.types import (
     PluginEvents,
     MonitoringModes,
     MonitoringFrame,
-    TelemetryEventEnum,
+    MonitoringEventTypeEnum,
     Image,
 )
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -147,8 +147,8 @@ class MonitoringWorker:
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> bytes:
-        msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=TelemetryEventEnum.monitoring_frame_raw,
+        msg = octoprint_nanny.clients.flatbuffers.build_monitoring_event_flatbuffer(
+            event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -158,8 +158,8 @@ class MonitoringWorker:
     def _create_lite_fb_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
-        return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=TelemetryEventEnum.monitoring_frame_post,
+        return octoprint_nanny.clients.flatbuffers.build_monitoring_event_flatbuffer(
+            event_type=MonitoringEventTypeEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -323,12 +323,12 @@ class MonitoringManager:
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self, session=None, **kwargs):
+    async def start(self, print_session=None, **kwargs):
         self._reset()
         self.plugin.settings.reset_print_session()
         await self.plugin.settings.create_print_session()
         logger.info(
-            f"Initializing monitoring workers with session={self.plugin.settings.print_session.session}"
+            f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
         )
         for worker in self._workers:
             thread = threading.Thread(target=worker.run, name=str(worker.__class__))

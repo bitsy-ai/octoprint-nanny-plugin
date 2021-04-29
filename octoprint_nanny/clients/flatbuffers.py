@@ -3,13 +3,11 @@ import flatbuffers
 from typing import Optional
 
 import print_nanny_client
-from print_nanny_client.telemetry_event import (
-    MonitoringFrame,
+from print_nanny_client.flatbuffers.monitoring import (
+    MonitoringEvent,
     Image,
     Box,
     BoundingBoxes,
-    TelemetryEventEnum,
-    TelemetryEvent,
     Metadata,
 )
 from octoprint_nanny.types import MonitoringFrame as MonitoringFrameT
@@ -51,16 +49,16 @@ def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrameT) ->
     return bounding_boxes
 
 
-def build_telemetry_event_message(
+def build_monitoring_event_flatbuffer(
     event_type: int,
     metadata: Metadata,
     monitoring_frame: MonitoringFrameT,
 ) -> bytes:
+
     builder = flatbuffers.Builder(1024)
 
     # begin image
     Image.ImageStartDataVector(builder, len(monitoring_frame.image.data))
-    # builder.head = builder.head - len(monitoring_frame.image.data)
 
     builder.Bytes[
         builder.head : (builder.head + len(monitoring_frame.image.data))
@@ -73,41 +71,34 @@ def build_telemetry_event_message(
     image = Image.ImageEnd(builder)
     # end image
 
-    # begin event data
-    # prediction is optional; if not provided, inference will run in beam pipeline
-    bounding_boxes = build_bounding_boxes_message(builder, monitoring_frame)
-    MonitoringFrame.MonitoringFrameStart(builder)
-    MonitoringFrame.MonitoringFrameAddImage(builder, image)
-    if bounding_boxes:
-        MonitoringFrame.MonitoringFrameAddBoundingBoxes(builder, bounding_boxes)
-    event_data = MonitoringFrame.MonitoringFrameEnd(builder)
-
-    # end event data
-
     # begin metadata
     client_version = builder.CreateString(print_nanny_client.__version__)
-    session = builder.CreateString(metadata.session)
+    session = builder.CreateString(metadata.print_session)
 
     Metadata.MetadataStart(builder)
     Metadata.MetadataAddUserId(builder, metadata.user_id)
-    Metadata.MetadataAddDeviceCloudiotId(builder, metadata.device_cloudiot_id)
-    Metadata.MetadataAddDeviceId(builder, metadata.device_id)
+    Metadata.MetadataAddCloudiotDeviceId(builder, metadata.device_cloudiot_id)
+    Metadata.MetadataAddOctoprintDeviceId(builder, metadata.device_id)
     Metadata.MetadataAddTs(builder, monitoring_frame.ts)
     Metadata.MetadataAddClientVersion(builder, client_version)
-    Metadata.MetadataAddSession(builder, session)
+    Metadata.MetadataAddPrintSession(builder, session)
     metadata = Metadata.MetadataEnd(builder)
     # end metadata
 
-    # begin telemetry event
-    TelemetryEvent.TelemetryEventStart(builder)
-    TelemetryEvent.TelemetryEventAddEventData(builder, event_data)
-    TelemetryEvent.TelemetryEventAddEventDataType(
-        builder, print_nanny_client.telemetry_event.EventData.EventData.MonitoringFrame
-    )
-    TelemetryEvent.TelemetryEventAddMetadata(builder, metadata)
-    TelemetryEvent.TelemetryEventAddEventType(builder, event_type)
-    telemetry_event = TelemetryEvent.TelemetryEventEnd(builder)
-    builder.Finish(telemetry_event)
+    # begin bounding box and image data
+    # prediction is optional; if not provided, inference will run in beam pipeline
+    bounding_boxes = build_bounding_boxes_message(builder, monitoring_frame)
 
-    # end tlemetry event
+    MonitoringEvent.MonitoringEventStart(builder)
+    MonitoringEvent.MonitoringEventAddEventType(builder, event_type)
+    MonitoringEvent.MonitoringEventAddImage(builder, image)
+    MonitoringEvent.MonitoringEventAddMetadata(builder, metadata)
+
+    if bounding_boxes:
+        MonitoringEvent.MonitoringEventAddBoundingBoxes(builder, bounding_boxes)
+
+    monitoring_event = MonitoringEvent.MonitoringEventEnd(builder)
+
+    builder.Finish(monitoring_event)
+
     return builder.Output()

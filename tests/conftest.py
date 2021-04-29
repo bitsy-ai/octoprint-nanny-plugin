@@ -36,7 +36,7 @@ def metadata():
         user_id=1234,
         device_id=1234,
         device_cloudiot_id=1234,
-        session=uuid.uuid4().hex,
+        print_session=uuid.uuid4().hex,
         client_version=print_nanny_client.__version__,
         ts=datetime.now().timestamp(),
     )

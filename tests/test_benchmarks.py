@@ -10,9 +10,8 @@ import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys
 import PIL
-from print_nanny_client.telemetry_event import (
-    TelemetryEvent,
-    MonitoringFrame,
+from print_nanny_client.flatbuffers.monitoring import (
+    MonitoringEvent,
 )
 from datetime import datetime
 

@@ -55,4 +55,4 @@ def test_client_id_constructor(
         root_ca_filename,
         trace_context={},
     )
-    mock_mqtt.Client.assert_called_once_with(client_id=client_id)
+    mock_mqtt.Client.assert_called_once_with(client_id=client_id, clean_session=False)
