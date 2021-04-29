@@ -253,7 +253,6 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_cloudiot_id"], None)
         self._settings.set(["device_registered"], False)
         self._settings.save()
-        self.worker_manager.reset_device_settings_state()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
@@ -577,7 +576,6 @@ class OctoPrintNannyPlugin(
             self._test_api_auth(auth_token, api_url), self.worker_manager.loop
         )
         response = response.result()
-
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
             self._settings.set(["auth_valid"], True)
