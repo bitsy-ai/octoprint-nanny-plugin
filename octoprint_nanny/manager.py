@@ -195,10 +195,6 @@ class WorkerManager:
             logger.error(f"on_print_start API called failed {e}", exc_info=True)
             return
 
-        if self.plugin.get_setting("auto_start"):
-            logger.info("Print Nanny monitoring is set to auto-start")
-            self.monitoring_manager.start()
-
     async def on_calibration_update(self):
         logger.info(
             f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
