@@ -324,25 +324,31 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager.start")
     async def start(self, print_session=None, **kwargs):
-        self._reset()
-        self.plugin.settings.reset_print_session()
-        await self.plugin.settings.create_print_session()
-        logger.info(
-            f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
-        )
-        for worker in self._workers:
-            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
-            thread.daemon = True
-            self._worker_threads.append(thread)
-            logger.info(f"Starting thread {thread.name}")
-            thread.start()
+        monitoring_active = self.plugin._settings.get(["monitoring_active"])
+        if not monitoring_active:
+            self.plugin._settings.set(["monitoring_active"], True)
+            self._reset()
+            self.plugin.settings.reset_print_session()
+            await self.plugin.settings.create_print_session()
+            logger.info(
+                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
+            )
+            for worker in self._workers:
+                thread = threading.Thread(target=worker.run, name=str(worker.__class__))
+                thread.daemon = True
+                self._worker_threads.append(thread)
+                logger.info(f"Starting thread {thread.name}")
+                thread.start()
 
-        self.plugin._settings.set(["monitoring_active"], True)
-        await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id,
-            monitoring_active=True,
-            last_session=self.plugin.settings.print_session.id,
-        )
+            await self.plugin.settings.rest_client.update_octoprint_device(
+                self.plugin.settings.device_id,
+                monitoring_active=True,
+                last_session=self.plugin.settings.print_session.id,
+            )
+        else:
+            logger.warning(
+                "Received MONITORING_START command while monitoring is already active, discarding"
+            )
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
