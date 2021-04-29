@@ -551,7 +551,7 @@ class OctoPrintNannyPlugin(
         if isinstance(result, Exception):
             raise result
         self._settings.save()
-        self.worker_manager.apply_device_registration()
+        # self.worker_manager.apply_device_registration()
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
