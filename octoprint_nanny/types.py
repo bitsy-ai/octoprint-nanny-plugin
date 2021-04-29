@@ -11,9 +11,10 @@ from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
-from print_nanny_client.flatbuffers.monitoring.EventTypeEnum import (
-    EventTypeEnum as MonitoringEventTypeEnum,
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
 )
+
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
