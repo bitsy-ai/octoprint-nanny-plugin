@@ -12,7 +12,7 @@ import paho.mqtt.client as mqtt
 from typing import List
 import sys
 import beeline
-
+import threading
 from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
