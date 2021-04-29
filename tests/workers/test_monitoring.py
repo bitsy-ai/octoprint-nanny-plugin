@@ -17,8 +17,8 @@ import print_nanny_client
 from print_nanny_client.flatbuffers.monitoring import (
     MonitoringEvent,
 )
-from print_nanny_client.flatbuffers.monitoring.EventTypeEnum import (
-    EventTypeEnum as MonitoringEventTypeEnum,
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
 )
 
 
