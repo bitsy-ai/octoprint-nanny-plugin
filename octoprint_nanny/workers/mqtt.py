@@ -220,7 +220,7 @@ class MQTTPublisherWorker:
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
                 if event_type not in self.MUTED_EVENTS:
-                    logger.info(
+                    logger.debug(
                         f"No {self.__class__} handler registered for {event_type}"
                     )
                 return
