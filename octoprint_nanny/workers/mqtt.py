@@ -168,14 +168,7 @@ class MQTTPublisherWorker:
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
-        event.update(
-            dict(
-                user_id=self.plugin.settings.user_id,
-                device_id=self.plugin.settings.device_id,
-                device_cloudiot_name=self.plugin.settings.device_cloudiot_name,
-            )
-        )
-        event.update(self.plugin.settings.get_device_metadata())
+        event.update({"metadata": self.plugin.settings.metadata})
 
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self.plugin.settings.get_print_job_metadata())
@@ -293,9 +286,9 @@ class MQTTSubscriberWorker:
             return
 
         command_id = message.get("remote_control_command_id")
-        metadata = self.plugin.settings.get_device_metadata()
+
         await self.plugin.settings.rest_client.update_remote_control_command(
-            command_id, received=True, metadata=metadata
+            command_id, received=True, metadata=self.plugin.settings.metadata
         )
 
         handler_fns = self._callbacks.get(event_type)
@@ -314,20 +307,16 @@ class MQTTSubscriberWorker:
                     else:
                         handler_fn(event=message, event_type=event_type)
 
-                    metadata = self.plugin.settings.get_device_metadata()
                     # set success state
                     await self.plugin.settings.rest_client.update_remote_control_command(
-                        command_id,
-                        success=True,
-                        metadata=metadata,
+                        command_id, success=True, metadata=self.plugin.settings.metadata
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    metadata = self.plugin.settings.get_device_metadata()
                     await self.plugin.settings.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
-                        metadata=metadata,
+                        metadata=self.plugin.settings.metadata,
                     )
 
     async def _loop(self):

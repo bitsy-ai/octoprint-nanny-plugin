@@ -54,8 +54,8 @@ should_backoff = False
 class MQTTClient:
     def __init__(
         self,
-        device_id: str,
-        device_cloudiot_id: str,
+        octoprint_device_id: str,
+        cloudiot_device_id: str,
         private_key_file: str,
         ca_cert: str,
         algorithm="ES256",
@@ -76,9 +76,9 @@ class MQTTClient:
         trace_context={},
         message_callbacks=[],  # see message_callback_add() https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#subscribe-unsubscribe
     ):
-        self.device_id = device_cloudiot_id
-        self.device_cloudiot_id = device_cloudiot_id
-        client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{device_cloudiot_id}"
+        self.octoprint_device_id = octoprint_device_id
+        self.cloudiot_device_id = cloudiot_device_id
+        client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{cloudiot_device_id}"
 
         self.client_id = client_id
         self.private_key_file = private_key_file
@@ -115,19 +115,19 @@ class MQTTClient:
         self.client.on_unsubscribe = self._on_unsubscribe
 
         # device receives configuration updates on this topic
-        self.config_topic = f"/devices/{self.device_cloudiot_id}/config"
+        self.config_topic = f"/devices/{self.cloudiot_device_id}/config"
 
         # device receives commands on this topic
-        self.commands_topic = f"/devices/{self.device_cloudiot_id}/commands/#"
+        self.commands_topic = f"/devices/{self.cloudiot_device_id}/commands/#"
         # remote_control app commmands are routed to this subfolder
         self.remote_control_commands_topic = (
-            f"/devices/{self.device_cloudiot_id}/commands/remote_control"
+            f"/devices/{self.cloudiot_device_id}/commands/remote_control"
         )
         # this permits routing on a per-app basis, e.g.
-        # /devices/{self.device_cloudiot_id}/commands/my_app_name
+        # /devices/{self.cloudiot_device_id}/commands/my_app_name
 
         # default telemetry topic
-        self.default_telemetry_topic = f"/devices/{self.device_cloudiot_id}/events"
+        self.default_telemetry_topic = f"/devices/{self.cloudiot_device_id}/events"
 
         # octoprint event telemetry topic
         self.octoprint_event_topic = os.path.join(
@@ -219,11 +219,11 @@ class MQTTClient:
             )
             self.client.subscribe(self.config_topic, qos=1)
             logger.info(
-                f"Subscribing to config updates device_cloudiot_id={self.device_cloudiot_id} to topic {self.config_topic}"
+                f"Subscribing to config updates cloudiot_device_id={self.cloudiot_device_id} to topic {self.config_topic}"
             )
             self.client.subscribe(self.commands_topic, qos=1)
             logger.info(
-                f"Subscribing to remote commands device_cloudiot_id={self.device_cloudiot_id} to topic {self.commands_topic}"
+                f"Subscribing to remote commands cloudiot_device_id={self.cloudiot_device_id} to topic {self.commands_topic}"
             )
         else:
             logger.error(f"Connection refused by MQTT broker with reason code rc={rc}")

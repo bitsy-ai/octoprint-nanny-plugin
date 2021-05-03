@@ -15,6 +15,7 @@ import os
 import re
 import threading
 import uuid
+from typing import Optional
 
 from octoprint.events import Events
 import octoprint.filemanager
@@ -39,7 +40,7 @@ class WorkerManager:
     Coordinates MQTTManager and MonitoringManager classes
     """
 
-    def __init__(self, plugin):
+    def __init__(self, plugin, plugin_settings: Optional[PluginSettingsMemoize] = None):
 
         self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
         self.event_loop_thread.daemon = True
@@ -62,7 +63,8 @@ class WorkerManager:
         mqtt_receive_queue = self.manager.AioQueue()
         self.mqtt_receive_queue = mqtt_receive_queue
 
-        plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
+        if plugin_settings is None:
+            plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
@@ -117,9 +119,7 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(
-            self.plugin.settings.get_device_metadata()
-        )
+        self._honeycomb_tracer.add_global_context(self.plugin.settings.metadata)
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
@@ -158,7 +158,7 @@ class WorkerManager:
         await self.monitoring_manager.stop()
 
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, monitoring_active=False
+            self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
 
         self.mqtt_manager.stop()
@@ -176,7 +176,7 @@ class WorkerManager:
             )
             printer_profile = (
                 await self.plugin.settings.rest_client.update_or_create_printer_profile(
-                    current_profile, self.plugin.settings.device_id
+                    current_profile, self.plugin.settings.octoprint_device_id
                 )
             )
 
@@ -187,7 +187,9 @@ class WorkerManager:
             )
             gcode_file = (
                 await self.plugin.settings.rest_client.update_or_create_gcode_file(
-                    event_data, gcode_file_path, self.plugin.settings.device_id
+                    event_data,
+                    gcode_file_path,
+                    self.plugin.settings.octoprint_device_id,
                 )
             )
 
@@ -201,7 +203,7 @@ class WorkerManager:
         )
         device_calibration = (
             await self.plugin.settings.rest_client.update_or_create_device_calibration(
-                self.plugin.settings.device_id,
+                self.plugin.settings.octoprint_device_id,
                 {
                     "x0": self.plugin.get_setting("calibrate_x0"),
                     "x1": self.plugin.get_setting("calibrate_x1"),

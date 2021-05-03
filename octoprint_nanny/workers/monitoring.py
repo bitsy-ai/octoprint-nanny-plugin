@@ -218,7 +218,7 @@ class MonitoringWorker:
         func = functools.partial(print_is_healthy, self._df)
         healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:
-            octoprint_device = self._plugin.settings.device_id
+            octoprint_device = self._plugin.settings.octoprint_device_id
             dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
             self._df.to_parquet(dataframe, engine="pyarrow")
             alert = await self._plugin.settings.rest_client.create_defect_alert(
@@ -308,15 +308,13 @@ class MonitoringManager:
             self.mqtt_send_queue,
             self.halt,
             self.plugin,
-            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._websocket_worker = WebSocketWorker(
             self.plugin.settings.ws_url,
             self.plugin.settings.auth_token,
             self.pn_ws_queue,
-            self.plugin.settings.device_id,
+            self.plugin.settings.octoprint_device_id,
             self.halt,
-            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
@@ -341,7 +339,7 @@ class MonitoringManager:
                 thread.start()
 
             await self.plugin.settings.rest_client.update_octoprint_device(
-                self.plugin.settings.device_id,
+                self.plugin.settings.octoprint_device_id,
                 monitoring_active=True,
                 last_session=self.plugin.settings.print_session.id,
             )
@@ -361,7 +359,7 @@ class MonitoringManager:
             ["monitoring_active"], False
         )  # @todo fix setting iface
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, monitoring_active=False
+            self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
         if self.plugin.settings.print_session:
             logger.info(
