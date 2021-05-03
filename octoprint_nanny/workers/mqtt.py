@@ -168,7 +168,7 @@ class MQTTPublisherWorker:
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
-        event.update({"metadata": self.plugin.settings.metadata})
+        event.update({"metadata": self.plugin.settings.metadata.to_dict()})
 
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self.plugin.settings.get_print_job_metadata())
