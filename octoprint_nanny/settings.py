@@ -381,7 +381,7 @@ class PluginSettingsMemoize:
         self.test_mqtt_settings()
         if self._mqtt_client is None:
             self._mqtt_client = MQTTClient(
-                device_id=self.octoprint_device_id,
+                octoprint_device_id=self.octoprint_device_id,
                 cloudiot_device_id=self.cloudiot_device_id,
                 private_key_file=self.device_private_key,
                 ca_cert=self.ca_cert,
