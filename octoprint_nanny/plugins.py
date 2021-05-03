@@ -641,9 +641,24 @@ class OctoPrintNannyPlugin(
     ## Progress plugin
 
     def on_print_progress(self, storage, path, progress):
-        self.worker_manager.mqtt_send_queue.put_nowait(
-            {"event_type": Events.PRINT_PROGRESS, "event_data": {"progress": progress}}
-        )
+        octoprint_job = self._printer.get_current_job()
+        payload = {
+            "event_type": Events.PRINT_PROGRESS,
+            "event_data": {
+                "print_progress": progress,
+            },
+        }
+        progress = octoprint_job.get("progress")
+        if octoprint_job and progress:
+            payload["event_data"].update(
+                {
+                    "filepos": progress.get("filepos"),
+                    "time_elapsed": progress.get("printTime"),
+                    "time_remaiing": progress.get("printTimeLeft"),
+                }
+            )
+
+        self.worker_manager.mqtt_send_queue.put_nowait(payload)
 
     ## EnvironmentDetectionPlugin
     @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
