@@ -119,7 +119,9 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(self.plugin.settings.metadata)
+        self._honeycomb_tracer.add_global_context(
+            self.plugin.settings.metadata.to_dict()
+        )
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 

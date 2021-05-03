@@ -1,5 +1,5 @@
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from PIL.Image import Image as PillowImage
 import numpy as np
 from typing import Optional, Dict
@@ -25,6 +25,8 @@ class Image:
     width: int
     data: bytes
     # ndarray: np.ndarray
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass
@@ -38,6 +40,9 @@ class Metadata:
     environment: Dict[str, str]
     model_version: str = None
 
+    def to_dict(self):
+        return asdict(self)
+
 
 @dataclass
 class BoundingBoxPrediction:
@@ -46,12 +51,18 @@ class BoundingBoxPrediction:
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
 
+    def to_dict(self):
+        return asdict(self)
+
 
 @dataclass
 class MonitoringFrame:
     ts: int
     image: Image
     bounding_boxes: BoundingBoxPrediction = None
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class MonitoringModes(Enum):
