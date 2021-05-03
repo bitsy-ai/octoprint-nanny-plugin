@@ -30,13 +30,13 @@ def device_id():
 
 
 @pytest.fixture
-def device_cloudiot_id():
+def cloudiot_device_id():
     return "1234"
 
 
 @pytest.fixture
-def client_id(device_cloudiot_id):
-    return f"projects/{mqtt.GCP_PROJECT_ID}/locations/{mqtt.IOT_DEVICE_REGISTRY_REGION}/registries/{mqtt.IOT_DEVICE_REGISTRY}/devices/{device_cloudiot_id}"
+def client_id(cloudiot_device_id):
+    return f"projects/{mqtt.GCP_PROJECT_ID}/locations/{mqtt.IOT_DEVICE_REGISTRY_REGION}/registries/{mqtt.IOT_DEVICE_REGISTRY}/devices/{cloudiot_device_id}"
 
 
 def test_client_id_constructor(
@@ -45,12 +45,12 @@ def test_client_id_constructor(
     root_ca_filename,
     device_id,
     client_id,
-    device_cloudiot_id,
+    cloudiot_device_id,
 ):
     mock_mqtt = mocker.patch("octoprint_nanny.clients.mqtt.mqtt")
     client = mqtt.MQTTClient(
         device_id,
-        device_cloudiot_id,
+        cloudiot_device_id,
         private_key_filename,
         root_ca_filename,
         trace_context={},

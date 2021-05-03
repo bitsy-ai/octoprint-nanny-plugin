@@ -95,8 +95,8 @@ DEFAULT_SETTINGS = dict(
     device_manage_url=None,
     device_fingerprint=None,
     device_cloudiot_name=None,
-    device_cloudiot_id=None,
-    device_id=None,
+    cloudiot_device_id=None,
+    octoprint_device_id=None,
     device_name=platform.node(),
     device_private_key=None,
     device_public_key=None,
@@ -246,20 +246,22 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_private_key"], None)
         self._settings.set(["device_public_key"], None)
         self._settings.set(["device_fingerprint"], None)
-        self._settings.set(["device_id"], None)
+        self._settings.set(["octoprint_device_id"], None)
         self._settings.set(["device_serial"], None)
         self._settings.set(["device_manage_url"], None)
         self._settings.set(["device_cloudiot_name"], None)
-        self._settings.set(["device_cloudiot_id"], None)
+        self._settings.set(["cloudiot_device_id"], None)
         self._settings.set(["device_registered"], False)
         self._settings.save()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
-        device_id = self.get_setting("device_id")
-        if device_id is None:
+        octoprint_device_id = self.get_setting("octoprint_device_id")
+        if octoprint_device_id is None:
             return
-        logger.info(f"Syncing printer profiles for device_id={device_id}")
+        logger.info(
+            f"Syncing printer profiles for octoprint_device_id={octoprint_device_id}"
+        )
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
@@ -267,7 +269,7 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             try:
                 created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
-                    profile, device_id
+                    profile, octoprint_device_id
                 )
                 id_map["octoprint"][profile_id] = created_profile.id
                 id_map["octoprint_nanny"][created_profile.id] = profile_id
@@ -409,14 +411,14 @@ class OctoPrintNannyPlugin(
 
     @beeline.traced("OctoPrintNannyPlugin.sync_device_metadata")
     async def sync_device_metadata(self):
-        device_id = self.get_setting("device_id")
-        if device_id is None:
+        octoprint_device_id = self.get_setting("octoprint_device_id")
+        if octoprint_device_id is None:
             return
-        logger.info(f"Syncing metadata for device_id={device_id}")
+        logger.info(f"Syncing metadata for octoprint_device_id={octoprint_device_id}")
 
         device_info = self.get_device_info()
         return await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
-            device_id, **device_info
+            octoprint_device_id, **device_info
         )
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
@@ -468,10 +470,10 @@ class OctoPrintNannyPlugin(
 
         self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_manage_url"], device.manage_url)
-        self._settings.set(["device_id"], device.id)
+        self._settings.set(["octoprint_device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
-        self._settings.set(["device_cloudiot_id"], device.cloudiot_device_num_id)
+        self._settings.set(["cloudiot_device_id"], device.cloudiot_device_num_id)
         self._settings.set(["device_registered"], True)
 
         self._settings.save()
@@ -685,12 +687,12 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_private_key"]) is None,
                 self._settings.get(["device_public_key"]) is None,
                 self._settings.get(["device_fingerprint"]) is None,
-                self._settings.get(["device_id"]) is None,
+                self._settings.get(["octoprint_device_id"]) is None,
                 self._settings.get(["device_serial"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_manage_url"]) is None,
                 self._settings.get(["device_cloudiot_name"]) is None,
-                self._settings.get(["device_cloudiot_id"]) is None,
+                self._settings.get(["cloudiot_device_id"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,

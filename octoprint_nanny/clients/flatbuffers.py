@@ -77,8 +77,8 @@ def build_monitoring_event_flatbuffer(
 
     Metadata.MetadataStart(builder)
     Metadata.MetadataAddUserId(builder, metadata.user_id)
-    Metadata.MetadataAddCloudiotDeviceId(builder, metadata.device_cloudiot_id)
-    Metadata.MetadataAddOctoprintDeviceId(builder, metadata.device_id)
+    Metadata.MetadataAddCloudiotDeviceId(builder, metadata.cloudiot_device_id)
+    Metadata.MetadataAddOctoprintDeviceId(builder, metadata.octoprint_device_id)
     Metadata.MetadataAddTs(builder, monitoring_frame.ts)
     Metadata.MetadataAddClientVersion(builder, client_version)
     Metadata.MetadataAddPrintSession(builder, session)

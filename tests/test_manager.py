@@ -24,7 +24,7 @@ def test_default_settings_client_states(mocker):
     manager = WorkerManager(plugin)
 
     assert manager.plugin.settings.auth_token is None
-    assert manager.plugin.settings.device_id is None
+    assert manager.plugin.settings.octoprint_device_id is None
 
     with pytest.raises(PluginSettingsRequired):
         dir(manager.plugin.settings.mqtt_client)
@@ -90,37 +90,29 @@ async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocke
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
-async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, mocker):
+async def test_mqtt_receive_queue_valid_octoprint_event(mocker, metadata):
     plugin = mocker.Mock()
-    plugin.get_setting = get_default_setting
-
-    mock_event_is_tracked.return_value = True
+    plugin_settings = mocker.Mock()
+    plugin_settings.event_is_tracked.return_value = True
+    plugin_settings.metadata = metadata
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
-    manager = WorkerManager(plugin)
-    mock_rest_client = mocker.patch(
-        "octoprint_nanny.settings.PluginSettingsMemoize.rest_client"
+    plugin_settings.rest_client.update_remote_control_command.return_value = (
+        asyncio.Future()
     )
-    mock_rest_client.update_remote_control_command.return_value = asyncio.Future()
-    mock_rest_client.update_remote_control_command.return_value.set_result("foo")
+    plugin_settings.rest_client.update_remote_control_command.return_value.set_result(
+        "foo"
+    )
 
-    mock_mqtt_client = mocker.patch(
-        "octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client"
-    )
     mock_topic = "mock_command_topic"
-    mock_mqtt_client.remote_control_commands_topic = mock_topic
-    topic = mock_topic
-    type(mock_mqtt_client).commands_topic = PropertyMock(return_value=topic)
-    mocker.patch(
-        "octoprint_nanny.settings.PluginSettingsMemoize.get_device_metadata",
-        return_value={},
-    )
+    plugin_settings.mqtt_client.remote_control_commands_topic = mock_topic
+    plugin_settings.mqtt_client.commands_topic = mock_topic
 
+    manager = WorkerManager(plugin, plugin_settings=plugin_settings)
     mock_start_monitoring = mocker.patch.object(manager.monitoring_manager, "start")
 
-    manager = WorkerManager(plugin)
+    manager.plugin.settings.metadata = metadata
     manager.mqtt_manager.subscriber_worker.register_callbacks(
         {"octoprint_nanny_plugin_monitoring_start": mock_start_monitoring}
     )
@@ -131,23 +123,23 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mock_event_is_tracked, m
             "command": "MonitoringStart",
             "remote_control_command_id": 1,
         },
-        "topic": topic,
+        "topic": mock_topic,
     }
     manager.mqtt_manager.mqtt_receive_queue.put_nowait(command)
 
     await manager.mqtt_manager.subscriber_worker._loop()
 
-    mock_rest_client.update_remote_control_command.assert_has_calls(
+    plugin_settings.rest_client.update_remote_control_command.assert_has_calls(
         [
             mocker.call(
                 command["message"]["remote_control_command_id"],
                 received=True,
-                metadata={},
+                metadata=metadata,
             ),
             mocker.call(
                 command["message"]["remote_control_command_id"],
                 success=True,
-                metadata={},
+                metadata=metadata,
             ),
         ]
     )

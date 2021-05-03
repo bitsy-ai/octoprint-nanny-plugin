@@ -2,7 +2,7 @@ from enum import Enum
 from dataclasses import dataclass
 from PIL.Image import Image as PillowImage
 import numpy as np
-from typing import Optional
+from typing import Optional, Dict
 
 from print_nanny_client import (
     OctoPrintPluginEventEventTypeEnum as OctoPrintPluginEventTypes,
@@ -30,11 +30,12 @@ class Image:
 @dataclass
 class Metadata:
     user_id: int
-    device_id: int
-    device_cloudiot_id: int
+    octoprint_device_id: int
+    cloudiot_device_id: int
     ts: int
     print_session: str
     client_version: str
+    environment: Dict[str, str]
     model_version: str = None
 
 
