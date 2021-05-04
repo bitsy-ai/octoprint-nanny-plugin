@@ -189,8 +189,8 @@ $(function () {
                 class: 'alert-error'
             },
             'success': {
-                header: 'Nice! Acount link succeeded',
-                text: 'You can now use Print Nanny on this device.',
+                header: 'Nice!',
+                text: 'Your Print Nanny account is linked. Register this device below to begin monitoring your prints.',
                 class: 'alert-success'
             }
         };
