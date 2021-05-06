@@ -105,11 +105,7 @@
                         type="text" />
                 </div>
             </div>
-<<<<<<< HEAD
-            <div class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
-=======
             <div id="octoprint_nanny_alert_device_registration" class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
->>>>>>> devel
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: deviceAlertHeader"></span></h4> 
@@ -124,11 +120,8 @@
                 Start Registration
             </button>
             <br>
-<<<<<<< HEAD
-=======
                 <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">⏳ Print Nanny is registering your device... </4>
                 <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Print Nanny now recognizes this device.</h4>
->>>>>>> devel
             <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
                 <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
             </div>  
