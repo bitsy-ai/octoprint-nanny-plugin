@@ -59,15 +59,6 @@ class PluginSettingsMemoize:
     def reset_rest_client_state(self):
         self._rest_client = None
 
-    @beeline.traced("PluginSettingsMemoize.get_device_metadata")
-    def get_device_metadata(self):
-        metadata = dict(
-            created_dt=datetime.now(pytz.timezone("UTC")),
-            environment=self.environment,
-        )
-        metadata.update(self.device_info)
-        return metadata
-
     @beeline.traced("PluginSettingsMemoize.get_current_octoprint_job")
     def get_current_octoprint_job(self):
         """
@@ -241,8 +232,8 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("device_cloudiot_name")
 
     @property
-    def device_id(self):
-        return self.plugin.get_setting("device_id")
+    def octoprint_device_id(self):
+        return self.plugin.get_setting("octoprint_device_id")
 
     @property
     def monitoring_active(self):
@@ -259,8 +250,8 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("device_serial")
 
     @property
-    def device_cloudiot_id(self):
-        return self.plugin.get_setting("device_cloudiot_id")
+    def cloudiot_device_id(self):
+        return self.plugin.get_setting("cloudiot_device_id")
 
     @property
     def device_private_key(self):
@@ -322,14 +313,14 @@ class PluginSettingsMemoize:
 
         printer_profile = self.get_current_octoprint_profile()
         printer_profile = await self.rest_client.update_or_create_printer_profile(
-            printer_profile, self.device_id
+            printer_profile, self.octoprint_device_id
         )
 
         print_session = await self.rest_client.create_print_session(
             gcode_filename=gcode_filename,
             session=session,
             printer_profile=printer_profile.id,
-            octoprint_device=self.device_id,
+            octoprint_device=self.octoprint_device_id,
         )
         self._print_session = print_session
         return self._print_session
@@ -337,13 +328,15 @@ class PluginSettingsMemoize:
     @property
     def metadata(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
+        print_session = self.print_session.session if self.print_session else None
         return Metadata(
             user_id=self.user_id,
-            device_id=self.device_id,
-            device_cloudiot_id=self.device_cloudiot_id,
-            session=self.print_session.session,
+            octoprint_device_id=self.octoprint_device_id,
+            cloudiot_device_id=self.cloudiot_device_id,
+            print_session=print_session,
             client_version=print_nanny_client.__version__,
             ts=ts,
+            environment=self.environment,
         )
 
     @property
@@ -374,12 +367,12 @@ class PluginSettingsMemoize:
 
     def test_mqtt_settings(self):
         if (
-            self.device_cloudiot_id is None
+            self.cloudiot_device_id is None
             or self.device_private_key is None
             or self.ca_cert is None
         ):
             raise PluginSettingsRequired(
-                f"Received None for device_cloudiot_id={self.device_cloudiot_id} or private_key_file={self.device_private_key} or ca_cert={self.ca_cert}"
+                f"Received None for cloudiot_device_id={self.cloudiot_device_id} or private_key_file={self.device_private_key} or ca_cert={self.ca_cert}"
             )
         return True
 
@@ -388,12 +381,11 @@ class PluginSettingsMemoize:
         self.test_mqtt_settings()
         if self._mqtt_client is None:
             self._mqtt_client = MQTTClient(
-                device_id=self.device_id,
-                device_cloudiot_id=self.device_cloudiot_id,
+                octoprint_device_id=self.octoprint_device_id,
+                cloudiot_device_id=self.cloudiot_device_id,
                 private_key_file=self.device_private_key,
                 ca_cert=self.ca_cert,
                 mqtt_receive_queue=self.mqtt_receive_queue,
-                trace_context=self.get_device_metadata(),
             )
         return self._mqtt_client
 

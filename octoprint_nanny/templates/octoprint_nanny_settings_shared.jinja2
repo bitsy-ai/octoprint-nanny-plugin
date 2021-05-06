@@ -15,49 +15,46 @@
   <div class="tab-content">
     <div id="{{template_name}}_basic" class="tab-pane active">
       <fieldset>
-          {% if plugin_octoprint_nanny_settings.auth_valid == True %}
-          {% else %}
 
-            <div>          
-                <h2>Login</h2>
-                <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
-                <p>
-                    <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-large btn-primary">
-                    Request Account
-                    </a>
+        <div>          
+            <h2>Login</h2>
+            <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
+            <p>
+                <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-large btn-primary">
+                Request Account
+                </a>
 
-                    <a target="_blank" href="https://www.print-nanny.com/accounts/login/" class="btn btn-secondary btn-large">
-                    Login
-                    </a>
-                </p>
+                <a target="_blank" href="https://www.print-nanny.com/accounts/login/" class="btn btn-secondary btn-large">
+                Login
+                </a>
+            </p>
             <hr>
             <h2>Link Accounts</h2>
 
-                <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
-                and paste it below.</p>
-                <div class="control-group">
-                    <label class="control-label" for="octoprint_nanny_settings_auth_token_basic"><strong>Authentication Token</strong></label>
-                    <div class="controls">
-                        <input 
-                            id="octoprint_nanny_settings_auth_token_basic" 
-                            class="input-xxlarge"
-                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
-                    </div>
+            <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
+            and paste it below.</p>
+            <div class="control-group">
+                <label class="control-label" for="octoprint_nanny_settings_auth_token_basic"><strong>Authentication Token</strong></label>
+                <div class="controls">
+                    <input 
+                        id="octoprint_nanny_settings_auth_token_basic" 
+                        class="input-xxlarge"
+                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
                 </div>
-                <div class="alert alert-block" data-bind="css: authAlertClass">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                
-                    <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
-                    <span data-bind="text: authAlertText"></span>
-                </div>
-
-                <button data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
-                    Test Connection
-                </button>
             </div>
+            <div id="octoprint_nanny_alert_auth" class="alert alert-block" data-bind="{css: authAlertClass, visible: authAlertClass }">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            
+                <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
+                <span data-bind="text: authAlertText"></span>
+            </div>
+
+            <button id="octoprint_nanny_test_auth_token" data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
+                Test Connection
+            </button>
+        </div>
         <hr>
 
-        {% endif %}
             
         {% if plugin_octoprint_nanny_settings.device_registered == True %}
             <div class="col-sm">        
@@ -74,10 +71,11 @@
                     <pre id="octoprint_nanny_settings_device_fingerprint" data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint">
                     </pre>
                 </div>
-                <a class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
+                <a id="octoprint_nanny_settings_manage_device" class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
                     Manage Device
                 </a>
-                <button 
+                <button
+                id="octoprint_nanny_settings_reset_device"
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
                 type="submit" 
                 class="btn btn-secondary btn">
@@ -107,7 +105,11 @@
                         type="text" />
                 </div>
             </div>
+<<<<<<< HEAD
             <div class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
+=======
+            <div id="octoprint_nanny_alert_device_registration" class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
+>>>>>>> devel
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: deviceAlertHeader"></span></h4> 
@@ -116,11 +118,17 @@
 
             <button 
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
+                id="octoprint_nanny_device_registration"
                 type="submit" 
                 class="btn btn-primary btn-large">
                 Start Registration
             </button>
             <br>
+<<<<<<< HEAD
+=======
+                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">⏳ Print Nanny is registering your device... </4>
+                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Print Nanny now recognizes this device.</h4>
+>>>>>>> devel
             <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
                 <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
             </div>  
@@ -185,13 +193,13 @@
             </div>
 
 
-            <div class="alert alert-block" data-bind="css: authAlertClass">
+            <div id="octoprint_nanny_alert_advanced_settings" class="alert alert-block" data-bind="css: authAlertClass">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             
                 <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
                 <span data-bind="text: authAlertText"></span>
             </div>
-            <button data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
+            <button id="octoprint_nanny_save_advanced_settings" data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
                 Save Advanced Settings
             </button>
 

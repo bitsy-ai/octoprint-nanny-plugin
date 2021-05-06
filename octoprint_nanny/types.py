@@ -1,17 +1,20 @@
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from PIL.Image import Image as PillowImage
 import numpy as np
-from typing import Optional
+from typing import Optional, Dict
 
-from print_nanny_client.models.plugin_event_event_type_enum import (
-    PluginEventEventTypeEnum as PluginEventTypes,
+from print_nanny_client import (
+    OctoPrintPluginEventEventTypeEnum as OctoPrintPluginEventTypes,
 )
-from print_nanny_client.models.octo_print_event_event_type_enum import (
+from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
-from print_nanny_client.telemetry_event.TelemetryEventEnum import TelemetryEventEnum
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
+
 
 PLUGIN_PREFIX = "octoprint_nanny_"
 
@@ -22,17 +25,23 @@ class Image:
     width: int
     data: bytes
     # ndarray: np.ndarray
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass
 class Metadata:
     user_id: int
-    device_id: int
-    device_cloudiot_id: int
+    octoprint_device_id: int
+    cloudiot_device_id: int
     ts: int
-    session: str
+    print_session: str
     client_version: str
+    environment: Dict[str, str]
     model_version: str = None
+
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass
@@ -42,12 +51,18 @@ class BoundingBoxPrediction:
     detection_boxes: np.ndarray
     detection_classes: np.ndarray
 
+    def to_dict(self):
+        return asdict(self)
+
 
 @dataclass
 class MonitoringFrame:
     ts: int
     image: Image
     bounding_boxes: BoundingBoxPrediction = None
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class MonitoringModes(Enum):
@@ -101,11 +116,12 @@ class EnumBase(ClassMemberMixin, Enum):
 
 
 PluginEvents = EnumBase(
-    "PluginEvents",
+    "OctoPrintPluginEvents",
     {
-        attr: getattr(PluginEventTypes, attr)
-        for attr in dir(PluginEventTypes)
-        if getattr(PluginEventTypes, attr) in PluginEventTypes.allowable_values
+        attr: getattr(OctoPrintPluginEventTypes, attr)
+        for attr in dir(OctoPrintPluginEventTypes)
+        if getattr(OctoPrintPluginEventTypes, attr)
+        in OctoPrintPluginEventTypes.allowable_values
     },
 )
 

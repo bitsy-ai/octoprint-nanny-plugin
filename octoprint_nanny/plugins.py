@@ -15,6 +15,7 @@ import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
+import socket
 
 import time
 import requests
@@ -33,7 +34,7 @@ def configure_logger(logger, logfile_path):
     )
     file_logging_handler.setFormatter(
         logging.Formatter(
-            "%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s"
+            "%(asctime)s - %(name)s - %(module)s - %(thread)d - %(levelname)s - %(message)s"
         )
     )
     file_logging_handler.setLevel(logging.DEBUG)
@@ -75,7 +76,7 @@ DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 88
 DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
     "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.2030.ltsapis.goog"
 )
-DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gtsltsr/gtsltsr.crt"
+DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.google.com/roots.pem"
 BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
 DEFAULT_SETTINGS = dict(
@@ -94,8 +95,8 @@ DEFAULT_SETTINGS = dict(
     device_manage_url=None,
     device_fingerprint=None,
     device_cloudiot_name=None,
-    device_cloudiot_id=None,
-    device_id=None,
+    cloudiot_device_id=None,
+    octoprint_device_id=None,
     device_name=platform.node(),
     device_private_key=None,
     device_public_key=None,
@@ -130,7 +131,7 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.EnvironmentDetectionPlugin,
     octoprint.plugin.ProgressPlugin,
     octoprint.plugin.ShutdownPlugin,
-    octoprint.plugin.ReloadNeedingPlugin,
+    octoprint.plugin.RestartNeedingPlugin,
 ):
     def __init__(self, *args, **kwargs):
         # User interactive
@@ -166,21 +167,25 @@ class OctoPrintNannyPlugin(
     def _cpuinfo(self) -> dict:
         """
         Dict from /proc/cpu
+        Keys lowercased for portability
         {'processor': '3', 'model name': 'ARMv7 Processor rev 3 (v7l)', 'BogoMIPS': '270.00',
         'Features': 'half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm crc32', 'CPU implementer': '0x41',
         'CPU architecture': '7', 'CPU variant': '0x0', 'CPU part': '0xd08', 'CPU revision': '3', 'Hardware': 'BCM2711',
         'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
         """
-        return {
-            x.split(":")[0].strip(): x.split(":")[1].strip()
+        cpuinfo = {
+            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
             for x in open("/proc/cpuinfo").read().split("\n")
             if len(x.split(":")) > 1
         }
+        logger.info(f"/proc/cpuinfo:\n {cpuinfo}")
+        return cpuinfo
 
     @beeline.traced("OctoPrintNannyPlugin._meminfo")
     def _meminfo(self) -> dict:
         """
         Dict from /proc/meminfo
+        Keys lowercased for portability
 
             {'MemTotal': '3867172 kB', 'MemFree': '1241596 kB', 'MemAvailable': '3019808 kB', 'Buffers': '131336 kB', 'Cached': '1641988 kB',
             'SwapCached': '1372 kB', 'Active': '1015728 kB', 'Inactive': '1469520 kB', 'Active(anon)': '564560 kB', 'Inactive(anon)': '65344 kB', '
@@ -191,11 +196,13 @@ class OctoPrintNannyPlugin(
             'Bounce': '0 kB', 'WritebackTmp': '0 kB', 'CommitLimit': '2035980 kB', 'Committed_AS': '1755048 kB', 'VmallocTotal': '245760 kB', 'VmallocUsed': '5732 kB',
             'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
         """
-        return {
-            x.split(":")[0].strip(): x.split(":")[1].strip()
+        meminfo = {
+            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
             for x in open("/proc/meminfo").read().split("\n")
             if len(x.split(":")) > 1
         }
+        logger.info(f"/proc/meminfo:\n {meminfo}")
+        return meminfo
 
     @beeline.traced("OctoPrintNannyPlugin.get_device_info")
     @beeline.traced_thread
@@ -203,24 +210,27 @@ class OctoPrintNannyPlugin(
         cpuinfo = self._cpuinfo()
 
         # @todo warn if neon acceleration is not supported
-        cpu_flags = cpuinfo.get("Features", "").split()
+        cpu_flags = cpuinfo.get("features")
+        if isinstance(cpu_flags, str):
+            cpu_flags = cpu_flags.split()
 
         # processors are zero indexed
         cores = int(cpuinfo.get("processor")) + 1
         # covnert kB string like '3867172 kB' to int
-        ram = int(self._meminfo().get("MemTotal").split()[0])
+        ram = int(self._meminfo().get("memtotal").split()[0])
 
+        logger.info(f"Runtime environment:\n {self._environment}")
         python_version = self._environment.get("python", {}).get("version")
         pip_version = self._environment.get("python", {}).get("pip")
         virtualenv = self._environment.get("python", {}).get("virtualenv")
 
         return {
-            "model": cpuinfo.get("Model"),
+            "model": cpuinfo.get("model"),
             "platform": platform.platform(),
             "cpu_flags": cpu_flags,
-            "hardware": cpuinfo.get("Hardware"),
-            "revision": cpuinfo.get("Revision"),
-            "serial": cpuinfo.get("Serial"),
+            "hardware": cpuinfo.get("hardware"),
+            "revision": cpuinfo.get("revision"),
+            "serial": cpuinfo.get("serial", socket.gethostname()),
             "cores": cores,
             "ram": ram,
             "python_version": python_version,
@@ -236,21 +246,22 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_private_key"], None)
         self._settings.set(["device_public_key"], None)
         self._settings.set(["device_fingerprint"], None)
-        self._settings.set(["device_id"], None)
+        self._settings.set(["octoprint_device_id"], None)
         self._settings.set(["device_serial"], None)
         self._settings.set(["device_manage_url"], None)
         self._settings.set(["device_cloudiot_name"], None)
-        self._settings.set(["device_cloudiot_id"], None)
+        self._settings.set(["cloudiot_device_id"], None)
         self._settings.set(["device_registered"], False)
         self._settings.save()
-        self._worker_manager.reset_device_settings_state()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs):
-        device_id = self.get_setting("device_id")
-        if device_id is None:
+        octoprint_device_id = self.get_setting("octoprint_device_id")
+        if octoprint_device_id is None:
             return
-        logger.info(f"Syncing printer profiles for device_id={device_id}")
+        logger.info(
+            f"Syncing printer profiles for octoprint_device_id={octoprint_device_id}"
+        )
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
@@ -258,7 +269,7 @@ class OctoPrintNannyPlugin(
         for profile_id, profile in printer_profiles.items():
             try:
                 created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
-                    profile, device_id
+                    profile, octoprint_device_id
                 )
                 id_map["octoprint"][profile_id] = created_profile.id
                 id_map["octoprint_nanny"][created_profile.id] = profile_id
@@ -400,14 +411,14 @@ class OctoPrintNannyPlugin(
 
     @beeline.traced("OctoPrintNannyPlugin.sync_device_metadata")
     async def sync_device_metadata(self):
-        device_id = self.get_setting("device_id")
-        if device_id is None:
+        octoprint_device_id = self.get_setting("octoprint_device_id")
+        if octoprint_device_id is None:
             return
-        logger.info(f"Syncing metadata for device_id={device_id}")
+        logger.info(f"Syncing metadata for octoprint_device_id={octoprint_device_id}")
 
         device_info = self.get_device_info()
         return await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
-            device_id, **device_info
+            octoprint_device_id, **device_info
         )
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
@@ -459,10 +470,10 @@ class OctoPrintNannyPlugin(
 
         self._settings.set(["device_serial"], device.serial)
         self._settings.set(["device_manage_url"], device.manage_url)
-        self._settings.set(["device_id"], device.id)
+        self._settings.set(["octoprint_device_id"], device.id)
         self._settings.set(["device_fingerprint"], device.fingerprint)
         self._settings.set(["device_cloudiot_name"], device.cloudiot_device_name)
-        self._settings.set(["device_cloudiot_id"], device.cloudiot_device_num_id)
+        self._settings.set(["cloudiot_device_id"], device.cloudiot_device_num_id)
         self._settings.set(["device_registered"], True)
 
         self._settings.save()
@@ -541,7 +552,7 @@ class OctoPrintNannyPlugin(
         if isinstance(result, Exception):
             raise result
         self._settings.save()
-        self.worker_manager.apply_device_registration()
+        # self.worker_manager.apply_device_registration()
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
@@ -567,7 +578,6 @@ class OctoPrintNannyPlugin(
             self._test_api_auth(auth_token, api_url), self.worker_manager.loop
         )
         response = response.result()
-
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
             self._settings.set(["auth_valid"], True)
@@ -577,7 +587,7 @@ class OctoPrintNannyPlugin(
             self._settings.set(["user_id"], response.id)
 
             self._settings.save()
-
+            self.worker_manager.plugin.settings.reset_rest_client_state()
             return flask.json.jsonify(response.to_dict())
         elif isinstance(response, Exception):
             e = str(response)
@@ -593,7 +603,7 @@ class OctoPrintNannyPlugin(
 
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
-        local_only = ["monitoring_frame_b64"]
+        local_only = ["monitoring_frame_b64", "monitoring_reset"]
         return plugin_events + remote_commands + local_only
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
@@ -608,7 +618,7 @@ class OctoPrintNannyPlugin(
 
     def on_after_startup(self, *args, **kwargs):
         logger.info("OctoPrint Nanny startup complete, configuring logger")
-        configure_logger(logger, self.get_plugin_logfile_path())
+        configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
         # shutdown event is handled in .on_shutdown
@@ -631,9 +641,24 @@ class OctoPrintNannyPlugin(
     ## Progress plugin
 
     def on_print_progress(self, storage, path, progress):
-        self.worker_manager.mqtt_send_queue.put_nowait(
-            {"event_type": Events.PRINT_PROGRESS, "event_data": {"progress": progress}}
-        )
+        octoprint_job = self._printer.get_current_job()
+        payload = {
+            "event_type": Events.PRINT_PROGRESS,
+            "event_data": {
+                "print_progress": progress,
+            },
+        }
+        progress = octoprint_job.get("progress")
+        if octoprint_job and progress:
+            payload["event_data"].update(
+                {
+                    "filepos": progress.get("filepos"),
+                    "time_elapsed": progress.get("printTime"),
+                    "time_remaiing": progress.get("printTimeLeft"),
+                }
+            )
+
+        self.worker_manager.mqtt_send_queue.put_nowait(payload)
 
     ## EnvironmentDetectionPlugin
     @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
@@ -677,12 +702,12 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["device_private_key"]) is None,
                 self._settings.get(["device_public_key"]) is None,
                 self._settings.get(["device_fingerprint"]) is None,
-                self._settings.get(["device_id"]) is None,
+                self._settings.get(["octoprint_device_id"]) is None,
                 self._settings.get(["device_serial"]) is None,
                 self._settings.get(["device_registered"]) is False,
                 self._settings.get(["device_manage_url"]) is None,
                 self._settings.get(["device_cloudiot_name"]) is None,
-                self._settings.get(["device_cloudiot_id"]) is None,
+                self._settings.get(["cloudiot_device_id"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
                 self._settings.get(["user_url"]) is None,

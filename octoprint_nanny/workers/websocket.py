@@ -6,6 +6,7 @@ import json
 import logging
 import queue
 import websockets
+from websockets.exceptions import ConnectionClosedError
 import urllib
 import asyncio
 import os
@@ -100,7 +101,7 @@ class WebSocketWorker:
 
     @backoff.on_exception(
         backoff.expo,
-        websockets.exceptions.ConnectionClosedError,
+        ConnectionClosedError,
         jitter=backoff.random_jitter,
         logger=logger,
     )

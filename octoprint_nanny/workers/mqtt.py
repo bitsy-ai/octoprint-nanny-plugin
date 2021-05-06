@@ -70,7 +70,7 @@ class MQTTManager:
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join(1)
+            worker.join(5)
 
     def _reset(self):
         self.halt = threading.Event()
@@ -168,14 +168,7 @@ class MQTTPublisherWorker:
     async def _publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
         logger.info(f"_publish_octoprint_event_telemetry {event}")
-        event.update(
-            dict(
-                user_id=self.plugin.settings.user_id,
-                device_id=self.plugin.settings.device_id,
-                device_cloudiot_name=self.plugin.settings.device_cloudiot_name,
-            )
-        )
-        event.update(self.plugin.settings.get_device_metadata())
+        event.update({"metadata": self.plugin.settings.metadata.to_dict()})
 
         if event_type in self.PRINT_JOB_EVENTS:
             event.update(self.plugin.settings.get_print_job_metadata())
@@ -220,7 +213,7 @@ class MQTTPublisherWorker:
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
                 if event_type not in self.MUTED_EVENTS:
-                    logger.info(
+                    logger.debug(
                         f"No {self.__class__} handler registered for {event_type}"
                     )
                 return
@@ -293,9 +286,9 @@ class MQTTSubscriberWorker:
             return
 
         command_id = message.get("remote_control_command_id")
-        metadata = self.plugin.settings.get_device_metadata()
+
         await self.plugin.settings.rest_client.update_remote_control_command(
-            command_id, received=True, metadata=metadata
+            command_id, received=True, metadata=self.plugin.settings.metadata
         )
 
         handler_fns = self._callbacks.get(event_type)
@@ -314,20 +307,16 @@ class MQTTSubscriberWorker:
                     else:
                         handler_fn(event=message, event_type=event_type)
 
-                    metadata = self.plugin.settings.get_device_metadata()
                     # set success state
                     await self.plugin.settings.rest_client.update_remote_control_command(
-                        command_id,
-                        success=True,
-                        metadata=metadata,
+                        command_id, success=True, metadata=self.plugin.settings.metadata
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    metadata = self.plugin.settings.get_device_metadata()
                     await self.plugin.settings.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
-                        metadata=metadata,
+                        metadata=self.plugin.settings.metadata,
                     )
 
     async def _loop(self):

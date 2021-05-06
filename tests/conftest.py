@@ -34,11 +34,12 @@ def calibration():
 def metadata():
     return Metadata(
         user_id=1234,
-        device_id=1234,
-        device_cloudiot_id=1234,
-        session=uuid.uuid4().hex,
+        octoprint_device_id=1234,
+        cloudiot_device_id=1234,
+        print_session=uuid.uuid4().hex,
         client_version=print_nanny_client.__version__,
         ts=datetime.now().timestamp(),
+        environment={},
     )
 
 

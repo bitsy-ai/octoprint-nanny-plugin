@@ -64,7 +64,7 @@ $(function () {
                 }
                 self.imageData("data:image/jpeg;base64," + message.data.payload);
             }
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_predict_offline') {
+            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_monitoring_reset') {
                 console.log(message)
                 self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
@@ -121,8 +121,6 @@ $(function () {
 
         stopMonitoring = function () {
             const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'stopMonitoring'
-            self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
-
             OctoPrint.postJson(url, {})
                 .done((res) => {
                     console.log(res)
@@ -177,10 +175,12 @@ $(function () {
         self.settingsViewModel = parameters[1];
 
         self.authAlertClass = ko.observable();
+        self.authAlertText = ko.observable()
+        self.authAlertHeader = ko.observable()
         self.authAlerts = {
             'warning': {
-                header: 'Hey!',
-                text: 'Test your connection 👇',
+                header: 'Link your Print Nanny account',
+                text: 'Enter your auth token and click the Test Connection button to get started.',
                 class: 'alert'
             },
             'error': {
@@ -190,7 +190,7 @@ $(function () {
             },
             'success': {
                 header: 'Nice!',
-                text: 'Your token is verified.',
+                text: 'Your Print Nanny account is linked. Register this device below to begin monitoring your prints.',
                 class: 'alert-success'
             }
         };
@@ -200,8 +200,15 @@ $(function () {
         self.deviceRegisterProgress = 0;
         self.deviceRegisterProgressCompleted = 6;
 
-        self.authAlertHeader = ko.observable(self.authAlerts.warning.header)
-        self.authAlertText = ko.observable(self.authAlerts.warning.text)
+
+
+        self.onAfterBinding = function(){
+            if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){
+                self.authAlertHeader = self.authAlerts.warning.header
+                self.authAlertText = self.authAlerts.warning.text
+                self.authAlertClass = self.authAlerts.warning.class
+            }
+        }
 
         self.deviceAlertClass = ko.observable();
         self.deviceAlerts = {

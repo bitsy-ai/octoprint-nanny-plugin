@@ -15,6 +15,7 @@ import os
 import re
 import threading
 import uuid
+from typing import Optional
 
 from octoprint.events import Events
 import octoprint.filemanager
@@ -39,7 +40,7 @@ class WorkerManager:
     Coordinates MQTTManager and MonitoringManager classes
     """
 
-    def __init__(self, plugin):
+    def __init__(self, plugin, plugin_settings: Optional[PluginSettingsMemoize] = None):
 
         self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
         self.event_loop_thread.daemon = True
@@ -62,7 +63,8 @@ class WorkerManager:
         mqtt_receive_queue = self.manager.AioQueue()
         self.mqtt_receive_queue = mqtt_receive_queue
 
-        plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
+        if plugin_settings is None:
+            plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
@@ -118,24 +120,24 @@ class WorkerManager:
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         self._honeycomb_tracer.add_global_context(
-            self.plugin.settings.get_device_metadata()
+            self.plugin.settings.metadata.to_dict()
         )
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.apply_device_registration")
-    def apply_device_registration(self):
-        self.mqtt_manager.stop()
-        logger.info("Resetting WorkerManager device registration state")
-        self.plugin.settings.reset_device_settings_state()
-        self.mqtt_manager.start()
+    # @beeline.traced("WorkerManager.apply_device_registration")
+    # def apply_device_registration(self):
+    #     self.mqtt_manager.stop()
+    #     logger.info("Resetting WorkerManager device registration state")
+    #     self.plugin.settings.reset_device_settings_state()
+    #     self.mqtt_manager.start()
 
     @beeline.traced("WorkerManager.on_settings_save")
     def on_settings_save(self):
         self.mqtt_manager.stop()
         self.plugin.settings.reset_device_settings_state()
         self.plugin.settings.reset_rest_client_state()
-
+        self.mqtt_manager.start()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
@@ -158,7 +160,7 @@ class WorkerManager:
         await self.monitoring_manager.stop()
 
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, monitoring_active=False
+            self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
 
         self.mqtt_manager.stop()
@@ -176,7 +178,7 @@ class WorkerManager:
             )
             printer_profile = (
                 await self.plugin.settings.rest_client.update_or_create_printer_profile(
-                    current_profile, self.plugin.settings.device_id
+                    current_profile, self.plugin.settings.octoprint_device_id
                 )
             )
 
@@ -187,7 +189,9 @@ class WorkerManager:
             )
             gcode_file = (
                 await self.plugin.settings.rest_client.update_or_create_gcode_file(
-                    event_data, gcode_file_path, self.plugin.settings.device_id
+                    event_data,
+                    gcode_file_path,
+                    self.plugin.settings.octoprint_device_id,
                 )
             )
 
@@ -195,17 +199,13 @@ class WorkerManager:
             logger.error(f"on_print_start API called failed {e}", exc_info=True)
             return
 
-        if self.plugin.get_setting("auto_start"):
-            logger.info("Print Nanny monitoring is set to auto-start")
-            self.monitoring_manager.start()
-
     async def on_calibration_update(self):
         logger.info(
             f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
         )
         device_calibration = (
             await self.plugin.settings.rest_client.update_or_create_device_calibration(
-                self.plugin.settings.device_id,
+                self.plugin.settings.octoprint_device_id,
                 {
                     "x0": self.plugin.get_setting("calibrate_x0"),
                     "x1": self.plugin.get_setting("calibrate_x1"),

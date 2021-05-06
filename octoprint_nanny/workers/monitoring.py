@@ -39,7 +39,7 @@ from octoprint_nanny.types import (
     PluginEvents,
     MonitoringModes,
     MonitoringFrame,
-    TelemetryEventEnum,
+    MonitoringEventTypeEnum,
     Image,
 )
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -147,8 +147,8 @@ class MonitoringWorker:
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> bytes:
-        msg = octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=TelemetryEventEnum.monitoring_frame_raw,
+        msg = octoprint_nanny.clients.flatbuffers.build_monitoring_event_flatbuffer(
+            event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -158,8 +158,8 @@ class MonitoringWorker:
     def _create_lite_fb_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
-        return octoprint_nanny.clients.flatbuffers.build_telemetry_event_message(
-            event_type=TelemetryEventEnum.monitoring_frame_post,
+        return octoprint_nanny.clients.flatbuffers.build_monitoring_event_flatbuffer(
+            event_type=MonitoringEventTypeEnum.monitoring_frame_post,
             metadata=self._plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
@@ -218,7 +218,7 @@ class MonitoringWorker:
         func = functools.partial(print_is_healthy, self._df)
         healthy = await self.loop.run_in_executor(self.pool, func)
         if healthy is False:
-            octoprint_device = self._plugin.settings.device_id
+            octoprint_device = self._plugin.settings.octoprint_device_id
             dataframe = io.BytesIO(name=f"{octoprint_device}_{ts}.parquet")
             self._df.to_parquet(dataframe, engine="pyarrow")
             alert = await self._plugin.settings.rest_client.create_defect_alert(
@@ -308,50 +308,58 @@ class MonitoringManager:
             self.mqtt_send_queue,
             self.halt,
             self.plugin,
-            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._websocket_worker = WebSocketWorker(
             self.plugin.settings.ws_url,
             self.plugin.settings.auth_token,
             self.pn_ws_queue,
-            self.plugin.settings.device_id,
+            self.plugin.settings.octoprint_device_id,
             self.halt,
-            trace_context=self.plugin.settings.get_device_metadata(),
         )
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
         logger.info(f"Finished resetting MonitoringManager")
 
     @beeline.traced("MonitoringManager.start")
-    async def start(self, session=None, **kwargs):
-        self._reset()
-        self.plugin.settings.reset_print_session()
-        await self.plugin.settings.create_print_session()
-        logger.info(
-            f"Initializing monitoring workers with session={self.plugin.settings.print_session.session}"
-        )
-        for worker in self._workers:
-            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
-            thread.daemon = True
-            self._worker_threads.append(thread)
-            logger.info(f"Starting thread {thread.name}")
-            thread.start()
+    async def start(self, print_session=None, **kwargs):
+        monitoring_active = self.plugin._settings.get(["monitoring_active"])
+        if not monitoring_active:
+            self.plugin._settings.set(["monitoring_active"], True)
+            self._reset()
+            self.plugin.settings.reset_print_session()
+            await self.plugin.settings.create_print_session()
+            logger.info(
+                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
+            )
+            for worker in self._workers:
+                thread = threading.Thread(target=worker.run, name=str(worker.__class__))
+                thread.daemon = True
+                self._worker_threads.append(thread)
+                logger.info(f"Starting thread {thread.name}")
+                thread.start()
 
-        self.plugin._settings.set(["monitoring_active"], True)
-        await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id,
-            monitoring_active=True,
-            last_session=self.plugin.settings.print_session.id,
-        )
+            await self.plugin.settings.rest_client.update_octoprint_device(
+                self.plugin.settings.octoprint_device_id,
+                monitoring_active=True,
+                last_session=self.plugin.settings.print_session.id,
+            )
+        else:
+            logger.warning(
+                "Received MONITORING_START command while monitoring is already active, discarding"
+            )
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
+
         self._drain()
+        self.plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_RESET,
+        )
         self.plugin._settings.set(
             ["monitoring_active"], False
         )  # @todo fix setting iface
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.device_id, monitoring_active=False
+            self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
         if self.plugin.settings.print_session:
             logger.info(
