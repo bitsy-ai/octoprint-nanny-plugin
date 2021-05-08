@@ -238,7 +238,7 @@ class MQTTClient:
         global should_backoff
         global minimum_backoff_time
         should_backoff = True
-        if not self._thread_halt.is_set():
+        if not self.halt.is_set():
             if should_backoff:
 
                 # Otherwise, wait and connect again.
@@ -303,13 +303,11 @@ class MQTTClient:
             event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
         )
 
-    def stop(self):
-        return self.client.loop_stop()
-
     def run(self, halt):
-        self._thread_halt = halt
+        self.halt = halt
         self.connect()
-        return self.client.loop_start()
+        while not self.halt.is_set():
+            self.client.loop()
 
 
 def create_jwt(
