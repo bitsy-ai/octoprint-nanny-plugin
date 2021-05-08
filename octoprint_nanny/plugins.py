@@ -552,7 +552,8 @@ class OctoPrintNannyPlugin(
         if isinstance(result, Exception):
             raise result
         self._settings.save()
-        # self.worker_manager.apply_device_registration()
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET)
+
         return flask.jsonify(result)
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_snapshot_url")
@@ -603,7 +604,7 @@ class OctoPrintNannyPlugin(
 
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
-        local_only = ["monitoring_frame_b64", "monitoring_reset"]
+        local_only = ["monitoring_frame_b64", "monitoring_reset", "device_reset"]
         return plugin_events + remote_commands + local_only
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
@@ -624,10 +625,13 @@ class OctoPrintNannyPlugin(
         # shutdown event is handled in .on_shutdown
         if event_type == Events.SHUTDOWN:
             return
-        logger.debug(f"Putting event_type={event_type} into mqtt_send_queue")
-        self.worker_manager.mqtt_send_queue.put_nowait(
-            {"event_type": event_type, "event_data": event_data}
-        )
+        elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET:
+            self.worker_manager.mqtt_client_reset()
+        else:
+            logger.debug(f"Putting event_type={event_type} into mqtt_send_queue")
+            self.worker_manager.mqtt_send_queue.put_nowait(
+                {"event_type": event_type, "event_data": event_data}
+            )
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
@@ -670,10 +674,10 @@ class OctoPrintNannyPlugin(
     def get_settings_defaults(self):
         return DEFAULT_SETTINGS
 
-    @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
-    def on_settings_save(self, data):
-        super().on_settings_save(data)
-        self.worker_manager.on_settings_save()
+    # @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
+    # def on_settings_save(self, data):
+    #     super().on_settings_save(data)
+    #     self.worker_manager.on_settings_save()
 
     ## Template plugin
 
