@@ -66,9 +66,7 @@ from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
 DEFAULT_API_URL = os.environ.get(
     "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
 )
-DEFAULT_WS_URL = os.environ.get(
-    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/video/"
-)
+DEFAULT_WS_URL = os.environ.get("OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/")
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
