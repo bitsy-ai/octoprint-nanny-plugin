@@ -96,8 +96,11 @@ class WebSocketWorker:
 
     @beeline.traced("WebSocketWorker._loop")
     async def _loop(self, websocket):
-        msg = await self._producer.coro_get()
-        return await websocket.send(msg)
+        try:
+            msg = await self._producer.coro_get(block=False)
+            return await websocket.send(msg)
+        except queue.Empty as e:
+            return
 
     @backoff.on_exception(
         backoff.expo,
