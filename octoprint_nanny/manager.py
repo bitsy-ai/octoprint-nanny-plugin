@@ -132,8 +132,8 @@ class WorkerManager:
     #     self.plugin.settings.reset_device_settings_state()
     #     self.mqtt_manager.start()
 
-    @beeline.traced("WorkerManager.on_settings_save")
-    def on_settings_save(self):
+    @beeline.traced("WorkerManager.mqtt_client_reset")
+    def mqtt_client_reset(self):
         self.mqtt_manager.stop()
         self.plugin.settings.reset_device_settings_state()
         self.plugin.settings.reset_rest_client_state()
