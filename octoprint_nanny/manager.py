@@ -125,13 +125,6 @@ class WorkerManager:
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
-    # @beeline.traced("WorkerManager.apply_device_registration")
-    # def apply_device_registration(self):
-    #     self.mqtt_manager.stop()
-    #     logger.info("Resetting WorkerManager device registration state")
-    #     self.plugin.settings.reset_device_settings_state()
-    #     self.mqtt_manager.start()
-
     @beeline.traced("WorkerManager.mqtt_client_reset")
     def mqtt_client_reset(self):
         self.mqtt_manager.stop()
