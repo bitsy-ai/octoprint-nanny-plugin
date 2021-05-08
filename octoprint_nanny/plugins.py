@@ -613,9 +613,11 @@ class OctoPrintNannyPlugin(
         asyncio.run_coroutine_threadsafe(
             self.worker_manager.shutdown(), self.worker_manager.loop
         ).result()
+        self._settings.set(["monitoring_active"], False)
 
     def on_startup(self, *args, **kwargs):
         logger.info("OctoPrint Nanny starting up")
+        self._settings.set(["monitoring_active"], False)
 
     def on_after_startup(self, *args, **kwargs):
         logger.info("OctoPrint Nanny startup complete, configuring logger")
