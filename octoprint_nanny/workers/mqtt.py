@@ -41,20 +41,11 @@ class MQTTManager:
         halt = threading.Event()
         self.halt = halt
         self.plugin = plugin
-
-        self.publisher_worker = MQTTPublisherWorker(
-            self.halt, self.mqtt_send_queue, self.plugin
-        )
-        self.subscriber_worker = MQTTSubscriberWorker(
-            self.halt, self.mqtt_receive_queue, self.plugin
-        )
-        self.client_worker = MQTTClientWorker(self.halt, self.plugin)
-        self._workers = [
-            self.client_worker,
-            self.publisher_worker,
-            self.subscriber_worker,
-        ]
         self._worker_threads = []
+        self.publisher_worker = MQTTPublisherWorker(self.mqtt_send_queue, self.plugin)
+        self.subscriber_worker = MQTTSubscriberWorker(
+            self.mqtt_receive_queue, self.plugin
+        )
 
     def _drain(self):
         """
@@ -62,20 +53,12 @@ class MQTTManager:
         """
         self.halt.set()
 
-        try:
-            logger.info("Waiting for MQTTManager.mqtt_client network loop to finish")
-            self.client_worker.stop()
-        except PluginSettingsRequired:
-            pass
-
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
             worker.join()
 
     def _reset(self):
         self.halt = threading.Event()
-        for worker in self._workers:
-            worker.halt = self.halt
         self._worker_threads = []
 
     def start(self, **kwargs):
@@ -84,8 +67,16 @@ class MQTTManager:
         """
         logger.info("MQTTManager.start was called")
         self._reset()
+
+        self._workers = [
+            self.publisher_worker,
+            self.subscriber_worker,
+            self.plugin.settings.mqtt_client,
+        ]
         for worker in self._workers:
-            thread = threading.Thread(target=worker.run, name=str(worker.__class__))
+            thread = threading.Thread(
+                target=worker.run, name=str(worker.__class__), args=(self.halt,)
+            )
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
@@ -93,30 +84,6 @@ class MQTTManager:
     def stop(self):
         logger.info("MQTTManager.stop was called")
         self._drain()
-
-
-class MQTTClientWorker:
-    """
-    Manages paho MQTT client's network loop on behalf of Publisher/Subscriber Workers
-    https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#network-loop
-    """
-
-    def __init__(self, halt, plugin):
-
-        self.plugin = plugin
-        self.halt = halt
-
-    def stop(self):
-        return self.plugin.settings.mqtt_client.stop()
-
-    def run(self):
-
-        try:
-            return self.plugin.settings.mqtt_client.run(self.halt)
-        except PluginSettingsRequired as e:
-            logger.debug(e)
-            pass
-        logger.warning("MQTTClientWorker will exit soon")
 
 
 class MQTTPublisherWorker:
@@ -137,9 +104,9 @@ class MQTTPublisherWorker:
     # do not warn when the following events are skipped on telemetry update
     MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
 
-    def __init__(self, halt, queue, plugin):
+    def __init__(self, queue, plugin):
 
-        self.halt = halt
+        self.halt = None
         self.queue = queue
         self.plugin = plugin
         self._callbacks = {}
@@ -154,11 +121,12 @@ class MQTTPublisherWorker:
         logging.info(f"Registered MQTTSubscribeWorker._callbacks {self._callbacks}")
         return self._callbacks
 
-    def run(self):
+    def run(self, halt):
         """
         Telemetry worker's event loop is exposed as WorkerManager.loop
         this permits other threads to schedule work in this event loop with asyncio.run_coroutine_threadsafe()
         """
+        self.halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
@@ -180,7 +148,10 @@ class MQTTPublisherWorker:
                 {"name": "WorkerManager.queue.coro_get"}
             )
 
-            event = await self.queue.coro_get()
+            try:
+                event = await self.queue.coro_get(block=False)
+            except queue.Empty as e:
+                return
 
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
@@ -242,15 +213,16 @@ class MQTTPublisherWorker:
 
 
 class MQTTSubscriberWorker:
-    def __init__(self, halt, queue, plugin):
+    def __init__(self, queue, plugin):
 
-        self.halt = halt
+        self.halt = None
         self.queue = queue
         self.plugin = plugin
         self._callbacks = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    def run(self):
+    def run(self, halt):
+        self.halt = halt
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.set_default_executor(
@@ -326,7 +298,10 @@ class MQTTSubscriberWorker:
             {"name": "WorkerManager.queue.coro_get"}
         )
 
-        payload = await self.queue.coro_get()
+        try:
+            payload = await self.queue.coro_get(block=False)
+        except queue.Empty as e:
+            return
 
         self._honeycomb_tracer.add_context(dict(event=payload))
         self._honeycomb_tracer.finish_span(span)
