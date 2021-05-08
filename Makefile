@@ -58,7 +58,6 @@ release: dist
 
 
 octoprint-sandbox:
-	cd ~/projects/OctoPrint && \
 	. .venv/bin/activate && \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="https://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/api/" \
@@ -72,7 +71,6 @@ octoprint-sandbox:
 	octoprint serve
 
 octoprint-local:
-	cd ~/projects/OctoPrint && \
 	. .venv/bin/activate && \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" \
