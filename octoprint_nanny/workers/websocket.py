@@ -41,7 +41,6 @@ class WebSocketWorker:
         auth_token,
         producer,
         device_id,
-        halt,
         trace_context={},
     ):
 
@@ -57,14 +56,9 @@ class WebSocketWorker:
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._auth_token}"),)
-        self._halt = halt
+        self._halt = None
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
-
-    def _signal_handler(self, received_signal, _):
-        logger.warning(f"Received signal {received_signal}")
-        self._halt.set()
-        sys.exit(0)
 
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
@@ -87,14 +81,15 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             await websocket.send(msg)
 
-    def run(self):
+    def run(self, halt):
+        self._halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.relay_loop())
+        return loop.run_until_complete(asyncio.ensure_future(self.relay_loop()))
 
     async def _loop(self, websocket):
         try:
-            msg = await self._producer.coro_get(block=False)
+            msg = await self._producer.coro_get(timeout=10)
             return await websocket.send(msg)
         except queue.Empty as e:
             return

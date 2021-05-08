@@ -149,7 +149,7 @@ class MQTTPublisherWorker:
             )
 
             try:
-                event = await self.queue.coro_get(block=False)
+                event = await self.queue.coro_get(timeout=2)
             except queue.Empty as e:
                 return
 
@@ -299,7 +299,7 @@ class MQTTSubscriberWorker:
         )
 
         try:
-            payload = await self.queue.coro_get(block=False)
+            payload = await self.queue.coro_get(timeout=2)
         except queue.Empty as e:
             return
 
