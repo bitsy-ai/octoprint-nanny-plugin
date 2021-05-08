@@ -149,7 +149,7 @@ class MQTTPublisherWorker:
             )
 
             try:
-                event = await self.queue.coro_get(block=False)
+                event = await self.queue.coro_get(timeout=2)
             except queue.Empty as e:
                 return
 
@@ -260,7 +260,7 @@ class MQTTSubscriberWorker:
         command_id = message.get("remote_control_command_id")
 
         await self.plugin.settings.rest_client.update_remote_control_command(
-            command_id, received=True, metadata=self.plugin.settings.metadata
+            command_id, received=True, metadata=self.plugin.settings.metadata.to_dict()
         )
 
         handler_fns = self._callbacks.get(event_type)
@@ -281,14 +281,16 @@ class MQTTSubscriberWorker:
 
                     # set success state
                     await self.plugin.settings.rest_client.update_remote_control_command(
-                        command_id, success=True, metadata=self.plugin.settings.metadata
+                        command_id,
+                        success=True,
+                        metadata=self.plugin.settings.metadata.to_dict(),
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
                     await self.plugin.settings.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
-                        metadata=self.plugin.settings.metadata,
+                        metadata=self.plugin.settings.metadata.to_dict(),
                     )
 
     async def _loop(self):
@@ -299,7 +301,7 @@ class MQTTSubscriberWorker:
         )
 
         try:
-            payload = await self.queue.coro_get(block=False)
+            payload = await self.queue.coro_get(timeout=2)
         except queue.Empty as e:
             return
 

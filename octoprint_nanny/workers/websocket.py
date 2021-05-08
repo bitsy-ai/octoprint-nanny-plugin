@@ -41,7 +41,6 @@ class WebSocketWorker:
         auth_token,
         producer,
         device_id,
-        halt,
         trace_context={},
     ):
 
@@ -57,19 +56,13 @@ class WebSocketWorker:
         self._producer = producer
 
         self._extra_headers = (("Authorization", f"Bearer {self._auth_token}"),)
-        self._halt = halt
+        self._halt = None
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
-
-    def _signal_handler(self, received_signal, _):
-        logger.warning(f"Received signal {received_signal}")
-        self._halt.set()
-        sys.exit(0)
 
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
 
-    @beeline.traced("WebSocketWorker.ping")
     async def ping(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -80,7 +73,6 @@ class WebSocketWorker:
             await websocket.send(msg)
             return await websocket.recv()
 
-    @beeline.traced("WebSocketWorker.send")
     async def send(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -89,22 +81,26 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             await websocket.send(msg)
 
-    def run(self):
+    def run(self, halt):
+        self._halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.relay_loop())
+        return loop.run_until_complete(asyncio.ensure_future(self.relay_loop()))
 
-    @beeline.traced("WebSocketWorker._loop")
     async def _loop(self, websocket):
-        msg = await self._producer.coro_get()
-        return await websocket.send(msg)
+        try:
+            msg = await self._producer.coro_get(timeout=10)
+            return await websocket.send(msg)
+        except queue.Empty as e:
+            return
 
-    @backoff.on_exception(
-        backoff.expo,
-        ConnectionClosedError,
-        jitter=backoff.random_jitter,
-        logger=logger,
-    )
+    # @backoff.on_exception(
+    #     backoff.expo,
+    #     ConnectionClosedError,
+    #     jitter=backoff.random_jitter,
+    #     logger=logger,
+    #     max_time=60,
+    # )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with websockets.connect(

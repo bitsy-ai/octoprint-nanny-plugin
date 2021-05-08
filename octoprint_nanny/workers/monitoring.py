@@ -64,7 +64,6 @@ class MonitoringWorker:
         self,
         pn_ws_queue,
         mqtt_send_queue,
-        halt,
         plugin,
         trace_context={},
     ):
@@ -94,10 +93,9 @@ class MonitoringWorker:
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
 
-        self._halt = halt
+        self._halt = None
         self._df = None
 
-    @beeline.traced(name="MonitoringWorker.load_url_buffer")
     async def load_url_buffer(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(self._snapshot_url) as res:
@@ -130,20 +128,12 @@ class MonitoringWorker:
 
         return {"mask": mask, "coords": (x0, y0, x1, y1)}
 
-    @beeline.traced(name="MonitoringWorker.update_dataframe")
     def update_dataframe(self, ts, prediction):
         if self._df is None:
             self._df = pd.DataFrame()
         self._df = self._df.append(explode_prediction_df(ts, prediction))
         return self._df
 
-    def _producer_worker(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(asyncio.ensure_future(self._producer()))
-        loop.close()
-
-    @beeline.traced(name="MonitoringWorker._create_active_learning_msg")
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> bytes:
@@ -154,7 +144,6 @@ class MonitoringWorker:
         )
         return msg
 
-    @beeline.traced(name="MonitoringWorker._create_lite_fb_mqtt_msg")
     def _create_lite_fb_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> Tuple[bytes, Optional[bytes]]:
@@ -164,7 +153,6 @@ class MonitoringWorker:
             monitoring_frame=monitoring_frame,
         )
 
-    @beeline.traced(name="MonitoringWorker._active_learning_loop")
     async def _active_learning_loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
@@ -183,7 +171,6 @@ class MonitoringWorker:
         self._pn_ws_queue.put_nowait(image_bytes)
         self._mqtt_send_queue.put_nowait(msg)
 
-    @beeline.traced(name="MonitoringWorker._lite_predict_and_calc_health")
     async def _lite_predict_and_calc_health(self, ts) -> MonitoringFrame:
 
         image_bytes = await self.load_url_buffer()
@@ -228,7 +215,6 @@ class MonitoringWorker:
 
         return monitoring_frame
 
-    @beeline.traced(name="MonitoringWorker._lite_loop")
     async def _lite_loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
 
@@ -245,7 +231,6 @@ class MonitoringWorker:
         if monitoring_frame.bounding_boxes is not None:
             self._mqtt_send_queue.put_nowait(msg)
 
-    @beeline.traced(name="MonitoringWorker._loop")
     async def _loop(self):
 
         if self._monitoring_mode == MonitoringModes.ACTIVE_LEARNING:
@@ -260,7 +245,7 @@ class MonitoringWorker:
         """
         Calculates prediction and publishes result to subscriber queues
         """
-        logger.info("Started MonitoringWorker.consumer thread")
+        logger.info("Started MonitoringWorker.producer thread")
         loop = asyncio.get_running_loop()
         self.loop = loop
         with concurrent.futures.ProcessPoolExecutor() as pool:
@@ -271,11 +256,12 @@ class MonitoringWorker:
 
             logger.warning("Halt event set, worker will exit soon")
 
-    def run(self):
+    def run(self, halt):
+        self._halt = halt
         loop = asyncio.new_event_loop()
         self.loop = loop
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self._producer())
+        return loop.run_until_complete(asyncio.ensure_future(self._producer()))
 
 
 class MonitoringManager:
@@ -286,7 +272,7 @@ class MonitoringManager:
         plugin,
     ):
 
-        self.halt = threading.Event()
+        self.halt = None
         self.pn_ws_queue = pn_ws_queue
         self.mqtt_send_queue = mqtt_send_queue
         self.plugin = plugin
@@ -294,7 +280,8 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._drain")
     def _drain(self):
-        self.halt.set()
+        if self.halt:
+            self.halt.set()
 
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
@@ -306,7 +293,6 @@ class MonitoringManager:
         self._predict_worker = MonitoringWorker(
             self.pn_ws_queue,
             self.mqtt_send_queue,
-            self.halt,
             self.plugin,
         )
         self._websocket_worker = WebSocketWorker(
@@ -314,7 +300,6 @@ class MonitoringManager:
             self.plugin.settings.auth_token,
             self.pn_ws_queue,
             self.plugin.settings.octoprint_device_id,
-            self.halt,
         )
         self._workers = [self._predict_worker, self._websocket_worker]
         self._worker_threads = []
@@ -332,7 +317,9 @@ class MonitoringManager:
                 f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
             )
             for worker in self._workers:
-                thread = threading.Thread(target=worker.run, name=str(worker.__class__))
+                thread = threading.Thread(
+                    target=worker.run, name=str(worker.__class__), args=(self.halt,)
+                )
                 thread.daemon = True
                 self._worker_threads.append(thread)
                 logger.info(f"Starting thread {thread.name}")

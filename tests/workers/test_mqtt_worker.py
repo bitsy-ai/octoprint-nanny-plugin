@@ -5,7 +5,6 @@ from asynctest import CoroutineMock
 from asynctest import MagicMock
 from datetime import datetime
 from octoprint_nanny.workers.mqtt import (
-    MQTTClientWorker,
     MQTTManager,
     MQTTSubscriberWorker,
     MQTTPublisherWorker,

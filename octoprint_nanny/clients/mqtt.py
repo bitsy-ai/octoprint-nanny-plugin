@@ -25,7 +25,7 @@ MQTT_BRIDGE_HOSTNAME = os.environ.get(
 
 MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
 IOT_DEVICE_REGISTRY = os.environ.get(
-    "OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY", "devices-us-central1-prod"
+    "OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY", "octoprint-devices"
 )
 IOT_DEVICE_REGISTRY_REGION = os.environ.get(
     "OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY_REGION", "us-central1"

@@ -40,6 +40,7 @@ def configure_logger(logger, logfile_path):
     file_logging_handler.setLevel(logging.DEBUG)
 
     logger.addHandler(file_logging_handler)
+
     logger.info(f"Logger file handler added {file_logging_handler}")
 
 
@@ -65,9 +66,7 @@ from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
 DEFAULT_API_URL = os.environ.get(
     "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
 )
-DEFAULT_WS_URL = os.environ.get(
-    "OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/images/"
-)
+DEFAULT_WS_URL = os.environ.get("OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/")
 DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
@@ -613,9 +612,11 @@ class OctoPrintNannyPlugin(
         asyncio.run_coroutine_threadsafe(
             self.worker_manager.shutdown(), self.worker_manager.loop
         ).result()
+        self._settings.set(["monitoring_active"], False)
 
     def on_startup(self, *args, **kwargs):
         logger.info("OctoPrint Nanny starting up")
+        self._settings.set(["monitoring_active"], False)
 
     def on_after_startup(self, *args, **kwargs):
         logger.info("OctoPrint Nanny startup complete, configuring logger")
