@@ -69,7 +69,6 @@ class WebSocketWorker:
     def encode(self, msg):
         return json.dumps(msg, cls=NumpyEncoder)
 
-    @beeline.traced("WebSocketWorker.ping")
     async def ping(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -80,7 +79,6 @@ class WebSocketWorker:
             await websocket.send(msg)
             return await websocket.recv()
 
-    @beeline.traced("WebSocketWorker.send")
     async def send(self, msg=None):
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
@@ -94,7 +92,6 @@ class WebSocketWorker:
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.relay_loop())
 
-    @beeline.traced("WebSocketWorker._loop")
     async def _loop(self, websocket):
         try:
             msg = await self._producer.coro_get(block=False)
