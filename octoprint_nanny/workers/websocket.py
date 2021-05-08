@@ -107,6 +107,7 @@ class WebSocketWorker:
         ConnectionClosedError,
         jitter=backoff.random_jitter,
         logger=logger,
+        max_time=60,
     )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")

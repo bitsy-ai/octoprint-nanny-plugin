@@ -41,10 +41,6 @@ def configure_logger(logger, logfile_path):
 
     logger.addHandler(file_logging_handler)
 
-    # backoff logging handler
-    logging.getLogger("backoff").addHandler(logging.StreamHandler())
-    logging.getLogger("backoff").addHandler(file_logging_handler)
-
     logger.info(f"Logger file handler added {file_logging_handler}")
 
 
