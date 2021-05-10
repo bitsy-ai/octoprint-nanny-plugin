@@ -20,7 +20,7 @@ async def test_handle_config_update(mocker):
     data_folder = "/path/to/data"
     plugin.get_plugin_data_folder.return_value = data_folder
 
-    subscriber_worker = MQTTSubscriberWorker(halt=halt, queue=queue, plugin=plugin)
+    subscriber_worker = MQTTSubscriberWorker(queue=queue, plugin=plugin)
 
     mock_res = MagicMock()
     mock_res.__aenter__.return_value.get.return_value.__aenter__.return_value.text.return_value = (
