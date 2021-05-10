@@ -34,27 +34,34 @@
         <p>
             <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server</a> to share your projects and hang out with cool people. 😎
         </p>
+        <p><a href="https://www.print-nanny.com/health/" target="_blank">Print Nanny system status</a></p>
             <table class="table">
             <thead>
             <tr>
-            <th>Endpoint</th>
+            <th>Connection Name</th>
             <th>Status</th>
             </tr>
             </thead>
             <tbody>
             <tr>
-            <td>{{ plugin_octoprint_nanny_settings.api_url }} </td>
-            <td data-bind="css: apiStatusClass">
+            <td data-bind="class: apiStatusClass">{{ plugin_octoprint_nanny_settings.api_url }} </td>
+            <td>
                 <span data-bind="text: apiStatusMessage"></span></td>
             </tr>
             <tr>
             <tr>
-            <td>{{ plugin_octoprint_nanny_settings.mqtt_bridge_hostname }}:{{ plugin_octoprint_nanny_settings.mqtt_bridge_port }}</td>
-            <td data-bind="css: mqttStatusClass"><span data-bind="text: mqttStatusMessage"></span></td>
+            <td data-bind="class: mqttPingStatusClass">{{ plugin_octoprint_nanny_settings.mqtt_bridge_hostname }}:{{ plugin_octoprint_nanny_settings.mqtt_bridge_port }} (ping)</td>
+            <td><span data-bind="text: mqttPingStatusMessage"></span></td>
             </tr>
-
+            <tr>
+            <td data-bind="class: mqttPongStatusClass">{{ plugin_octoprint_nanny_settings.mqtt_bridge_hostname }}:{{ plugin_octoprint_nanny_settings.mqtt_bridge_port }} (pong)</td>
+            <td><span data-bind="text: mqttPongStatusMessage"></span></td>
+            </tr>
             </tbody>
             </table>
+            <button data-bind="{click: testConnectionsAsync }" type="submit" class="btn btn-primary btn-large">
+                Test Connections
+            </button>
         <hr/>
 
         <h2>Print Nanny Monitoring</h2>
@@ -83,7 +90,7 @@
             </button>
     </div>
     <div data-bind="{visible: calibrationActive}">
-        <h3>Calibrate 3D Print Volume</h3>
+        <h3>Calibrate Area of Interest</h3>
         <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
         
         <p>
