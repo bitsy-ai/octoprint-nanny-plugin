@@ -49,8 +49,42 @@ $(function () {
 
         self.calibrationActive = ko.observable(false)
 
-        self.active = ko.observable(false)
+        self.statusCheckActive = ko.observable(true);
+        self.statusCheckSuccess = ko.observable(false);
+        self.statusCheckFailed = ko.observable(false);
 
+        testDeviceRegistration = function (done, err) {
+            
+        }
+        testAuthToken = function () {
+            if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined) {
+                self.statusCheckActive = ko.observable(false);
+                self.statusCheckSuccess = ko.observable(false);
+                self.statusCheckFailed = ko.observable(true);
+                return
+            }
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testAuthToken'
+            console.debug('Attempting to verify Print Nanny Auth token...')
+            return OctoPrint.postJson(url, {
+                'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
+                'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
+            })
+                .done((res) => {
+                    console.log(res)
+
+
+                })
+                .fail(e => {
+                    console.error(e)
+
+                    console.error('Print Nanny token verification failed', e)
+
+                });
+        }
+
+        self.onAfterBinding = function(){
+            testAuthToken().then(testDeviceRegistration)
+        }
 
         OctoPrint.socket.onMessage("*", function (message) {
             console.log(message)
@@ -198,9 +232,7 @@ $(function () {
         self.imageData = ko.observable();
         self.deviceRegisterProgressPercent = ko.observable();
         self.deviceRegisterProgress = 0;
-        self.deviceRegisterProgressCompleted = 6;
-
-        self.statusCheckActive = ko.observable();
+        self.deviceRegisterProgressCompleted = 6;        
 
         self.onAfterBinding = function(){
             if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){

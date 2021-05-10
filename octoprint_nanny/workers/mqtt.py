@@ -68,7 +68,7 @@ class MQTTManager:
         self._reset()
 
         try:
-            mqtt_client = self.plugin.settngs.mqtt_client
+            mqtt_client = self.plugin.settings.mqtt_client
         except PluginSettingsRequired as e:
             logger.warning(e)
             logger.warning(
