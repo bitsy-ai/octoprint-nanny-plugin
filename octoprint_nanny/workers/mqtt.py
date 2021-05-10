@@ -65,13 +65,22 @@ class MQTTManager:
         """
         (re)initialize and start worker threads
         """
-        logger.info("MQTTManager.start was called")
         self._reset()
+
+        try:
+            mqtt_client = self.plugin.settngs.mqtt_client
+        except PluginSettingsRequired as e:
+            logger.warning(e)
+            logger.warning(
+                "MQTTManager.start was called without device registration set, ignoring"
+            )
+
+        logger.info("MQTTManager.start was called")
 
         self._workers = [
             self.publisher_worker,
             self.subscriber_worker,
-            self.plugin.settings.mqtt_client,
+            mqtt_client,
         ]
         for worker in self._workers:
             thread = threading.Thread(
