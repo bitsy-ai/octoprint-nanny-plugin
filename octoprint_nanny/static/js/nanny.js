@@ -200,7 +200,7 @@ $(function () {
         self.deviceRegisterProgress = 0;
         self.deviceRegisterProgressCompleted = 6;
 
-
+        self.statusCheckActive = ko.observable();
 
         self.onAfterBinding = function(){
             if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){
