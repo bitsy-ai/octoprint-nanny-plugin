@@ -47,19 +47,30 @@ $(function () {
 
         self.previewActive = ko.observable(false)
 
-        self.calibrationActive = ko.observable(false)
+        self.calibrationActive = ko.observable(false);
 
-        self.statusCheckActive = ko.observable(true);
+        self.statusCheckActive = ko.observable(false);
         self.statusCheckSuccess = ko.observable(false);
         self.statusCheckFailed = ko.observable(false);
-        
+
+        self.apiStatusMessage = ko.observable();
+        self.apiStatusClass = ko.observable();
+        self.mqttStatusMessage = ko.observable();
+        self.mqttStatusClass = ko.observable();
+
+
         testConnectionsAsync = function () {
             if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined) {
-                self.statusCheckActive = ko.observable(false);
-                self.statusCheckSuccess = ko.observable(false);
-                self.statusCheckFailed = ko.observable(true);
+                self.statusCheckActive(false);
+                self.statusCheckSuccess(false);
+                self.statusCheckFailed(true);
                 return
             }
+            self.statusCheckActive(true);
+            self.apiStatusClass('active')
+            self.apiStatusMessage('⏳')
+            self.mqttStatusClass('active')
+            self.mqttStatusMessage('⏳')
             const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testConnectionsAsync'
             return OctoPrint.postJson(url, {
                 'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
@@ -72,9 +83,9 @@ $(function () {
                 })
                 .fail(e => {
                     console.error('Print Nanny token verification failed', e)
-                    self.statusCheckActive = ko.observable(false);
-                    self.statusCheckSuccess = ko.observable(false);
-                    self.statusCheckFailed = ko.observable(true);
+                    self.statusCheckActive(false);
+                    self.statusCheckSuccess(false);
+                    self.statusCheckFailed(true);
                 });
         }
 
@@ -98,10 +109,17 @@ $(function () {
                     case 'plugin_octoprint_nanny_monitoring_reset':
                         return self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
                     case 'plugin_octoprint_nanny_test_rest_api_failed':
-                    self.statusCheckActive = ko.observable(false);
-                    self.statusCheckSuccess = ko.observable(false);
-                    self.statusCheckFailed = ko.observable(true);
-                    
+                        self.statusCheckActive(false);
+                        self.statusCheckSuccess(false);
+                        self.statusCheckFailed(true);
+                        self.apiStatusMessage(message.data.error);
+                        self.apiStatusClass('danger');
+                    case 'plugin_octoprint_nanny_test_rest_api_success':
+                        self.statusCheckActive(false);
+                        self.statusCheckSuccess(false);
+                        self.statusCheckFailed(true);
+                        self.apiStatusMessage('✔️');
+                        self.apiStatusClass('success');       
                 }
             }
         });

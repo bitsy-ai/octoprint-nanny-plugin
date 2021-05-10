@@ -157,12 +157,24 @@ class OctoPrintNannyPlugin(
         try:
             user = await rest_client.get_user()
             logger.info(f"Authenticated as user id={user.id} url={user.url}")
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_SUCCESS,
+                payload=response,
+            )                
             return user
         except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"_test_api_auth API call failed with error{e}")
             self._settings.set(["auth_valid"], False)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_FAILED,
+                payload=dict(error=str(e))
+            )
         except asyncio.TimeoutError as e:
             logger.error(f"Connection to Print Nanny REST API timed out")
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_FAILED,
+                payload=dict(error="Connection timed out")
+            )
 
     def _test_api_auth(self, auth_token: str, api_url: str):
         response = asyncio.run_coroutine_threadsafe(
@@ -430,9 +442,13 @@ class OctoPrintNannyPlugin(
         logger.info(f"Syncing metadata for octoprint_device_id={octoprint_device_id}")
 
         device_info = self.get_device_info()
-        return await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
+        try:
+            await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
             octoprint_device_id, **device_info
-        )
+            )
+        except asyncio.TimeoutError as e:
+            logger.error(f"Connection to Print Nanny REST API timed out")
+
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
     @beeline.traced_thread
@@ -667,18 +683,8 @@ class OctoPrintNannyPlugin(
         elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET:
             self.worker_manager.mqtt_client_reset()
         elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API:
-
-            response = self._test_api_auth(**event_data)
-            if isinstance(response, print_nanny_client.models.user.User):
-                self._event_bus.fire(
-                    Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_SUCCESS,
-                    payload=response,
-                )
-            else:
-                self._event_bus.fire(
-                    Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_FAILED,
-                    payload=response,
-                )
+            # schedule api call on worker_manager's event loop to avoid blocking on_event in OctoPrint's main loop
+            asyncio.run_coroutine_threadsafe(self._test_api_auth_async(**event_data), self.worker_manager.loop)
         elif (
             event_type == Events.PLUGIN_OCTOPRINT_NANNY_CONNECTION_TEST_REST_API_FAILED
         ):
