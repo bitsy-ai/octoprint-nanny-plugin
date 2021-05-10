@@ -4,6 +4,7 @@ import urllib
 import hashlib
 import backoff
 import json
+import os
 import beeline
 
 from octoprint.events import Events
@@ -30,7 +31,9 @@ API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = 120
+MAX_BACKOFF_TIME = os.environ.get("OCTOPRINT_NANNY_MAX_BACKOFF_TIME", 120)
+
+logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
 
 
 class RestAPIClient:

@@ -52,19 +52,15 @@ $(function () {
         self.statusCheckActive = ko.observable(true);
         self.statusCheckSuccess = ko.observable(false);
         self.statusCheckFailed = ko.observable(false);
-
-        testDeviceRegistration = function (done, err) {
-            
-        }
-        testAuthToken = function () {
+        
+        testConnectionsAsync = function () {
             if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined) {
                 self.statusCheckActive = ko.observable(false);
                 self.statusCheckSuccess = ko.observable(false);
                 self.statusCheckFailed = ko.observable(true);
                 return
             }
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testAuthToken'
-            console.debug('Attempting to verify Print Nanny Auth token...')
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testConnectionsAsync'
             return OctoPrint.postJson(url, {
                 'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
                 'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
@@ -75,32 +71,38 @@ $(function () {
 
                 })
                 .fail(e => {
-                    console.error(e)
-
                     console.error('Print Nanny token verification failed', e)
-
+                    self.statusCheckActive = ko.observable(false);
+                    self.statusCheckSuccess = ko.observable(false);
+                    self.statusCheckFailed = ko.observable(true);
                 });
         }
 
         self.onAfterBinding = function(){
-            testAuthToken().then(testDeviceRegistration)
+            testConnectionsAsync();
+        }
+
+        showMonitoringFrame = function (payload){
+            if (self.previewActive() == false) {
+                self.previewActive(true);
+            }
+            self.imageData("data:image/jpeg;base64," + payload);
         }
 
         OctoPrint.socket.onMessage("*", function (message) {
             console.log(message)
-            if (message && message.data && (
-                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_b64'
-            )
-            ) {
-
-                if (self.previewActive() == false) {
-                    self.previewActive(true);
+            if (message && message.data && message.data.type ){
+                switch(message.data.type){
+                    case 'plugin_octoprint_nanny_monitoring_frame_b64':
+                        return showMonitoringFrame(message.data.payload)
+                    case 'plugin_octoprint_nanny_monitoring_reset':
+                        return self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
+                    case 'plugin_octoprint_nanny_test_rest_api_failed':
+                    self.statusCheckActive = ko.observable(false);
+                    self.statusCheckSuccess = ko.observable(false);
+                    self.statusCheckFailed = ko.observable(true);
+                    
                 }
-                self.imageData("data:image/jpeg;base64," + message.data.payload);
-            }
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_monitoring_reset') {
-                console.log(message)
-                self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
         });
 

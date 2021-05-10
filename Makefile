@@ -59,6 +59,7 @@ release: dist
 
 octoprint-sandbox:
 	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=30 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="https://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/api/" \
 	OCTOPRINT_NANNY_WS_URL="ws://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/ws/" \
@@ -72,6 +73,7 @@ octoprint-sandbox:
 
 octoprint-local:
 	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" \
 	OCTOPRINT_NANNY_WS_URL="ws://localhost:8000/ws/" \
