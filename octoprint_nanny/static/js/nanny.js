@@ -113,30 +113,38 @@ $(function () {
                         return showMonitoringFrame(message.data.payload)
                     case 'plugin_octoprint_nanny_monitoring_reset':
                         return self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
-                    case 'plugin_octoprint_nanny_connection_test_rest_api_failed':
+                    case 'plugin_octoprint_nanny_connect_test_rest_api_failed':
                         self.statusCheckActive(false);
                         self.statusCheckSuccess(false);
                         self.statusCheckFailed(true);
                         self.apiStatusMessage(message.data.error);
                         self.apiStatusClass('danger');
-                    case 'plugin_octoprint_nanny_connection_test_rest_api_success':
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_rest_api_success':
                         self.statusCheckActive(false);
                         self.statusCheckFailed(false);
                         self.apiStatusMessage('✔️ Connected to REST API');
                         self.apiStatusClass('success');
-
-                    case 'plugin_octoprint_nanny_connection_test_mqtt_ping_failed':
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_ping_failed':
                         self.statusCheckActive(false);
                         self.statusCheckSuccess(false);
                         self.statusCheckFailed(true);
                         self.mqttPingStatusMessage(message.data.error);
                         self.mqttPingStatusClass('danger');
-
-                    case 'plugin_octoprint_nanny_connection_test_mqtt_ping_success':
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_ping_success':
                         self.statusCheckActive(false);
                         self.statusCheckFailed(false);
                         self.mqttPingStatusMessage('✔️ Ping Sent');
                         self.mqttPingStatusClass('success');
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_pong_success':
+                        self.statusCheckActive(false);
+                        self.statusCheckFailed(false);
+                        self.mqttPongStatusMessage('✔️ Pong Received');
+                        self.mqttPongStatusClass('success');
+                        break
                 }
             }
         });

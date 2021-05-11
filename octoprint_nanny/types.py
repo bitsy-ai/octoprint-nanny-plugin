@@ -37,6 +37,8 @@ class Metadata:
     ts: int
     print_session: str
     client_version: str
+    octoprint_version: str
+    plugin_version: str
     environment: Dict[str, str]
     model_version: str = None
 
