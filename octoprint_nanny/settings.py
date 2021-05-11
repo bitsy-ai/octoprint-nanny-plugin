@@ -3,6 +3,7 @@ from datetime import datetime
 import logging
 import pytz
 
+import octoprint
 from octoprint_nanny.workers.monitoring import (
     MonitoringWorker,
 )
@@ -321,6 +322,7 @@ class PluginSettingsMemoize:
             session=session,
             printer_profile=printer_profile.id,
             octoprint_device=self.octoprint_device_id,
+            octoprint_job=octoprint_job,
         )
         self._print_session = print_session
         return self._print_session
@@ -337,6 +339,8 @@ class PluginSettingsMemoize:
             client_version=print_nanny_client.__version__,
             ts=ts,
             environment=self.environment,
+            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            plugin_version=self.plugin._plugin_version,
         )
 
     @property

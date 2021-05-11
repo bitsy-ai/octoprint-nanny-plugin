@@ -48,16 +48,16 @@ async def test_mqtt_send_queue_valid_octoprint_event(mock_event_is_tracked, mock
     event = {"event_type": Events.PRINT_STARTED, "event_data": {}}
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_publish_octoprint_event_telemetry = mocker.patch.object(
+    mockpublish_octoprint_event_telemetry = mocker.patch.object(
         manager.mqtt_manager.publisher_worker,
-        "_publish_octoprint_event_telemetry",
+        "publish_octoprint_event_telemetry",
         return_value=asyncio.Future(),
     )
-    mock_publish_octoprint_event_telemetry.return_value.set_result("foo")
+    mockpublish_octoprint_event_telemetry.return_value.set_result("foo")
 
     await manager.mqtt_manager.publisher_worker._loop()
 
-    mock_publish_octoprint_event_telemetry.assert_called_once_with(event)
+    mockpublish_octoprint_event_telemetry.assert_called_once_with(event)
 
     mock_on_print_start.assert_called_once_with(
         event_data=event["event_data"], event_type=event["event_type"]

@@ -65,13 +65,22 @@ class MQTTManager:
         """
         (re)initialize and start worker threads
         """
-        logger.info("MQTTManager.start was called")
         self._reset()
+
+        try:
+            mqtt_client = self.plugin.settings.mqtt_client
+        except PluginSettingsRequired as e:
+            logger.warning(e)
+            logger.warning(
+                "MQTTManager.start was called without device registration set, ignoring"
+            )
+
+        logger.info("MQTTManager.start was called")
 
         self._workers = [
             self.publisher_worker,
             self.subscriber_worker,
-            self.plugin.settings.mqtt_client,
+            mqtt_client,
         ]
         for worker in self._workers:
             thread = threading.Thread(
@@ -133,13 +142,15 @@ class MQTTPublisherWorker:
 
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
-    async def _publish_octoprint_event_telemetry(self, event):
+    async def publish_octoprint_event_telemetry(self, event):
         event_type = event.get("event_type")
-        logger.info(f"_publish_octoprint_event_telemetry {event}")
-        event.update({"metadata": self.plugin.settings.metadata.to_dict()})
+        event.update(
+            {
+                "metadata": self.plugin.settings.metadata.to_dict(),
+                "octoprint_job": self.plugin.settings.get_current_octoprint_job(),
+            }
+        )
 
-        if event_type in self.PRINT_JOB_EVENTS:
-            event.update(self.plugin.settings.get_print_job_metadata())
         self.plugin.settings.mqtt_client.publish_octoprint_event(event)
 
     async def _loop(self):
@@ -179,7 +190,7 @@ class MQTTPublisherWorker:
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
             tracked = self.plugin.settings.event_is_tracked(event_type)
             if tracked:
-                await self._publish_octoprint_event_telemetry(event)
+                await self.publish_octoprint_event_telemetry(event)
 
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
@@ -218,7 +229,9 @@ class MQTTSubscriberWorker:
         self.halt = None
         self.queue = queue
         self.plugin = plugin
-        self._callbacks = {}
+        self._callbacks = {
+            "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]
+        }
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def run(self, halt):
@@ -230,6 +243,12 @@ class MQTTSubscriberWorker:
         )
 
         return self.loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
+
+    def handle_pong(self, event=None, **kwargs):
+        logger.info(f"Received pong event {event}")
+        return self.plugin._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PONG_SUCCESS
+        )
 
     def register_callbacks(self, callbacks):
         for k, v in callbacks.items():

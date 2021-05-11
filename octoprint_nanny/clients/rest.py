@@ -4,6 +4,7 @@ import urllib
 import hashlib
 import backoff
 import json
+import os
 import beeline
 
 from octoprint.events import Events
@@ -30,7 +31,29 @@ API_CLIENT_EXCEPTIONS = (
     print_nanny_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = 120
+MAX_BACKOFF_TIME = int(os.environ.get("OCTOPRINT_NANNY_MAX_BACKOFF_TIME", 120))
+
+logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
+
+
+def fatal_code(e):
+    return 400 <= e.response.status_code < 500
+
+
+def backoff_hdlr(details):
+    logger.warning(
+        "Backing off {wait:0.1f} seconds afters {tries} tries "
+        "calling function {target} with args {args} and kwargs "
+        "{kwargs}".format(**details)
+    )
+
+
+def giveup_hdlr(details):
+    logger.error(
+        "Giving up {wait:0.1f} seconds afters {tries} tries "
+        "calling function {target} with args {args} and kwargs "
+        "{kwargs}".format(**details)
+    )
 
 
 class RestAPIClient:
@@ -59,6 +82,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_or_create_octoprint_device(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -76,6 +102,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -94,6 +123,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_remote_control_command(self, command_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -113,6 +145,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -127,6 +162,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def create_octoprint_event(self, event_type, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -147,6 +185,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_print_progress(self, print_session_id, event_data):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -166,6 +207,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_or_create_gcode_file(
         self, event_data, gcode_file_path, octoprint_device_id
@@ -194,6 +238,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def create_print_session(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
@@ -213,6 +260,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_or_create_printer_profile(
         self, printer_profile, octoprint_device_id
@@ -268,6 +318,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def update_or_create_device_calibration(
         self, octoprint_device_id, coordinates, mask
@@ -291,6 +344,9 @@ class RestAPIClient:
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
         jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
     )
     async def create_defect_alert(self, octoprint_device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:

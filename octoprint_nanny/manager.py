@@ -145,8 +145,11 @@ class WorkerManager:
             asyncio.run_coroutine_threadsafe(self.monitoring_manager.start(), self.loop)
 
     async def on_user_logged_in(self, **kwargs):
-        await self.plugin.sync_printer_profiles()
-        await self.plugin.sync_device_metadata()
+        try:
+            await self.plugin.sync_printer_profiles()
+            await self.plugin.sync_device_metadata()
+        except API_CLIENT_EXCEPTIONS:  # rest_client.py contains backoff and giveup logging hanlers
+            pass
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self):
