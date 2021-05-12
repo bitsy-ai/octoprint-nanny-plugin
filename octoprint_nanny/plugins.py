@@ -776,11 +776,6 @@ class OctoPrintNannyPlugin(
     def get_settings_defaults(self):
         return DEFAULT_SETTINGS
 
-    # @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
-    # def on_settings_save(self, data):
-    #     super().on_settings_save(data)
-    #     self.worker_manager.on_settings_save()
-
     ## Template plugin
 
     def get_template_vars(self):

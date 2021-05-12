@@ -92,6 +92,13 @@
                     <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
                 </div> 
             </div>
+            <div class="control-group" title="Start monitoring automatically">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start" id="octoprint_nanny_settings_auto_start"> Auto-start monitoring when print job begins
+                    </label>
+                </div>
+            </div>
         {% else %}
         <div>            
             <h2>Device Registration</h2>
@@ -122,9 +129,16 @@
             <br>
                 <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">⏳ Print Nanny is registering your device... </4>
                 <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Print Nanny now recognizes this device.</h4>
-            <div class="progress progress-striped active" data-bind="visible: deviceRegisterProgressPercent() !== undefined">
+            <div class="progress progress-striped" data-bind="visible: deviceRegisterProgressPercent() !== undefined, css: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !== '100%' ? 'active': 'inactive'">
                 <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
-            </div>  
+            </div>
+            <div class="control-group" title="Start monitoring automatically">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start" id="octoprint_nanny_settings_auto_start"> Auto-start monitoring when print job begins
+                    </label>
+                </div>
+            </div>
         </div>
 
         {% endif %}
