@@ -191,6 +191,10 @@ class WorkerManager:
                 )
             )
 
+            if self.plugin.settings.auto_start:
+                logger.info("Starting Print Nanny monitoring worker")
+                await self.monitoring_manager.start()
+
         except API_CLIENT_EXCEPTIONS as e:
             logger.error(f"on_print_start API called failed {e}", exc_info=True)
             return
