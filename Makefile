@@ -4,6 +4,10 @@
 
 PRINT_NANNY_USER ?= "leigh"
 
+OCTOPRINT_NANNY_API_URL ?= "http://localhost:8000/api/"
+OCTOPRINT_NANNY_WS_URL ?= "ws://localhost:8000/ws/"
+
+
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
@@ -59,9 +63,10 @@ release: dist
 
 octoprint-sandbox:
 	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=30 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
-	OCTOPRINT_NANNY_API_URL="https://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/api/" \
-	OCTOPRINT_NANNY_WS_URL="ws://${PRINT_NANNY_USER}.sandbox.print-nanny.com:8000/ws/" \
+	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \
+	OCTOPRINT_NANNY_WS_URL="${OCTOPRINT_NANNY_WS_URL}" \
 	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="octoprint-devices" \
 	OCTOPRINT_NANNY_SNAPSHOT_URL="https://localhost:8080/?action=snapshot" \
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \
@@ -72,9 +77,10 @@ octoprint-sandbox:
 
 octoprint-local:
 	. .venv/bin/activate && \
+	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
-	OCTOPRINT_NANNY_API_URL="http://localhost:8000/api/" \
-	OCTOPRINT_NANNY_WS_URL="ws://localhost:8000/ws/" \
+	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \
+	OCTOPRINT_NANNY_WS_URL="${OCTOPRINT_NANNY_WS_URL}" \
 	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="octoprint-devices" \
 	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \

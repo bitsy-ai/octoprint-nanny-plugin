@@ -25,20 +25,71 @@
 
 </div>
 
-<div data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid" >
+<div data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid() && !settingsViewModel.settings.plugins.octoprint_nanny.device_registered()" >
+
     <div class="row-fluid">
-        <h2>Live Monitoring</h2>
-        <p>If Print Nanny detects a critical defect, she'll email <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.user_email"></span></strong>
-        </p>
-    
+        <div class="span-6">
+            <img class="img-fluid" src="plugin/octoprint_nanny/static/img/logo-square-excited.png"/>
+        </div>
+
+        <h3>Your device is not registered yet!</h3>
+
+        <p>To get started, open OctoPrint's <i class="fa fa-wrench"></i> settings menu and register your device.</p>
         <p>
         Looking for help? <a href="https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new/choose">Create a Github issue</a> to report a bug or get support.
+        
         </p>
         <p>
-            <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server</a> to chat about 3D printing, share your projects, and let us know what you think of Print Nanny.
-
+            <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server</a> to chat, share your projects, and let us know what you think of Print Nanny.
         </p>
+    </div>
 
+
+</div>
+
+<div data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid() && settingsViewModel.settings.plugins.octoprint_nanny.device_registered()" >
+    <div class="row-fluid">
+        <h2>Print Nanny Status</h2>
+        <p>
+        Looking for help? <a href="https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new/choose">Create a Github issue</a> to report a bug or ask a question.
+        </p>
+        <p>
+            <a href="https://discord.gg/YK7qnv5KjB">Join the Discord server</a> to share your projects and hang out with cool people. 😎
+        </p>
+        <p><a href="https://www.print-nanny.com/health/" target="_blank">Print Nanny system status</a></p>
+            <table class="table">
+            <thead>
+            <tr>
+            <th>Connection Name</th>
+            <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td data-bind="class: apiStatusClass">{{ plugin_octoprint_nanny_settings.api_url }} </td>
+            <td>
+                <span data-bind="text: apiStatusMessage"></span></td>
+            </tr>
+            <tr>
+            <tr>
+            <td data-bind="class: mqttPingStatusClass">{{ plugin_octoprint_nanny_settings.mqtt_bridge_hostname }}:{{ plugin_octoprint_nanny_settings.mqtt_bridge_port }} (ping)</td>
+            <td><span data-bind="text: mqttPingStatusMessage"></span></td>
+            </tr>
+            <tr>
+            <td data-bind="class: mqttPongStatusClass">{{ plugin_octoprint_nanny_settings.mqtt_bridge_hostname }}:{{ plugin_octoprint_nanny_settings.mqtt_bridge_port }} (pong)</td>
+            <td><span data-bind="text: mqttPongStatusMessage"></span></td>
+            </tr>
+            </tbody>
+            </table>
+            <button data-bind="{click: testConnectionsAsync }" type="submit" class="btn btn-primary btn-large">
+                Test Connections
+            </button>
+        <hr/>
+
+        <h2>Print Nanny Monitoring</h2>
+        <p>Sending notifications to: <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.user_email"></span></strong>
+        </p>
+        <hr/>
         <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }"/>
 
         <hr/>
@@ -61,7 +112,7 @@
             </button>
     </div>
     <div data-bind="{visible: calibrationActive}">
-        <h3>Calibrate 3D Print Volume</h3>
+        <h3>Calibrate Area of Interest</h3>
         <p>Right-click the image below, then draw a loose box around your printer's XYZ area.</p> 
         
         <p>

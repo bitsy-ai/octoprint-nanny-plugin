@@ -47,26 +47,105 @@ $(function () {
 
         self.previewActive = ko.observable(false)
 
-        self.calibrationActive = ko.observable(false)
+        self.calibrationActive = ko.observable(false);
 
-        self.active = ko.observable(false)
+        self.statusCheckActive = ko.observable();
+        self.statusCheckSuccess = ko.observable();
+        self.statusCheckFailed = ko.observable();
 
+        self.apiStatusMessage = ko.observable();
+        self.apiStatusClass = ko.observable();
+        self.mqttPingStatusMessage = ko.observable();
+        self.mqttPingStatusClass = ko.observable();
+        self.mqttPongStatusMessage = ko.observable();
+        self.mqttPongStatusClass = ko.observable();
+    
+
+
+        testConnectionsAsync = function () {
+            if (self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token() == undefined) {
+                self.statusCheckActive(false);
+                self.statusCheckSuccess(false);
+                self.statusCheckFailed(true);
+                return
+            }
+            self.statusCheckActive(true);
+            self.apiStatusClass('active')
+            self.apiStatusMessage('⏳ Connecting')
+            self.mqttPingStatusClass('active')
+            self.mqttPingStatusMessage('⏳ Sending Ping')
+            self.mqttPongStatusMessage('⏳ Waiting on Pong')
+
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'testConnectionsAsync'
+            return OctoPrint.postJson(url, {
+                'auth_token': self.settingsViewModel.settings.plugins.octoprint_nanny.auth_token(),
+                'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
+            })
+                .done((res) => {
+                    console.log(res)
+
+
+                })
+                .fail(e => {
+                    console.error('Print Nanny token verification failed', e)
+                    self.statusCheckActive(false);
+                    self.statusCheckSuccess(false);
+                    self.statusCheckFailed(true);
+                });
+        }
+
+        // self.onAfterBinding = function(){
+        //     testConnectionsAsync();
+        // }
+
+        showMonitoringFrame = function (payload){
+            if (self.previewActive() == false) {
+                self.previewActive(true);
+            }
+            self.imageData("data:image/jpeg;base64," + payload);
+        }
 
         OctoPrint.socket.onMessage("*", function (message) {
             console.log(message)
-            if (message && message.data && (
-                message.data.type == 'plugin_octoprint_nanny_monitoring_frame_b64'
-            )
-            ) {
-
-                if (self.previewActive() == false) {
-                    self.previewActive(true);
+            if (message && message.data && message.data.type ){
+                switch(message.data.type){
+                    case 'plugin_octoprint_nanny_monitoring_frame_b64':
+                        return showMonitoringFrame(message.data.payload)
+                    case 'plugin_octoprint_nanny_monitoring_reset':
+                        return self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
+                    case 'plugin_octoprint_nanny_connect_test_rest_api_failed':
+                        self.statusCheckActive(false);
+                        self.statusCheckSuccess(false);
+                        self.statusCheckFailed(true);
+                        self.apiStatusMessage(message.data.error);
+                        self.apiStatusClass('danger');
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_rest_api_success':
+                        self.statusCheckActive(false);
+                        self.statusCheckFailed(false);
+                        self.apiStatusMessage('✔️ Connected to REST API');
+                        self.apiStatusClass('success');
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_ping_failed':
+                        self.statusCheckActive(false);
+                        self.statusCheckSuccess(false);
+                        self.statusCheckFailed(true);
+                        self.mqttPingStatusMessage(message.data.error);
+                        self.mqttPingStatusClass('danger');
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_ping_success':
+                        self.statusCheckActive(false);
+                        self.statusCheckFailed(false);
+                        self.mqttPingStatusMessage('✔️ Ping Sent');
+                        self.mqttPingStatusClass('success');
+                        break
+                    case 'plugin_octoprint_nanny_connect_test_mqtt_pong_success':
+                        self.statusCheckActive(false);
+                        self.statusCheckFailed(false);
+                        self.mqttPongStatusMessage('✔️ Pong Received');
+                        self.mqttPongStatusClass('success');
+                        break
                 }
-                self.imageData("data:image/jpeg;base64," + message.data.payload);
-            }
-            if (message && message.data && message.data.type == 'plugin_octoprint_nanny_monitoring_reset') {
-                console.log(message)
-                self.imageData("plugin/octoprint_nanny/static/img/sleeping.png");
             }
         });
 
@@ -198,9 +277,7 @@ $(function () {
         self.imageData = ko.observable();
         self.deviceRegisterProgressPercent = ko.observable();
         self.deviceRegisterProgress = 0;
-        self.deviceRegisterProgressCompleted = 6;
-
-
+        self.deviceRegisterProgressCompleted = 6;        
 
         self.onAfterBinding = function(){
             if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){

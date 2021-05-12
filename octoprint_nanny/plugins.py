@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 import socket
-
+from datetime import datetime
 import time
 import requests
 
@@ -61,6 +61,7 @@ from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
+from octoprint_nanny.exceptions import PluginSettingsRequired
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -71,7 +72,7 @@ DEFAULT_SNAPSHOT_URL = os.environ.get(
     "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
 )
 
-DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 8883)
+DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
 DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
     "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.2030.ltsapis.goog"
 )
@@ -149,18 +150,69 @@ class OctoPrintNannyPlugin(
     def set_setting(self, key, value):
         return self._settings.set([key], value)
 
-    @beeline.traced("OctoPrintNannyPlugin._test_api_auth")
+    @beeline.traced("OctoPrintNannyPlugin._test_mqtt_async")
     @beeline.traced_thread
-    async def _test_api_auth(self, auth_token, api_url):
+    async def _test_mqtt_async(self):
+        try:
+            mqtt_client = self.settings.mqtt_client
+        except PluginSettingsRequired as e:
+            logger.error(f"Initializing mqtt_client failed with error {e}")
+            return self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_FAILED,
+                payload=dict(error="Missing device registration"),
+            )
+        try:
+            payload = {
+                "event_type": "plugin_octoprint_nanny_connect_test_mqtt_ping",
+                "metadata": self.settings.metadata.to_dict(),
+                "octoprint_job": self.settings.get_current_octoprint_job(),
+            }
+            mqtt_client.publish_octoprint_event(payload)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_SUCCESS,
+                payload=payload,
+            )
+        except Exception as e:
+            logger.error(
+                f"Publishing plugin_octoprint_nanny_connect_test_mqtt_ping event failed with error {e}"
+            )
+            return self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_FAILED,
+                payload=dict(error=str(e)),
+            )
+
+    @beeline.traced("OctoPrintNannyPlugin._test_api_auth_async")
+    @beeline.traced_thread
+    async def _test_api_auth_async(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
         logger.info("Initialized rest_client")
         try:
             user = await rest_client.get_user()
             logger.info(f"Authenticated as user id={user.id} url={user.url}")
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_SUCCESS,
+            )
             return user
         except API_CLIENT_EXCEPTIONS as e:
-            logger.error(f"_test_api_auth API call failed {e}")
+            logger.error(f"_test_api_auth API call failed with error{e}")
             self._settings.set(["auth_valid"], False)
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_FAILED,
+                payload=dict(error=str(e.reason)),
+            )
+        except asyncio.TimeoutError as e:
+            logger.error(f"Connection to Print Nanny REST API timed out")
+            self._event_bus.fire(
+                Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_FAILED,
+                payload=dict(error="Connection timed out"),
+            )
+
+    def _test_api_auth(self, auth_token: str, api_url: str):
+        response = asyncio.run_coroutine_threadsafe(
+            self._test_api_auth_async(auth_token, api_url), self.worker_manager.loop
+        )
+        result = response.result()
+        return result
 
     @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
@@ -254,7 +306,7 @@ class OctoPrintNannyPlugin(
         self._settings.save()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
-    async def sync_printer_profiles(self, **kwargs):
+    async def sync_printer_profiles(self, **kwargs) -> bool:
         octoprint_device_id = self.get_setting("octoprint_device_id")
         if octoprint_device_id is None:
             return
@@ -275,11 +327,17 @@ class OctoPrintNannyPlugin(
             except print_nanny_client.exceptions.ApiException as e:
                 # octoprint device was deleted remotely
                 if e.status == 400:
-                    res = json.loads(e.body)
-                    if res.get("octoprint_device") is not None:
-                        self._reset_octoprint_device()
-                        break
-                raise e
+                    try:
+                        res = json.loads(e.body)
+                        if res.get("octoprint_device") is not None:
+                            self._reset_octoprint_device()
+                    except ValueError as e2:  # not all responses are JSON serializable right now (e.g. django default responses)
+                        pass
+                logger.error(f"Error syncing printer profiles {e.body}")
+                return False
+            except asyncio.TimeoutError as e:
+                logger.error(f"Connection to Print Nanny REST API timed out")
+                return False
 
         logger.info(f"Synced {len(printer_profiles)} printer_profile")
 
@@ -291,6 +349,7 @@ class OctoPrintNannyPlugin(
         logger.info(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
+        return True
 
     @beeline.traced("OctoPrintNannyPlugin._write_keypair")
     @beeline.traced_thread
@@ -416,9 +475,12 @@ class OctoPrintNannyPlugin(
         logger.info(f"Syncing metadata for octoprint_device_id={octoprint_device_id}")
 
         device_info = self.get_device_info()
-        return await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
-            octoprint_device_id, **device_info
-        )
+        try:
+            await self.worker_manager.plugin.settings.rest_client.update_octoprint_device(
+                octoprint_device_id, **device_info
+            )
+        except asyncio.TimeoutError as e:
+            logger.error(f"Connection to Print Nanny REST API timed out")
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
     @beeline.traced_thread
@@ -480,23 +542,19 @@ class OctoPrintNannyPlugin(
             Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_START,
             payload={"msg": "Syncing printer profiles..."},
         )
-        try:
-            printers = await self.sync_printer_profiles()
+        sync_success = await self.sync_printer_profiles()
+        if sync_success:
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_PRINTER_PROFILE_SYNC_DONE,
                 payload={
                     "msg": "Success! Printer profiles synced to https://print-nanny.com/dashboard/printer-profiles"
                 },
             )
-        except API_CLIENT_EXCEPTIONS as e:
-            logger.error(e)
+        else:
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
                 payload={"msg": str(e.body)},
             )
-            return e
-
-        return printers
 
     @beeline.traced("OctoPrintNannyPlugin._test_snapshot_url")
     async def _test_snapshot_url(self, url):
@@ -567,17 +625,36 @@ class OctoPrintNannyPlugin(
         return flask.jsonify({"image": base64.b64encode(image)})
 
     @beeline.traced(name="OctoPrintNannyPlugin.test_auth_token")
+    @octoprint.plugin.BlueprintPlugin.route("/testConnectionsAsync", methods=["POST"])
+    def test_auth_token_async(self):
+        """
+        Immediately returns a 200 response if auth token is set, 400 if auth not provided
+        Connection test results published in async message Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API
+        """
+        auth_token = flask.request.json.get("auth_token")
+        api_url = flask.request.json.get("api_url")
+        logger.info("Testing REST API connection async")
+        if auth_token is None:
+            return flask.json.jsonify({"error": "auth_token was not provided"}, 400)
+
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API,
+            payload=flask.request.json,
+        )
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING,
+        )
+        return flask.json.jsonify({"msg": "Testing Print Nanny connections"}, 200)
+
+    @beeline.traced(name="OctoPrintNannyPlugin.test_auth_token")
     @octoprint.plugin.BlueprintPlugin.route("/testAuthToken", methods=["POST"])
     def test_auth_token(self):
         auth_token = flask.request.json.get("auth_token")
         api_url = flask.request.json.get("api_url")
 
-        logger.info("Testing auth_token in event loop")
+        logger.info("Testing auth_token in worker thread's event loop")
 
-        response = asyncio.run_coroutine_threadsafe(
-            self._test_api_auth(auth_token, api_url), self.worker_manager.loop
-        )
-        response = response.result()
+        response = self._test_api_auth(auth_token, api_url)
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
             self._settings.set(["auth_valid"], True)
@@ -603,7 +680,20 @@ class OctoPrintNannyPlugin(
 
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
-        local_only = ["monitoring_frame_b64", "monitoring_reset", "device_reset"]
+        local_only = [
+            "monitoring_frame_b64",
+            "monitoring_reset",
+            "device_reset",
+            "connect_test_rest_api",
+            "connect_test_rest_api_failed",
+            "connect_test_rest_api_success",
+            "connect_test_mqtt_ping",
+            "connect_test_mqtt_ping_failed",
+            "connect_test_mqtt_ping_success",
+            "connect_test_mqtt_pong",
+            "connect_test_mqtt_pong_failed",
+            "connect_test_mqtt_pong_success",
+        ]
         return plugin_events + remote_commands + local_only
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_after_startup")
@@ -623,11 +713,22 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
-        # shutdown event is handled in .on_shutdown
+        # shutdown event is handled in .on_shutdown so queue is correctly drained
         if event_type == Events.SHUTDOWN:
             return
         elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET:
             self.worker_manager.mqtt_client_reset()
+
+        elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API:
+            # schedule api call on worker_manager's event loop to avoid blocking on_event in OctoPrint's main loop
+            asyncio.run_coroutine_threadsafe(
+                self._test_api_auth_async(**event_data), self.worker_manager.loop
+            )
+        elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING:
+            # schedule api call on worker_manager's event loop to avoid blocking on_event in OctoPrint's main loop
+            asyncio.run_coroutine_threadsafe(
+                self._test_mqtt_async(), self.worker_manager.loop
+            )
         else:
             logger.debug(f"Putting event_type={event_type} into mqtt_send_queue")
             self.worker_manager.mqtt_send_queue.put_nowait(
@@ -674,11 +775,6 @@ class OctoPrintNannyPlugin(
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return DEFAULT_SETTINGS
-
-    # @beeline.traced(name="OctoPrintNannyPlugin.on_settings_save")
-    # def on_settings_save(self, data):
-    #     super().on_settings_save(data)
-    #     self.worker_manager.on_settings_save()
 
     ## Template plugin
 
