@@ -1,10 +1,11 @@
 import pytest
 from octoprint_nanny.types import Metadata
 from octoprint_nanny.workers.monitoring import MonitoringWorker
-from octoprint_nanny.plugins import OctoPrintNannyPlugin
+from octoprint_nanny import __plugin_version__
 import uuid
 import print_nanny_client
 from datetime import datetime
+import octoprint
 
 
 class MockResponse(object):
@@ -40,6 +41,8 @@ def metadata():
         client_version=print_nanny_client.__version__,
         ts=datetime.now().timestamp(),
         environment={},
+        octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+        plugin_version=__plugin_version__,
     )
 
 
