@@ -20,7 +20,6 @@ from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.settings import PluginSettingsMemoize
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.types import PluginEvents, MonitoringModes
