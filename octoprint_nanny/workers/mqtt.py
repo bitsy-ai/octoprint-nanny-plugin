@@ -1,5 +1,4 @@
 import aiohttp
-import aioprocessing
 import asyncio
 import concurrent
 import inspect
@@ -30,8 +29,8 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 class MQTTManager:
     def __init__(
         self,
-        mqtt_send_queue: aioprocessing.Queue,
-        mqtt_receive_queue: aioprocessing.Queue,
+        mqtt_send_queue: queue.Queue,
+        mqtt_receive_queue: queue.Queue,
         plugin,
     ):
 
@@ -154,15 +153,14 @@ class MQTTPublisherWorker:
 
     async def _loop(self):
         try:
-            span = self._honeycomb_tracer.start_span(
-                {"name": "WorkerManager.queue.coro_get"}
-            )
 
             try:
-                event = await self.queue.coro_get(timeout=2)
+                event = self.queue.get(timeout=1)
             except queue.Empty as e:
                 return
-
+            span = self._honeycomb_tracer.start_span(
+                {"name": "MQTTPublisherWorker._loop"}
+            )
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
 
@@ -319,7 +317,7 @@ class MQTTSubscriberWorker:
         )
 
         try:
-            payload = await self.queue.coro_get(timeout=2)
+            payload = self.queue.get(timeout=1)
         except queue.Empty as e:
             return
 

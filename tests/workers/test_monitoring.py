@@ -34,7 +34,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -46,7 +46,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -58,7 +58,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
 
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
@@ -97,7 +97,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -109,7 +109,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -121,7 +121,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
 
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
@@ -154,7 +154,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_uncalibrated(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -167,7 +167,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
     fake_session = "test-session-134"
     predict_worker._session = fake_session
 
@@ -181,7 +181,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_uncalibrated(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_called_once()
     assert predict_worker._mqtt_send_queue.put_nowait.called is False
 
 
@@ -203,7 +203,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_calibrated(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -216,7 +216,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_calibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
     fake_session = "test-session-134"
     predict_worker._session = fake_session
 
@@ -230,7 +230,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_calibrated(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_called_once()
     assert predict_worker._mqtt_send_queue.put_nowait.called is False
 
 
@@ -248,7 +248,7 @@ async def test_offline_mode_webcam_disabled(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -260,7 +260,7 @@ async def test_offline_mode_webcam_disabled(
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -272,7 +272,7 @@ async def test_offline_mode_webcam_disabled(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_not_called()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_not_called()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
 
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]
@@ -305,7 +305,7 @@ async def test_active_learning_mode(
 
     plugin = mocker.Mock()
 
-    pn_ws_queue = mocker.Mock()
+    multiprocess_ws_queue = mocker.Mock()
     mqtt_send_queue = mocker.Mock()
 
     plugin.settings.snapshot_url = "http://localhost:8080"
@@ -317,7 +317,7 @@ async def test_active_learning_mode(
     plugin.settings.monitoring_mode = MonitoringModes.ACTIVE_LEARNING
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
+    predict_worker = MonitoringWorker(multiprocess_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -329,7 +329,7 @@ async def test_active_learning_mode(
         mock_events_enum.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
         payload=mock_base64.b64encode.return_value,
     )
-    predict_worker._pn_ws_queue.put_nowait.assert_called_once()
+    predict_worker._multiprocess_ws_queue.put_nowait.assert_called_once()
     predict_worker._mqtt_send_queue.put_nowait.assert_called_once()
 
     kall = predict_worker._mqtt_send_queue.put_nowait.mock_calls[0]

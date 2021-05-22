@@ -1,20 +1,11 @@
-from datetime import datetime
-from time import sleep
-import aiohttp
-import aioprocessing
 import asyncio
-import base64
+import beeline
 import concurrent
-import inspect
-import io
 import logging
 import multiprocessing
-import platform
-import pytz
-import os
-import re
+import queue
+import multiprocessing
 import threading
-import uuid
 from typing import Optional
 
 from octoprint.events import Events
@@ -28,8 +19,6 @@ from octoprint_nanny.settings import PluginSettingsMemoize
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.workers.mqtt import MQTTManager
 from octoprint_nanny.workers.monitoring import MonitoringManager
-import beeline
-
 
 Events.PRINT_PROGRESS = "PrintProgress"
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
@@ -49,18 +38,16 @@ class WorkerManager:
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
         self.plugin = plugin
-        self.manager = aioprocessing.AioManager()
-        self.shared = self.manager.Namespace()
 
         # images streamed to webapp asgi over websocket
-        pn_ws_queue = self.manager.AioQueue()
-        self.pn_ws_queue = pn_ws_queue
+        multiprocess_ws_queue = multiprocessing.Queue()
+        self.multiprocess_ws_queue = multiprocess_ws_queue
 
         # outbound telemetry messages to MQTT bridge
-        mqtt_send_queue = self.manager.AioQueue()
+        mqtt_send_queue = queue.Queue()
         self.mqtt_send_queue = mqtt_send_queue
         # inbound MQTT command and config messages from MQTT bridge
-        mqtt_receive_queue = self.manager.AioQueue()
+        mqtt_receive_queue = queue.Queue()
         self.mqtt_receive_queue = mqtt_receive_queue
 
         if plugin_settings is None:
@@ -68,7 +55,7 @@ class WorkerManager:
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
-            pn_ws_queue,
+            multiprocess_ws_queue,
             mqtt_send_queue,
             plugin,
         )
@@ -177,8 +164,6 @@ class WorkerManager:
                     current_profile, self.plugin.settings.octoprint_device_id
                 )
             )
-
-            self.shared.printer_profile_id = printer_profile.id
 
             gcode_file_path = self.plugin._file_manager.path_on_disk(
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]

@@ -37,6 +37,8 @@ logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
 
 
 def fatal_code(e):
+    if isinstance(e, aiohttp.client_exceptions.ClientConnectorError):
+        return False
     return 400 <= e.response.status_code < 500
 
 
@@ -50,7 +52,7 @@ def backoff_hdlr(details):
 
 def giveup_hdlr(details):
     logger.error(
-        "Giving up {wait:0.1f} seconds afters {tries} tries "
+        "Giving up {elapsed:0.1f} seconds afters {tries} tries "
         "calling function {target} with args {args} and kwargs "
         "{kwargs}".format(**details)
     )
