@@ -37,12 +37,9 @@ logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
 
 
 def fatal_code(e):
-    logger.error(e)
     if isinstance(e, aiohttp.client_exceptions.ClientConnectorError):
         return False
-    return
-    # if hasattr()
-    # return 400 <= e.response.status_code < 500
+    return 400 <= e.response.status_code < 500
 
 
 def backoff_hdlr(details):
