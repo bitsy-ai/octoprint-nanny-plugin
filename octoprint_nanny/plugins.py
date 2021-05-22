@@ -713,6 +713,8 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
+        tracked = self.plugin.settings.event_is_tracked(event_type)
+        
         # shutdown event is handled in .on_shutdown so queue is correctly drained
         if event_type == Events.SHUTDOWN:
             return
@@ -729,11 +731,16 @@ class OctoPrintNannyPlugin(
             asyncio.run_coroutine_threadsafe(
                 self._test_mqtt_async(), self.worker_manager.loop
             )
-        else:
+        elif tracked:
             logger.debug(f"Putting event_type={event_type} into mqtt_send_queue")
-            self.worker_manager.mqtt_send_queue.put_nowait(
-                {"event_type": event_type, "event_data": event_data}
-            )
+            try:
+                self.worker_manager.mqtt_send_queue.put_nowait(
+                    {"event_type": event_type, "event_data": event_data}
+                )
+            except BrokenPipeError as e:
+                logger.error(f'BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}')
+        else:
+            logger.info(f"Ignoring event_type={event_type} tracked={tracked}")
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
