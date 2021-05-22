@@ -44,9 +44,7 @@ class WebSocketWorker:
     ):
 
         if not isinstance(queue, multiprocessing.queues.Queue):
-            raise ValueError(
-                "queue should be an instance of multiprocessing.Queue"
-            )
+            raise ValueError("queue should be an instance of multiprocessing.Queue")
 
         self._device_id = device_id
         self._base_url = base_url
