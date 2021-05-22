@@ -46,7 +46,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_uncalibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -109,7 +109,7 @@ async def test_offline_mode_webcam_enabled_with_prediction_results_calibrated(
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -167,7 +167,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_uncalibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
     fake_session = "test-session-134"
     predict_worker._session = fake_session
 
@@ -216,7 +216,7 @@ async def test_offline_mode_webcam_enabled_zero_prediction_results_calibrated(
     plugin.settings.monitoring_mode = MonitoringModes.LITE
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
     fake_session = "test-session-134"
     predict_worker._session = fake_session
 
@@ -260,7 +260,7 @@ async def test_offline_mode_webcam_disabled(
     plugin.settings.metadata = metadata
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop
@@ -317,7 +317,7 @@ async def test_active_learning_mode(
     plugin.settings.monitoring_mode = MonitoringModes.ACTIVE_LEARNING
 
     halt = threading.Event()
-    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, halt, plugin)
+    predict_worker = MonitoringWorker(pn_ws_queue, mqtt_send_queue, plugin)
 
     loop = asyncio.get_running_loop()
     predict_worker.loop = loop

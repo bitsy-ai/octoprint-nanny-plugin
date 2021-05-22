@@ -134,12 +134,12 @@ async def test_mqtt_receive_queue_valid_octoprint_event(mocker, metadata):
             mocker.call(
                 command["message"]["remote_control_command_id"],
                 received=True,
-                metadata=metadata,
+                metadata=metadata.to_dict(),
             ),
             mocker.call(
                 command["message"]["remote_control_command_id"],
                 success=True,
-                metadata=metadata,
+                metadata=metadata.to_dict(),
             ),
         ]
     )
