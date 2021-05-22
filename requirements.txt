@@ -6,15 +6,15 @@
 #
 --extra-index-url https://www.piwheels.org/simple
 
-aiohttp==3.7.4.post0
+aiodns==3.0.0
+    # via aiohttp
+aiohttp[speedups]==3.7.4.post0
     # via
     #   OctoPrint-Nanny (setup.py)
     #   print-nanny-client
-aioprocessing==1.1.0
-    # via OctoPrint-Nanny (setup.py)
 async-timeout==3.0.1
     # via aiohttp
-attrs==20.3.0
+attrs==21.2.0
     # via aiohttp
 babel==2.9.1
     # via flask-babel
@@ -22,14 +22,21 @@ backoff==1.10.0
     # via OctoPrint-Nanny (setup.py)
 blinker==1.4
     # via octoprint
+brotlipy==0.7.0
+    # via aiohttp
 cachelib==0.1.1
     # via octoprint
+cchardet==2.1.7
+    # via aiohttp
 certifi==2020.12.5
     # via
     #   requests
     #   sentry-sdk
 cffi==1.14.5
-    # via cryptography
+    # via
+    #   brotlipy
+    #   cryptography
+    #   pycares
 chardet==4.0.0
     # via
     #   aiohttp
@@ -52,7 +59,7 @@ flask-babel==1.0.0
     # via octoprint
 flask-login==0.5.0
     # via octoprint
-flask==1.1.2
+flask==1.1.4
     # via
     #   flask-assets
     #   flask-babel
@@ -97,7 +104,7 @@ netaddr==0.8.0
     # via octoprint
 netifaces==0.10.9
     # via octoprint
-numpy==1.20.2
+numpy==1.20.3
     # via
     #   OctoPrint-Nanny (setup.py)
     #   pyarrow
@@ -107,7 +114,7 @@ octoprint-firmwarecheck==2021.2.4
     # via octoprint
 octoprint-pisupport==2021.3.26.post2
     # via octoprint
-octoprint==1.6.0
+octoprint==1.6.1
     # via OctoPrint-Nanny (setup.py)
 paho-mqtt==1.5.1
     # via OctoPrint-Nanny (setup.py)
@@ -117,12 +124,14 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.0.dev15
+print-nanny-client==0.6.2
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
 https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl
     # via OctoPrint-Nanny (setup.py)
+pycares==4.0.0
+    # via aiodns
 pycparser==2.20
     # via cffi
 pyjwt==2.1.0
@@ -154,7 +163,7 @@ sentry-sdk==0.20.3
     # via octoprint
 sgmllib3k==1.0.0
     # via feedparser
-six==1.15.0
+six==1.16.0
     # via
     #   libhoney
     #   print-nanny-client
@@ -180,9 +189,9 @@ watchdog==0.10.4
     # via octoprint
 webassets==2.0
     # via flask-assets
-websocket-client==0.58.0
+websocket-client==0.59.0
     # via octoprint
-websockets==9.0.1
+websockets==9.0.2
     # via OctoPrint-Nanny (setup.py)
 werkzeug==1.0.1
     # via
