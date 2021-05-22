@@ -200,12 +200,14 @@ class OctoPrintNannyPlugin(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_FAILED,
                 payload=dict(error=str(e.reason)),
             )
+            raise e
         except asyncio.TimeoutError as e:
             logger.error(f"Connection to Print Nanny REST API timed out")
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_FAILED,
                 payload=dict(error="Connection timed out"),
             )
+            raise e
 
     def _test_api_auth(self, auth_token: str, api_url: str):
         response = asyncio.run_coroutine_threadsafe(
@@ -654,7 +656,16 @@ class OctoPrintNannyPlugin(
 
         logger.info("Testing auth_token in worker thread's event loop")
 
-        response = self._test_api_auth(auth_token, api_url)
+        try:
+            response = self._test_api_auth(auth_token, api_url)
+        except Exception as e:
+            e = str(e)
+            return (
+                flask.json.jsonify(
+                    {"msg": "Error communicating with Print Nanny API", "error": e}
+                ),
+                500,
+            )
         if isinstance(response, print_nanny_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
             self._settings.set(["auth_valid"], True)
@@ -666,15 +677,6 @@ class OctoPrintNannyPlugin(
             self._settings.save()
             self.worker_manager.plugin.settings.reset_rest_client_state()
             return flask.json.jsonify(response.to_dict())
-        elif isinstance(response, Exception):
-            e = str(response)
-            logger.error(e)
-            return (
-                flask.json.jsonify(
-                    {"msg": "Error communicating with Print Nanny API", "error": e}
-                ),
-                500,
-            )
 
     def register_custom_events(self):
 
@@ -713,7 +715,7 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
-        tracked = self.plugin.settings.event_is_tracked(event_type)
+        tracked = self.settings.event_is_tracked(event_type)
 
         # shutdown event is handled in .on_shutdown so queue is correctly drained
         if event_type == Events.SHUTDOWN:

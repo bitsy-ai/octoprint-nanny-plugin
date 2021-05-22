@@ -24,7 +24,7 @@ def get_default_setting(key):
 @pytest.mark.asyncio
 async def test_active_learning_json_serialize(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -33,7 +33,9 @@ async def test_active_learning_json_serialize(benchmark, mocker):
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = None
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
 
     def serialize(buffer):
@@ -51,7 +53,7 @@ async def test_active_learning_json_serialize(benchmark, mocker):
 @pytest.mark.asyncio
 async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -60,7 +62,9 @@ async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = None
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
     (image_width, image_height) = PIL.Image.open(io.BytesIO(buffer)).size
 
@@ -90,7 +94,7 @@ async def test_active_learning_flatbuffer_serialize(benchmark, mocker):
 @pytest.mark.asyncio
 async def test_lite_json_serialize(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -99,7 +103,9 @@ async def test_lite_json_serialize(benchmark, mocker):
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = None
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
 
     (_, _), (viz_buffer, h, w), prediction = predict_threadsafe(
@@ -126,7 +132,7 @@ async def test_lite_json_serialize(benchmark, mocker):
 @pytest.mark.asyncio
 async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -135,7 +141,9 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = None
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
     (oh, ow), (viz_buffer, vh, vw), prediction = predict_threadsafe(
         buffer, calibration=None, min_score_thresh=0.001
@@ -182,7 +190,7 @@ async def test_lite_flatbuffer_uncalibrated_serialize(benchmark, mocker):
 @pytest.mark.asyncio
 async def test_lite_flatbuffer_calibrated_serialize(calibration, benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -191,7 +199,9 @@ async def test_lite_flatbuffer_calibrated_serialize(calibration, benchmark, mock
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = calibration
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
     (oh, ow), (viz_buffer, vh, vw), prediction = predict_threadsafe(
         buffer,
@@ -239,7 +249,7 @@ async def test_lite_flatbuffer_calibrated_serialize(calibration, benchmark, mock
 @pytest.mark.asyncio
 async def test_uncalibrated_predict(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -248,7 +258,9 @@ async def test_uncalibrated_predict(benchmark, mocker):
     mock_plugin.settings.snapshot_url = get_default_setting("snapshot_url")
     mock_plugin.settings.calibration = None
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
 
     benchmark(predict_threadsafe, buffer, calibration=None, min_score_thresh=0.01)
@@ -258,7 +270,7 @@ async def test_uncalibrated_predict(benchmark, mocker):
 @pytest.mark.asyncio
 async def test_calibrated_predict(benchmark, mocker):
 
-    mock_pn_ws_queue = mocker.Mock()
+    mock_multiprocess_ws_queue = mocker.Mock()
     mock_mqtt_send_queue = mocker.Mock()
     halt = threading.Event()
     mock_plugin = mocker.Mock()
@@ -273,7 +285,9 @@ async def test_calibrated_predict(benchmark, mocker):
     )
     mock_plugin.settings.calibration = calibration
 
-    worker = MonitoringWorker(mock_pn_ws_queue, mock_mqtt_send_queue, halt, mock_plugin)
+    worker = MonitoringWorker(
+        mock_multiprocess_ws_queue, mock_mqtt_send_queue, halt, mock_plugin
+    )
     buffer = await worker.load_url_buffer()
 
     benchmark(

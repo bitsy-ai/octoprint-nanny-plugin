@@ -62,7 +62,7 @@ class MonitoringWorker:
 
     def __init__(
         self,
-        pn_ws_queue,
+        multiprocess_ws_queue,
         mqtt_send_queue,
         plugin,
         trace_context={},
@@ -70,7 +70,7 @@ class MonitoringWorker:
         """
         webcam_url - ./mjpg_streamer -i "./input_raspicam.so -fps 5" -o "./output_http.so"
         octoprint_ws_queue - consumer relay to octoprint's main event bus
-        pn_ws_queue - consumer relay to websocket upload proc
+        multiprocess_ws_queue - consumer relay to websocket upload proc
         calibration - (x0, y0, x1, y1) normalized by h,w to range [0, 1]
         fpm - approximate frame per minute sample rate, depends on asyncio.sleep()
         halt - threading.Event()
@@ -86,7 +86,7 @@ class MonitoringWorker:
         self._sleep_interval = 60 / int(self._fpm)
         self._snapshot_url = plugin.settings.snapshot_url
 
-        self._pn_ws_queue = pn_ws_queue
+        self._multiprocess_ws_queue = multiprocess_ws_queue
         self._mqtt_send_queue = mqtt_send_queue
 
         self._trace_context = trace_context
@@ -168,7 +168,7 @@ class MonitoringWorker:
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
             payload=b64_image,
         )
-        self._pn_ws_queue.put_nowait(image_bytes)
+        self._multiprocess_ws_queue.put_nowait(image_bytes)
         self._mqtt_send_queue.put_nowait(msg)
 
     async def _lite_predict_and_calc_health(self, ts) -> MonitoringFrame:
@@ -226,7 +226,7 @@ class MonitoringWorker:
             payload=base64.b64encode(monitoring_frame.image.data),
         )
         if self._plugin.settings.webcam_upload:
-            self._pn_ws_queue.put_nowait(monitoring_frame.image.data)
+            self._multiprocess_ws_queue.put_nowait(monitoring_frame.image.data)
 
         if monitoring_frame.bounding_boxes is not None:
             self._mqtt_send_queue.put_nowait(msg)
@@ -267,13 +267,13 @@ class MonitoringWorker:
 class MonitoringManager:
     def __init__(
         self,
-        pn_ws_queue,
+        multiprocess_ws_queue,
         mqtt_send_queue,
         plugin,
     ):
 
         self.halt = None
-        self.pn_ws_queue = pn_ws_queue
+        self.multiprocess_ws_queue = multiprocess_ws_queue
         self.mqtt_send_queue = mqtt_send_queue
         self.plugin = plugin
         self._worker_threads = []
@@ -291,14 +291,14 @@ class MonitoringManager:
     def _reset(self):
         self.halt = threading.Event()
         self._predict_worker = MonitoringWorker(
-            self.pn_ws_queue,
+            self.multiprocess_ws_queue,
             self.mqtt_send_queue,
             self.plugin,
         )
         self._websocket_worker = WebSocketWorker(
             self.plugin.settings.ws_url,
             self.plugin.settings.auth_token,
-            self.pn_ws_queue,
+            self.multiprocess_ws_queue,
             self.plugin.settings.octoprint_device_id,
         )
         self._workers = [self._predict_worker, self._websocket_worker]

@@ -159,7 +159,6 @@ plugin_requires = [
     "print-nanny-client>=0.6.1-rc1",
     "websockets>=9.0.1",
     "backoff>=1.10.0",
-    "aioprocessing>=1.1.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
