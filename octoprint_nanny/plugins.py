@@ -714,7 +714,7 @@ class OctoPrintNannyPlugin(
 
     def on_event(self, event_type, event_data):
         tracked = self.plugin.settings.event_is_tracked(event_type)
-        
+
         # shutdown event is handled in .on_shutdown so queue is correctly drained
         if event_type == Events.SHUTDOWN:
             return
@@ -738,7 +738,9 @@ class OctoPrintNannyPlugin(
                     {"event_type": event_type, "event_data": event_data}
                 )
             except BrokenPipeError as e:
-                logger.error(f'BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}')
+                logger.error(
+                    f"BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}"
+                )
         else:
             logger.info(f"Ignoring event_type={event_type} tracked={tracked}")
 
