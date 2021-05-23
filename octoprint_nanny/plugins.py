@@ -136,6 +136,7 @@ class OctoPrintNannyPlugin(
 
     octoprint_event_prefix = "plugin_octoprint_nanny_"
     plugin_identifier = "octoprint_nanny"
+    VERBOSE_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
 
     def __init__(self, *args, **kwargs):
         # User interactive
@@ -683,11 +684,7 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
 
     def register_custom_events(self):
-        # register events in PluginEvents enum
-        # strip plugin_octoprint_nanny prefix from enum strings; octoprint will add this prefix to all strings returned by register_custom_events method()
-        plugin_events = [
-            x.value.replace(self.octoprint_event_prefix, "") for x in PluginEvents
-        ]
+        plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
@@ -711,6 +708,7 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
+
         tracked = self.settings.event_is_tracked(event_type)
 
         # shutdown event is handled in .on_shutdown so queue is correctly drained
@@ -739,8 +737,11 @@ class OctoPrintNannyPlugin(
                 logger.error(
                     f"BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}"
                 )
+        elif event_type in self.VERBOSE_EVENTS:
+            logger.debug(f"Ignoring event_type={event_type} event_data={event_data}")
+
         else:
-            logger.info(f"Ignoring event_type={event_type} tracked={tracked}")
+            logger.info(f"Ignoring event_type={event_type} event_data{event_data}")
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):

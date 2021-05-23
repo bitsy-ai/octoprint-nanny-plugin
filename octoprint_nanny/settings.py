@@ -399,8 +399,13 @@ class PluginSettingsMemoize:
         return self._mqtt_client
 
     def event_is_tracked(self, event_type):
+        prefix = self.plugin.octoprint_event_prefix
+        prefix_stripped = event_type.replace(prefix, "")
         return (
             TrackedOctoPrintEvents.is_member(event_type)
+            or TrackedOctoPrintEvents.is_member(prefix_stripped)
             or RemoteCommands.is_member(event_type)
+            or RemoteCommands.is_member(prefix_stripped)
             or PluginEvents.is_member(event_type)
+            or PluginEvents.is_member(prefix_stripped)
         )
