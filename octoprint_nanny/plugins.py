@@ -133,6 +133,11 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.ShutdownPlugin,
     octoprint.plugin.RestartNeedingPlugin,
 ):
+
+    octoprint_event_prefix = "plugin_octoprint_nanny_"
+    plugin_identifier = "octoprint_nanny"
+    VERBOSE_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
+
     def __init__(self, *args, **kwargs):
         # User interactive
         self._calibration = None
@@ -679,22 +684,10 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
 
     def register_custom_events(self):
-
         plugin_events = [x.value for x in PluginEvents]
         remote_commands = [x.value for x in RemoteCommands]
         local_only = [
-            "monitoring_frame_b64",
-            "monitoring_reset",
-            "device_reset",
-            "connect_test_rest_api",
-            "connect_test_rest_api_failed",
-            "connect_test_rest_api_success",
-            "connect_test_mqtt_ping",
-            "connect_test_mqtt_ping_failed",
-            "connect_test_mqtt_ping_success",
-            "connect_test_mqtt_pong",
-            "connect_test_mqtt_pong_failed",
-            "connect_test_mqtt_pong_success",
+            "monitoring_frame_b64",  # not sent via event telemetry
         ]
         return plugin_events + remote_commands + local_only
 
@@ -715,6 +708,7 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event_type, event_data):
+
         tracked = self.settings.event_is_tracked(event_type)
 
         # shutdown event is handled in .on_shutdown so queue is correctly drained
@@ -743,8 +737,11 @@ class OctoPrintNannyPlugin(
                 logger.error(
                     f"BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}"
                 )
+        elif event_type in self.VERBOSE_EVENTS:
+            logger.debug(f"Ignoring event_type={event_type} event_data={event_data}")
+
         else:
-            logger.info(f"Ignoring event_type={event_type} tracked={tracked}")
+            logger.info(f"Ignoring event_type={event_type} event_data{event_data}")
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
