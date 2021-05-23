@@ -108,8 +108,6 @@ class MQTTPublisherWorker:
         Events.PRINT_RESUMED,
         Events.PRINT_STARTED,
     ]
-    # do not warn when the following events are skipped on telemetry update
-    MUTED_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
 
     def __init__(self, queue, plugin):
 
@@ -177,7 +175,7 @@ class MQTTPublisherWorker:
                 return
             event_type = event.get("event_type")
             if event_type is None:
-                logger.warning(
+                logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(
                         event=event
                     )
@@ -191,10 +189,7 @@ class MQTTPublisherWorker:
 
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
-                if event_type not in self.MUTED_EVENTS:
-                    logger.debug(
-                        f"No {self.__class__} handler registered for {event_type}"
-                    )
+                logger.debug(f"No {self.__class__} handler registered for {event_type}")
                 return
             for handler_fn in handler_fns:
                 logger.debug(f"MQTTPublisherWorker calling handler_fn={handler_fn}")
