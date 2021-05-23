@@ -133,6 +133,10 @@ class OctoPrintNannyPlugin(
     octoprint.plugin.ShutdownPlugin,
     octoprint.plugin.RestartNeedingPlugin,
 ):
+
+    octoprint_event_prefix = "plugin_octoprint_nanny_"
+    plugin_identifier = "octoprint_nanny"
+
     def __init__(self, *args, **kwargs):
         # User interactive
         self._calibration = None
@@ -679,22 +683,14 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
 
     def register_custom_events(self):
-
-        plugin_events = [x.value for x in PluginEvents]
+        # register events in PluginEvents enum
+        # strip plugin_octoprint_nanny prefix from enum strings; octoprint will add this prefix to all strings returned by register_custom_events method()
+        plugin_events = [
+            x.value.replace(self.octoprint_event_prefix, "") for x in PluginEvents
+        ]
         remote_commands = [x.value for x in RemoteCommands]
         local_only = [
-            "monitoring_frame_b64",
-            "monitoring_reset",
-            "device_reset",
-            "connect_test_rest_api",
-            "connect_test_rest_api_failed",
-            "connect_test_rest_api_success",
-            "connect_test_mqtt_ping",
-            "connect_test_mqtt_ping_failed",
-            "connect_test_mqtt_ping_success",
-            "connect_test_mqtt_pong",
-            "connect_test_mqtt_pong_failed",
-            "connect_test_mqtt_pong_success",
+            "monitoring_frame_b64",  # not sent via event telemetry
         ]
         return plugin_events + remote_commands + local_only
 
