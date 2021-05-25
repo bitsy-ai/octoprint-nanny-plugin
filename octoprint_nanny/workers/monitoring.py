@@ -39,9 +39,12 @@ from octoprint_nanny.types import (
     PluginEvents,
     MonitoringModes,
     MonitoringFrame,
-    MonitoringEventTypeEnum,
     Image,
 )
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
+
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import octoprint_nanny.clients.flatbuffers
 
