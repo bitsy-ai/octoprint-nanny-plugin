@@ -11,9 +11,6 @@ from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventTypes,
 )
 from print_nanny_client.models.command_enum import CommandEnum
-from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
-    MonitoringEventTypeEnum,
-)
 
 
 PLUGIN_PREFIX = "octoprint_nanny_"
@@ -135,6 +132,7 @@ RemoteCommands = EnumBase(
         if getattr(CommandEnum, attr) in CommandEnum.allowable_values
     },
 )
+
 
 TrackedOctoPrintEvents = EnumBase(
     "TrackedOctoPrintEvents",
