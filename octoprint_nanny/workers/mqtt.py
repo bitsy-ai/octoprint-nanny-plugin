@@ -17,11 +17,12 @@ import print_nanny_client
 
 from octoprint.events import Events
 
+from print_nanny_client import TelemetryEvent, OctoprintEnvironment
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import PluginEvents, MonitoringModes
+from octoprint_nanny.types import MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -139,12 +140,21 @@ class MQTTPublisherWorker:
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
     async def publish_octoprint_event_telemetry(self, event):
-        event_type = event.get("event_type")
-        event.update(
-            {
-                "metadata": self.plugin.settings.metadata.to_dict(),
-                "octoprint_job": self.plugin.settings.get_current_octoprint_job(),
-            }
+        # event_type = event.get("event_type")
+        # event_data =
+        # event.update(
+        #     {
+        #         "metadata": self.plugin.settings.metadata.to_dict(),
+        #         "octoprint_job": self.plugin.settings.get_current_octoprint_job(),
+        #     }
+        # )
+        import pdb
+
+        pdb.set_trace()
+        environment = OctoprintEnvironment()
+        payload = TelemetryEvent(
+            print_session=self.plugin.settings.print_session,
+            environment=environment ** event,
         )
 
         self.plugin.settings.mqtt_client.publish_octoprint_event(event)

@@ -36,7 +36,6 @@ from octoprint_nanny.predictor import (
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import (
-    PluginEvents,
     MonitoringModes,
     MonitoringFrame,
     Image,

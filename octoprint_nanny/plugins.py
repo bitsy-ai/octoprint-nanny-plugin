@@ -1,26 +1,39 @@
 import asyncio
 import logging
 import base64
-import concurrent
-import glob
 import hashlib
 import io
 import json
 import os
 import platform
-import platform
-import queue
-import re
-import threading
 import uuid
-from datetime import datetime
-from pathlib import Path
 import socket
-from datetime import datetime
-import time
 import requests
+import beeline
+import aiohttp.client_exceptions
+import flask
+import octoprint.plugin
+import octoprint.util
 
+from pathlib import Path
+
+from octoprint.events import Events
+
+import print_nanny_client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+
+import octoprint_nanny.exceptions
+from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
+from octoprint_nanny.manager import WorkerManager
+from octoprint_nanny.clients.honeycomb import HoneycombTracer
+from octoprint_nanny.exceptions import PluginSettingsRequired
+from octoprint_nanny.types import MonitoringModes
+from print_nanny_client import (
+    PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
+    OctoPrintEventEventTypeEnum as OctoPrintEventType,
+    PrintStatusEventEventTypeEnum as PrintStatusEventType,
+    RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
+)
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -42,26 +55,6 @@ def configure_logger(logger, logfile_path):
     logger.addHandler(file_logging_handler)
 
     logger.info(f"Logger file handler added {file_logging_handler}")
-
-
-import beeline
-import aiohttp.client_exceptions
-import flask
-import octoprint.plugin
-import octoprint.util
-import uuid
-import numpy as np
-
-from octoprint.events import Events, eventManager
-
-import print_nanny_client
-
-import octoprint_nanny.exceptions
-from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
-from octoprint_nanny.manager import WorkerManager
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import MonitoringModes, PluginEvents, RemoteCommands
-from octoprint_nanny.exceptions import PluginSettingsRequired
 
 
 DEFAULT_API_URL = os.environ.get(
@@ -684,8 +677,8 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
 
     def register_custom_events(self):
-        plugin_events = [x.value for x in PluginEvents]
-        remote_commands = [x.value for x in RemoteCommands]
+        plugin_events = [x.value for x in PrintNannyPluginEventType]
+        remote_commands = [x.value for x in RemoteCommandEventType]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
         ]

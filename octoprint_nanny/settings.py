@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 import logging
 import pytz
@@ -11,18 +10,18 @@ from octoprint_nanny.workers.monitoring import (
 import beeline
 import uuid
 
-from print_nanny_client.models.octo_print_event_event_type_enum import (
-    OctoPrintEventEventTypeEnum,
+from print_nanny_client import (
+    PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
+    OctoPrintEventEventTypeEnum as OctoPrintEventType,
+    PrintStatusEventEventTypeEnum as PrintStatusEventType,
+    RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
 )
 
 from octoprint_nanny.clients.mqtt import MQTTClient
-from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.rest import RestAPIClient
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import (
     MonitoringModes,
-    PluginEvents,
-    TrackedOctoPrintEvents,
-    RemoteCommands,
     Metadata,
 )
 import print_nanny_client
@@ -144,11 +143,9 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer_profile_manager.get_current_or_default()
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_temperatures")
     def get_current_octoprint_temperatures(self):
         return self.plugin._printer.get_current_temperatures()
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_printer_state")
     def get_current_octoprint_printer_state(self):
         """
         HTTP/1.1 200 OK
@@ -402,10 +399,12 @@ class PluginSettingsMemoize:
         prefix = self.plugin.octoprint_event_prefix
         prefix_stripped = event_type.replace(prefix, "")
         return (
-            TrackedOctoPrintEvents.is_member(event_type)
-            or TrackedOctoPrintEvents.is_member(prefix_stripped)
-            or RemoteCommands.is_member(event_type)
-            or RemoteCommands.is_member(prefix_stripped)
-            or PluginEvents.is_member(event_type)
-            or PluginEvents.is_member(prefix_stripped)
+            PrintNannyPluginEventType.is_member(event_type)
+            or PrintNannyPluginEventType.is_member(prefix_stripped)
+            or OctoPrintEventType.is_member(event_type)
+            or OctoPrintEventType.is_member(prefix_stripped)
+            or PrintStatusEventType.is_member(event_type)
+            or PrintStatusEventType.is_member(prefix_stripped)
+            or RemoteCommandEventType.is_member(event_type)
+            or RemoteCommandEventType.is_member(prefix_stripped)
         )
