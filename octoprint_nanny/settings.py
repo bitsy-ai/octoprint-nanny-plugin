@@ -399,12 +399,12 @@ class PluginSettingsMemoize:
         prefix = self.plugin.octoprint_event_prefix
         prefix_stripped = event_type.replace(prefix, "")
         return (
-            PrintNannyPluginEventType.is_member(event_type)
-            or PrintNannyPluginEventType.is_member(prefix_stripped)
-            or OctoPrintEventType.is_member(event_type)
-            or OctoPrintEventType.is_member(prefix_stripped)
-            or PrintStatusEventType.is_member(event_type)
-            or PrintStatusEventType.is_member(prefix_stripped)
-            or RemoteCommandEventType.is_member(event_type)
-            or RemoteCommandEventType.is_member(prefix_stripped)
+            event_type in PrintNannyPluginEventType.allowable_values
+            or prefix_stripped in PrintNannyPluginEventType.allowable_values
+            or event_type in OctoPrintEventType.allowable_values
+            or prefix_stripped in OctoPrintEventType.allowable_values
+            or event_type in PrintStatusEventType.allowable_values
+            or prefix_stripped in PrintStatusEventType.allowable_values
+            or event_type in RemoteCommandEventType.allowable_values
+            or prefix_stripped in RemoteCommandEventType.allowable_values
         )

@@ -677,7 +677,11 @@ class OctoPrintNannyPlugin(
             return flask.json.jsonify(response.to_dict())
 
     def register_custom_events(self):
-        plugin_events = [x.value for x in PrintNannyPluginEventType]
+        # remove plugin event prefix when registering events (octoprint adds prefix)
+        plugin_events = [
+            x.replace(self.octoprint_event_prefix, "")
+            for x in PrintNannyPluginEventType
+        ]
         remote_commands = [x.value for x in RemoteCommandEventType]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
