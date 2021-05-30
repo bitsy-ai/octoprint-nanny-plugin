@@ -69,7 +69,7 @@ flatbuffers==1.12
     # via OctoPrint-Nanny (setup.py)
 future==0.18.2
     # via octoprint
-honeycomb-beeline==2.16.2
+honeycomb-beeline==2.17.0
     # via OctoPrint-Nanny (setup.py)
 idna==2.10
     # via
@@ -124,7 +124,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.4rc2
+print-nanny-client==0.6.5rc1
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
@@ -180,7 +180,7 @@ typing-extensions==3.10.0.0 ; python_version < "3.8"
     #   yarl
 unidecode==0.4.21
     # via octoprint
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   print-nanny-client
     #   requests
@@ -191,7 +191,7 @@ webassets==2.0
     # via flask-assets
 websocket-client==0.59.0
     # via octoprint
-websockets==9.0.2
+websockets==9.1
     # via OctoPrint-Nanny (setup.py)
 werkzeug==1.0.1
     # via
