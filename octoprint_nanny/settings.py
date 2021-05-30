@@ -148,77 +148,7 @@ class PluginSettingsMemoize:
 
     def get_current_octoprint_printer_state(self):
         """
-        HTTP/1.1 200 OK
-        Content-Type: application/json
-
-        {
-            "temperature": {
-                "tool0": {
-                "actual": 214.8821,
-                "target": 220.0,
-                "offset": 0
-                },
-                "tool1": {
-                "actual": 25.3,
-                "target": null,
-                "offset": 0
-                },
-                "bed": {
-                "actual": 50.221,
-                "target": 70.0,
-                "offset": 5
-                },
-                "history": [
-                {
-                    "time": 1395651928,
-                    "tool0": {
-                    "actual": 214.8821,
-                    "target": 220.0
-                    },
-                    "tool1": {
-                    "actual": 25.3,
-                    "target": null
-                    },
-                    "bed": {
-                    "actual": 50.221,
-                    "target": 70.0
-                    }
-                },
-                {
-                    "time": 1395651926,
-                    "tool0": {
-                    "actual": 212.32,
-                    "target": 220.0
-                    },
-                    "tool1": {
-                    "actual": 25.1,
-                    "target": null
-                    },
-                    "bed": {
-                    "actual": 49.1123,
-                    "target": 70.0
-                    }
-                }
-                ]
-            },
-            "sd": {
-                "ready": true
-            },
-            "state": {
-                "text": "Operational",
-                "flags": {
-                "operational": true,
-                "paused": false,
-                "printing": false,
-                "cancelling": false,
-                "pausing": false,
-                "sdReady": true,
-                "error": false,
-                "ready": true,
-                "closedOrError": false
-                }
-            }
-        }
+        {'state': {'text': 'Offline', 'flags': {'operational': False, 'printing': False, 'cancelling': False, 'pausing': False, 'resuming': False, 'finishing': False, 'closedOrError': True, 'error': False, 'paused': False, 'ready': False, 'sdReady': False}, 'error': ''}, 'job': {'file': {'name': None, 'path': None, 'size': None, 'origin': None, 'date': None}, 'estimatedPrintTime': None, 'lastPrintTime': None, 'filament': {'length': None, 'volume': None}, 'user': None}, 'currentZ': None, 'progress': {'completion': None, 'filepos': None, 'printTime': None, 'printTimeLeft': None, 'printTimeOrigin': None}, 'offsets': {}, 'resends': {'count': 0, 'ratio': 0}}
         """
         return self.plugin._printer.get_current_data()
 

@@ -17,7 +17,11 @@ import print_nanny_client
 
 from octoprint.events import Events
 
-from print_nanny_client import TelemetryEvent, OctoprintEnvironment
+from print_nanny_client import (
+    TelemetryEvent,
+    OctoprintEnvironment,
+    OctoprintPrinterData,
+)
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
@@ -140,24 +144,23 @@ class MQTTPublisherWorker:
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
     async def publish_octoprint_event_telemetry(self, event):
-        # event_type = event.get("event_type")
-        # event_data =
-        # event.update(
-        #     {
-        #         "metadata": self.plugin.settings.metadata.to_dict(),
-        #         "octoprint_job": self.plugin.settings.get_current_octoprint_job(),
-        #     }
-        # )
-        import pdb
-
-        pdb.set_trace()
-        environment = OctoprintEnvironment()
+        environment = self.plugin._environment
+        environment = OctoprintEnvironment(
+            os=environment.get("os", {}),
+            python=environment.get("python", {}),
+            hardware=environment.get("hardware", {}),
+            pi_support=environment.get("plugins", {}).get("pi_support", {}),
+        )
+        printer_data = OctoprintPrinterData(**self.plugin._printer.get_current_data())
         payload = TelemetryEvent(
             print_session=self.plugin.settings.print_session,
-            environment=environment ** event,
+            environment=environment,
+            printer_data=printer_data,
+            temperature=self.plugin._printer.get_current_temperatures(),
+            **event,
         )
 
-        self.plugin.settings.mqtt_client.publish_octoprint_event(event)
+        return self.plugin.settings.mqtt_client.publish_octoprint_event(payload)
 
     async def _loop(self):
         try:

@@ -680,9 +680,9 @@ class OctoPrintNannyPlugin(
         # remove plugin event prefix when registering events (octoprint adds prefix)
         plugin_events = [
             x.replace(self.octoprint_event_prefix, "")
-            for x in PrintNannyPluginEventType
+            for x in PrintNannyPluginEventType.allowable_values
         ]
-        remote_commands = [x.value for x in RemoteCommandEventType]
+        remote_commands = RemoteCommandEventType.allowable_values
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
         ]
