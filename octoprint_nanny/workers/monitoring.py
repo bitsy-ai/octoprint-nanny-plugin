@@ -101,7 +101,7 @@ class MonitoringWorker:
     async def load_url_buffer(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(self._snapshot_url) as res:
-                assert res.headers["content-type"] == "image/jpeg"
+                # assert res.headers["content-type"] == "image/jpeg"
                 b = await res.read()
                 return b
 
