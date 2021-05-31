@@ -77,11 +77,18 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             await websocket.send(msg)
 
+    @backoff.on_exception(
+        backoff.expo,
+        ConnectionClosedError,
+        jitter=backoff.random_jitter,
+        logger=logger,
+        max_time=120,
+    )
     def run(self, halt):
         self._halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(asyncio.ensure_future(self.relay_loop()))
+        return loop.run_until_complete(self.relay_loop())
 
     async def _loop(self, websocket):
         try:
@@ -90,13 +97,6 @@ class WebSocketWorker:
         except queue.Empty as e:
             return
 
-    @backoff.on_exception(
-        backoff.expo,
-        ConnectionClosedError,
-        jitter=backoff.random_jitter,
-        logger=logger,
-        max_time=60,
-    )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with websockets.connect(
