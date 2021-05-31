@@ -738,7 +738,7 @@ class OctoPrintNannyPlugin(
             logger.debug(f"Ignoring event_type={event_type} event_data={event_data}")
 
         else:
-            logger.info(f"Ignoring event_type={event_type} event_data{event_data}")
+            logger.info(f"Ignoring event_type={event_type} event_data={event_data}")
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):
