@@ -330,7 +330,6 @@ class MonitoringManager:
             await self.plugin.settings.rest_client.update_octoprint_device(
                 self.plugin.settings.octoprint_device_id,
                 monitoring_active=True,
-                last_session=self.plugin.settings.print_session.id,
             )
         else:
             logger.warning(
