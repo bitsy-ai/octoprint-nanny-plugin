@@ -2,21 +2,21 @@ import aiohttp
 import asyncio
 import concurrent
 import inspect
-import io
 import json
 import logging
 import os
 import queue
 import threading
-
+from datetime import datetime
 import logging
+import pytz
 
 import beeline
 
 import print_nanny_client
 
 from octoprint.events import Events
-
+import octoprint
 from print_nanny_client import (
     TelemetryEvent,
     OctoprintEnvironment,
@@ -140,7 +140,6 @@ class MQTTPublisherWorker:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
-
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
     async def publish_octoprint_event_telemetry(self, event):
@@ -151,14 +150,23 @@ class MQTTPublisherWorker:
             hardware=environment.get("hardware", {}),
             pi_support=environment.get("plugins", {}).get("pi_support", {}),
         )
-        printer_data = OctoprintPrinterData(**self.plugin._printer.get_current_data())
+        printer_data = self.plugin._printer.get_current_data()
+        currentZ = printer_data.pop("currentZ")
+        logger.info(f"printer_data={printer_data}")
+        printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
         payload = TelemetryEvent(
             print_session=self.plugin.settings.print_session,
-            environment=environment,
-            printer_data=printer_data,
+            octoprint_environment=environment,
+            octoprint_printer_data=printer_data,
             temperature=self.plugin._printer.get_current_temperatures(),
+            print_nanny_plugin_version=self.plugin._plugin_version,
+            print_nanny_client_version=print_nanny_client.__version__,
+            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            octoprint_device=self.plugin.settings.octoprint_device_id,
+            ts=datetime.now(pytz.timezone("UTC")).timestamp(),
             **event,
         )
+        payload = payload.to_dict()
 
         return self.plugin.settings.mqtt_client.publish_octoprint_event(payload)
 

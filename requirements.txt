@@ -28,7 +28,7 @@ cachelib==0.1.1
     # via octoprint
 cchardet==2.1.7
     # via aiohttp
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   requests
     #   sentry-sdk
@@ -124,7 +124,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.5rc7
+print-nanny-client==0.6.5rc18
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
