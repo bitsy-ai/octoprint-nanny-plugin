@@ -2,26 +2,31 @@ import aiohttp
 import asyncio
 import concurrent
 import inspect
-import io
 import json
 import logging
 import os
 import queue
 import threading
-
+from datetime import datetime
 import logging
+import pytz
 
 import beeline
 
 import print_nanny_client
 
 from octoprint.events import Events
-
+import octoprint
+from print_nanny_client import (
+    TelemetryEvent,
+    OctoprintEnvironment,
+    OctoprintPrinterData,
+)
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import PluginEvents, MonitoringModes
+from octoprint_nanny.types import MonitoringModes
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -135,19 +140,40 @@ class MQTTPublisherWorker:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
-
         return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
 
     async def publish_octoprint_event_telemetry(self, event):
-        event_type = event.get("event_type")
-        event.update(
-            {
-                "metadata": self.plugin.settings.metadata.to_dict(),
-                "octoprint_job": self.plugin.settings.get_current_octoprint_job(),
-            }
+        environment = self.plugin._environment
+        environment = OctoprintEnvironment(
+            os=environment.get("os", {}),
+            python=environment.get("python", {}),
+            hardware=environment.get("hardware", {}),
+            pi_support=environment.get("plugins", {}).get("pi_support", {}),
         )
+        printer_data = self.plugin._printer.get_current_data()
+        currentZ = printer_data.pop("currentZ")
+        logger.info(f"printer_data={printer_data}")
+        printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
+        print_session = (
+            self.plugin.settings.print_session.id
+            if self.plugin.settings.print_session
+            else self.plugin.settings.print_session
+        )
+        payload = TelemetryEvent(
+            print_session=print_session,
+            octoprint_environment=environment,
+            octoprint_printer_data=printer_data,
+            temperature=self.plugin._printer.get_current_temperatures(),
+            print_nanny_plugin_version=self.plugin._plugin_version,
+            print_nanny_client_version=print_nanny_client.__version__,
+            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            octoprint_device=self.plugin.settings.octoprint_device_id,
+            ts=datetime.now(pytz.timezone("UTC")).timestamp(),
+            **event,
+        )
+        payload = payload.to_dict()
 
-        self.plugin.settings.mqtt_client.publish_octoprint_event(event)
+        return self.plugin.settings.mqtt_client.publish_octoprint_event(payload)
 
     async def _loop(self):
         try:

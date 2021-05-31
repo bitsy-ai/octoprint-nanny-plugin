@@ -143,7 +143,9 @@ class WorkerManager:
         await self.monitoring_manager.stop()
 
         await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.octoprint_device_id, monitoring_active=False
+            self.plugin.settings.octoprint_device_id,
+            monitoring_active=False,
+            printer_state="Offline",
         )
 
         self.mqtt_manager.stop()

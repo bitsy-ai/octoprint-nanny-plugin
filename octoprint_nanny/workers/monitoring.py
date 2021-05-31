@@ -36,7 +36,6 @@ from octoprint_nanny.predictor import (
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import (
-    PluginEvents,
     MonitoringModes,
     MonitoringFrame,
     Image,
@@ -102,7 +101,7 @@ class MonitoringWorker:
     async def load_url_buffer(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(self._snapshot_url) as res:
-                assert res.headers["content-type"] == "image/jpeg"
+                # assert res.headers["content-type"] == "image/jpeg"
                 b = await res.read()
                 return b
 
@@ -331,7 +330,6 @@ class MonitoringManager:
             await self.plugin.settings.rest_client.update_octoprint_device(
                 self.plugin.settings.octoprint_device_id,
                 monitoring_active=True,
-                last_session=self.plugin.settings.print_session.id,
             )
         else:
             logger.warning(

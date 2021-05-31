@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 import logging
 import pytz
@@ -11,18 +10,18 @@ from octoprint_nanny.workers.monitoring import (
 import beeline
 import uuid
 
-from print_nanny_client.models.octo_print_event_event_type_enum import (
-    OctoPrintEventEventTypeEnum,
+from print_nanny_client import (
+    PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
+    OctoPrintEventEventTypeEnum as OctoPrintEventType,
+    PrintJobStatusEnum,
+    RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
 )
 
 from octoprint_nanny.clients.mqtt import MQTTClient
-from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
+from octoprint_nanny.clients.rest import RestAPIClient
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import (
     MonitoringModes,
-    PluginEvents,
-    TrackedOctoPrintEvents,
-    RemoteCommands,
     Metadata,
 )
 import print_nanny_client
@@ -144,84 +143,12 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer_profile_manager.get_current_or_default()
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_temperatures")
     def get_current_octoprint_temperatures(self):
         return self.plugin._printer.get_current_temperatures()
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_printer_state")
     def get_current_octoprint_printer_state(self):
         """
-        HTTP/1.1 200 OK
-        Content-Type: application/json
-
-        {
-            "temperature": {
-                "tool0": {
-                "actual": 214.8821,
-                "target": 220.0,
-                "offset": 0
-                },
-                "tool1": {
-                "actual": 25.3,
-                "target": null,
-                "offset": 0
-                },
-                "bed": {
-                "actual": 50.221,
-                "target": 70.0,
-                "offset": 5
-                },
-                "history": [
-                {
-                    "time": 1395651928,
-                    "tool0": {
-                    "actual": 214.8821,
-                    "target": 220.0
-                    },
-                    "tool1": {
-                    "actual": 25.3,
-                    "target": null
-                    },
-                    "bed": {
-                    "actual": 50.221,
-                    "target": 70.0
-                    }
-                },
-                {
-                    "time": 1395651926,
-                    "tool0": {
-                    "actual": 212.32,
-                    "target": 220.0
-                    },
-                    "tool1": {
-                    "actual": 25.1,
-                    "target": null
-                    },
-                    "bed": {
-                    "actual": 49.1123,
-                    "target": 70.0
-                    }
-                }
-                ]
-            },
-            "sd": {
-                "ready": true
-            },
-            "state": {
-                "text": "Operational",
-                "flags": {
-                "operational": true,
-                "paused": false,
-                "printing": false,
-                "cancelling": false,
-                "pausing": false,
-                "sdReady": true,
-                "error": false,
-                "ready": true,
-                "closedOrError": false
-                }
-            }
-        }
+        {'state': {'text': 'Offline', 'flags': {'operational': False, 'printing': False, 'cancelling': False, 'pausing': False, 'resuming': False, 'finishing': False, 'closedOrError': True, 'error': False, 'paused': False, 'ready': False, 'sdReady': False}, 'error': ''}, 'job': {'file': {'name': None, 'path': None, 'size': None, 'origin': None, 'date': None}, 'estimatedPrintTime': None, 'lastPrintTime': None, 'filament': {'length': None, 'volume': None}, 'user': None}, 'currentZ': None, 'progress': {'completion': None, 'filepos': None, 'printTime': None, 'printTimeLeft': None, 'printTimeOrigin': None}, 'offsets': {}, 'resends': {'count': 0, 'ratio': 0}}
         """
         return self.plugin._printer.get_current_data()
 
@@ -402,10 +329,12 @@ class PluginSettingsMemoize:
         prefix = self.plugin.octoprint_event_prefix
         prefix_stripped = event_type.replace(prefix, "")
         return (
-            TrackedOctoPrintEvents.is_member(event_type)
-            or TrackedOctoPrintEvents.is_member(prefix_stripped)
-            or RemoteCommands.is_member(event_type)
-            or RemoteCommands.is_member(prefix_stripped)
-            or PluginEvents.is_member(event_type)
-            or PluginEvents.is_member(prefix_stripped)
+            event_type in PrintNannyPluginEventType.allowable_values
+            or prefix_stripped in PrintNannyPluginEventType.allowable_values
+            or event_type in OctoPrintEventType.allowable_values
+            or prefix_stripped in OctoPrintEventType.allowable_values
+            or event_type in PrintJobStatusEnum.allowable_values
+            or prefix_stripped in PrintJobStatusEnum.allowable_values
+            or event_type in RemoteCommandEventType.allowable_values
+            or prefix_stripped in RemoteCommandEventType.allowable_values
         )
