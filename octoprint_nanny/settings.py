@@ -13,7 +13,7 @@ import uuid
 from print_nanny_client import (
     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
     OctoPrintEventEventTypeEnum as OctoPrintEventType,
-    PrintStatusEventEventTypeEnum as PrintStatusEventType,
+    PrintJobStatusEnum,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
 )
 
@@ -333,8 +333,8 @@ class PluginSettingsMemoize:
             or prefix_stripped in PrintNannyPluginEventType.allowable_values
             or event_type in OctoPrintEventType.allowable_values
             or prefix_stripped in OctoPrintEventType.allowable_values
-            or event_type in PrintStatusEventType.allowable_values
-            or prefix_stripped in PrintStatusEventType.allowable_values
+            or event_type in PrintJobStatusEnum.allowable_values
+            or prefix_stripped in PrintJobStatusEnum.allowable_values
             or event_type in RemoteCommandEventType.allowable_values
             or prefix_stripped in RemoteCommandEventType.allowable_values
         )

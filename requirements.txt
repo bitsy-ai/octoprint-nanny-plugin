@@ -102,7 +102,7 @@ multidict==5.1.0
     #   yarl
 netaddr==0.8.0
     # via octoprint
-netifaces==0.10.9
+netifaces==0.11.0
     # via octoprint
 numpy==1.20.3
     # via
@@ -110,7 +110,7 @@ numpy==1.20.3
     #   pyarrow
 octoprint-filecheck==2021.2.23
     # via octoprint
-octoprint-firmwarecheck==2021.2.4
+octoprint-firmwarecheck==2021.5.31
     # via octoprint
 octoprint-pisupport==2021.3.26.post2
     # via octoprint
@@ -124,7 +124,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.5rc20
+print-nanny-client==0.6.5rc22
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
