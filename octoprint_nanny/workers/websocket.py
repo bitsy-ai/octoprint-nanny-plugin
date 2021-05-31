@@ -88,7 +88,10 @@ class WebSocketWorker:
         self._halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(asyncio.ensure_future(self.relay_loop()))
+        task = asyncio.ensure_future(self.relay_loop())
+        result = loop.run_until_complete(task)
+        logger.warning(f"Websocket exited with result {result}")
+        loop.close()
 
     async def _loop(self, websocket):
         try:
@@ -106,3 +109,4 @@ class WebSocketWorker:
             while not self._halt.is_set():
                 await self._loop(websocket)
             logger.warning("Halt event set, worker will exit soon")
+            return True
