@@ -14,9 +14,10 @@ import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
+import pytz
 
 from pathlib import Path
-
+from datetime import datetime
 from octoprint.events import Events
 
 import print_nanny_client
@@ -30,9 +31,10 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from print_nanny_client import (
     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
-    OctoPrintEventEventTypeEnum as OctoPrintEventType,
-    PrintStatusEventEventTypeEnum as PrintStatusEventType,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
+    TelemetryEvent,
+    OctoprintEnvironment,
+    OctoprintPrinterData,
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -160,11 +162,38 @@ class OctoPrintNannyPlugin(
                 payload=dict(error="Missing device registration"),
             )
         try:
-            payload = {
+            event = {
                 "event_type": "plugin_octoprint_nanny_connect_test_mqtt_ping",
-                "metadata": self.settings.metadata.to_dict(),
-                "octoprint_job": self.settings.get_current_octoprint_job(),
             }
+            environment = self._environment
+            environment = OctoprintEnvironment(
+                os=environment.get("os", {}),
+                python=environment.get("python", {}),
+                hardware=environment.get("hardware", {}),
+                pi_support=environment.get("plugins", {}).get("pi_support", {}),
+            )
+            printer_data = self._printer.get_current_data()
+            currentZ = printer_data.pop("currentZ")
+            logger.info(f"printer_data={printer_data}")
+            printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
+            print_session = (
+                self.settings.print_session.id
+                if self.settings.print_session
+                else self.settings.print_session
+            )
+            payload = TelemetryEvent(
+                print_session=print_session,
+                octoprint_environment=environment,
+                octoprint_printer_data=printer_data,
+                temperature=self._printer.get_current_temperatures(),
+                print_nanny_plugin_version=self._plugin_version,
+                print_nanny_client_version=print_nanny_client.__version__,
+                octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+                octoprint_device=self.settings.octoprint_device_id,
+                ts=datetime.now(pytz.timezone("UTC")).timestamp(),
+                **event,
+            )
+            payload = payload.to_dict()
             mqtt_client.publish_octoprint_event(payload)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_SUCCESS,
