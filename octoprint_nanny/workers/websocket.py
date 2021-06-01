@@ -6,8 +6,6 @@ import concurrent
 import json
 import logging
 import queue
-import websockets
-import websockets.exceptions
 import urllib
 import asyncio
 import os
@@ -64,33 +62,21 @@ class WebSocketWorkerV2:
 
     async def _loop(self, websocket) -> Awaitable:
         try:
-            msg = self._queue.get(timeout=0.5)
-            await websocket.send_bytes(msg)
+            msg = self._queue.get(timeout=1)
+            return await websocket.send_bytes(msg)
         except queue.Empty as e:
             pass
-        except websockets.exceptions.InvalidMessage as e:
-            logger.warning("An invalid ")
 
-    @backoff.on_exception(
-        backoff.expo,
-        (
-            ConnectionResetError,
-            aiohttp.client_exceptions.ServerDisconnectedError,
-            aiohttp.client_exceptions.ClientOSError,
-        ),
-        jitter=backoff.random_jitter,
-        logger=logger,
-        max_time=600,
-    )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
-        timeout = aiohttp.ClientTimeout(total=60)
         async with aiohttp.ClientSession(
-            loop=self.loop, headers=self._extra_headers, timeout=timeout
+            loop=self.loop, headers=self._extra_headers
         ) as session:
-            async with session.ws_connect(self._url) as ws:
+            async with session.ws_connect(self._url, heartbeat=4, timeout=30) as ws:
                 logger.info(f"Websocket initialized {ws}")
+
                 while not self._halt.is_set():
                     await self._loop(ws)
+
                 logger.warning("Halt event set, worker will exit soon")
                 return True
