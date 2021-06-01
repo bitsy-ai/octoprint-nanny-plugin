@@ -28,7 +28,7 @@ cachelib==0.1.1
     # via octoprint
 cchardet==2.1.7
     # via aiohttp
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   requests
     #   sentry-sdk
@@ -69,7 +69,7 @@ flatbuffers==1.12
     # via OctoPrint-Nanny (setup.py)
 future==0.18.2
     # via octoprint
-honeycomb-beeline==2.16.2
+honeycomb-beeline==2.17.0
     # via OctoPrint-Nanny (setup.py)
 idna==2.10
     # via
@@ -102,7 +102,7 @@ multidict==5.1.0
     #   yarl
 netaddr==0.8.0
     # via octoprint
-netifaces==0.10.9
+netifaces==0.11.0
     # via octoprint
 numpy==1.20.3
     # via
@@ -110,7 +110,7 @@ numpy==1.20.3
     #   pyarrow
 octoprint-filecheck==2021.2.23
     # via octoprint
-octoprint-firmwarecheck==2021.2.4
+octoprint-firmwarecheck==2021.5.31
     # via octoprint
 octoprint-pisupport==2021.3.26.post2
     # via octoprint
@@ -124,7 +124,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.4rc2
+print-nanny-client==0.6.5rc24
     # via OctoPrint-Nanny (setup.py)
 psutil==5.8.0
     # via octoprint
@@ -180,7 +180,7 @@ typing-extensions==3.10.0.0 ; python_version < "3.8"
     #   yarl
 unidecode==0.4.21
     # via octoprint
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   print-nanny-client
     #   requests
@@ -191,7 +191,7 @@ webassets==2.0
     # via flask-assets
 websocket-client==0.59.0
     # via octoprint
-websockets==9.0.2
+websockets==9.1
     # via OctoPrint-Nanny (setup.py)
 werkzeug==1.0.1
     # via

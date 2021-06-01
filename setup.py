@@ -22,7 +22,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.6.4"
+plugin_version = "0.6.5"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -156,8 +156,8 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "print-nanny-client>=0.6.4rc2",
-    "websockets>=9.0.1",
+    "print-nanny-client>=0.6.5rc24",
+    "websockets>=9.1",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",

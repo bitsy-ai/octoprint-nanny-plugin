@@ -281,7 +281,9 @@ class MQTTClient:
         return self.client.publish(topic, payload, qos=qos, retain=retain)
 
     def publish_octoprint_event(self, event, retain=False, qos=1):
-        logger.info(f"Publishing event on {self.octoprint_event_topic}: {event}")
+        logger.info(
+            f"Publishing event_type={event.get('event_type')} on {self.octoprint_event_topic}: {event}"
+        )
         payload = json.dumps(event, cls=NumpyEncoder)
         return self.publish(
             payload, topic=self.octoprint_event_topic, retain=retain, qos=qos

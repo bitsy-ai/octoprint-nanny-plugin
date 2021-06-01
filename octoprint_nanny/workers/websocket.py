@@ -20,7 +20,6 @@ import beeline
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import PluginEvents
 
 # @ todo configure logger from ~/.octoprint/logging.yaml
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
@@ -78,11 +77,22 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             await websocket.send(msg)
 
+    @backoff.on_exception(
+        backoff.expo,
+        ConnectionClosedError,
+        jitter=backoff.random_jitter,
+        logger=logger,
+        max_time=120,
+    )
     def run(self, halt):
         self._halt = halt
         loop = asyncio.new_event_loop()
+        loop.set_debug(True)
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(asyncio.ensure_future(self.relay_loop()))
+        task = asyncio.ensure_future(self.relay_loop())
+        result = loop.run_until_complete(task)
+        logger.warning(f"Websocket exited with result {result}")
+        loop.close()
 
     async def _loop(self, websocket):
         try:
@@ -91,13 +101,6 @@ class WebSocketWorker:
         except queue.Empty as e:
             return
 
-    # @backoff.on_exception(
-    #     backoff.expo,
-    #     ConnectionClosedError,
-    #     jitter=backoff.random_jitter,
-    #     logger=logger,
-    #     max_time=60,
-    # )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with websockets.connect(
@@ -107,3 +110,4 @@ class WebSocketWorker:
             while not self._halt.is_set():
                 await self._loop(websocket)
             logger.warning("Halt event set, worker will exit soon")
+            return True
