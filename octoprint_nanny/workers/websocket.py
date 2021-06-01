@@ -87,6 +87,7 @@ class WebSocketWorker:
     def run(self, halt):
         self._halt = halt
         loop = asyncio.new_event_loop()
+        loop.set_debug(True)
         asyncio.set_event_loop(loop)
         task = asyncio.ensure_future(self.relay_loop())
         result = loop.run_until_complete(task)
