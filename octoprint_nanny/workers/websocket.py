@@ -1,4 +1,3 @@
-import aiohttp
 import asyncio
 import backoff
 import hashlib
@@ -6,7 +5,7 @@ import json
 import logging
 import queue
 import websockets
-from websockets.exceptions import ConnectionClosedError
+import websockets.exceptions
 import urllib
 import asyncio
 import os
@@ -15,6 +14,7 @@ import multiprocessing
 import signal
 import sys
 import os
+from typing import Awaitable
 
 import beeline
 
@@ -77,13 +77,6 @@ class WebSocketWorker:
                 msg = {"event_type": "ping"}
             await websocket.send(msg)
 
-    @backoff.on_exception(
-        backoff.expo,
-        ConnectionClosedError,
-        jitter=backoff.random_jitter,
-        logger=logger,
-        max_time=120,
-    )
     def run(self, halt):
         self._halt = halt
         loop = asyncio.new_event_loop()
@@ -91,18 +84,27 @@ class WebSocketWorker:
         asyncio.set_event_loop(loop)
         task = asyncio.ensure_future(self.relay_loop())
         result = loop.run_until_complete(task)
-        logger.warning(f"Websocket exited with result {result}")
         loop.close()
 
-    async def _loop(self, websocket):
+    async def _loop(self, websocket) -> Awaitable:
         try:
             msg = self._queue.get(timeout=1)
-            return await websocket.send(msg)
+            await websocket.send(msg)
         except queue.Empty as e:
-            return
+            pass
+        except websockets.exceptions.InvalidMessage as e:
+            logger.warning("An invalid ")
 
+    @backoff.on_exception(
+        backoff.expo,
+        (websockets.exceptions.WebSocketException,),
+        jitter=backoff.random_jitter,
+        logger=logger,
+        max_time=600,
+    )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
+
         async with websockets.connect(
             self._url, extra_headers=self._extra_headers
         ) as websocket:

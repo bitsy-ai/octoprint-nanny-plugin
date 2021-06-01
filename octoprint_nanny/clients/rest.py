@@ -36,8 +36,13 @@ MAX_BACKOFF_TIME = int(os.environ.get("OCTOPRINT_NANNY_MAX_BACKOFF_TIME", 120))
 logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
 
 
-def fatal_code(e):
+def fatal_code(e) -> bool:
+    """
+    Returns True if error code is fatal and should not be retried
+    """
     if isinstance(e, aiohttp.client_exceptions.ClientConnectorError):
+        return False
+    if isinstance(e, aiohttp.client_exceptions.ClientOSError):
         return False
     return 400 <= e.response.status_code < 500
 
