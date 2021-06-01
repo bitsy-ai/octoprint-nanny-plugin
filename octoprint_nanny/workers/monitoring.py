@@ -25,7 +25,7 @@ import beeline
 
 from octoprint.events import Events
 
-from octoprint_nanny.workers.websocket import WebSocketWorker
+from octoprint_nanny.workers.websocket import WebSocketWorkerV2
 from octoprint_nanny.predictor import (
     ThreadLocalPredictor,
     predict_threadsafe,
@@ -297,7 +297,7 @@ class MonitoringManager:
             self.mqtt_send_queue,
             self.plugin,
         )
-        self._websocket_worker = WebSocketWorker(
+        self._websocket_worker = WebSocketWorkerV2(
             self.plugin.settings.ws_url,
             self.plugin.settings.auth_token,
             self.multiprocess_ws_queue,

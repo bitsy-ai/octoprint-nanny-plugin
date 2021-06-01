@@ -4,7 +4,7 @@ import queue
 import aiohttp
 import urllib
 from datetime import datetime
-from octoprint_nanny.workers.websocket import WebSocketWorker
+from octoprint_nanny.workers.websocket import WebSocketWorkerV2
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 import pytz
 import threading
@@ -14,7 +14,7 @@ import threading
 def ws_client(mocker):
     mocker.patch("octoprint_nanny.workers.websocket.asyncio")
     q = multiprocessing.Queue()
-    return WebSocketWorker(
+    return WebSocketWorkerV2(
         "ws://localhost:8000/ws/",
         "3a833ac48104772a349254690cae747e826886f1",
         q,
@@ -46,6 +46,6 @@ def predict_worker(mocker):
 
 def test_wrong_queue_type_raises():
     with pytest.raises(ValueError):
-        WebSocketWorker(
+        WebSocketWorkerV2(
             "http://foo.com/ws/", "api_team", queue.Queue(), 1, threading.Event()
         )
