@@ -1,6 +1,8 @@
 import asyncio
+import aiohttp
 import backoff
 import hashlib
+import concurrent
 import json
 import logging
 import queue
@@ -25,14 +27,7 @@ from octoprint_nanny.clients.honeycomb import HoneycombTracer
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.websocket")
 
 
-class WebSocketWorker:
-    """
-    Relays prediction and image buffers from PredictWorker
-    to websocket connection
-
-    Restart proc on api_url and auth_token settings change
-    """
-
+class WebSocketWorkerV2:
     def __init__(
         self,
         base_url,
@@ -56,40 +51,21 @@ class WebSocketWorker:
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
         self._honeycomb_tracer.add_global_context(trace_context)
 
-    def encode(self, msg):
-        return json.dumps(msg, cls=NumpyEncoder)
-
-    async def ping(self, msg=None):
-        async with websockets.connect(
-            self._url, extra_headers=self._extra_headers
-        ) as websocket:
-            if msg is None:
-                msg = {"event_type": "ping"}
-            msg = self.encode(msg)
-            await websocket.send(msg)
-            return await websocket.recv()
-
-    async def send(self, msg=None):
-        async with websockets.connect(
-            self._url, extra_headers=self._extra_headers
-        ) as websocket:
-            if msg is None:
-                msg = {"event_type": "ping"}
-            await websocket.send(msg)
-
     def run(self, halt):
         self._halt = halt
-        loop = asyncio.new_event_loop()
-        loop.set_debug(True)
-        asyncio.set_event_loop(loop)
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.loop.set_default_executor(
+            concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        )
         task = asyncio.ensure_future(self.relay_loop())
-        result = loop.run_until_complete(task)
-        loop.close()
+        self.loop.run_until_complete(task)
+        self.loop.close()
 
     async def _loop(self, websocket) -> Awaitable:
         try:
-            msg = self._queue.get(timeout=1)
-            await websocket.send(msg)
+            msg = self._queue.get(timeout=0.5)
+            await websocket.send_bytes(msg)
         except queue.Empty as e:
             pass
         except websockets.exceptions.InvalidMessage as e:
@@ -97,19 +73,24 @@ class WebSocketWorker:
 
     @backoff.on_exception(
         backoff.expo,
-        (websockets.exceptions.WebSocketException,),
+        (
+            ConnectionResetError,
+            aiohttp.client_exceptions.ServerDisconnectedError,
+            aiohttp.client_exceptions.ClientOSError,
+        ),
         jitter=backoff.random_jitter,
         logger=logger,
         max_time=600,
     )
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
-
-        async with websockets.connect(
-            self._url, extra_headers=self._extra_headers
-        ) as websocket:
-            logger.info(f"Websocket connected {websocket}")
-            while not self._halt.is_set():
-                await self._loop(websocket)
-            logger.warning("Halt event set, worker will exit soon")
-            return True
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(
+            loop=self.loop, headers=self._extra_headers, timeout=timeout
+        ) as session:
+            async with session.ws_connect(self._url) as ws:
+                logger.info(f"Websocket initialized {ws}")
+                while not self._halt.is_set():
+                    await self._loop(ws)
+                logger.warning("Halt event set, worker will exit soon")
+                return True

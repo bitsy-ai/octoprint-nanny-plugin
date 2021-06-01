@@ -40,9 +40,7 @@ def fatal_code(e) -> bool:
     """
     Returns True if error code is fatal and should not be retried
     """
-    if isinstance(e, aiohttp.client_exceptions.ClientConnectorError):
-        return False
-    if isinstance(e, aiohttp.client_exceptions.ClientOSError):
+    if isinstance(e, aiohttp.ClientConnectionError):
         return False
     return 400 <= e.response.status_code < 500
 
