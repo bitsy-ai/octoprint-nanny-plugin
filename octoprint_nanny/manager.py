@@ -39,10 +39,6 @@ class WorkerManager:
 
         self.plugin = plugin
 
-        # images streamed to webapp asgi over websocket
-        multiprocess_ws_queue = multiprocessing.Queue()
-        self.multiprocess_ws_queue = multiprocess_ws_queue
-
         # outbound telemetry messages to MQTT bridge
         mqtt_send_queue = queue.Queue()
         self.mqtt_send_queue = mqtt_send_queue
