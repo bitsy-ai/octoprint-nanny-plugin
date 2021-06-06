@@ -202,10 +202,12 @@ class MQTTPublisherWorker:
             )
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
+            event_type = event.get("event_type")
 
-            if event == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-                ts = event_data["ts"]
-                image_bytes = event_data["image_bytes"]
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
+                eve
+                ts = event["event_data"]["ts"]
+                image_bytes = event["event_data"]["image_bytes"]
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
                 image = Image(height=h, width=w, data=image_bytes)
@@ -218,7 +220,6 @@ class MQTTPublisherWorker:
                 )
                 self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(msg)
                 return
-            event_type = event.get("event_type")
             if event_type is None:
                 logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(
