@@ -1,7 +1,5 @@
-import io
 import flatbuffers
 import logging
-from typing import Optional
 
 import print_nanny_client
 from print_nanny_client.flatbuffers.monitoring import (

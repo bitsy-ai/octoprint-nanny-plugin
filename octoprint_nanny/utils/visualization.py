@@ -14,7 +14,6 @@
 # ==============================================================================
 # python
 import collections
-import logging
 
 # lib
 import numpy as np

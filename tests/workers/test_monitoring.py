@@ -1,7 +1,4 @@
 import pytest
-import concurrent
-import asyncio
-import threading
 from asynctest import patch
 
 from octoprint_nanny.types import MonitoringModes

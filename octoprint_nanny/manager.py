@@ -3,7 +3,6 @@ import beeline
 import concurrent
 import logging
 import multiprocessing
-import queue
 import multiprocessing
 import threading
 from typing import Optional

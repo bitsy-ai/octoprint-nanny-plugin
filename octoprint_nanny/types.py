@@ -2,7 +2,7 @@ from enum import Enum
 from dataclasses import dataclass, asdict
 from PIL.Image import Image as PillowImage
 import numpy as np
-from typing import Optional, Dict
+from typing import Dict
 
 
 @dataclass
