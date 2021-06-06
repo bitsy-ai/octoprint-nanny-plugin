@@ -1,5 +1,6 @@
 import io
 import flatbuffers
+import logging
 from typing import Optional
 
 import print_nanny_client
@@ -12,6 +13,7 @@ from print_nanny_client.flatbuffers.monitoring import (
 )
 from octoprint_nanny.types import MonitoringFrame as MonitoringFrameT
 
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.flatbuffers")
 
 def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrameT) -> bytes:
     if monitoring_frame.bounding_boxes is None:
@@ -73,8 +75,11 @@ def build_monitoring_event_flatbuffer(
 
     # begin metadata
     client_version = builder.CreateString(print_nanny_client.__version__)
-    session = builder.CreateString(metadata.print_session)
-
+    try:
+        session = builder.CreateString(metadata.print_session)
+    except Exception as e:
+        logger.error(e)
+        logger.info(f"print_session={metadata.print_session}")
     Metadata.MetadataStart(builder)
     Metadata.MetadataAddUserId(builder, metadata.user_id)
     Metadata.MetadataAddCloudiotDeviceId(builder, metadata.cloudiot_device_id)
