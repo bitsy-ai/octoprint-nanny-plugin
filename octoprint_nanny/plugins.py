@@ -714,7 +714,7 @@ class OctoPrintNannyPlugin(
         remote_commands = RemoteCommandEventType.allowable_values
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
-            "monitoring_frame_bytes"
+            "monitoring_frame_bytes",
         ]
         return plugin_events + remote_commands + local_only
 
