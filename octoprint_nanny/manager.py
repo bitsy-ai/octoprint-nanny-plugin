@@ -3,7 +3,6 @@ import beeline
 import concurrent
 import logging
 import multiprocessing
-import queue
 import multiprocessing
 import threading
 from typing import Optional
@@ -40,29 +39,25 @@ class WorkerManager:
         self.plugin = plugin
 
         # images streamed to webapp asgi over websocket
-        multiprocess_ws_queue = multiprocessing.Queue()
-        self.multiprocess_ws_queue = multiprocess_ws_queue
-
+        self.manager = multiprocessing.Manager()
         # outbound telemetry messages to MQTT bridge
-        mqtt_send_queue = queue.Queue()
-        self.mqtt_send_queue = mqtt_send_queue
+        self.mqtt_send_queue = self.manager.Queue()
         # inbound MQTT command and config messages from MQTT bridge
-        mqtt_receive_queue = queue.Queue()
-        self.mqtt_receive_queue = mqtt_receive_queue
+        self.mqtt_receive_queue = self.manager.Queue()
 
         if plugin_settings is None:
-            plugin_settings = PluginSettingsMemoize(plugin, mqtt_receive_queue)
+            plugin_settings = PluginSettingsMemoize(plugin, self.mqtt_receive_queue)
+
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
-            multiprocess_ws_queue,
-            mqtt_send_queue,
+            self.mqtt_send_queue,
             plugin,
         )
 
         self.mqtt_manager = MQTTManager(
-            mqtt_send_queue=mqtt_send_queue,
-            mqtt_receive_queue=mqtt_receive_queue,
+            mqtt_send_queue=self.mqtt_send_queue,
+            mqtt_receive_queue=self.mqtt_receive_queue,
             plugin=plugin,
         )
         # local callback/handler functions for events published via telemetry queue

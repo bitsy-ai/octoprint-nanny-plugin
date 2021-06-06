@@ -1,10 +1,8 @@
 # coding=utf-8
 
-import fnmatch
 import os
 import platform
 import sys
-import subprocess
 import setuptools
 
 
@@ -157,12 +155,12 @@ plugin_requires = [
     "pytz",
     "aiohttp[speedups]>=3.7.4",
     "print-nanny-client>=0.6.5rc24",
-    "websockets>=9.1",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
     "flatbuffers==1.12",
+    "websockets>=9.1",
 ] + plugin_requires_third_party_wheels
 
 offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels

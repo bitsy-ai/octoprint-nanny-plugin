@@ -1,9 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-import logging
-import os
-import pathlib
 from .plugins import OctoPrintNannyPlugin
 
 __plugin_name__ = "OctoPrint Nanny"

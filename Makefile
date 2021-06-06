@@ -4,8 +4,8 @@
 
 PRINT_NANNY_USER ?= "leigh"
 
-OCTOPRINT_NANNY_API_URL ?= "http://localhost:8000/api/"
-OCTOPRINT_NANNY_WS_URL ?= "ws://localhost:8000/ws/"
+OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
+OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
 
 clean-build: ## remove build artifacts
@@ -76,7 +76,6 @@ octoprint-sandbox:
 	octoprint serve
 
 octoprint-local:
-	. .venv/bin/activate && \
 	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \
@@ -87,7 +86,7 @@ octoprint-local:
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
-	octoprint serve
+	/home/pi/oprint/bin/python3 /home/pi/oprint/bin/octoprint serve --host=127.0.0.1 --port=5000
 
 octoprint-prod:
 	rm -rf ~/.octoprint && rsync ~/.octoprint-prod ~/.octoprint

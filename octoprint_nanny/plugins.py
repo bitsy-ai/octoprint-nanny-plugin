@@ -661,7 +661,7 @@ class OctoPrintNannyPlugin(
         Connection test results published in async message Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API
         """
         auth_token = flask.request.json.get("auth_token")
-        api_url = flask.request.json.get("api_url")
+        flask.request.json.get("api_url")
         logger.info("Testing REST API connection async")
         if auth_token is None:
             return flask.json.jsonify({"error": "auth_token was not provided"}, 400)
@@ -714,6 +714,7 @@ class OctoPrintNannyPlugin(
         remote_commands = RemoteCommandEventType.allowable_values
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
+            "monitoring_frame_bytes",
         ]
         return plugin_events + remote_commands + local_only
 
@@ -759,7 +760,7 @@ class OctoPrintNannyPlugin(
                 self.worker_manager.mqtt_send_queue.put_nowait(
                     {"event_type": event_type, "event_data": event_data}
                 )
-            except BrokenPipeError as e:
+            except BrokenPipeError:
                 logger.error(
                     f"BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}"
                 )

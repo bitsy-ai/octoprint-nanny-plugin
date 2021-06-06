@@ -2,8 +2,7 @@ import asyncio
 import pytest
 from asynctest import patch
 
-from unittest.mock import PropertyMock
-
+import PIL
 import octoprint_nanny.plugins  # import DEFAULT_SETTINGS, OctoPrintNannyPlugin
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -32,18 +31,21 @@ def test_default_settings_client_states(mocker):
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
-async def test_mqtt_send_queue_valid_octoprint_event(mock_event_is_tracked, mocker):
+async def test_mqtt_send_queue_valid_octoprint_event(mocker, metadata):
     plugin = mocker.Mock()
     plugin.get_setting = get_default_setting
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
 
-    mock_event_is_tracked.return_value = True
+    plugin_settings = mocker.Mock()
+    plugin_settings.event_is_tracked.return_value = True
+    plugin_settings.metadata = metadata
 
     mock_on_print_start = mocker.patch.object(WorkerManager, "on_print_start")
-
-    manager = WorkerManager(plugin)
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
+        "plugin_octoprint-nanny_monitoring_frame_bytes"
+    )
+    manager = WorkerManager(plugin, plugin_settings=plugin_settings)
     event = {"event_type": Events.PRINT_STARTED, "event_data": {}}
     manager.mqtt_send_queue.put_nowait(event)
 
@@ -64,19 +66,30 @@ async def test_mqtt_send_queue_valid_octoprint_event(mock_event_is_tracked, mock
 
 
 @pytest.mark.asyncio
-@patch("octoprint_nanny.settings.PluginSettingsMemoize.event_is_tracked")
-async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocker):
+async def test_mqtt_send_queue_bounding_box_predict(mocker, mock_image, metadata):
     plugin = mocker.Mock()
-    plugin.get_setting = get_default_setting
+    plugin.settings.metadata = metadata
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client")
 
-    mock_event_is_tracked.return_value = False
+    plugin_settings = mocker.Mock()
+    plugin_settings.event_is_tracked.return_value = True
+    plugin_settings.metadata = metadata
 
-    manager = WorkerManager(plugin)
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
+        "plugin_octoprint_nanny_monitoring_frame_bytes"
+    )
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64 = (
+        "plugin_octoprint_nanny_monitoring_frame_b64"
+    )
 
-    event = bytearray("testing".encode())
+    manager = WorkerManager(plugin, plugin_settings=plugin_settings)
+
+    event = {
+        "event_type": Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES,
+        "event_data": {"image": await mock_image.read(), "ts": 1234},
+    }
     manager.mqtt_send_queue.put_nowait(event)
 
     mock_fn = plugin.settings.mqtt_client.publish_monitoring_frame_raw
@@ -85,7 +98,7 @@ async def test_mqtt_send_queue_bounding_box_predict(mock_event_is_tracked, mocke
 
     await manager.mqtt_manager.publisher_worker._loop()
 
-    mock_fn.assert_called_once_with(event)
+    mock_fn.assert_called_once()
 
 
 @pytest.mark.asyncio

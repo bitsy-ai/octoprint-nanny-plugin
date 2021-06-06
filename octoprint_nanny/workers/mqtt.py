@@ -10,9 +10,10 @@ import threading
 from datetime import datetime
 import logging
 import pytz
-
+import PIL
+import io
 import beeline
-
+import base64
 import print_nanny_client
 
 from octoprint.events import Events
@@ -22,11 +23,19 @@ from print_nanny_client import (
     OctoprintEnvironment,
     OctoprintPrinterData,
 )
+from octoprint_nanny.clients.flatbuffers import build_monitoring_event_flatbuffer
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
-from octoprint_nanny.types import MonitoringModes
+from octoprint_nanny.types import (
+    MonitoringModes,
+    MonitoringFrame,
+    Image,
+)
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -140,7 +149,8 @@ class MQTTPublisherWorker:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
-        return loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
+        loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
+        loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
         environment = self.plugin._environment
@@ -175,6 +185,16 @@ class MQTTPublisherWorker:
 
         return self.plugin.settings.mqtt_client.publish_octoprint_event(payload)
 
+    def _create_active_learning_flatbuffer_msg(
+        self, monitoring_frame: MonitoringFrame
+    ) -> bytes:
+        msg = build_monitoring_event_flatbuffer(
+            event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
+            metadata=self.plugin.settings.metadata,
+            monitoring_frame=monitoring_frame,
+        )
+        return msg
+
     async def _loop(self):
         try:
 
@@ -187,19 +207,23 @@ class MQTTPublisherWorker:
             )
             self._honeycomb_tracer.add_context(dict(event=event))
             self._honeycomb_tracer.finish_span(span)
-
-            if isinstance(event, bytearray):
-                if self.plugin.settings.monitoring_mode == MonitoringModes.LITE:
-                    self.plugin.settings.mqtt_client.publish_monitoring_frame_post(
-                        event
-                    )
-                elif (
-                    self.plugin.settings.monitoring_mode
-                    == MonitoringModes.ACTIVE_LEARNING
-                ):
-                    self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(event)
-                return
             event_type = event.get("event_type")
+
+            if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
+                ts = event["event_data"]["ts"]
+                image_bytes = event["event_data"]["image"]
+                pimage = PIL.Image.open(io.BytesIO(image_bytes))
+                (w, h) = pimage.size
+                image = Image(height=h, width=w, data=image_bytes)
+                monitoring_frame = MonitoringFrame(ts=ts, image=image)
+                msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
+                b64_image = base64.b64encode(image_bytes)
+                self.plugin._event_bus.fire(
+                    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
+                    payload=b64_image,
+                )
+                self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(msg)
+                return
             if event_type is None:
                 logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(
@@ -260,7 +284,8 @@ class MQTTSubscriberWorker:
             concurrent.futures.ThreadPoolExecutor(max_workers=4)
         )
 
-        return self.loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
+        self.loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
+        self.loop.close()
 
     def handle_pong(self, event=None, **kwargs):
         logger.info(f"Received pong event {event}")

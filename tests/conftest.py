@@ -17,7 +17,7 @@ class MockResponse(object):
 
 
 @pytest.fixture
-def mock_response():
+def mock_image():
     return MockResponse()
 
 
