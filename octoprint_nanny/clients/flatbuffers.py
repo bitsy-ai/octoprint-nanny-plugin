@@ -15,6 +15,7 @@ from octoprint_nanny.types import MonitoringFrame as MonitoringFrameT
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.flatbuffers")
 
+
 def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrameT) -> bytes:
     if monitoring_frame.bounding_boxes is None:
         return

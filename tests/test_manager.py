@@ -43,7 +43,9 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker, metadata):
     plugin_settings.metadata = metadata
 
     mock_on_print_start = mocker.patch.object(WorkerManager, "on_print_start")
-    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = "plugin_octoprint-nanny_monitoring_frame_bytes"
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
+        "plugin_octoprint-nanny_monitoring_frame_bytes"
+    )
     manager = WorkerManager(plugin, plugin_settings=plugin_settings)
     event = {"event_type": Events.PRINT_STARTED, "event_data": {}}
     manager.mqtt_send_queue.put_nowait(event)
@@ -72,22 +74,23 @@ async def test_mqtt_send_queue_bounding_box_predict(mocker, mock_image, metadata
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client")
 
-
     plugin_settings = mocker.Mock()
     plugin_settings.event_is_tracked.return_value = True
     plugin_settings.metadata = metadata
 
-    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = "plugin_octoprint_nanny_monitoring_frame_bytes"
-    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64= "plugin_octoprint_nanny_monitoring_frame_b64"
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
+        "plugin_octoprint_nanny_monitoring_frame_bytes"
+    )
+    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64 = (
+        "plugin_octoprint_nanny_monitoring_frame_b64"
+    )
 
     manager = WorkerManager(plugin, plugin_settings=plugin_settings)
 
     event = {
         "event_type": Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES,
-        "event_data": {
-            "image": await mock_image.read(),
-            "ts": 1234
-    }}
+        "event_data": {"image": await mock_image.read(), "ts": 1234},
+    }
     manager.mqtt_send_queue.put_nowait(event)
 
     mock_fn = plugin.settings.mqtt_client.publish_monitoring_frame_raw

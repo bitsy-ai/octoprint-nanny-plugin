@@ -1,4 +1,3 @@
-
 import base64
 import concurrent
 import asyncio
@@ -56,7 +55,6 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring
 
 
 class MonitoringWorker:
-
     def __init__(self, queue: multiprocessing.Queue, plugin):
         self.exit = threading.Event()
         self.queue = queue
@@ -78,12 +76,12 @@ class MonitoringWorker:
     async def _loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
-        self.queue.put_nowait({
-            "event_type": Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES,
-            "event_data": {
-                "image": image_bytes,
-                "ts": ts
-        }})
+        self.queue.put_nowait(
+            {
+                "event_type": Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES,
+                "event_data": {"image": image_bytes, "ts": ts},
+            }
+        )
 
     @backoff.on_exception(
         backoff.expo,
@@ -101,7 +99,12 @@ class MonitoringWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started MonitoringWorker.producer thread")
-        async with websockets.connect(self._ws_url, extra_headers=(("Authorization", f"Bearer {self.plugin_settings.auth_token}"),)) as ws:
+        async with websockets.connect(
+            self._ws_url,
+            extra_headers=(
+                ("Authorization", f"Bearer {self.plugin_settings.auth_token}"),
+            ),
+        ) as ws:
             logger.info(f"Initialized websocket {ws}")
             self.ws = ws
             logger.info("Initialized ws connection")
@@ -115,9 +118,7 @@ class MonitoringWorker:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.set_debug(True)
-        self.loop.set_default_executor(
-            concurrent.futures.ThreadPoolExecutor()
-        )
+        self.loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
         task = asyncio.ensure_future(self._producer())
         self.loop.run_until_complete(task)
         self.loop.close()
@@ -126,12 +127,9 @@ class MonitoringWorker:
         logger.warning("MonitoringWorkerV2 shutdown initiated")
         self.exit.set()
 
+
 class MonitoringManager:
-    def __init__(
-        self,
-        mqtt_send_queue,
-        plugin
-    ):
+    def __init__(self, mqtt_send_queue, plugin):
 
         self.mqtt_send_queue = mqtt_send_queue
         self.plugin = plugin
@@ -169,7 +167,8 @@ class MonitoringManager:
             )
             for worker in self._workers:
                 thread = threading.Thread(
-                    target=worker.run, name=str(worker.__class__),
+                    target=worker.run,
+                    name=str(worker.__class__),
                 )
                 thread.daemon = True
                 self._worker_threads.append(thread)
