@@ -3,10 +3,6 @@ import logging
 import pytz
 
 import octoprint
-from octoprint_nanny.workers.monitoring import (
-    MonitoringWorker,
-)
-
 import beeline
 import uuid
 
@@ -157,6 +153,10 @@ class PluginSettingsMemoize:
         self.environment = environment
 
     @property
+    def logfile_path(self):
+        return self.plugin._settings.get_plugin_logfile_path()
+
+    @property
     def device_cloudiot_name(self):
         return self.plugin.get_setting("device_cloudiot_name")
 
@@ -275,10 +275,32 @@ class PluginSettingsMemoize:
             plugin_version=self.plugin._plugin_version,
         )
 
+    def calc_calibration(x0, y0, x1, y1, height=480, width=640):
+        if (
+            x0 is None
+            or y0 is None
+            or x1 is None
+            or y1 is None
+            or height is None
+            or width is None
+        ):
+            logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
+            return None
+
+        mask = np.zeros((height, width))
+        for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
+            value = (
+                1 if (h / height >= y0 and h / height <= y1 and w / width >= x0) else 0
+            )
+            mask[h][w] = value
+
+        mask = mask.astype(np.uint8)
+        logger.info(f"Calibration set")
+
     @property
     def calibration(self):
         if self._calibration is None:
-            self._calibration = MonitoringWorker.calc_calibration(
+            self._calibration = self.calc_calibration(
                 self.plugin.get_setting("calibrate_x0"),
                 self.plugin.get_setting("calibrate_y0"),
                 self.plugin.get_setting("calibrate_x1"),

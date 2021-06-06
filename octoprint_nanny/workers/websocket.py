@@ -63,6 +63,7 @@ class WebSocketWorkerV2:
     async def _loop(self, websocket) -> Awaitable:
         try:
             msg = self._queue.get(timeout=1)
+            logger.info('Sending websocket msg')
             return await websocket.send_bytes(msg)
         except queue.Empty as e:
             pass
@@ -70,9 +71,9 @@ class WebSocketWorkerV2:
     async def relay_loop(self):
         logging.info(f"Initializing websocket {self._url}")
         async with aiohttp.ClientSession(
-            loop=self.loop, headers=self._extra_headers
+            headers=self._extra_headers
         ) as session:
-            async with session.ws_connect(self._url, heartbeat=4, timeout=30) as ws:
+            async with session.ws_connect(self._url, heartbeat=20, timeout=30) as ws:
                 logger.info(f"Websocket initialized {ws}")
 
                 while not self._halt.is_set():

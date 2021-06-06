@@ -162,6 +162,7 @@ plugin_requires = [
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
     "flatbuffers==1.12",
+    "websockets>=9.1",
 ] + plugin_requires_third_party_wheels
 
 offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels
