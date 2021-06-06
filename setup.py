@@ -1,10 +1,8 @@
 # coding=utf-8
 
-import fnmatch
 import os
 import platform
 import sys
-import subprocess
 import setuptools
 
 

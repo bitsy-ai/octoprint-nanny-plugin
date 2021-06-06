@@ -1,5 +1,4 @@
 import asyncio
-import os
 import pytest
 from asynctest import CoroutineMock
 from asynctest import MagicMock
@@ -14,7 +13,7 @@ from octoprint_nanny.workers.mqtt import (
 @pytest.mark.asyncio
 async def test_handle_config_update(mocker):
     plugin = mocker.Mock()
-    halt = mocker.Mock()
+    mocker.Mock()
     queue = mocker.Mock()
 
     data_folder = "/path/to/data"
@@ -36,7 +35,7 @@ async def test_handle_config_update(mocker):
     writer_mock = MagicMock()
     writer_mock.write.return_value = asyncio.Future()
     writer_mock.write.return_value.set_result(MagicMock())
-    open_mock = MagicMock()
+    MagicMock()
     mock_open = mocker.patch("octoprint_nanny.workers.mqtt.open")
 
     topic = "fake-topic"

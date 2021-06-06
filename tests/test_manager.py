@@ -2,7 +2,6 @@ import asyncio
 import pytest
 from asynctest import patch
 
-from unittest.mock import PropertyMock
 import PIL
 import octoprint_nanny.plugins  # import DEFAULT_SETTINGS, OctoPrintNannyPlugin
 from octoprint_nanny.manager import WorkerManager

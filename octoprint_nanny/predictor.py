@@ -1,9 +1,7 @@
-import base64
 import json
 import logging
 import numpy as np
 import os
-import time
 import io
 import threading
 from dataclasses import asdict
@@ -16,7 +14,6 @@ from octoprint_nanny.utils.visualization import (
 from octoprint_nanny.types import BoundingBoxPrediction, MonitoringFrame, Image
 import beeline
 
-from typing import Optional, Tuple
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.predictor")
 try:

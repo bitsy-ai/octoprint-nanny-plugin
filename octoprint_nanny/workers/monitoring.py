@@ -1,27 +1,21 @@
-import base64
 import concurrent
 import asyncio
 import pytz
 import aiohttp
 import logging
-import io
 import PIL
 import backoff
-import functools
 from datetime import datetime
 import multiprocessing
 import numpy as np
 import threading
-from enum import Enum
-from uuid import uuid4
 
 # python >= 3.8
 try:
-    from typing import TypedDict, Optional, Tuple
+    from typing import Tuple, TypedDict
 # python <= 3.7
 except:
     from typing_extensions import TypedDict, Tuple
-    from typing import Optional
 
 import beeline
 

@@ -1,15 +1,12 @@
 from datetime import datetime, timedelta
 import ssl
 import jwt
-import gzip
 import logging
 import os
 import time
 import json
-import io
 import random
 import paho.mqtt.client as mqtt
-from typing import List
 import sys
 import beeline
 import threading
