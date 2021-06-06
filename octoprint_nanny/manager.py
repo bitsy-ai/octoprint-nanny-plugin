@@ -46,8 +46,6 @@ class WorkerManager:
         # inbound MQTT command and config messages from MQTT bridge
         self.mqtt_receive_queue = self.manager.Queue()
 
-
-
         if plugin_settings is None:
             plugin_settings = PluginSettingsMemoize(plugin, self.mqtt_receive_queue)
 

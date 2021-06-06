@@ -10,9 +10,10 @@ import threading
 from datetime import datetime
 import logging
 import pytz
-
+import PIL
+import io
 import beeline
-
+import base64
 import print_nanny_client
 
 from octoprint.events import Events
@@ -22,8 +23,12 @@ from print_nanny_client import (
     OctoprintEnvironment,
     OctoprintPrinterData,
 )
+from octoprint_nanny.clients.flatbuffers import build_monitoring_event_flatbuffer
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.types import (
@@ -183,9 +188,9 @@ class MQTTPublisherWorker:
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> bytes:
-        msg = octoprint_nanny.clients.flatbuffers.build_monitoring_event_flatbuffer(
+        msg = build_monitoring_event_flatbuffer(
             event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
-            metadata=self.plugin_settings.metadata,
+            metadata=self.plugin.settings.metadata,
             monitoring_frame=monitoring_frame,
         )
         return msg
@@ -205,15 +210,14 @@ class MQTTPublisherWorker:
             event_type = event.get("event_type")
 
             if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-                eve
                 ts = event["event_data"]["ts"]
-                image_bytes = event["event_data"]["image_bytes"]
+                image_bytes = event["event_data"]["image"]
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
                 image = Image(height=h, width=w, data=image_bytes)
                 monitoring_frame = MonitoringFrame(ts=ts, image=image)
-                msg = self._create_active_learning_flatbuffer_msg(event)
-                b64_image = base64.b64encode(event.image.data)
+                msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
+                b64_image = base64.b64encode(image_bytes)
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,

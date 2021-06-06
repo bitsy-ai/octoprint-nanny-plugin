@@ -43,7 +43,6 @@ from octoprint_nanny.types import (
     Image,
 )
 import websockets
-from octoprint_nanny.workers.websocket import WebSocketWorkerV2
 from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
     MonitoringEventTypeEnum,
 )
@@ -56,7 +55,7 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
 
-class MonitoringWorkerV2:
+class MonitoringWorker:
 
     def __init__(self, queue: multiprocessing.Queue, plugin):
         self.exit = threading.Event()
@@ -76,7 +75,7 @@ class MonitoringWorkerV2:
                 await self.ws.send(b)
                 return b
 
-    async def _active_learning_loop(self):
+    async def _loop(self):
         ts = int(datetime.now(pytz.utc).timestamp())
         image_bytes = await self.load_url_buffer()
         self.queue.put_nowait({
@@ -108,7 +107,7 @@ class MonitoringWorkerV2:
             logger.info("Initialized ws connection")
             while not self.exit.is_set():
                 await asyncio.sleep(self._sleep_interval)
-                await self._active_learning_loop()
+                await self._loop()
 
         logger.warning("Halt event set, worker will exit soon")
 
@@ -150,7 +149,7 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._reset")
     def _reset(self):
-        self._predict_worker = MonitoringWorkerV2(
+        self._predict_worker = MonitoringWorker(
             self.mqtt_send_queue,
             self.plugin,
         )
