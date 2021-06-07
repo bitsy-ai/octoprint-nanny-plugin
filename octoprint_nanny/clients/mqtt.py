@@ -312,6 +312,7 @@ class MQTTClient:
     def shutdown(self):
         self.exit.set()
 
+
 def create_jwt(
     project_id, private_key_file, algorithm, jwt_expires_minutes=JWT_EXPIRES_MINUTES
 ):
