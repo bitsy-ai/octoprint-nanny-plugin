@@ -10,7 +10,6 @@ import multiprocessing
 import numpy as np
 import threading
 
-from typing import Tuple
 import beeline
 
 from octoprint.events import Events
