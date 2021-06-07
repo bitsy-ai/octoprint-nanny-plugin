@@ -9,6 +9,7 @@ __plugin_pythoncompat__ = ">=3,<4"  # only python 3
 
 __plugin_version__ = "0.6.6rc4"
 
+
 def __plugin_load__():
     global __plugin_implementation__
     __plugin_implementation__ = OctoPrintNannyPlugin()
