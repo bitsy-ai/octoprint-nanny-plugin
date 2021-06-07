@@ -7,7 +7,6 @@ from octoprint_nanny.workers.monitoring import (
     MonitoringManager,
     MonitoringModes,
 )
-from octoprint_nanny.predictor import predict_threadsafe
 
 import print_nanny_client
 from print_nanny_client.flatbuffers.monitoring import (
