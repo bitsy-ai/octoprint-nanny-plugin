@@ -38,9 +38,9 @@ class WorkerManager:
         self.plugin = plugin
 
         # outbound telemetry messages to MQTT bridge
-        self.mqtt_send_queue = queue.Queue()
+        self.mqtt_send_queue:queue.Queue = queue.Queue()
         # inbound MQTT command and config messages from MQTT bridge
-        self.mqtt_receive_queue = queue.Queue()
+        self.mqtt_receive_queue:queue.Queue = queue.Queue()
 
         if plugin_settings is None:
             plugin_settings = PluginSettingsMemoize(plugin, self.mqtt_receive_queue)
