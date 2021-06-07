@@ -15,6 +15,7 @@ import flask
 import octoprint.plugin
 import octoprint.util
 import pytz
+from typing import Dict
 
 from pathlib import Path
 from datetime import datetime
@@ -225,7 +226,7 @@ class OctoPrintNannyPlugin(
             self._settings.set(["auth_valid"], False)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_FAILED,
-                payload=dict(error=str(e.reason)),
+                payload=dict(error=str(e)),
             )
             raise e
         except asyncio.TimeoutError as e:
@@ -338,14 +339,14 @@ class OctoPrintNannyPlugin(
     async def sync_printer_profiles(self, **kwargs) -> bool:
         octoprint_device_id = self.get_setting("octoprint_device_id")
         if octoprint_device_id is None:
-            return
+            return False
         logger.info(
             f"Syncing printer profiles for octoprint_device_id={octoprint_device_id}"
         )
         printer_profiles = self._printer_profile_manager.get_all()
 
         # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
-        id_map = {"octoprint": {}, "octoprint_nanny": {}}
+        id_map: Dict[str, Dict[str, int]] = {"octoprint": {}, "octoprint_nanny": {}}
         for profile_id, profile in printer_profiles.items():
             try:
                 created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
@@ -388,21 +389,24 @@ class OctoPrintNannyPlugin(
             self.get_plugin_data_folder(), "private_key.pem"
         )
 
-        with open(pubkey_filename, "w+") as f:
-            f.write(device.public_key)
+        with open(pubkey_filename, "w+") as pubkey_f:
+            pubkey_f.write(device.public_key)
 
-        with open(pubkey_filename, "rb") as f:
-            content = f.read()
-            if hashlib.sha256(content).hexdigest() != device.public_key_checksum:
+        with open(pubkey_filename, "rb") as pubkey_fb:
+            pubkey_content: bytes = pubkey_fb.read()
+            if hashlib.sha256(pubkey_content).hexdigest() != device.public_key_checksum:
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {pubkey_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        with open(privkey_filename, "w+") as f:
-            f.write(device.private_key)
-        with open(privkey_filename, "rb") as f:
-            content = f.read()
-            if hashlib.sha256(content).hexdigest() != device.private_key_checksum:
+        with open(privkey_filename, "w+") as privkey_f:
+            privkey_f.write(device.private_key)
+        with open(privkey_filename, "rb") as privkey_fb:
+            privkey_content: bytes = privkey_fb.read()
+            if (
+                hashlib.sha256(privkey_content).hexdigest()
+                != device.private_key_checksum
+            ):
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {privkey_filename} did not match the expected checksum value. Please try again!"
                 )
@@ -466,27 +470,27 @@ class OctoPrintNannyPlugin(
 
         backup_ca_filename = os.path.join(ca_path, "backup_ca.pem")
 
-        with open(primary_ca_filename, "w+") as f:
-            f.write(device.ca_certs["primary"])
+        with open(primary_ca_filename, "w+") as primary_f:
+            primary_f.write(device.ca_certs["primary"])
 
-        with open(primary_ca_filename, "rb") as f:
-            content = f.read()
+        with open(primary_ca_filename, "rb") as primary_fb:
+            primary_content = primary_fb.read()
 
             if (
-                hashlib.sha256(content).hexdigest()
+                hashlib.sha256(primary_content).hexdigest()
                 != device.ca_certs["primary_checksum"]
             ):
                 raise octoprint_nanny.exceptions.FileIntegrity(
                     f"The checksum of file {primary_ca_filename} did not match the expected checksum value. Please try again!"
                 )
 
-        with open(backup_ca_filename, "w+") as f:
-            f.write(device.ca_certs["backup"])
+        with open(backup_ca_filename, "w+") as backup_f:
+            backup_f.write(device.ca_certs["backup"])
 
-        with open(backup_ca_filename, "rb") as f:
-            content = f.read()
+        with open(backup_ca_filename, "rb") as backup_fb:
+            backup_content = backup_fb.read()
             if (
-                hashlib.sha256(content).hexdigest()
+                hashlib.sha256(backup_content).hexdigest()
                 != device.ca_certs["backup_checksum"]
             ):
                 raise octoprint_nanny.exceptions.FileIntegrity(
@@ -546,7 +550,7 @@ class OctoPrintNannyPlugin(
             logger.error(e)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
-                payload={"msg": str(e.body)},
+                payload={"msg": str(e)},
             )
             return e
 
@@ -582,7 +586,7 @@ class OctoPrintNannyPlugin(
         else:
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_FAILED,
-                payload={"msg": str(e.body)},
+                payload={},
             )
 
     @beeline.traced("OctoPrintNannyPlugin._test_snapshot_url")
@@ -686,10 +690,9 @@ class OctoPrintNannyPlugin(
         try:
             response = self._test_api_auth(auth_token, api_url)
         except Exception as e:
-            e = str(e)
             return (
                 flask.json.jsonify(
-                    {"msg": "Error communicating with Print Nanny API", "error": e}
+                    {"msg": "Error communicating with Print Nanny API", "error": str(e)}
                 ),
                 500,
             )

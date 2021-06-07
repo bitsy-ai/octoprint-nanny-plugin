@@ -38,6 +38,9 @@ jobs:
       - name: Install test dependencies
         run: |
           .venv/bin/pip install -r dev-requirements.txt
+      - name: MyPy
+        run: |
+          source .venv/bin/activate && make mypy
       - name: Generate code coverage report
         run: |
           source .venv/bin/activate && make online-ci-test
