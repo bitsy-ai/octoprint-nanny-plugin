@@ -14,14 +14,6 @@ from typing import Tuple
 import beeline
 
 from octoprint.events import Events
-
-from octoprint_nanny.predictor import (
-    ThreadLocalPredictor,
-    predict_threadsafe,
-    print_is_healthy,
-    DETECTION_LABELS,
-    explode_prediction_df,
-)
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import (
