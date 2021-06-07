@@ -1,3 +1,12 @@
+![Discord](https://img.shields.io/discord/773452324692688956)
+![Github Followers](https://img.shields.io/github/followers/leigh-johnson?style=social)
+
+![Tests](https://img.shields.io/github/workflow/status/bitsy-ai/octoprint-nanny-plugin/test)
+![Code Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin)
+
+![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin?style=flat-square)
+![Release](https://img.shields.io/github/release-date-pre/bitsy-ai/octoprint-nanny-plugin)
+
 ![Print Nanny Logo](https://github.com/bitsy-ai/octoprint-nanny-plugin/raw/main/docs/images/logo.jpg)
 
 OctoPrint monitoring & alerting AI.
