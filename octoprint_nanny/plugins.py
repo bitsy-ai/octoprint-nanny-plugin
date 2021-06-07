@@ -164,7 +164,7 @@ class OctoPrintNannyPlugin(
             )
         try:
             event = {
-                "event_type": "plugin_octoprint_nanny_connect_test_mqtt_ping",
+                "event_type": Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING,
             }
             environment = self._environment
             environment = OctoprintEnvironment(
