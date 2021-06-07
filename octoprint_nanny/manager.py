@@ -2,8 +2,7 @@ import asyncio
 import beeline
 import concurrent
 import logging
-import multiprocessing
-import multiprocessing
+import queue
 import threading
 from typing import Optional
 
@@ -38,12 +37,10 @@ class WorkerManager:
 
         self.plugin = plugin
 
-        # images streamed to webapp asgi over websocket
-        self.manager = multiprocessing.Manager()
         # outbound telemetry messages to MQTT bridge
-        self.mqtt_send_queue = self.manager.Queue()
+        self.mqtt_send_queue = queue.Queue()
         # inbound MQTT command and config messages from MQTT bridge
-        self.mqtt_receive_queue = self.manager.Queue()
+        self.mqtt_receive_queue = queue.Queue()
 
         if plugin_settings is None:
             plugin_settings = PluginSettingsMemoize(plugin, self.mqtt_receive_queue)
