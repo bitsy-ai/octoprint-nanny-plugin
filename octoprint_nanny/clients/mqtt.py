@@ -76,6 +76,7 @@ class MQTTClient:
         self.octoprint_device_id = octoprint_device_id
         self.cloudiot_device_id = cloudiot_device_id
         client_id = f"projects/{project_id}/locations/{region}/registries/{registry_id}/devices/{cloudiot_device_id}"
+        self.exit = threading.Event()
 
         self.client_id = client_id
         self.private_key_file = private_key_file
@@ -235,7 +236,7 @@ class MQTTClient:
         global should_backoff
         global minimum_backoff_time
         should_backoff = True
-        if not self.halt.is_set():
+        if not self.exit.is_set():
             if should_backoff:
 
                 # Otherwise, wait and connect again.
@@ -303,12 +304,13 @@ class MQTTClient:
             event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
         )
 
-    def run(self, halt):
-        self.halt = halt
+    def run(self):
         self.connect()
-        while not self.halt.is_set():
+        while not self.exit.is_set():
             self.client.loop()
 
+    def shutdown(self):
+        self.exit.set()
 
 def create_jwt(
     project_id, private_key_file, algorithm, jwt_expires_minutes=JWT_EXPIRES_MINUTES
