@@ -182,4 +182,3 @@ class MonitoringManager:
             logger.info(
                 f"Closing monitoring session session={self.plugin.settings.print_session.session}"
             )
-        self.plugin.settings.reset_print_session()
