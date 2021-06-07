@@ -11,12 +11,9 @@ __plugin_version__ = "0.6.6rc1"
 
 
 def __plugin_load__():
-    global __plugin_implementation__
     __plugin_implementation__ = OctoPrintNannyPlugin()
-
     __plugin_implementation__.version = __plugin_version__
 
-    global __plugin_hooks__
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         # "octoprint.timelapse.capture.post": __plugin_implementation__.on_timelapse_capture,

@@ -109,7 +109,7 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.mqtt_client_reset")
     def mqtt_client_reset(self):
-        self.mqtt_manager.stop()
+        self.mqtt_manager.shutdown()
         self.plugin.settings.reset_device_settings_state()
         self.plugin.settings.reset_rest_client_state()
         self.mqtt_manager.start()
@@ -143,7 +143,7 @@ class WorkerManager:
             printer_state="Offline",
         )
 
-        self.mqtt_manager.stop()
+        self.mqtt_manager.shutdown()
         self._honeycomb_tracer.on_shutdown()
 
     ##
@@ -182,9 +182,6 @@ class WorkerManager:
             return
 
     async def on_calibration_update(self):
-        logger.info(
-            f"{self.__class__}.on_calibration_update called for event_type={event_type} event_data={event_data}"
-        )
         device_calibration = (
             await self.plugin.settings.rest_client.update_or_create_device_calibration(
                 self.plugin.settings.octoprint_device_id,

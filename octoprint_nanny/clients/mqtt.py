@@ -349,4 +349,4 @@ def create_jwt(
         )
     )
 
-    return jwt.encode(token, signing_key, algorithm=algorithm)
+    return jwt.encode(token, signing_key, algorithm=algorithm)  # type: ignore

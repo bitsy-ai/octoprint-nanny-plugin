@@ -3,7 +3,6 @@ import json
 import threading
 import io
 from octoprint_nanny.workers.monitoring import MonitoringWorker
-from octoprint_nanny.predictor import predict_threadsafe
 import octoprint_nanny.plugins
 from octoprint_nanny.utils.encoder import NumpyEncoder
 import sys

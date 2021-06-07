@@ -15,39 +15,38 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.flatbuffers")
 
 
 def build_bounding_boxes_message(builder, monitoring_frame: MonitoringFrameT) -> bytes:
-    if monitoring_frame.bounding_boxes is None:
-        return
+    if monitoring_frame.bounding_boxes:
+        boxes = monitoring_frame.bounding_boxes.detection_boxes
+        scores = monitoring_frame.bounding_boxes.detection_scores
+        classes = monitoring_frame.bounding_boxes.detection_classes
+        num_detections = monitoring_frame.bounding_boxes.num_detections
 
-    boxes = monitoring_frame.bounding_boxes.detection_boxes
-    scores = monitoring_frame.bounding_boxes.detection_scores
-    classes = monitoring_frame.bounding_boxes.detection_classes
-    num_detections = monitoring_frame.bounding_boxes.num_detections
+        # begin boxes builder
+        BoundingBoxes.BoundingBoxesStartDetectionBoxesVector(builder, len(boxes))
+        for box in boxes:
+            Box.CreateBox(builder, *box)
+        boxes = builder.EndVector(len(boxes))
+        # end boxes
 
-    # begin boxes builder
-    BoundingBoxes.BoundingBoxesStartDetectionBoxesVector(builder, len(boxes))
-    for box in boxes:
-        Box.CreateBox(builder, *box)
-    boxes = builder.EndVector(len(boxes))
-    # end boxes
+        # begin scores
+        scores = builder.CreateNumpyVector(scores)
+        # end scores
 
-    # begin scores
-    scores = builder.CreateNumpyVector(scores)
-    # end scores
+        # begin classes builder
+        classes = builder.CreateNumpyVector(classes)
+        # end classes
 
-    # begin classes builder
-    classes = builder.CreateNumpyVector(classes)
-    # end classes
+        # begin bounding boxes
+        BoundingBoxes.BoundingBoxesStart(builder)
+        BoundingBoxes.BoundingBoxesAddDetectionBoxes(builder, boxes)
+        BoundingBoxes.BoundingBoxesAddDetectionScores(builder, scores)
+        BoundingBoxes.BoundingBoxesAddDetectionClasses(builder, classes)
+        BoundingBoxes.BoundingBoxesAddNumDetections(builder, num_detections)
+        bounding_boxes = BoundingBoxes.BoundingBoxesEnd(builder)
+        # end bounding boxes
 
-    # begin bounding boxes
-    BoundingBoxes.BoundingBoxesStart(builder)
-    BoundingBoxes.BoundingBoxesAddDetectionBoxes(builder, boxes)
-    BoundingBoxes.BoundingBoxesAddDetectionScores(builder, scores)
-    BoundingBoxes.BoundingBoxesAddDetectionClasses(builder, classes)
-    BoundingBoxes.BoundingBoxesAddNumDetections(builder, num_detections)
-    bounding_boxes = BoundingBoxes.BoundingBoxesEnd(builder)
-    # end bounding boxes
-
-    return bounding_boxes
+        return bounding_boxes
+    raise ValueError("monitoring_frame.bounding_boxes is required")
 
 
 def build_monitoring_event_flatbuffer(
@@ -85,16 +84,15 @@ def build_monitoring_event_flatbuffer(
     metadata = Metadata.MetadataEnd(builder)
     # end metadata
 
-    # begin bounding box and image data
-    # prediction is optional; if not provided, inference will run in beam pipeline
-    bounding_boxes = build_bounding_boxes_message(builder, monitoring_frame)
-
     MonitoringEvent.MonitoringEventStart(builder)
     MonitoringEvent.MonitoringEventAddEventType(builder, event_type)
     MonitoringEvent.MonitoringEventAddImage(builder, image)
     MonitoringEvent.MonitoringEventAddMetadata(builder, metadata)
 
-    if bounding_boxes:
+    # begin bounding box and image data
+    # prediction is optional; if not provided, inference will run in beam pipeline
+    if monitoring_frame.bounding_boxes:
+        bounding_boxes = build_bounding_boxes_message(builder, monitoring_frame)
         MonitoringEvent.MonitoringEventAddBoundingBoxes(builder, bounding_boxes)
 
     monitoring_event = MonitoringEvent.MonitoringEventEnd(builder)

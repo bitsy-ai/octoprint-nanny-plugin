@@ -2,7 +2,7 @@ from enum import Enum
 from dataclasses import dataclass, asdict
 from PIL.Image import Image as PillowImage
 import numpy as np
-from typing import Dict
+from typing import Dict, Optional
 
 
 @dataclass
@@ -20,13 +20,13 @@ class Metadata:
     user_id: int
     octoprint_device_id: int
     cloudiot_device_id: int
-    ts: int
+    ts: float
     print_session: str
     client_version: str
     octoprint_version: str
     plugin_version: str
     environment: Dict[str, str]
-    model_version: str = None
+    model_version: Optional[str] = None
 
     def to_dict(self):
         return asdict(self)
@@ -47,7 +47,7 @@ class BoundingBoxPrediction:
 class MonitoringFrame:
     ts: int
     image: Image
-    bounding_boxes: BoundingBoxPrediction = None
+    bounding_boxes: Optional[BoundingBoxPrediction] = None
 
     def to_dict(self):
         return asdict(self)
