@@ -10,13 +10,7 @@ import multiprocessing
 import numpy as np
 import threading
 
-# python >= 3.8
-try:
-    from typing import Tuple, TypedDict
-# python <= 3.7
-except:
-    from typing_extensions import TypedDict, Tuple
-
+from typing import Tuple
 import beeline
 
 from octoprint.events import Events
@@ -35,7 +29,7 @@ from octoprint_nanny.types import (
     MonitoringFrame,
     Image,
 )
-import websockets
+from websockets.legacy.client import connect as ws_connect
 from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
     MonitoringEventTypeEnum,
 )
@@ -93,7 +87,7 @@ class MonitoringWorker:
         Calculates prediction and publishes result to subscriber queues
         """
         logger.info("Started MonitoringWorker.producer thread")
-        async with websockets.connect(
+        async with ws_connect(
             self._ws_url,
             extra_headers=(
                 ("Authorization", f"Bearer {self.plugin_settings.auth_token}"),

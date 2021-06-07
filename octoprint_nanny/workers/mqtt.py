@@ -14,6 +14,7 @@ import PIL
 import io
 import beeline
 import base64
+from typing import List
 import print_nanny_client
 
 from octoprint.events import Events
@@ -50,10 +51,10 @@ class MQTTManager:
 
         self.mqtt_send_queue = mqtt_send_queue
         self.mqtt_receive_queue = mqtt_receive_queue
-        halt = threading.Event()
-        self.halt = halt
+        self.exit = threading.Event()
+
         self.plugin = plugin
-        self._worker_threads = []
+        self._worker_threads: List[threading.Thread] = []
         self.publisher_worker = MQTTPublisherWorker(self.mqtt_send_queue, self.plugin)
         self.subscriber_worker = MQTTSubscriberWorker(
             self.mqtt_receive_queue, self.plugin
@@ -63,14 +64,12 @@ class MQTTManager:
         """
         Halt running workers and wait pending work
         """
-        self.halt.set()
-
         for worker in self._worker_threads:
             logger.info(f"Waiting for worker={worker} thread to drain")
             worker.join()
 
     def _reset(self):
-        self.halt = threading.Event()
+        self.exit = threading.Event()
         self._worker_threads = []
 
     def start(self, **kwargs):
@@ -96,14 +95,17 @@ class MQTTManager:
         ]
         for worker in self._workers:
             thread = threading.Thread(
-                target=worker.run, name=str(worker.__class__), args=(self.halt,)
+                target=worker.run,
+                name=str(worker.__class__),
             )
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
 
-    def stop(self):
-        logger.info("MQTTManager.stop was called")
+    def shutdown(self):
+        logger.warning("MMQTTManager shutdown initiated")
+        for worker in self._workers:
+            worker.shutdown()
         self._drain()
 
 
@@ -124,8 +126,7 @@ class MQTTPublisherWorker:
     ]
 
     def __init__(self, queue, plugin):
-
-        self.halt = None
+        self.exit = threading.Event()
         self.queue = queue
         self.plugin = plugin
         self._callbacks = {}
@@ -140,12 +141,11 @@ class MQTTPublisherWorker:
         logging.info(f"Registered MQTTSubscribeWorker._callbacks {self._callbacks}")
         return self._callbacks
 
-    def run(self, halt):
+    def run(self):
         """
         Telemetry worker's event loop is exposed as WorkerManager.loop
         this permits other threads to schedule work in this event loop with asyncio.run_coroutine_threadsafe()
         """
-        self.halt = halt
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
@@ -257,18 +257,22 @@ class MQTTPublisherWorker:
         Publishes telemetry events via HTTP
         """
         logger.info(f"Started {self.__class__}.loop_forever ")
-        while not self.halt.is_set():
+        while not self.exit.is_set():
             try:
                 await self._loop()
             except PluginSettingsRequired as e:
                 logger.debug(e)
         logger.info(f"Exiting soon {self.__class__}.loop_forever")
 
+    def shutdown(self):
+        logger.warning("MQTTPublisherWorker shutdown initiated")
+        self.exit.set()
+
 
 class MQTTSubscriberWorker:
     def __init__(self, queue, plugin):
 
-        self.halt = None
+        self.exit = threading.Event()
         self.queue = queue
         self.plugin = plugin
         self._callbacks = {
@@ -276,8 +280,7 @@ class MQTTSubscriberWorker:
         }
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    def run(self, halt):
-        self.halt = halt
+    def run(self):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.set_default_executor(
@@ -304,7 +307,7 @@ class MQTTSubscriberWorker:
 
     async def loop_forever(self):
         logger.info(f"Started {self.__class__}.loop_forever")
-        while not self.halt.is_set():
+        while not self.exit.is_set():
             try:
                 await self._loop()
             except PluginSettingsRequired as e:
@@ -425,3 +428,7 @@ class MQTTSubscriberWorker:
             json.dumps(metadata),
             os.path.join(self.plugin.get_plugin_data_folder(), "metadata.json"),
         )
+
+    def shutdown(self):
+        logger.warning("MQTTSubscriberWorker shutdown initiated")
+        self.exit.set()
