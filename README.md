@@ -4,7 +4,7 @@
 ![Tests](https://img.shields.io/github/workflow/status/bitsy-ai/octoprint-nanny-plugin/Test)
 ![Code Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin)
 
-![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin?style=flat-square)
+![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin)
 ![Release](https://img.shields.io/github/release-date-pre/bitsy-ai/octoprint-nanny-plugin)
 
 ![Print Nanny Logo](https://github.com/bitsy-ai/octoprint-nanny-plugin/raw/main/docs/images/logo.jpg)
