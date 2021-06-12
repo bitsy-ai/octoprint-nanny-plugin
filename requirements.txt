@@ -124,8 +124,10 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.6rc1
+print-nanny-client==0.7.0.dev9
     # via OctoPrint-Nanny (setup.py)
+protobuf==3.17.3
+    # via print-nanny-client
 psutil==5.8.0
     # via octoprint
 https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl
@@ -167,6 +169,7 @@ six==1.16.0
     # via
     #   libhoney
     #   print-nanny-client
+    #   protobuf
     #   python-dateutil
     #   websocket-client
 statsd==3.3.0
