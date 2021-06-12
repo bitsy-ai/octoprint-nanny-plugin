@@ -219,21 +219,23 @@ class MQTTPublisherWorker:
                 (w, h) = pimage.size
                 image = Image(height=h, width=w, data=image_bytes)
 
-                metadata = print_nanny_client.protobuf.common_pb.Metadata(
-                    clou
+                monitoring_image = build_monitoring_image(
+                    image_bytes=image_bytes,
+                    width=w,
+                    height=h,
+                    ts=ts,
+                    plugin=self.plugin,
+                    plugin_settings=self.plugin_settings,
                 )
-                monitoring_image = print_nanny_client.protobuf.monitoring_pb.MonitoringImage(
 
-                )
-                monitoring_frame = MonitoringFrame(ts=ts, image=image)
-                msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
                 b64_image = base64.b64encode(image_bytes)
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,
                 )
-                self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(msg)
-                return
+                return self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(
+                    monitoring_image.SerializeToString()
+                )
             if event_type is None:
                 logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(
