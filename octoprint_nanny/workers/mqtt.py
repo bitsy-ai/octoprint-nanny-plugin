@@ -24,6 +24,8 @@ from print_nanny_client import (
     OctoprintEnvironment,
     OctoprintPrinterData,
 )
+import print_nanny_client.protobuf
+
 from octoprint_nanny.clients.flatbuffers import build_monitoring_event_flatbuffer
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -188,6 +190,7 @@ class MQTTPublisherWorker:
     def _create_active_learning_flatbuffer_msg(
         self, monitoring_frame: MonitoringFrame
     ) -> bytes:
+
         msg = build_monitoring_event_flatbuffer(
             event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
             metadata=self.plugin.settings.metadata,
@@ -215,6 +218,13 @@ class MQTTPublisherWorker:
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
                 image = Image(height=h, width=w, data=image_bytes)
+
+                metadata = print_nanny_client.protobuf.common_pb.Metadata(
+                    clou
+                )
+                monitoring_image = print_nanny_client.protobuf.monitoring_pb.MonitoringImage(
+
+                )
                 monitoring_frame = MonitoringFrame(ts=ts, image=image)
                 msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
                 b64_image = base64.b64encode(image_bytes)

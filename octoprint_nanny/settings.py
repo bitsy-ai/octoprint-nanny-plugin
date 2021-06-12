@@ -148,8 +148,10 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer.get_current_data()
 
-    @beeline.traced("PluginSettingsMemoize.on_environment_detected")
     def on_environment_detected(self, environment):
+        """
+            {'os': {'id': 'linux', 'platform': 'linux', 'bits': 32}, 'python': {'version': '3.7.3', 'pip': '21.1.2', 'virtualenv': '/home/pi/oprint'}, 'hardware': {'cores': 4, 'freq': 1500.0, 'ram': 3959304192}, 'plugins': {'pi_support': {'model': 'Raspberry Pi 4 Model B Rev 1.1', 'throttle_state': '0x0', 'octopi_version': '0.18.0'}}}
+        """
         self.environment = environment
 
     @property
@@ -270,7 +272,7 @@ class PluginSettingsMemoize:
             print_session=print_session,
             client_version=print_nanny_client.__version__,
             ts=ts,
-            environment=self.environment,
+            octoprint_environment=self.environment,
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
             plugin_version=self.plugin._plugin_version,
         )
