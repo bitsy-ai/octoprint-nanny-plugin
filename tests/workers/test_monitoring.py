@@ -9,6 +9,13 @@ from octoprint_nanny.workers.monitoring import (
 )
 
 import print_nanny_client
+from print_nanny_client.flatbuffers.monitoring import (
+    MonitoringEvent,
+)
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
+
 
 # @pytest.mark.asyncio
 # @pytest.mark.offline

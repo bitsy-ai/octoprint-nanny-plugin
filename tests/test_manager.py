@@ -66,15 +66,16 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker, metadata):
 
 
 @pytest.mark.asyncio
-async def test_mqtt_send_queue_monitoring_frame_raw(
-    mocker, mock_image, plugin_settings
-):
+async def test_mqtt_send_queue_bounding_box_predict(mocker, mock_image, metadata):
     plugin = mocker.Mock()
+    plugin.settings.metadata = metadata
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client")
 
+    plugin_settings = mocker.Mock()
     plugin_settings.event_is_tracked.return_value = True
+    plugin_settings.metadata = metadata
 
     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
         "plugin_octoprint_nanny_monitoring_frame_bytes"

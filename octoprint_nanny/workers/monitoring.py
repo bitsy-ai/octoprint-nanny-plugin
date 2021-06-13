@@ -21,9 +21,13 @@ from octoprint_nanny.types import (
     Image,
 )
 from websockets.legacy.client import connect as ws_connect
+from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
+    MonitoringEventTypeEnum,
+)
 
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
+import octoprint_nanny.clients.flatbuffers
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")

@@ -41,6 +41,7 @@ class PluginSettingsMemoize:
         self._calibration = None
         self._metadata = None
         self._print_session = None
+        self.environment = {}
 
     def reset_print_session(self):
         self._print_session = None
@@ -147,13 +148,11 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer.get_current_data()
 
-    @property
-    def environment(self):
-        return self.plugin._environment
-
-    @property
-    def data_folder(self):
-        return self.plugin.get_plugin_data_folder()
+    def on_environment_detected(self, environment):
+        """
+        {'os': {'id': 'linux', 'platform': 'linux', 'bits': 32}, 'python': {'version': '3.7.3', 'pip': '21.1.2', 'virtualenv': '/home/pi/oprint'}, 'hardware': {'cores': 4, 'freq': 1500.0, 'ram': 3959304192}, 'plugins': {'pi_support': {'model': 'Raspberry Pi 4 Model B Rev 1.1', 'throttle_state': '0x0', 'octopi_version': '0.18.0'}}}
+        """
+        self.environment = environment
 
     @property
     def logfile_path(self):
@@ -266,13 +265,11 @@ class PluginSettingsMemoize:
     def metadata(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
         print_session = self.print_session.session if self.print_session else None
-        print_session_id = self.print_session.id if self.print_session else None
         return Metadata(
             user_id=self.user_id,
             octoprint_device_id=self.octoprint_device_id,
             cloudiot_device_id=self.cloudiot_device_id,
             print_session=print_session,
-            print_session_id=print_session_id,
             client_version=print_nanny_client.__version__,
             ts=ts,
             octoprint_environment=self.environment,

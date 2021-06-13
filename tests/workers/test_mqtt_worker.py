@@ -13,14 +13,13 @@ from octoprint_nanny.workers.mqtt import (
 @pytest.mark.asyncio
 async def test_handle_config_update(mocker):
     plugin = mocker.Mock()
-    plugin_settings = mocker.Mock()
     mocker.Mock()
     queue = mocker.Mock()
 
-    plugin_settings.data_folder = "/path/to/data"
-    subscriber_worker = MQTTSubscriberWorker(
-        queue=queue, plugin=plugin, plugin_settings=plugin_settings
-    )
+    data_folder = "/path/to/data"
+    plugin.get_plugin_data_folder.return_value = data_folder
+
+    subscriber_worker = MQTTSubscriberWorker(queue=queue, plugin=plugin)
 
     mock_res = MagicMock()
     mock_res.__aenter__.return_value.get.return_value.__aenter__.return_value.text.return_value = (

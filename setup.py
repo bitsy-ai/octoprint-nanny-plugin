@@ -159,6 +159,7 @@ plugin_requires = [
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
+    "flatbuffers==1.12",
     "websockets>=9.1",
 ] + plugin_requires_third_party_wheels
 
