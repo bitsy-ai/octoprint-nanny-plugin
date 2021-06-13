@@ -271,7 +271,7 @@ class PluginSettingsMemoize:
             created_dt=now,
         )
         self._print_session_rest = print_session
-        self._print_session_pb = print_nanny_client.protobuf.common_pb.PrintSession(
+        self._print_session_pb = print_nanny_client.protobuf.common_pb2.PrintSession(
             session=session, id=print_session.id, created_ts=now.timestamp()
         )
         return self._print_session_rest
@@ -279,11 +279,16 @@ class PluginSettingsMemoize:
     @property
     def octoprint_environment(self):
         return self.plugin._environment
+
     @property
     def metadata(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
-        print_session = self.print_session_rest.session if self.print_session_rest else None
-        print_session_id = self.print_session_rest.id if self.print_session_rest else None
+        print_session = (
+            self.print_session_rest.session if self.print_session_rest else None
+        )
+        print_session_id = (
+            self.print_session_rest.id if self.print_session_rest else None
+        )
         return Metadata(
             user_id=self.user_id,
             octoprint_device_id=self.octoprint_device_id,

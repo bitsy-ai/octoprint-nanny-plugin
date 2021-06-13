@@ -138,7 +138,7 @@ class MonitoringManager:
             self.plugin.settings.reset_print_session()
             await self.plugin.settings.create_print_session()
             logger.info(
-                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
+                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session_rest.session}"
             )
             for worker in self._workers:
                 thread = threading.Thread(
