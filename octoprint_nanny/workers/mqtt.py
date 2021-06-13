@@ -14,7 +14,7 @@ import PIL
 import io
 import beeline
 import base64
-from typing import List
+from typing import List, Callable, Dict
 import print_nanny_client
 
 from octoprint.events import Events
@@ -24,12 +24,8 @@ from print_nanny_client import (
     OctoprintEnvironment,
     OctoprintPrinterData,
 )
-from octoprint_nanny.clients.flatbuffers import build_monitoring_event_flatbuffer
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
-    MonitoringEventTypeEnum,
-)
 
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.types import (
@@ -37,6 +33,8 @@ from octoprint_nanny.types import (
     MonitoringFrame,
     Image,
 )
+from octoprint_nanny.clients.protobuf import build_monitoring_image
+from octoprint_nanny.settings import PluginSettingsMemoize
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -46,6 +44,7 @@ class MQTTManager:
         self,
         mqtt_send_queue: queue.Queue,
         mqtt_receive_queue: queue.Queue,
+        plugin_settings: PluginSettingsMemoize,
         plugin,
     ):
 
@@ -53,11 +52,14 @@ class MQTTManager:
         self.mqtt_receive_queue = mqtt_receive_queue
         self.exit = threading.Event()
 
+        self.plugin_settings = plugin_settings
         self.plugin = plugin
         self._worker_threads: List[threading.Thread] = []
-        self.publisher_worker = MQTTPublisherWorker(self.mqtt_send_queue, self.plugin)
+        self.publisher_worker = MQTTPublisherWorker(
+            self.mqtt_send_queue, self.plugin, self.plugin_settings
+        )
         self.subscriber_worker = MQTTSubscriberWorker(
-            self.mqtt_receive_queue, self.plugin
+            self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
 
     def _drain(self):
@@ -79,7 +81,7 @@ class MQTTManager:
         self._reset()
 
         try:
-            mqtt_client = self.plugin.settings.mqtt_client
+            mqtt_client = self.plugin_settings.mqtt_client
         except PluginSettingsRequired as e:
             logger.warning(e)
             logger.warning(
@@ -125,11 +127,12 @@ class MQTTPublisherWorker:
         Events.PRINT_STARTED,
     ]
 
-    def __init__(self, queue, plugin):
+    def __init__(self, queue, plugin, plugin_settings: PluginSettingsMemoize):
         self.exit = threading.Event()
         self.queue = queue
         self.plugin = plugin
-        self._callbacks = {}
+        self.plugin_settings = plugin_settings
+        self._callbacks: Dict[str, List[Callable]] = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
@@ -153,7 +156,7 @@ class MQTTPublisherWorker:
         loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
-        environment = self.plugin._environment
+        environment = self.plugin_settings.environment
         environment = OctoprintEnvironment(
             os=environment.get("os", {}),
             python=environment.get("python", {}),
@@ -165,9 +168,9 @@ class MQTTPublisherWorker:
         logger.info(f"printer_data={printer_data}")
         printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
         print_session = (
-            self.plugin.settings.print_session.id
-            if self.plugin.settings.print_session
-            else self.plugin.settings.print_session
+            self.plugin_settings.print_session.id
+            if self.plugin_settings.print_session
+            else self.plugin_settings.print_session
         )
         payload = TelemetryEvent(
             print_session=print_session,
@@ -177,23 +180,13 @@ class MQTTPublisherWorker:
             print_nanny_plugin_version=self.plugin._plugin_version,
             print_nanny_client_version=print_nanny_client.__version__,
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-            octoprint_device=self.plugin.settings.octoprint_device_id,
+            octoprint_device=self.plugin_settings.octoprint_device_id,
             ts=datetime.now(pytz.timezone("UTC")).timestamp(),
             **event,
         )
         payload = payload.to_dict()
 
-        return self.plugin.settings.mqtt_client.publish_octoprint_event(payload)
-
-    def _create_active_learning_flatbuffer_msg(
-        self, monitoring_frame: MonitoringFrame
-    ) -> bytes:
-        msg = build_monitoring_event_flatbuffer(
-            event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
-            metadata=self.plugin.settings.metadata,
-            monitoring_frame=monitoring_frame,
-        )
-        return msg
+        return self.plugin_settings.mqtt_client.publish_octoprint_event(payload)
 
     async def _loop(self):
         try:
@@ -215,15 +208,23 @@ class MQTTPublisherWorker:
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
                 image = Image(height=h, width=w, data=image_bytes)
-                monitoring_frame = MonitoringFrame(ts=ts, image=image)
-                msg = self._create_active_learning_flatbuffer_msg(monitoring_frame)
+
+                monitoring_image = build_monitoring_image(
+                    image_bytes=image_bytes,
+                    width=w,
+                    height=h,
+                    ts=ts,
+                    plugin_settings=self.plugin_settings,
+                )
+
                 b64_image = base64.b64encode(image_bytes)
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,
                 )
-                self.plugin.settings.mqtt_client.publish_monitoring_frame_raw(msg)
-                return
+                return self.plugin_settings.mqtt_client.publish_monitoring_frame_raw(
+                    monitoring_image.SerializeToString()
+                )
             if event_type is None:
                 logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(
@@ -233,7 +234,7 @@ class MQTTPublisherWorker:
                 return
 
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
-            tracked = self.plugin.settings.event_is_tracked(event_type)
+            tracked = self.plugin_settings.event_is_tracked(event_type)
             if tracked:
                 await self.publish_octoprint_event_telemetry(event)
 
@@ -270,11 +271,12 @@ class MQTTPublisherWorker:
 
 
 class MQTTSubscriberWorker:
-    def __init__(self, queue, plugin):
+    def __init__(self, queue, plugin, plugin_settings: PluginSettingsMemoize):
 
         self.exit = threading.Event()
         self.queue = queue
         self.plugin = plugin
+        self.plugin_settings = plugin_settings
         self._callbacks = {
             "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]
         }
@@ -324,8 +326,8 @@ class MQTTSubscriberWorker:
 
         command_id = message.get("remote_control_command_id")
 
-        await self.plugin.settings.rest_client.update_remote_control_command(
-            command_id, received=True, metadata=self.plugin.settings.metadata.to_dict()
+        await self.plugin_settings.rest_client.update_remote_control_command(
+            command_id, received=True, metadata=self.plugin_settings.metadata.to_dict()
         )
 
         handler_fns = self._callbacks.get(event_type)
@@ -345,17 +347,17 @@ class MQTTSubscriberWorker:
                         handler_fn(event=message, event_type=event_type)
 
                     # set success state
-                    await self.plugin.settings.rest_client.update_remote_control_command(
+                    await self.plugin_settings.rest_client.update_remote_control_command(
                         command_id,
                         success=True,
-                        metadata=self.plugin.settings.metadata.to_dict(),
+                        metadata=self.plugin_settings.metadata.to_dict(),
                     )
                 except Exception as e:
                     logger.error(f"Error calling handler_fn {handler_fn} \n {e}")
-                    await self.plugin.settings.rest_client.update_remote_control_command(
+                    await self.plugin_settings.rest_client.update_remote_control_command(
                         command_id,
                         success=False,
-                        metadata=self.plugin.settings.metadata.to_dict(),
+                        metadata=self.plugin_settings.metadata.to_dict(),
                     )
 
     async def _loop(self):
@@ -378,10 +380,10 @@ class MQTTSubscriberWorker:
         if topic is None:
             logger.warning("Ignoring received message where topic=None")
 
-        elif topic == self.plugin.settings.mqtt_client.remote_control_commands_topic:
+        elif topic == self.plugin_settings.mqtt_client.remote_control_commands_topic:
             await self._handle_remote_control_command(**payload)
 
-        elif topic == self.plugin.settings.mqtt_client.config_topic:
+        elif topic == self.plugin_settings.mqtt_client.config_topic:
             await self._handle_config_update(**payload)
 
         else:
@@ -413,20 +415,20 @@ class MQTTSubscriberWorker:
             await _download(
                 session,
                 labels,
-                os.path.join(self.plugin.get_plugin_data_folder(), "labels.txt"),
+                os.path.join(self.plugin_settings.data_folder, "labels.txt"),
             )
             await _download(
                 session,
                 artifacts,
-                os.path.join(self.plugin.get_plugin_data_folder(), "model.tflite"),
+                os.path.join(self.plugin_settings.data_folder, "model.tflite"),
             )
         await _data_file(
             version,
-            os.path.join(self.plugin.get_plugin_data_folder(), "version.txt"),
+            os.path.join(self.plugin_settings.data_folder, "version.txt"),
         )
         await _data_file(
             json.dumps(metadata),
-            os.path.join(self.plugin.get_plugin_data_folder(), "metadata.json"),
+            os.path.join(self.plugin_settings.data_folder, "metadata.json"),
         )
 
     def shutdown(self):

@@ -65,8 +65,6 @@ flask==1.1.4
     #   flask-babel
     #   flask-login
     #   octoprint
-flatbuffers==1.12
-    # via OctoPrint-Nanny (setup.py)
 future==0.18.2
     # via octoprint
 honeycomb-beeline==2.17.0
@@ -105,9 +103,7 @@ netaddr==0.8.0
 netifaces==0.11.0
     # via octoprint
 numpy==1.20.3
-    # via
-    #   OctoPrint-Nanny (setup.py)
-    #   pyarrow
+    # via OctoPrint-Nanny (setup.py)
 octoprint-filecheck==2021.2.23
     # via octoprint
 octoprint-firmwarecheck==2021.5.31
@@ -124,12 +120,12 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.6.6rc1
+print-nanny-client==0.7.0.dev15
     # via OctoPrint-Nanny (setup.py)
+protobuf==3.17.3
+    # via print-nanny-client
 psutil==5.8.0
     # via octoprint
-https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl
-    # via OctoPrint-Nanny (setup.py)
 pycares==4.0.0
     # via aiodns
 pycparser==2.20
@@ -167,6 +163,7 @@ six==1.16.0
     # via
     #   libhoney
     #   print-nanny-client
+    #   protobuf
     #   python-dateutil
     #   websocket-client
 statsd==3.3.0

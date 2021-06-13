@@ -21,13 +21,13 @@ def test_default_settings_client_states(mocker):
     plugin.get_setting = get_default_setting
     manager = WorkerManager(plugin)
 
-    assert manager.plugin.settings.auth_token is None
-    assert manager.plugin.settings.octoprint_device_id is None
+    assert manager.plugin_settings.auth_token is None
+    assert manager.plugin_settings.octoprint_device_id is None
 
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin.settings.mqtt_client)
+        dir(manager.plugin_settings.mqtt_client)
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin.settings.rest_client)
+        dir(manager.plugin_settings.rest_client)
 
 
 @pytest.mark.asyncio
@@ -66,16 +66,15 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker, metadata):
 
 
 @pytest.mark.asyncio
-async def test_mqtt_send_queue_bounding_box_predict(mocker, mock_image, metadata):
+async def test_mqtt_send_queue_monitoring_frame_raw(
+    mocker, mock_image, plugin_settings
+):
     plugin = mocker.Mock()
-    plugin.settings.metadata = metadata
 
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.test_mqtt_settings")
     mocker.patch("octoprint_nanny.settings.PluginSettingsMemoize.mqtt_client")
 
-    plugin_settings = mocker.Mock()
     plugin_settings.event_is_tracked.return_value = True
-    plugin_settings.metadata = metadata
 
     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES = (
         "plugin_octoprint_nanny_monitoring_frame_bytes"
@@ -92,7 +91,7 @@ async def test_mqtt_send_queue_bounding_box_predict(mocker, mock_image, metadata
     }
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_fn = plugin.settings.mqtt_client.publish_monitoring_frame_raw
+    mock_fn = plugin_settings.mqtt_client.publish_monitoring_frame_raw
     mock_fn.return_value = asyncio.Future()
     mock_fn.return_value.set_result("foo")
 
