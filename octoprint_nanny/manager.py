@@ -35,7 +35,6 @@ class WorkerManager:
 
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-
         # outbound telemetry messages to MQTT bridge
         self.mqtt_send_queue: queue.Queue = queue.Queue()
         # inbound MQTT command and config messages from MQTT bridge
