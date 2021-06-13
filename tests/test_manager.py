@@ -21,13 +21,13 @@ def test_default_settings_client_states(mocker):
     plugin.get_setting = get_default_setting
     manager = WorkerManager(plugin)
 
-    assert manager.plugin.settings.auth_token is None
-    assert manager.plugin.settings.octoprint_device_id is None
+    assert manager.plugin_settings.auth_token is None
+    assert manager.plugin_settings.octoprint_device_id is None
 
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin.settings.mqtt_client)
+        dir(manager.plugin_settings.mqtt_client)
     with pytest.raises(PluginSettingsRequired):
-        dir(manager.plugin.settings.rest_client)
+        dir(manager.plugin_settings.rest_client)
 
 
 @pytest.mark.asyncio
@@ -91,7 +91,7 @@ async def test_mqtt_send_queue_monitoring_frame_raw(
     }
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_fn = plugin.settings.mqtt_client.publish_monitoring_frame_raw
+    mock_fn = plugin_settings.mqtt_client.publish_monitoring_frame_raw
     mock_fn.return_value = asyncio.Future()
     mock_fn.return_value.set_result("foo")
 
