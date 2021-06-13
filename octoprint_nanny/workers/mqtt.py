@@ -156,7 +156,7 @@ class MQTTPublisherWorker:
         loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
-        environment = self.plugin_settings.environment
+        environment = self.plugin_settings.octoprint_environment
         environment = OctoprintEnvironment(
             os=environment.get("os", {}),
             python=environment.get("python", {}),
@@ -167,13 +167,9 @@ class MQTTPublisherWorker:
         currentZ = printer_data.pop("currentZ")
         logger.info(f"printer_data={printer_data}")
         printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-        print_session = (
-            self.plugin_settings.print_session.id
-            if self.plugin_settings.print_session
-            else self.plugin_settings.print_session
-        )
+
         payload = TelemetryEvent(
-            print_session=print_session,
+            print_session=self.plugin_settings.print_session_rest,
             octoprint_environment=environment,
             octoprint_printer_data=printer_data,
             temperature=self.plugin._printer.get_current_temperatures(),

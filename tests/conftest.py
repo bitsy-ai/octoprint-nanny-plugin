@@ -85,7 +85,7 @@ def plugin_settings(mocker, metadata):
         id=1,
         session=uuid.uuid4().hex,
         created_ts=datetime.now().timestamp(),
-        datesegment='2021/01/01'
+        datesegment="2021/01/01",
     )
 
     return plugin_settings

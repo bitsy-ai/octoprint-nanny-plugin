@@ -3,7 +3,6 @@ from dataclasses import dataclass, asdict
 from PIL.Image import Image as PillowImage
 import numpy as np
 from typing import Dict, Optional
-from print_nanny_client.protobuf.common_pb2 import PrintSession
 
 
 @dataclass
@@ -27,7 +26,8 @@ class Metadata:
     plugin_version: str
     octoprint_environment: Dict[str, str]
     model_version: Optional[str] = None
-    print_session: Optional[PrintSession] = None
+    print_session: Optional[str] = None
+    print_session_id: Optional[int] = None
 
     def to_dict(self):
         return asdict(self)

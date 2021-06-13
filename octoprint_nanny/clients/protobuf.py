@@ -1,6 +1,10 @@
 import octoprint
 import print_nanny_client
-from print_nanny_client.protobuf.common_pb2 import OctoprintEnvironment, Metadata, PrintSession
+from print_nanny_client.protobuf.common_pb2 import (
+    OctoprintEnvironment,
+    Metadata,
+    PrintSession,
+)
 from print_nanny_client.protobuf.monitoring_pb2 import MonitoringImage
 
 
