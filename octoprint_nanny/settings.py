@@ -27,7 +27,12 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
 class PluginSettingsMemoize:
     """
-    Convenience methods/properties for accessing OctoPrint plugin settings and computed metadata
+    Convenience methods/properties for accessing:
+        1. OctoPrint plugin settings
+        2. Data pre-serialized to REST & Protobuf representation
+    
+    REST serialization supports HTTP1 REST API (OpenAPI 3.0 schema)
+    Protobuf serialization supports MQTT & data structures used in apache beam pipelines
     """
 
     def __init__(self, plugin, mqtt_receive_queue):
@@ -40,10 +45,14 @@ class PluginSettingsMemoize:
         self._rest_client = None
         self._calibration = None
         self._metadata = None
-        self._print_session = None
+
+        self._print_session_rest = None
+        self._print_session_pb = None
 
     def reset_print_session(self):
-        self._print_session = None
+        self._print_session_rest = None
+        self._print_session_pb = None
+
 
     @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
@@ -148,10 +157,6 @@ class PluginSettingsMemoize:
         return self.plugin._printer.get_current_data()
 
     @property
-    def environment(self):
-        return self.plugin._environment
-
-    @property
     def data_folder(self):
         return self.plugin.get_plugin_data_folder()
 
@@ -234,8 +239,12 @@ class PluginSettingsMemoize:
         return self.plugin.get_setting("webcam_upload")
 
     @property
-    def print_session(self):
-        return self._print_session
+    def print_session_rest(self):
+        return self._print_session_rest
+
+    @property
+    def print_session_pb(self):
+        return self._print_session_pb
 
     async def create_print_session(self):
         session = uuid.uuid4().hex
@@ -252,15 +261,23 @@ class PluginSettingsMemoize:
             printer_profile, self.octoprint_device_id
         )
 
+        now = datetime.utcnow()
+
         print_session = await self.rest_client.create_print_session(
             gcode_filename=gcode_filename,
             session=session,
             printer_profile=printer_profile.id,
             octoprint_device=self.octoprint_device_id,
             octoprint_job=octoprint_job,
+            created_dt=now
         )
-        self._print_session = print_session
-        return self._print_session
+        self._print_session_rest = print_session
+        self._print_session_pb = print_nanny_client.protobuf.common_pb.PrintSession(
+            session=session,
+            id=print_session.id,
+            created_ts=now.timestamp()
+        )
+        return self._print_session_rest
 
     @property
     def metadata(self):
@@ -279,7 +296,46 @@ class PluginSettingsMemoize:
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
             plugin_version=self.plugin._plugin_version,
         )
+    @property
+    def metadata_pb(self):
+        ts = datetime.now(pytz.timezone("UTC")).timestamp()
+        return print_nanny_client.protobuf.monitoring_pb2.Metadata(
+            user_id=self.user_id,
+            octoprint_device_id=self.octoprint_device_id,
+            cloudiot_device_id=self.cloudiot_device_id,
+            print_session=self.print_session_pb,
+            client_version=print_nanny_client.__version__,
+            ts=ts,
+            octoprint_environment=self.octoprint_environment_pb,
+            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            plugin_version=self.plugin._plugin_version,
+        )
 
+    @property
+    def octoprint_environment_pb(self):
+        octoprint_environment = self.plugin._environment
+        return OctoprintEnvironment(
+        plugin_version=self.plugin._plugin_version,
+        client_version=print_nanny_client.__version__,
+        python_version=octoprint_environment.get("python", {}).get("version"),
+        pip_version=octoprint_environment.get("python", {}).get("pip"),
+        octopi_version=octoprint_environment.get("plugins", {})
+        .get("pi_support", {})
+        .get("octopi_version"),
+        virtualenv=octoprint_environment.get("python", {}).get("virtualenv"),
+        platform=octoprint_environment.get("os", {}).get("platform"),
+        bits=octoprint_environment.get("os", {}).get("bits"),
+        cores=octoprint_environment.get("hardware", {}).get("cores"),
+        freq=octoprint_environment.get("hardware", {}).get("freq"),
+        ram=octoprint_environment.get("hardware", {}).get("ram"),
+        pi_model=octoprint_environment.get("plugins", {})
+        .get("pi_support", {})
+        .get("model"),
+        pi_throttle_state=octoprint_environment.get("plugins", {})
+        .get("pi_support", {})
+        .get("throttle_state"),
+        octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+    )
     def calc_calibration(x0, y0, x1, y1, height=480, width=640):
         if (
             x0 is None

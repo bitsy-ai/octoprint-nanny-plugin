@@ -203,7 +203,6 @@ class MQTTPublisherWorker:
             event_type = event.get("event_type")
 
             if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-                ts = event["event_data"]["ts"]
                 image_bytes = event["event_data"]["image"]
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
@@ -213,7 +212,6 @@ class MQTTPublisherWorker:
                     image_bytes=image_bytes,
                     width=w,
                     height=h,
-                    ts=ts,
                     plugin_settings=self.plugin_settings,
                 )
 

@@ -1,6 +1,6 @@
 import octoprint
 import print_nanny_client
-from print_nanny_client.protobuf.common_pb2 import OctoprintEnvironment, Metadata
+from print_nanny_client.protobuf.common_pb2 import OctoprintEnvironment, Metadata, PrintSession
 from print_nanny_client.protobuf.monitoring_pb2 import MonitoringImage
 
 
@@ -40,8 +40,7 @@ def build_metadata(plugin_settings) -> Metadata:
     octoprint_environment = build_octoprint_environment(plugin_settings)
 
     return Metadata(
-        print_session=plugin_settings.metadata.print_session,
-        print_session_id=plugin_settings.metadata.print_session_id,
+        print_session=plugin_settings.print_session_pb,
         user_id=plugin_settings.metadata.user_id,
         octoprint_device_id=plugin_settings.metadata.octoprint_device_id,
         cloudiot_device_id=plugin_settings.metadata.cloudiot_device_id,
@@ -50,10 +49,10 @@ def build_metadata(plugin_settings) -> Metadata:
 
 
 def build_monitoring_image(
-    image_bytes: bytes, height: int, width: int, ts: float, plugin_settings
+    image_bytes: bytes, height: int, width: int, plugin_settings
 ) -> MonitoringImage:
 
     metadata = build_metadata(plugin_settings)
     return MonitoringImage(
-        ts=ts, data=image_bytes, height=height, width=width, metadata=metadata
+        data=image_bytes, height=height, width=width, metadata=metadata
     )
