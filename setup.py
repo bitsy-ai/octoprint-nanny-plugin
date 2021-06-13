@@ -88,20 +88,16 @@ if sys.version_info.major == 2:
 plugin_requires_third_party_wheel_map = {
     "armv7l": {
         "32bit": [
-            "pyarrow @ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl",
         ]
     },
     "aarch64": {
         "32bit": [
-            "pyarrow==3.0.0",
         ],
         "64bit": [
-            "pyarrow==3.0.0",
         ],
     },
     "x86_64": {
         "64bit": [
-            "pyarrow==3.0.0",
         ]
     },
 }
