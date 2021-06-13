@@ -25,7 +25,7 @@ class Metadata:
     client_version: str
     octoprint_version: str
     plugin_version: str
-    octoprint_environment: Dict[str, str]
+    environment: Dict[str, str]
     model_version: Optional[str] = None
 
     def to_dict(self):
