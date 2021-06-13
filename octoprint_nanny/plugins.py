@@ -804,6 +804,12 @@ class OctoPrintNannyPlugin(
 
         self.worker_manager.mqtt_send_queue.put_nowait(payload)
 
+    ## EnvironmentDetectionPlugin
+    @beeline.traced(name="OctoPrintNannyPlugin.on_environment_detected")
+    def on_environment_detected(self, environment, *args, **kwargs):
+        self._environment = environment
+        self.worker_manager.plugin.settings.on_environment_detected(environment)
+
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         return DEFAULT_SETTINGS

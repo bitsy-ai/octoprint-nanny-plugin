@@ -103,7 +103,9 @@ netaddr==0.8.0
 netifaces==0.11.0
     # via octoprint
 numpy==1.20.3
-    # via OctoPrint-Nanny (setup.py)
+    # via
+    #   OctoPrint-Nanny (setup.py)
+    #   pyarrow
 octoprint-filecheck==2021.2.23
     # via octoprint
 octoprint-firmwarecheck==2021.5.31
@@ -126,6 +128,8 @@ protobuf==3.17.3
     # via print-nanny-client
 psutil==5.8.0
     # via octoprint
+https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl
+    # via OctoPrint-Nanny (setup.py)
 pycares==4.0.0
     # via aiodns
 pycparser==2.20
