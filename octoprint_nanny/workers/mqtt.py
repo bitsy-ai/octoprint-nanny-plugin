@@ -14,7 +14,7 @@ import PIL
 import io
 import beeline
 import base64
-from typing import List
+from typing import List, Callable, Dict
 import print_nanny_client
 
 from octoprint.events import Events
@@ -132,7 +132,7 @@ class MQTTPublisherWorker:
         self.queue = queue
         self.plugin = plugin
         self.plugin_settings = plugin_settings
-        self._callbacks = {}
+        self._callbacks:Dict[str, List[Callable]] = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
@@ -187,17 +187,6 @@ class MQTTPublisherWorker:
         payload = payload.to_dict()
 
         return self.plugin_settings.mqtt_client.publish_octoprint_event(payload)
-
-    def _create_active_learning_flatbuffer_msg(
-        self, monitoring_frame: MonitoringFrame
-    ) -> bytes:
-
-        msg = build_monitoring_event_flatbuffer(
-            event_type=MonitoringEventTypeEnum.monitoring_frame_raw,
-            metadata=self.plugin_settings.metadata,
-            monitoring_frame=monitoring_frame,
-        )
-        return msg
 
     async def _loop(self):
         try:
@@ -286,6 +275,7 @@ class MQTTSubscriberWorker:
 
         self.exit = threading.Event()
         self.queue = queue
+        self.plugin = plugin
         self.plugin_settings = plugin_settings
         self._callbacks = {
             "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]

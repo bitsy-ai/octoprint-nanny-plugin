@@ -27,7 +27,7 @@ class Metadata:
     octoprint_environment: Dict[str, str]
     model_version: Optional[str] = None
     print_session: Optional[str] = None
-    print_session_id: Optional[id] = None
+    print_session_id: Optional[int] = None
 
     def to_dict(self):
         return asdict(self)
