@@ -132,7 +132,7 @@ class MQTTPublisherWorker:
         self.queue = queue
         self.plugin = plugin
         self.plugin_settings = plugin_settings
-        self._callbacks:Dict[str, List[Callable]] = {}
+        self._callbacks: Dict[str, List[Callable]] = {}
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
