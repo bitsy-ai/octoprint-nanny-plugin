@@ -86,20 +86,12 @@ if sys.version_info.major == 2:
 
 # hardware layer : software layer : wheel
 plugin_requires_third_party_wheel_map = {
-    "armv7l": {
-        "32bit": [
-        ]
-    },
+    "armv7l": {"32bit": []},
     "aarch64": {
-        "32bit": [
-        ],
-        "64bit": [
-        ],
+        "32bit": [],
+        "64bit": [],
     },
-    "x86_64": {
-        "64bit": [
-        ]
-    },
+    "x86_64": {"64bit": []},
 }
 
 offline_requires_third_party_wheel_map = {
