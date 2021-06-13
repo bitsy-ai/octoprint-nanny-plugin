@@ -32,7 +32,27 @@ def calibration():
 
 
 @pytest.fixture
-def metadata():
+def octoprint_environment():
+    return {
+        "os": {"id": "linux", "platform": "linux", "bits": 32},
+        "python": {
+            "version": "3.7.3",
+            "pip": "21.1.2",
+            "virtualenv": "/home/pi/oprint",
+        },
+        "hardware": {"cores": 4, "freq": 1500.0, "ram": 3959304192},
+        "plugins": {
+            "pi_support": {
+                "model": "Raspberry Pi 4 Model B Rev 1.1",
+                "throttle_state": "0x0",
+                "octopi_version": "0.18.0",
+            }
+        },
+    }
+
+
+@pytest.fixture
+def metadata(octoprint_environment):
     return Metadata(
         user_id=1234,
         octoprint_device_id=1234,
@@ -40,8 +60,8 @@ def metadata():
         print_session=uuid.uuid4().hex,
         client_version=print_nanny_client.__version__,
         ts=datetime.now().timestamp(),
-        environment={},
-        octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+        octoprint_environment=octoprint_environment,
+        octoprint_version="0.0.0",
         plugin_version=__plugin_version__,
     )
 
@@ -54,6 +74,14 @@ def pytest_addoption(parser):
         default=False,
         help="enable benchmark tests",
     )
+
+
+@pytest.fixture
+def plugin_settings(mocker, metadata):
+    plugin_settings = mocker.Mock()
+    plugin_settings.metadata = metadata
+
+    return plugin_settings
 
 
 def pytest_collection_modifyitems(config, items):
