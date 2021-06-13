@@ -10,8 +10,3 @@ asynctest
 pytest-benchmark
 pygal
 mypy
-types-Werkzeug
-types-six
-types-pytz
-types-requests
-types-Flask
