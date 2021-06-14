@@ -48,6 +48,7 @@ class PluginSettingsMemoize:
 
         self._print_session_rest = None
         self._print_session_pb = None
+        self._octoprint_environment = None
 
     def reset_print_session(self):
         self._print_session_rest = None
@@ -154,6 +155,9 @@ class PluginSettingsMemoize:
         {'state': {'text': 'Offline', 'flags': {'operational': False, 'printing': False, 'cancelling': False, 'pausing': False, 'resuming': False, 'finishing': False, 'closedOrError': True, 'error': False, 'paused': False, 'ready': False, 'sdReady': False}, 'error': ''}, 'job': {'file': {'name': None, 'path': None, 'size': None, 'origin': None, 'date': None}, 'estimatedPrintTime': None, 'lastPrintTime': None, 'filament': {'length': None, 'volume': None}, 'user': None}, 'currentZ': None, 'progress': {'completion': None, 'filepos': None, 'printTime': None, 'printTimeLeft': None, 'printTimeOrigin': None}, 'offsets': {}, 'resends': {'count': 0, 'ratio': 0}}
         """
         return self.plugin._printer.get_current_data()
+
+    def on_environment_detected(self, environment):
+        self._octoprint_environment = environment
 
     @property
     def data_folder(self):
@@ -278,7 +282,7 @@ class PluginSettingsMemoize:
 
     @property
     def octoprint_environment(self):
-        return self.plugin._environment
+        return self._octoprint_environment
 
     @property
     def metadata(self):
@@ -319,7 +323,7 @@ class PluginSettingsMemoize:
 
     @property
     def octoprint_environment_pb(self):
-        octoprint_environment = self.plugin._environment
+        octoprint_environment = self.octoprint_environment
         return print_nanny_client.protobuf.common_pb2.OctoprintEnvironment(
             plugin_version=self.plugin._plugin_version,
             client_version=print_nanny_client.__version__,
