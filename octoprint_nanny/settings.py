@@ -43,7 +43,6 @@ class PluginSettingsMemoize:
         self._telemetry_events = None
         self._device_info = None
         self._rest_client = None
-        self._calibration = None
         self._metadata = None
 
         self._print_session_rest = None
@@ -58,7 +57,6 @@ class PluginSettingsMemoize:
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
-        self._calibration = None
 
     @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
     def reset_rest_client_state(self):
@@ -344,18 +342,7 @@ class PluginSettingsMemoize:
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         )
 
-    def calc_calibration(x0, y0, x1, y1, height=480, width=640):
-        if (
-            x0 is None
-            or y0 is None
-            or x1 is None
-            or y1 is None
-            or height is None
-            or width is None
-        ):
-            logger.warning(f"Invalid calibration values ({x0}, {y0}) ({x1}, {y1})")
-            return None
-
+    def calc_calibration_mask(x0: float, y0: float, x1: float, y1: float, height=480, width=640):
         mask = np.zeros((height, width))
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
             value = (
@@ -364,18 +351,19 @@ class PluginSettingsMemoize:
             mask[h][w] = value
 
         mask = mask.astype(np.uint8)
-        logger.info(f"Calibration set")
+        return mask
 
     @property
-    def calibration(self):
-        if self._calibration is None:
-            self._calibration = self.calc_calibration(
-                self.plugin.get_setting("calibrate_x0"),
-                self.plugin.get_setting("calibrate_y0"),
-                self.plugin.get_setting("calibrate_x1"),
-                self.plugin.get_setting("calibrate_y1"),
-            )
-        return self._calibration
+    def calibration_xy(self):
+        return (
+            self.plugin.get_setting("calibrate_x0"),
+            self.plugin.get_setting("calibrate_y0"),
+            self.plugin.get_setting("calibrate_x1"),
+            self.plugin.get_setting("calibrate_y1"),
+        )
+    @property
+    def calibration_mask(self):
+        return self.calc_calibration_mask(*self.calibration_mask)
 
     @property
     def monitoring_frames_per_minute(self):

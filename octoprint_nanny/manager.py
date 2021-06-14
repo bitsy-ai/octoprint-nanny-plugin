@@ -189,7 +189,7 @@ class WorkerManager:
                     "y0": self.plugin.get_setting("calibrate_y0"),
                     "y1": self.plugin.get_setting("calibrate_y1"),
                 },
-                self.plugin_settings.calibration,
+                self.plugin_settings.calibration_mask,
             )
         )
         logger.info(f"Device calibration upsert succeeded {device_calibration}")
