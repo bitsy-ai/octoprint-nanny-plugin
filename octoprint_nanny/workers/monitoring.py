@@ -174,7 +174,7 @@ class MonitoringManager:
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
-        if self.plugin.settings.print_session:
+        if self.plugin.settings.print_session_rest:
             logger.info(
-                f"Closing monitoring session session={self.plugin.settings.print_session.session}"
+                f"Closing monitoring session session={self.plugin.settings.print_session_rest.session}"
             )

@@ -320,7 +320,7 @@ class PluginSettingsMemoize:
     @property
     def octoprint_environment_pb(self):
         octoprint_environment = self.plugin._environment
-        return OctoprintEnvironment(
+        return print_nanny_client.protobuf.common_pb2.OctoprintEnvironment(
             plugin_version=self.plugin._plugin_version,
             client_version=print_nanny_client.__version__,
             python_version=octoprint_environment.get("python", {}).get("version"),

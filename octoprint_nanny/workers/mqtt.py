@@ -216,7 +216,7 @@ class MQTTPublisherWorker:
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,
                 )
-                return self.plugin_settings.mqtt_client.publish_monitoring_frame_raw(
+                return self.plugin_settings.mqtt_client.publish_monitoring_image(
                     monitoring_image.SerializeToString()
                 )
             if event_type is None:
