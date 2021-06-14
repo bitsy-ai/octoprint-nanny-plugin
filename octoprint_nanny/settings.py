@@ -314,11 +314,8 @@ class PluginSettingsMemoize:
             octoprint_device_id=self.octoprint_device_id,
             cloudiot_device_id=self.cloudiot_device_id,
             print_session=self.print_session_pb,
-            client_version=print_nanny_client.__version__,
             ts=ts,
             octoprint_environment=self.octoprint_environment_pb,
-            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-            plugin_version=self.plugin._plugin_version,
         )
 
     @property

@@ -216,7 +216,7 @@ class MQTTPublisherWorker:
                     image_bytes=image_bytes,
                     width=w,
                     height=h,
-                    plugin_settings=self.plugin_settings,
+                    metadata_pb=self.plugin_settings.metadata_pb,
                 )
 
                 b64_image = base64.b64encode(image_bytes)
