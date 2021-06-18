@@ -342,7 +342,9 @@ class PluginSettingsMemoize:
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         )
 
-    def calc_calibration_mask(x0: float, y0: float, x1: float, y1: float, height=480, width=640):
+    def calc_calibration_mask(
+        x0: float, y0: float, x1: float, y1: float, height=480, width=640
+    ):
         mask = np.zeros((height, width))
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
             value = (
@@ -361,6 +363,7 @@ class PluginSettingsMemoize:
             self.plugin.get_setting("calibrate_x1"),
             self.plugin.get_setting("calibrate_y1"),
         )
+
     @property
     def calibration_mask(self):
         return self.calc_calibration_mask(*self.calibration_mask)
