@@ -343,7 +343,7 @@ class PluginSettingsMemoize:
         )
 
     def calc_calibration_mask(
-        x0: float, y0: float, x1: float, y1: float, height=480, width=640
+        self, x0: float, y0: float, x1: float, y1: float, height=480, width=640
     ):
         mask = np.zeros((height, width))
         for (h, w), _ in np.ndenumerate(np.zeros((height, width))):
@@ -366,7 +366,7 @@ class PluginSettingsMemoize:
 
     @property
     def calibration_mask(self):
-        return self.calc_calibration_mask(*self.calibration_mask)
+        return self.calc_calibration_mask(*self.calibration_xy)
 
     @property
     def monitoring_frames_per_minute(self):
