@@ -66,14 +66,16 @@ def metadata(octoprint_environment):
         plugin_version=__plugin_version__,
     )
 
+
 @pytest.fixture
 def metadata_pb():
     return print_nanny_client.protobuf.monitoring_pb2.Metadata(
-            user_id=1234,
-            octoprint_device_id=1234,
-            cloudiot_device_id=1234,
-            ts=datetime.now().timestamp(),
+        user_id=1234,
+        octoprint_device_id=1234,
+        cloudiot_device_id=1234,
+        ts=datetime.now().timestamp(),
     )
+
 
 def pytest_addoption(parser):
     parser.addoption(
