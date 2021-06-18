@@ -182,9 +182,11 @@ class WorkerManager:
     async def on_calibration_update(self):
         payload = dict(
             octoprint_device=self.plugin_settings.octoprint_device_id,
-            xy=self.plugin_settings.calibration_xy
+            xy=self.plugin_settings.calibration_xy,
         )
         device_calibration = (
-            await self.plugin_settings.rest_client.update_or_create_device_calibration(payload)
+            await self.plugin_settings.rest_client.update_or_create_device_calibration(
+                payload
+            )
         )
         logger.info(f"Device calibration upsert succeeded {device_calibration}")

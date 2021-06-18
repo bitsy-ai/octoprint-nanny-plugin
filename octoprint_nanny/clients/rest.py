@@ -304,15 +304,11 @@ class RestAPIClient:
         on_backoff=backoff_hdlr,
         on_giveup=giveup_hdlr,
     )
-    async def update_or_create_device_calibration(
-        self, **kwargs
-    ):
+    async def update_or_create_device_calibration(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = print_nanny_client.MlOpsApi(api_client=api_client)
 
-            request = print_nanny_client.DeviceCalibrationRequest(
-                **kwargs
-            )
+            request = print_nanny_client.DeviceCalibrationRequest(**kwargs)
             device_calibration = await api_instance.device_calibration_update_or_create(
                 request
             )
