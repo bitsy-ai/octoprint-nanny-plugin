@@ -276,7 +276,10 @@ class PluginSettingsMemoize:
         )
         self._print_session_rest = print_session
         self._print_session_pb = print_nanny_client.protobuf.common_pb2.PrintSession(
-            session=session, id=print_session.id, created_ts=now.timestamp()
+            session=session,
+            id=print_session.id,
+            created_ts=now.timestamp(),
+            datesegment=print_session.datesegment,
         )
         return self._print_session_rest
 
