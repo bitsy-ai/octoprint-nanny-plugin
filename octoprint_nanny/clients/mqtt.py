@@ -29,9 +29,7 @@ IOT_DEVICE_REGISTRY_REGION = os.environ.get(
 )
 
 OCTOPRINT_EVENT_FOLDER = "octoprint-events"
-POST_EVENT_FOLDER = "monitoring-frame-post"
-RAW_EVENT_FOLDER = "monitoring-frame-raw"
-ACTIVE_LEARNING_EVENT_FOLDER = "active-learning"
+MONITORING_IMAGE_FOLDER = "MonitoringImage"
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.mqtt")
 device_logger = logging.getLogger(
@@ -131,13 +129,10 @@ class MQTTClient:
         self.octoprint_event_topic = os.path.join(
             self.default_telemetry_topic, OCTOPRINT_EVENT_FOLDER
         )
-        # bounding box telemetry topic
-        self.monitoring_frame_post_topic = os.path.join(
-            self.default_telemetry_topic, POST_EVENT_FOLDER
-        )
+
         # active learning telemetry topic
-        self.monitoring_frame_raw_topic = os.path.join(
-            self.default_telemetry_topic, RAW_EVENT_FOLDER
+        self.monitoring_image_topic = os.path.join(
+            self.default_telemetry_topic, MONITORING_IMAGE_FOLDER
         )
 
     ###
@@ -287,21 +282,13 @@ class MQTTClient:
             payload, topic=self.octoprint_event_topic, retain=retain, qos=qos
         )
 
-    def publish_monitoring_frame_post(self, event, retain=False, qos=1):
-        logger.debug(
-            f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_post_topic}"
-        )
-        return self.publish(
-            event, topic=self.monitoring_frame_post_topic, retain=retain, qos=qos
-        )
-
-    def publish_monitoring_frame_raw(self, event, retain=False, qos=1):
+    def publish_monitoring_image(self, event, retain=False, qos=1):
 
         logger.debug(
-            f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_frame_raw_topic}"
+            f"Publishing msg size={sys.getsizeof(event)} topic={self.monitoring_image_topic}"
         )
         return self.publish(
-            event, topic=self.monitoring_frame_raw_topic, retain=retain, qos=qos
+            event, topic=self.monitoring_image_topic, retain=retain, qos=qos
         )
 
     def run(self):

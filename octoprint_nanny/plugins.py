@@ -30,6 +30,8 @@ from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
+from octoprint_nanny.workers.mqtt import build_telemetry_event
+
 from print_nanny_client import (
     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
@@ -166,35 +168,7 @@ class OctoPrintNannyPlugin(
             event = {
                 "event_type": Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING,
             }
-            environment = self._environment
-            environment = OctoprintEnvironment(
-                os=environment.get("os", {}),
-                python=environment.get("python", {}),
-                hardware=environment.get("hardware", {}),
-                pi_support=environment.get("plugins", {}).get("pi_support", {}),
-            )
-            printer_data = self._printer.get_current_data()
-            currentZ = printer_data.pop("currentZ")
-            logger.info(f"printer_data={printer_data}")
-            printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-            print_session = (
-                self.settings.print_session.id
-                if self.settings.print_session
-                else self.settings.print_session
-            )
-            payload = TelemetryEvent(
-                print_session=print_session,
-                octoprint_environment=environment,
-                octoprint_printer_data=printer_data,
-                temperature=self._printer.get_current_temperatures(),
-                print_nanny_plugin_version=self._plugin_version,
-                print_nanny_client_version=print_nanny_client.__version__,
-                octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-                octoprint_device=self.settings.octoprint_device_id,
-                ts=datetime.now(pytz.timezone("UTC")).timestamp(),
-                **event,
-            )
-            payload = payload.to_dict()
+            payload = build_telemetry_event(event, self).to_dict()
             mqtt_client.publish_octoprint_event(payload)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_SUCCESS,
@@ -772,6 +746,10 @@ class OctoPrintNannyPlugin(
 
         else:
             logger.info(f"Ignoring event_type={event_type} event_data={event_data}")
+
+    def on_environment_detected(self, environment, *args, **kwargs):
+        self._octoprint_environment = environment
+        self.worker_manager.plugin.settings.on_environment_detected(environment)
 
     @beeline.traced(name="OctoPrintNannyPlugin.on_settings_initialized")
     def on_settings_initialized(self):

@@ -91,7 +91,7 @@ async def test_mqtt_send_queue_monitoring_frame_raw(
     }
     manager.mqtt_send_queue.put_nowait(event)
 
-    mock_fn = plugin_settings.mqtt_client.publish_monitoring_frame_raw
+    mock_fn = plugin_settings.mqtt_client.publish_monitoring_image
     mock_fn.return_value = asyncio.Future()
     mock_fn.return_value.set_result("foo")
 

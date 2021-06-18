@@ -8,7 +8,6 @@ OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
 OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
 mypy:
-	. .venv/bin/activate
 	mypy octoprint_nanny/
 
 clean-build: ## remove build artifacts

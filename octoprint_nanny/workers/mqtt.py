@@ -39,6 +39,37 @@ from octoprint_nanny.settings import PluginSettingsMemoize
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
+def build_telemetry_event(event, plugin) -> TelemetryEvent:
+    environment = plugin.settings.octoprint_environment
+    environment = OctoprintEnvironment(
+        os=environment.get("os", {}),
+        python=environment.get("python", {}),
+        hardware=environment.get("hardware", {}),
+        pi_support=environment.get("plugins", {}).get("pi_support", {}),
+    )
+    printer_data = plugin._printer.get_current_data()
+    currentZ = printer_data.pop("currentZ")
+    logger.info(f"printer_data={printer_data}")
+    printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
+    print_session = (
+        plugin.settings.print_session_rest.id
+        if plugin.settings.print_session_rest
+        else plugin.settings.print_session_rest
+    )
+    return TelemetryEvent(
+        print_session=print_session,
+        octoprint_environment=environment,
+        octoprint_printer_data=printer_data,
+        temperature=plugin._printer.get_current_temperatures(),
+        print_nanny_plugin_version=plugin._plugin_version,
+        print_nanny_client_version=print_nanny_client.__version__,
+        octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+        octoprint_device=plugin.settings.octoprint_device_id,
+        ts=datetime.now(pytz.timezone("UTC")).timestamp(),
+        **event,
+    )
+
+
 class MQTTManager:
     def __init__(
         self,
@@ -156,37 +187,10 @@ class MQTTPublisherWorker:
         loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
-        environment = self.plugin_settings.environment
-        environment = OctoprintEnvironment(
-            os=environment.get("os", {}),
-            python=environment.get("python", {}),
-            hardware=environment.get("hardware", {}),
-            pi_support=environment.get("plugins", {}).get("pi_support", {}),
+        payload = build_telemetry_event(event, self.plugin)
+        return self.plugin_settings.mqtt_client.publish_octoprint_event(
+            payload.to_dict()
         )
-        printer_data = self.plugin._printer.get_current_data()
-        currentZ = printer_data.pop("currentZ")
-        logger.info(f"printer_data={printer_data}")
-        printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-        print_session = (
-            self.plugin_settings.print_session.id
-            if self.plugin_settings.print_session
-            else self.plugin_settings.print_session
-        )
-        payload = TelemetryEvent(
-            print_session=print_session,
-            octoprint_environment=environment,
-            octoprint_printer_data=printer_data,
-            temperature=self.plugin._printer.get_current_temperatures(),
-            print_nanny_plugin_version=self.plugin._plugin_version,
-            print_nanny_client_version=print_nanny_client.__version__,
-            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-            octoprint_device=self.plugin_settings.octoprint_device_id,
-            ts=datetime.now(pytz.timezone("UTC")).timestamp(),
-            **event,
-        )
-        payload = payload.to_dict()
-
-        return self.plugin_settings.mqtt_client.publish_octoprint_event(payload)
 
     async def _loop(self):
         try:
@@ -203,7 +207,6 @@ class MQTTPublisherWorker:
             event_type = event.get("event_type")
 
             if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-                ts = event["event_data"]["ts"]
                 image_bytes = event["event_data"]["image"]
                 pimage = PIL.Image.open(io.BytesIO(image_bytes))
                 (w, h) = pimage.size
@@ -213,8 +216,7 @@ class MQTTPublisherWorker:
                     image_bytes=image_bytes,
                     width=w,
                     height=h,
-                    ts=ts,
-                    plugin_settings=self.plugin_settings,
+                    metadata_pb=self.plugin_settings.metadata_pb,
                 )
 
                 b64_image = base64.b64encode(image_bytes)
@@ -222,7 +224,7 @@ class MQTTPublisherWorker:
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,
                 )
-                return self.plugin_settings.mqtt_client.publish_monitoring_frame_raw(
+                return self.plugin_settings.mqtt_client.publish_monitoring_image(
                     monitoring_image.SerializeToString()
                 )
             if event_type is None:
