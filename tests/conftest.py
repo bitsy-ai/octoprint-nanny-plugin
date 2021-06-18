@@ -19,6 +19,68 @@ class MockResponse(object):
 
 
 @pytest.fixture
+def current_temperatures():
+    # TODO get payload structure https://docs.octoprint.org/en/master/modules/printer.html#octoprint.printer.PrinterInterface.get_current_temperatures
+    return dict()
+
+
+@pytest.fixture
+def current_printer_state():
+    return {
+        "state": {
+            "text": "Offline",
+            "flags": {
+                "operational": False,
+                "printing": False,
+                "cancelling": False,
+                "pausing": False,
+                "resuming": False,
+                "finishing": False,
+                "closedOrError": True,
+                "error": False,
+                "paused": False,
+                "ready": False,
+                "sdReady": False,
+            },
+            "error": "",
+        },
+        "job": {
+            "file": {
+                "name": None,
+                "path": None,
+                "size": None,
+                "origin": None,
+                "date": None,
+            },
+            "estimatedPrintTime": None,
+            "lastPrintTime": None,
+            "filament": {"length": None, "volume": None},
+            "user": None,
+        },
+        "currentZ": None,
+        "progress": {
+            "completion": None,
+            "filepos": None,
+            "printTime": None,
+            "printTimeLeft": None,
+            "printTimeOrigin": None,
+        },
+        "offsets": {},
+        "resends": {"count": 0, "ratio": 0},
+    }
+
+
+@pytest.fixture
+def EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES():
+    with open("octoprint_nanny/data/images/0.pre.jpg", "rb") as f:
+        image = f.read()
+    return dict(
+        event_type="plugin_octoprint_nanny_monitoring_frame_b64",
+        event_data=dict(image=image),
+    )
+
+
+@pytest.fixture
 def mock_image():
     return MockResponse()
 
@@ -88,7 +150,9 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture
-def plugin_settings(mocker, metadata, metadata_pb):
+def plugin_settings(
+    mocker, metadata, metadata_pb, current_printer_state, current_temperatures
+):
     plugin_settings = mocker.Mock()
     plugin_settings.metadata = metadata
     plugin_settings.print_session_pb = PrintSession(
@@ -99,8 +163,18 @@ def plugin_settings(mocker, metadata, metadata_pb):
     )
 
     plugin_settings.metadata_pb = metadata_pb
+    plugin_settings.current_printer_state = current_printer_state
+    plugin_settings.plugin_version = __plugin_version__
+    plugin_settings.current_temperatures = current_temperatures
 
     return plugin_settings
+
+
+@pytest.fixture
+def mock_plugin(mocker, plugin_settings):
+    plugin = mocker.Mock()
+    plugin.settings = plugin_settings
+    return plugin
 
 
 def pytest_collection_modifyitems(config, items):

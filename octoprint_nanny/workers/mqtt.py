@@ -14,7 +14,7 @@ import PIL
 import io
 import beeline
 import base64
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Any
 import print_nanny_client
 
 from octoprint.events import Events
@@ -47,9 +47,8 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
         hardware=environment.get("hardware", {}),
         pi_support=environment.get("plugins", {}).get("pi_support", {}),
     )
-    printer_data = plugin._printer.get_current_data()
+    printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
-    logger.info(f"printer_data={printer_data}")
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
     print_session = (
         plugin.settings.print_session_rest.id
@@ -60,8 +59,8 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
         print_session=print_session,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
-        temperature=plugin._printer.get_current_temperatures(),
-        print_nanny_plugin_version=plugin._plugin_version,
+        temperature=plugin.settings.current_temperatures,
+        print_nanny_plugin_version=plugin.settings.plugin_version,
         print_nanny_client_version=print_nanny_client.__version__,
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
@@ -192,6 +191,30 @@ class MQTTPublisherWorker:
             payload.to_dict()
         )
 
+    def handle_monitoring_frame_bytes(self, event: Dict[str, Any]):
+        if self.plugin_settings.monitoring_active:
+            image_bytes = event["event_data"]["image"]
+            pimage = PIL.Image.open(io.BytesIO(image_bytes))
+            (w, h) = pimage.size
+            image = Image(height=h, width=w, data=image_bytes)
+
+            monitoring_image = build_monitoring_image(
+                image_bytes=image_bytes,
+                width=w,
+                height=h,
+                metadata_pb=self.plugin_settings.metadata_pb,
+            )
+
+            b64_image = base64.b64encode(image_bytes)
+            if self.plugin_settings.monitoring_active:
+                self.plugin._event_bus.fire(
+                    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
+                    payload=b64_image,
+                )
+            return self.plugin_settings.mqtt_client.publish_monitoring_image(
+                monitoring_image.SerializeToString()
+            )
+
     async def _loop(self):
         try:
 
@@ -207,26 +230,7 @@ class MQTTPublisherWorker:
             event_type = event.get("event_type")
 
             if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-                image_bytes = event["event_data"]["image"]
-                pimage = PIL.Image.open(io.BytesIO(image_bytes))
-                (w, h) = pimage.size
-                image = Image(height=h, width=w, data=image_bytes)
-
-                monitoring_image = build_monitoring_image(
-                    image_bytes=image_bytes,
-                    width=w,
-                    height=h,
-                    metadata_pb=self.plugin_settings.metadata_pb,
-                )
-
-                b64_image = base64.b64encode(image_bytes)
-                self.plugin._event_bus.fire(
-                    Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
-                    payload=b64_image,
-                )
-                return self.plugin_settings.mqtt_client.publish_monitoring_image(
-                    monitoring_image.SerializeToString()
-                )
+                self.handle_monitoring_frame_bytes(event)
             if event_type is None:
                 logger.error(
                     "Ignoring enqueued msg without type declared {event}".format(

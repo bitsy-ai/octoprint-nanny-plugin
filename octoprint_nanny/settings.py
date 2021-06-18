@@ -145,10 +145,12 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer_profile_manager.get_current_or_default()
 
-    def get_current_octoprint_temperatures(self):
+    @property
+    def current_temperatures(self):
         return self.plugin._printer.get_current_temperatures()
 
-    def get_current_octoprint_printer_state(self):
+    @property
+    def current_printer_state(self):
         """
         {'state': {'text': 'Offline', 'flags': {'operational': False, 'printing': False, 'cancelling': False, 'pausing': False, 'resuming': False, 'finishing': False, 'closedOrError': True, 'error': False, 'paused': False, 'ready': False, 'sdReady': False}, 'error': ''}, 'job': {'file': {'name': None, 'path': None, 'size': None, 'origin': None, 'date': None}, 'estimatedPrintTime': None, 'lastPrintTime': None, 'filament': {'length': None, 'volume': None}, 'user': None}, 'currentZ': None, 'progress': {'completion': None, 'filepos': None, 'printTime': None, 'printTimeLeft': None, 'printTimeOrigin': None}, 'offsets': {}, 'resends': {'count': 0, 'ratio': 0}}
         """
@@ -283,6 +285,10 @@ class PluginSettingsMemoize:
         return self._octoprint_environment
 
     @property
+    def plugin_version(self):
+        return self.plugin._plugin_version
+
+    @property
     def metadata(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
         print_session = (
@@ -301,7 +307,7 @@ class PluginSettingsMemoize:
             ts=ts,
             octoprint_environment=self.octoprint_environment,
             octoprint_version=octoprint.util.version.get_octoprint_version_string(),
-            plugin_version=self.plugin._plugin_version,
+            plugin_version=self.plugin_version,
         )
 
     @property
@@ -320,7 +326,7 @@ class PluginSettingsMemoize:
     def octoprint_environment_pb(self):
         octoprint_environment = self.octoprint_environment
         return print_nanny_client.protobuf.common_pb2.OctoprintEnvironment(
-            plugin_version=self.plugin._plugin_version,
+            plugin_version=self.plugin_version,
             client_version=print_nanny_client.__version__,
             python_version=octoprint_environment.get("python", {}).get("version"),
             pip_version=octoprint_environment.get("python", {}).get("pip"),
