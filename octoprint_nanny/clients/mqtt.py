@@ -256,7 +256,7 @@ class MQTTClient:
         )
         logger.info(f"MQTT client connected to {self.mqtt_bridge_hostname}")
 
-    def publish(self, payload, topic=None, retain=False, qos=1):
+    def publish(self, payload, topic=None, retain=False, qos=1) -> mqtt.MQTTMessageInfo:
 
         """
         topic

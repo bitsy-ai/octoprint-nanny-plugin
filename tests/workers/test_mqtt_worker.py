@@ -10,6 +10,40 @@ from octoprint_nanny.workers.mqtt import (
 )
 
 
+def test_frame_sent_monitoring_active(
+    mocker, mock_plugin, EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+):
+    queue = mocker.Mock()
+    worker = MQTTPublisherWorker(
+        queue=queue, plugin=mock_plugin, plugin_settings=mock_plugin.settings
+    )
+
+    mock_plugin.settings.monitoring_active = True
+    res = worker.handle_monitoring_frame_bytes(
+        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+    )
+
+    assert mock_plugin.settings.mqtt_client.called_once()
+    assert mock_plugin._event_bus.fire().called_once()
+
+
+def test_frame_skipped_monitoring_inactive(
+    mocker, mock_plugin, EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+):
+    queue = mocker.Mock()
+    worker = MQTTPublisherWorker(
+        queue=queue, plugin=mock_plugin, plugin_settings=mock_plugin.settings
+    )
+
+    mock_plugin.settings.monitoring_active = False
+    res = worker.handle_monitoring_frame_bytes(
+        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+    )
+
+    assert mock_plugin.settings.mqtt_client.called is False
+    assert mock_plugin._event_bus.fire().called is False
+
+
 @pytest.mark.asyncio
 async def test_handle_config_update(mocker):
     plugin = mocker.Mock()
