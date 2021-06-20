@@ -53,17 +53,14 @@ class PluginSettingsMemoize:
         self._print_session_rest = None
         self._print_session_pb = None
 
-    @beeline.traced("PluginSettingsMemoize.reset_device_settings_state")
     def reset_device_settings_state(self):
         self._mqtt_client = None
         self._device_info = None
 
-    @beeline.traced("PluginSettingsMemoize.reset_rest_client_state")
     def reset_rest_client_state(self):
         self._rest_client = None
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_job")
-    def get_current_octoprint_job(self):
+    def current_job(self):
         """
         GET /api/job HTTP/1.1
             {
@@ -93,7 +90,6 @@ class PluginSettingsMemoize:
         """
         return self.plugin._printer.get_current_job()
 
-    @beeline.traced("PluginSettingsMemoize.get_current_octoprint_profile")
     def get_current_octoprint_profile(self):
         """
         HTTP/1.1 200 OK
@@ -251,11 +247,11 @@ class PluginSettingsMemoize:
 
     async def create_print_session(self):
         session = uuid.uuid4().hex
-        octoprint_job = self.get_current_octoprint_job()
+        octoprint_job = self.current_job()
 
         gcode_filename = None
-        if octoprint_job.get("job") and octoprint_job.get("job").get("file"):
-            gcode_filename = gcode_filename
+        if octoprint_job.get("file") and octoprint_job.get("file").get("name"):
+            gcode_filename = octoprint_job.get("file").get("name")
 
         # @todo sync gcode file to remote
 
@@ -265,15 +261,15 @@ class PluginSettingsMemoize:
         )
 
         now = datetime.utcnow()
-
         print_session = await self.rest_client.create_print_session(
-            gcode_filename=gcode_filename,
             session=session,
             printer_profile=printer_profile.id,
             octoprint_device=self.octoprint_device_id,
             octoprint_job=octoprint_job,
             created_dt=now,
+            gcode_filename=gcode_filename,
         )
+        logger.info(f"Created print_session={print_session}")
         self._print_session_rest = print_session
         self._print_session_pb = print_nanny_client.protobuf.common_pb2.PrintSession(
             session=session,
