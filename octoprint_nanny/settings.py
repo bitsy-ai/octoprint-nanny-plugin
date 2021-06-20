@@ -271,12 +271,13 @@ class PluginSettingsMemoize:
         )
         logger.info(f"Created print_session={print_session}")
         self._print_session_rest = print_session
-        self._print_session_pb = print_nanny_client.protobuf.common_pb2.PrintSession(
-            session=session,
-            id=print_session.id,
-            created_ts=now.timestamp(),
-            datesegment=print_session.datesegment,
-        )
+        pb = print_nanny_client.protobuf.common_pb2.PrintSession()
+
+        pb.session = session
+        pb.id = print_session.id
+        pb.created_ts = now.timestamp()
+        pb.datesegment = print_session.datesegment
+        self._print_session_pb = pb
         return self._print_session_rest
 
     @property
@@ -312,40 +313,46 @@ class PluginSettingsMemoize:
     @property
     def metadata_pb(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
-        return print_nanny_client.protobuf.monitoring_pb2.Metadata(
-            user_id=self.user_id,
-            octoprint_device_id=self.octoprint_device_id,
-            cloudiot_device_id=self.cloudiot_device_id,
-            print_session=self.print_session_pb,
-            ts=ts,
-            octoprint_environment=self.octoprint_environment_pb,
-        )
+
+        pb = print_nanny_client.protobuf.monitoring_pb2.Metadata()
+        pb.user_id = self.user_id
+        pb.octoprint_device_id = self.octoprint_device_id
+        pb.cloudiot_device_id = self.cloudiot_device_id
+        pb.print_session.CopyFrom(self.print_session_pb)
+        pb.octoprint_environment.CopyFrom(self.octoprint_environment_pb)
+        pb.ts = ts
+        logger.info(f"Created ts={pb.ts} from ts={ts}")
+        return pb
 
     @property
     def octoprint_environment_pb(self):
         octoprint_environment = self.octoprint_environment
-        return print_nanny_client.protobuf.common_pb2.OctoprintEnvironment(
-            plugin_version=self.plugin_version,
-            client_version=print_nanny_client.__version__,
-            python_version=octoprint_environment.get("python", {}).get("version"),
-            pip_version=octoprint_environment.get("python", {}).get("pip"),
-            octopi_version=octoprint_environment.get("plugins", {})
+        pb = print_nanny_client.protobuf.common_pb2.OctoprintEnvironment()
+        pb.plugin_version = self.plugin_version
+        pb.client_version = print_nanny_client.__version__
+        pb.python_version = octoprint_environment.get("python", {}).get("version")
+        pb.pip_version = octoprint_environment.get("python", {}).get("pip")
+
+        pb.octopi_version = (
+            octoprint_environment.get("plugins", {})
             .get("pi_support", {})
-            .get("octopi_version"),
-            virtualenv=octoprint_environment.get("python", {}).get("virtualenv"),
-            platform=octoprint_environment.get("os", {}).get("platform"),
-            bits=octoprint_environment.get("os", {}).get("bits"),
-            cores=octoprint_environment.get("hardware", {}).get("cores"),
-            freq=octoprint_environment.get("hardware", {}).get("freq"),
-            ram=octoprint_environment.get("hardware", {}).get("ram"),
-            pi_model=octoprint_environment.get("plugins", {})
-            .get("pi_support", {})
-            .get("model"),
-            pi_throttle_state=octoprint_environment.get("plugins", {})
-            .get("pi_support", {})
-            .get("throttle_state"),
-            octoprint_version=octoprint.util.version.get_octoprint_version_string(),
+            .get("octopi_version")
         )
+        pb.virtualenv = octoprint_environment.get("python", {}).get("virtualenv")
+        pb.platform = octoprint_environment.get("os", {}).get("platform")
+        pb.bits = octoprint_environment.get("os", {}).get("bits")
+        pb.cores = octoprint_environment.get("hardware", {}).get("cores")
+        pb.freq = octoprint_environment.get("hardware", {}).get("freq")
+        pb.ram = octoprint_environment.get("hardware", {}).get("ram")
+        pb.pi_model = octoprint_environment.get("plugins", {}).get("pi_support", {}).get("model")
+        
+        pb.pi_throttle_state = (
+            octoprint_environment.get("plugins", {})
+            .get("pi_support", {})
+            .get("throttle_state")
+        )
+        pb.octoprint_version = octoprint.util.version.get_octoprint_version_string()
+        return pb
 
     def calc_calibration_mask(
         self, x0: float, y0: float, x1: float, y1: float, height=480, width=640

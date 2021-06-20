@@ -204,7 +204,6 @@ class MQTTPublisherWorker:
                 height=h,
                 metadata_pb=self.plugin_settings.metadata_pb,
             )
-
             b64_image = base64.b64encode(image_bytes)
             if self.plugin_settings.monitoring_active:
                 self.plugin._event_bus.fire(

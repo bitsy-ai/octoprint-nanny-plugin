@@ -131,12 +131,12 @@ def metadata(octoprint_environment):
 
 @pytest.fixture
 def metadata_pb():
-    return print_nanny_client.protobuf.monitoring_pb2.Metadata(
-        user_id=1234,
-        octoprint_device_id=1234,
-        cloudiot_device_id=1234,
-        ts=datetime.now().timestamp(),
-    )
+    pb = print_nanny_client.protobuf.monitoring_pb2.Metadata()
+    pb.user_id = 1234
+    pb.octoprint_device_id = 1234
+    pb.cloudiot_device_id = 1234
+    pb.ts = datetime.now().timestamp()
+    return pb
 
 
 def pytest_addoption(parser):
@@ -155,12 +155,13 @@ def plugin_settings(
 ):
     plugin_settings = mocker.Mock()
     plugin_settings.metadata = metadata
-    plugin_settings.print_session_pb = PrintSession(
-        id=1,
-        session=uuid.uuid4().hex,
-        created_ts=datetime.now().timestamp(),
-        datesegment="2021/01/01",
-    )
+
+    pb = PrintSession()
+    pb.id = 1
+    pb.session = uuid.uuid4().hex
+    pb.created_ts = datetime.now().timestamp()
+    pb.datesegment = "2021/01/01"
+    plugin_settings.print_session_pb = pb
 
     plugin_settings.metadata_pb = metadata_pb
     plugin_settings.current_printer_state = current_printer_state
