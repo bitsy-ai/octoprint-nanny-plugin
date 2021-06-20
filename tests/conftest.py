@@ -131,12 +131,12 @@ def metadata(octoprint_environment):
 
 @pytest.fixture
 def metadata_pb():
-    pb = print_nanny_client.protobuf.monitoring_pb2.Metadata()
-    pb.user_id = 1234
-    pb.octoprint_device_id = 1234
-    pb.cloudiot_device_id = 1234
-    pb.ts = datetime.now().timestamp()
-    return pb
+    return print_nanny_client.protobuf.monitoring_pb2.Metadata(
+        user_id=1234,
+        octoprint_device_id=1234,
+        cloudiot_device_id=1234,
+        ts=datetime.now().timestamp(),
+    )
 
 
 def pytest_addoption(parser):
