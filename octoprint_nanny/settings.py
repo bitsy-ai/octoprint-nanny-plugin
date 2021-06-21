@@ -312,7 +312,7 @@ class PluginSettingsMemoize:
     @property
     def metadata_pb(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
-        return print_nanny_client.protobuf.monitoring_pb2.Metadata(
+        metadata = print_nanny_client.protobuf.monitoring_pb2.Metadata(
             user_id=self.user_id,
             octoprint_device_id=self.octoprint_device_id,
             cloudiot_device_id=self.cloudiot_device_id,
@@ -320,6 +320,9 @@ class PluginSettingsMemoize:
             ts=ts,
             octoprint_environment=self.octoprint_environment_pb,
         )
+        logger.info(f"Created metadata.ts={metadata.ts} with ts={ts}")
+
+        return metadata
 
     @property
     def octoprint_environment_pb(self):
