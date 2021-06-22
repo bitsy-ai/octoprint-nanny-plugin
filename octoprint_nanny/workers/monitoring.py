@@ -151,10 +151,6 @@ class MonitoringManager:
                 thread.start()
                 self._worker_threads.append(thread)
 
-            await self.plugin.settings.rest_client.update_octoprint_device(
-                self.plugin.settings.octoprint_device_id,
-                monitoring_active=True,
-            )
             logger.info("Print Nanny monitoring is now active")
         else:
             logger.warning(

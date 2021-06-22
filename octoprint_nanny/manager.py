@@ -137,7 +137,6 @@ class WorkerManager:
 
         await self.plugin_settings.rest_client.update_octoprint_device(
             self.plugin_settings.octoprint_device_id,
-            monitoring_active=False,
             printer_state="Offline",
         )
 
