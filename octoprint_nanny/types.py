@@ -21,12 +21,13 @@ class Metadata:
     octoprint_device_id: int
     cloudiot_device_id: int
     ts: float
-    print_session: str
     client_version: str
     octoprint_version: str
     plugin_version: str
-    environment: Dict[str, str]
+    octoprint_environment: Dict[str, str]
     model_version: Optional[str] = None
+    print_session: Optional[str] = None
+    print_session_id: Optional[int] = None
 
     def to_dict(self):
         return asdict(self)

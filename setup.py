@@ -20,7 +20,7 @@ plugin_package = "octoprint_nanny"
 plugin_name = "OctoPrint Nanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.6.6"
+plugin_version = "0.7.0"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -86,24 +86,12 @@ if sys.version_info.major == 2:
 
 # hardware layer : software layer : wheel
 plugin_requires_third_party_wheel_map = {
-    "armv7l": {
-        "32bit": [
-            "pyarrow @ https://github.com/bitsy-ai/pyarrow-arm-bin/releases/download/apache-arrow-3.0.0/pyarrow-3.0.0-cp37-cp37m-linux_armv7l.whl",
-        ]
-    },
+    "armv7l": {"32bit": []},
     "aarch64": {
-        "32bit": [
-            "pyarrow==3.0.0",
-        ],
-        "64bit": [
-            "pyarrow==3.0.0",
-        ],
+        "32bit": [],
+        "64bit": [],
     },
-    "x86_64": {
-        "64bit": [
-            "pyarrow==3.0.0",
-        ]
-    },
+    "x86_64": {"64bit": []},
 }
 
 offline_requires_third_party_wheel_map = {
@@ -154,12 +142,11 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "print-nanny-client>=0.6.6rc1",
+    "print-nanny-client>=0.7.0dev27",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
     "honeycomb-beeline",
-    "flatbuffers==1.12",
     "websockets>=9.1",
 ] + plugin_requires_third_party_wheels
 

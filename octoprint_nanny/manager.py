@@ -35,8 +35,6 @@ class WorkerManager:
 
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-        self.plugin = plugin
-
         # outbound telemetry messages to MQTT bridge
         self.mqtt_send_queue: queue.Queue = queue.Queue()
         # inbound MQTT command and config messages from MQTT bridge
@@ -45,6 +43,8 @@ class WorkerManager:
         if plugin_settings is None:
             plugin_settings = PluginSettingsMemoize(plugin, self.mqtt_receive_queue)
 
+        self.plugin_settings = plugin_settings
+        self.plugin = plugin
         self.plugin.settings = plugin_settings
 
         self.monitoring_manager = MonitoringManager(
@@ -56,6 +56,7 @@ class WorkerManager:
             mqtt_send_queue=self.mqtt_send_queue,
             mqtt_receive_queue=self.mqtt_receive_queue,
             plugin=plugin,
+            plugin_settings=plugin_settings,
         )
         # local callback/handler functions for events published via telemetry queue
         self._mqtt_send_queue_callbacks = {
@@ -99,7 +100,7 @@ class WorkerManager:
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
         self._honeycomb_tracer.add_global_context(
-            self.plugin.settings.metadata.to_dict()
+            self.plugin_settings.metadata.to_dict()
         )
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
@@ -107,13 +108,13 @@ class WorkerManager:
     @beeline.traced("WorkerManager.mqtt_client_reset")
     def mqtt_client_reset(self):
         self.mqtt_manager.shutdown()
-        self.plugin.settings.reset_device_settings_state()
-        self.plugin.settings.reset_rest_client_state()
+        self.plugin_settings.reset_device_settings_state()
+        self.plugin_settings.reset_rest_client_state()
         self.mqtt_manager.start()
         logger.info(
             "Stopping any existing monitoring processes to apply new calibration"
         )
-        monitoring_was_active = bool(self.plugin.settings.monitoring_active)
+        monitoring_was_active = bool(self.plugin_settings.monitoring_active)
         asyncio.run_coroutine_threadsafe(self.monitoring_manager.stop(), self.loop)
         logger.info("Sending latest calibration")
         asyncio.run_coroutine_threadsafe(self.on_calibration_update(), self.loop)
@@ -134,8 +135,8 @@ class WorkerManager:
     async def shutdown(self):
         await self.monitoring_manager.stop()
 
-        await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.octoprint_device_id,
+        await self.plugin_settings.rest_client.update_octoprint_device(
+            self.plugin_settings.octoprint_device_id,
             monitoring_active=False,
             printer_state="Offline",
         )
@@ -154,8 +155,8 @@ class WorkerManager:
                 self.plugin._printer_profile_manager.get_current_or_default()
             )
             printer_profile = (
-                await self.plugin.settings.rest_client.update_or_create_printer_profile(
-                    current_profile, self.plugin.settings.octoprint_device_id
+                await self.plugin_settings.rest_client.update_or_create_printer_profile(
+                    current_profile, self.plugin_settings.octoprint_device_id
                 )
             )
 
@@ -163,14 +164,14 @@ class WorkerManager:
                 octoprint.filemanager.FileDestinations.LOCAL, event_data["path"]
             )
             gcode_file = (
-                await self.plugin.settings.rest_client.update_or_create_gcode_file(
+                await self.plugin_settings.rest_client.update_or_create_gcode_file(
                     event_data,
                     gcode_file_path,
-                    self.plugin.settings.octoprint_device_id,
+                    self.plugin_settings.octoprint_device_id,
                 )
             )
 
-            if self.plugin.settings.auto_start:
+            if self.plugin_settings.auto_start:
                 logger.info("Starting Print Nanny monitoring worker")
                 await self.monitoring_manager.start()
 
@@ -179,16 +180,13 @@ class WorkerManager:
             return
 
     async def on_calibration_update(self):
+        payload = dict(
+            octoprint_device=self.plugin_settings.octoprint_device_id,
+            xy=self.plugin_settings.calibration_xy,
+        )
         device_calibration = (
-            await self.plugin.settings.rest_client.update_or_create_device_calibration(
-                self.plugin.settings.octoprint_device_id,
-                {
-                    "x0": self.plugin.get_setting("calibrate_x0"),
-                    "x1": self.plugin.get_setting("calibrate_x1"),
-                    "y0": self.plugin.get_setting("calibrate_y0"),
-                    "y1": self.plugin.get_setting("calibrate_y1"),
-                },
-                self.plugin.settings.calibration,
+            await self.plugin_settings.rest_client.update_or_create_device_calibration(
+                payload
             )
         )
         logger.info(f"Device calibration upsert succeeded {device_calibration}")

@@ -10,16 +10,51 @@ from octoprint_nanny.workers.mqtt import (
 )
 
 
+def test_frame_sent_monitoring_active(
+    mocker, mock_plugin, EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+):
+    queue = mocker.Mock()
+    worker = MQTTPublisherWorker(
+        queue=queue, plugin=mock_plugin, plugin_settings=mock_plugin.settings
+    )
+
+    mock_plugin.settings.monitoring_active = True
+    res = worker.handle_monitoring_frame_bytes(
+        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+    )
+
+    assert mock_plugin.settings.mqtt_client.called_once()
+    assert mock_plugin._event_bus.fire().called_once()
+
+
+def test_frame_skipped_monitoring_inactive(
+    mocker, mock_plugin, EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+):
+    queue = mocker.Mock()
+    worker = MQTTPublisherWorker(
+        queue=queue, plugin=mock_plugin, plugin_settings=mock_plugin.settings
+    )
+
+    mock_plugin.settings.monitoring_active = False
+    res = worker.handle_monitoring_frame_bytes(
+        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+    )
+
+    assert mock_plugin.settings.mqtt_client.called is False
+    assert mock_plugin._event_bus.fire().called is False
+
+
 @pytest.mark.asyncio
 async def test_handle_config_update(mocker):
     plugin = mocker.Mock()
+    plugin_settings = mocker.Mock()
     mocker.Mock()
     queue = mocker.Mock()
 
-    data_folder = "/path/to/data"
-    plugin.get_plugin_data_folder.return_value = data_folder
-
-    subscriber_worker = MQTTSubscriberWorker(queue=queue, plugin=plugin)
+    plugin_settings.data_folder = "/path/to/data"
+    subscriber_worker = MQTTSubscriberWorker(
+        queue=queue, plugin=plugin, plugin_settings=plugin_settings
+    )
 
     mock_res = MagicMock()
     mock_res.__aenter__.return_value.get.return_value.__aenter__.return_value.text.return_value = (

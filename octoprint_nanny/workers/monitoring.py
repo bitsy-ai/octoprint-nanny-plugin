@@ -21,13 +21,9 @@ from octoprint_nanny.types import (
     Image,
 )
 from websockets.legacy.client import connect as ws_connect
-from print_nanny_client.flatbuffers.monitoring.MonitoringEventTypeEnum import (
-    MonitoringEventTypeEnum,
-)
 
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
-import octoprint_nanny.clients.flatbuffers
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
@@ -142,7 +138,7 @@ class MonitoringManager:
             self.plugin.settings.reset_print_session()
             await self.plugin.settings.create_print_session()
             logger.info(
-                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session.session}"
+                f"Initializing monitoring workers with print_session={self.plugin.settings.print_session_rest.session}"
             )
             for worker in self._workers:
                 thread = threading.Thread(
@@ -178,7 +174,7 @@ class MonitoringManager:
         await self.plugin.settings.rest_client.update_octoprint_device(
             self.plugin.settings.octoprint_device_id, monitoring_active=False
         )
-        if self.plugin.settings.print_session:
+        if self.plugin.settings.print_session_rest:
             logger.info(
-                f"Closing monitoring session session={self.plugin.settings.print_session.session}"
+                f"Closing monitoring session session={self.plugin.settings.print_session_rest.session}"
             )
