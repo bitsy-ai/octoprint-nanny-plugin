@@ -320,8 +320,6 @@ class PluginSettingsMemoize:
             ts=ts,
             octoprint_environment=self.octoprint_environment_pb,
         )
-        logger.info(f"Created metadata.ts={metadata.ts} with ts={ts}")
-
         return metadata
 
     @property
