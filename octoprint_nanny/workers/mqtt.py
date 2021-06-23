@@ -270,7 +270,7 @@ class MQTTPublisherWorker:
                 logger.debug(e)
         logger.info(f"Exiting soon {self.__class__}.loop_forever")
 
-    def shutdown(self):
+    def shutdown(self, **kwargs):
         logger.warning("MQTTPublisherWorker shutdown initiated")
         self.exit.set()
 

@@ -133,14 +133,8 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self):
+
         await self.monitoring_manager.stop()
-
-        await self.plugin_settings.rest_client.update_octoprint_device(
-            self.plugin_settings.octoprint_device_id,
-            monitoring_active=False,
-            printer_state="Offline",
-        )
-
         self.mqtt_manager.shutdown()
         self._honeycomb_tracer.on_shutdown()
 

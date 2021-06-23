@@ -11,6 +11,7 @@ from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventType,
     PrintJobStatusEnum,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
+    PrinterStateEnum as PrinterEventType,
 )
 
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -49,8 +50,13 @@ class PluginSettingsMemoize:
         self._print_session_pb = None
         self._octoprint_environment = None
 
-    def reset_print_session(self):
-        self._print_session_rest = None
+    async def reset_print_session(self):
+        if self._print_session_rest is not None:
+            await self.rest_client.update_print_session(
+                self._print_session_rest.session,
+                active=False,
+            )
+            self._print_session_rest = None
         self._print_session_pb = None
 
     def reset_device_settings_state(self):
@@ -425,4 +431,6 @@ class PluginSettingsMemoize:
             or prefix_stripped in PrintJobStatusEnum.allowable_values
             or event_type in RemoteCommandEventType.allowable_values
             or prefix_stripped in RemoteCommandEventType.allowable_values
+            or event_type in PrinterEventType.allowable_values
+            or prefix_stripped in PrinterEventType.allowable_values
         )

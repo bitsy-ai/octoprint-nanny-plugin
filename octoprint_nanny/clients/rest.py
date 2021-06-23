@@ -235,6 +235,28 @@ class RestAPIClient:
             print_session = await api_instance.print_sessions_create(request)
             return print_session
 
+    @beeline.traced("RestAPIClient.update_print_session")
+    @backoff.on_exception(
+        backoff.expo,
+        aiohttp.ClientConnectionError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+        jitter=backoff.random_jitter,
+        giveup=fatal_code,
+        on_backoff=backoff_hdlr,
+        on_giveup=giveup_hdlr,
+    )
+    async def update_print_session(self, session: str, **kwargs):
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = RemoteControlApi(api_client=api_client)
+            request = print_nanny_client.models.patched_print_session_request.PatchedPrintSessionRequest(
+                **kwargs
+            )
+            print_session = await api_instance.print_session_partial_update(
+                session, patched_print_session_request=request
+            )
+            return print_session
+
     @beeline.traced("RestAPIClient.update_or_create_printer_profile")
     @backoff.on_exception(
         backoff.expo,
