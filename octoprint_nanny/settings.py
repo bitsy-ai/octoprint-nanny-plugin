@@ -11,6 +11,7 @@ from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventType,
     PrintJobStatusEnum,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
+    PrinterEventEventTypeEnum as PrinterEventType,
 )
 
 from octoprint_nanny.clients.mqtt import MQTTClient
@@ -430,4 +431,6 @@ class PluginSettingsMemoize:
             or prefix_stripped in PrintJobStatusEnum.allowable_values
             or event_type in RemoteCommandEventType.allowable_values
             or prefix_stripped in RemoteCommandEventType.allowable_values
+            or event_type in PrinterEventType.allowable_values
+            or prefix_stripped in PrinterEventType.allowable_values
         )
