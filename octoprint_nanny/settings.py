@@ -11,7 +11,7 @@ from print_nanny_client import (
     OctoPrintEventEventTypeEnum as OctoPrintEventType,
     PrintJobStatusEnum,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
-    PrinterEventEventTypeEnum as PrinterEventType,
+    PrinterStateEnum as PrinterEventType,
 )
 
 from octoprint_nanny.clients.mqtt import MQTTClient
