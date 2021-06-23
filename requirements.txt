@@ -49,7 +49,7 @@ cryptography==3.4.7
     # via OctoPrint-Nanny (setup.py)
 emoji==0.6.0
     # via octoprint
-feedparser==6.0.6
+feedparser==6.0.8
     # via octoprint
 filetype==1.0.7
     # via octoprint
@@ -102,7 +102,7 @@ netaddr==0.8.0
     # via octoprint
 netifaces==0.11.0
     # via octoprint
-numpy==1.20.3
+numpy==1.21.0
     # via OctoPrint-Nanny (setup.py)
 octoprint-filecheck==2021.2.23
     # via octoprint
@@ -120,7 +120,7 @@ pillow==8.2.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-print-nanny-client==0.7.0.dev27
+print-nanny-client==0.7.1
     # via OctoPrint-Nanny (setup.py)
 protobuf==3.17.3
     # via print-nanny-client

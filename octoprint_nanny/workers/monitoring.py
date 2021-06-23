@@ -135,7 +135,7 @@ class MonitoringManager:
         if not monitoring_active:
             self.plugin._settings.set(["monitoring_active"], True)
             self._reset()
-            self.plugin.settings.reset_print_session()
+            await self.plugin.settings.reset_print_session()
             await self.plugin.settings.create_print_session()
             logger.info(
                 f"Initializing monitoring workers with print_session={self.plugin.settings.print_session_rest.session}"
@@ -151,10 +151,6 @@ class MonitoringManager:
                 thread.start()
                 self._worker_threads.append(thread)
 
-            await self.plugin.settings.rest_client.update_octoprint_device(
-                self.plugin.settings.octoprint_device_id,
-                monitoring_active=True,
-            )
             logger.info("Print Nanny monitoring is now active")
         else:
             logger.warning(
@@ -168,12 +164,9 @@ class MonitoringManager:
         self.plugin._event_bus.fire(
             Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_RESET,
         )
-        self.plugin._settings.set(
-            ["monitoring_active"], False
-        )  # @todo fix setting iface
-        await self.plugin.settings.rest_client.update_octoprint_device(
-            self.plugin.settings.octoprint_device_id, monitoring_active=False
-        )
+        self.plugin._settings.set(["monitoring_active"], False)
+        await self.plugin.settings.reset_print_session()
+
         if self.plugin.settings.print_session_rest:
             logger.info(
                 f"Closing monitoring session session={self.plugin.settings.print_session_rest.session}"
