@@ -716,9 +716,9 @@ class OctoPrintNannyPlugin(
         tracked = self.settings.event_is_tracked(event_type)
 
         # shutdown event is handled in .on_shutdown so queue is correctly drained
-        if event_type == Events.SHUTDOWN:
-            return
-        elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET:
+        # if event_type == Events.SHUTDOWN:
+        #     return
+        if event_type == Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_RESET:
             self.worker_manager.mqtt_client_reset()
 
         elif event_type == Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API:
