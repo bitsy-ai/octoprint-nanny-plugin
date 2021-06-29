@@ -117,7 +117,7 @@ $(function () {
                         self.statusCheckActive(false);
                         self.statusCheckSuccess(false);
                         self.statusCheckFailed(true);
-                        self.apiStatusMessage(message.data.error);
+                        self.apiStatusMessage(message.data.payload.error);
                         self.apiStatusClass('danger');
                         break
                     case 'plugin_octoprint_nanny_connect_test_rest_api_success':
@@ -130,7 +130,7 @@ $(function () {
                         self.statusCheckActive(false);
                         self.statusCheckSuccess(false);
                         self.statusCheckFailed(true);
-                        self.mqttPingStatusMessage(message.data.error);
+                        self.mqttPingStatusMessage(message.data.payload.error);
                         self.mqttPingStatusClass('danger');
                         break
                     case 'plugin_octoprint_nanny_connect_test_mqtt_ping_success':

@@ -50,13 +50,9 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-    print_session = (
-        plugin.settings.print_session_rest.id
-        if plugin.settings.print_session_rest
-        else plugin.settings.print_session_rest
-    )
+
     return TelemetryEvent(
-        print_session=print_session,
+        print_session=plugin.settings.print_session_rest,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
@@ -92,14 +88,6 @@ class MQTTManager:
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
 
-    def _drain(self):
-        """
-        Halt running workers and wait pending work
-        """
-        for worker in self._worker_threads:
-            logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join()
-
     def _reset(self):
         self.exit = threading.Event()
         self._worker_threads = []
@@ -134,11 +122,10 @@ class MQTTManager:
             self._worker_threads.append(thread)
             thread.start()
 
-    def shutdown(self):
+    def shutdown(self, **kwargs):
         logger.warning("MMQTTManager shutdown initiated")
         for worker in self._workers:
             worker.shutdown()
-        self._drain()
 
 
 class MQTTPublisherWorker:
@@ -162,7 +149,15 @@ class MQTTPublisherWorker:
         self.queue = queue
         self.plugin = plugin
         self.plugin_settings = plugin_settings
-        self._callbacks: Dict[str, List[Callable]] = {}
+
+        # File "/home/pi/octoprint-nanny-plugin/octoprint_nanny/workers/mqtt.py", line 169, in __init__
+        # Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: [plugin_settings.reset_print_session]
+        # custom events are not registered at time of class initialization
+        self._callbacks: Dict[str, List[Callable]] = {
+            Events.PRINT_DONE: [plugin_settings.reset_print_session],
+            Events.PRINT_FAILED: [plugin_settings.reset_print_session],
+            Events.PRINT_CANCELLED: [plugin_settings.reset_print_session],
+        }
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
@@ -241,8 +236,10 @@ class MQTTPublisherWorker:
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
             tracked = self.plugin_settings.event_is_tracked(event_type)
             if tracked:
-                await self.publish_octoprint_event_telemetry(event)
-
+                try:
+                    await self.publish_octoprint_event_telemetry(event)
+                except Exception as e:
+                    logger.error(f"Error in publish_octoprint_event_telemetry {e}")
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
                 logger.debug(f"No {self.__class__} handler registered for {event_type}")
