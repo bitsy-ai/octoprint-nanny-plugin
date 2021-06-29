@@ -141,7 +141,7 @@ class OctoPrintNannyPlugin(
         self._calibration = None
 
         self._log_path = None
-        self._environment = {}
+        self._octoprint_environment = {}
 
         self.monitoring_active = False
         self.worker_manager = WorkerManager(plugin=self)
@@ -274,10 +274,10 @@ class OctoPrintNannyPlugin(
         # covnert kB string like '3867172 kB' to int
         ram = int(self._meminfo().get("memtotal").split()[0])
 
-        logger.info(f"Runtime environment:\n {self._environment}")
-        python_version = self._environment.get("python", {}).get("version")
-        pip_version = self._environment.get("python", {}).get("pip")
-        virtualenv = self._environment.get("python", {}).get("virtualenv")
+        logger.info(f"Runtime environment:\n {self._octoprint_environment}")
+        python_version = self._octoprint_environment.get("python", {}).get("version")
+        pip_version = self._octoprint_environment.get("python", {}).get("pip")
+        virtualenv = self._octoprint_environment.get("python", {}).get("virtualenv")
 
         return {
             "model": cpuinfo.get("model"),
@@ -508,6 +508,9 @@ class OctoPrintNannyPlugin(
             context={"name": "update_or_create_octoprint_device"}
         )
         try:
+            logger.info(
+                f"update_or_create_octoprint_device from device_info={device_info}"
+            )
             device = await self.worker_manager.plugin.settings.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
             )
