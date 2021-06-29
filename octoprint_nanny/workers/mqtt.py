@@ -51,11 +51,8 @@ async def build_telemetry_event(event, plugin) -> TelemetryEvent:
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
 
-    if plugin.settings.print_session_rest is None:
-        await plugin.settings.create_print_session()
-
     return TelemetryEvent(
-        print_session=plugin.settings.print_session_rest.id,
+        print_session=plugin.settings.print_session_rest,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
@@ -91,14 +88,6 @@ class MQTTManager:
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
         self._workers = [self.publisher_worker, self.subscriber_worker]
-
-    def _drain(self):
-        """
-        Halt running workers and wait pending work
-        """
-        for worker in self._worker_threads:
-            logger.info(f"Waiting for worker={worker} thread to drain")
-            worker.join()
 
     def _reset(self):
         self.exit = threading.Event()
@@ -138,7 +127,6 @@ class MQTTManager:
         logger.warning("MMQTTManager shutdown initiated")
         for worker in self._workers:
             worker.shutdown()
-        self._drain()
 
 
 class MQTTPublisherWorker:
@@ -162,6 +150,10 @@ class MQTTPublisherWorker:
         self.queue = queue
         self.plugin = plugin
         self.plugin_settings = plugin_settings
+
+        # File "/home/pi/octoprint-nanny-plugin/octoprint_nanny/workers/mqtt.py", line 169, in __init__
+        # Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_STOP: [plugin_settings.reset_print_session]
+        # custom events are not registered at time of class initialization
         self._callbacks: Dict[str, List[Callable]] = {
             Events.PRINT_DONE: [plugin_settings.reset_print_session],
             Events.PRINT_FAILED: [plugin_settings.reset_print_session],

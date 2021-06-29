@@ -132,7 +132,7 @@ class WorkerManager:
             pass
 
     @beeline.traced("WorkerManager.shutdown")
-    async def shutdown(self):
+    async def shutdown(self, **kwargs):
 
         await self.monitoring_manager.stop()
         self.mqtt_manager.shutdown()
