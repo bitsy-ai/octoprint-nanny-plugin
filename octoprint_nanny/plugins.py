@@ -168,7 +168,7 @@ class OctoPrintNannyPlugin(
             event = {
                 "event_type": Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING,
             }
-            payload = build_telemetry_event(event, self).to_dict()
+            payload = await build_telemetry_event(event, self).to_dict()
             mqtt_client.publish_octoprint_event(payload)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_MQTT_PING_SUCCESS,

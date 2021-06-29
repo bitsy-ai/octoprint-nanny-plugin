@@ -39,7 +39,7 @@ from octoprint_nanny.settings import PluginSettingsMemoize
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-def build_telemetry_event(event, plugin) -> TelemetryEvent:
+async def build_telemetry_event(event, plugin) -> TelemetryEvent:
     environment = plugin.settings.octoprint_environment
     environment = OctoprintEnvironment(
         os=environment.get("os", {}),
@@ -50,13 +50,12 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-    print_session = (
-        plugin.settings.print_session_rest.id
-        if plugin.settings.print_session_rest
-        else plugin.settings.print_session_rest
-    )
+
+    if plugin.settings.print_session_rest is None:
+        await plugin.settings.create_print_session()
+
     return TelemetryEvent(
-        print_session=print_session,
+        print_session=plugin.settings.print_session_rest.id,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
@@ -162,7 +161,11 @@ class MQTTPublisherWorker:
         self.queue = queue
         self.plugin = plugin
         self.plugin_settings = plugin_settings
-        self._callbacks: Dict[str, List[Callable]] = {}
+        self._callbacks: Dict[str, List[Callable]] = {
+            Events.PRINT_DONE: [plugin_settings.reset_print_session],
+            Events.PRINT_FAILED: [plugin_settings.reset_print_session],
+            Events.PRINT_CANCELLED: [plugin_settings.reset_print_session],
+        }
         self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
@@ -186,7 +189,7 @@ class MQTTPublisherWorker:
         loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
-        payload = build_telemetry_event(event, self.plugin)
+        payload = await build_telemetry_event(event, self.plugin)
         return self.plugin_settings.mqtt_client.publish_octoprint_event(
             payload.to_dict()
         )
