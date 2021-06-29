@@ -296,7 +296,7 @@ class MQTTClient:
         while not self.exit.is_set():
             self.client.loop()
 
-    def shutdown(self):
+    def shutdown(self, **kwargs):
         self.exit.set()
 
 

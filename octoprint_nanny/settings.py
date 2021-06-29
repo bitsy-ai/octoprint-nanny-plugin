@@ -50,7 +50,7 @@ class PluginSettingsMemoize:
         self._print_session_pb = None
         self._octoprint_environment = None
 
-    async def reset_print_session(self):
+    async def reset_print_session(self, **kwargs):
         if self._print_session_rest is not None:
             await self.rest_client.update_print_session(
                 self._print_session_rest.session,
@@ -251,39 +251,48 @@ class PluginSettingsMemoize:
     def print_session_pb(self):
         return self._print_session_pb
 
+    @property
+    def is_printing(self):
+        return (
+            self.current_printer_state.get("state", {}).get("flags", {}).get("printing")
+        )
+
     async def create_print_session(self):
-        session = uuid.uuid4().hex
-        octoprint_job = self.current_job()
+        if not self.print_session_rest:
+            session = uuid.uuid4().hex
+            octoprint_job = self.current_job()
 
-        gcode_filename = None
-        if octoprint_job.get("file") and octoprint_job.get("file").get("name"):
-            gcode_filename = octoprint_job.get("file").get("name")
+            gcode_filename = None
+            if octoprint_job.get("file") and octoprint_job.get("file").get("name"):
+                gcode_filename = octoprint_job.get("file").get("name")
 
-        # @todo sync gcode file to remote
+            # @todo sync gcode file to remote
 
-        printer_profile = self.get_current_octoprint_profile()
-        printer_profile = await self.rest_client.update_or_create_printer_profile(
-            printer_profile, self.octoprint_device_id
-        )
+            printer_profile = self.get_current_octoprint_profile()
+            printer_profile = await self.rest_client.update_or_create_printer_profile(
+                printer_profile, self.octoprint_device_id
+            )
 
-        now = datetime.utcnow()
-        print_session = await self.rest_client.create_print_session(
-            session=session,
-            printer_profile=printer_profile.id,
-            octoprint_device=self.octoprint_device_id,
-            octoprint_job=octoprint_job,
-            created_dt=now,
-            gcode_filename=gcode_filename,
-        )
-        logger.info(f"Created print_session={print_session}")
-        self._print_session_rest = print_session
-        self._print_session_pb = print_nanny_client.protobuf.common_pb2.PrintSession(
-            session=session,
-            id=print_session.id,
-            created_ts=now.timestamp(),
-            datesegment=print_session.datesegment,
-        )
-        return self._print_session_rest
+            now = datetime.utcnow()
+            print_session = await self.rest_client.create_print_session(
+                session=session,
+                printer_profile=printer_profile.id,
+                octoprint_device=self.octoprint_device_id,
+                octoprint_job=octoprint_job,
+                created_dt=now,
+                gcode_filename=gcode_filename,
+            )
+            logger.info(f"Created print_session={print_session}")
+            self._print_session_rest = print_session
+            self._print_session_pb = (
+                print_nanny_client.protobuf.common_pb2.PrintSession(
+                    session=session,
+                    id=print_session.id,
+                    created_ts=now.timestamp(),
+                    datesegment=print_session.datesegment,
+                )
+            )
+        return self.print_session_rest
 
     @property
     def octoprint_environment(self):
