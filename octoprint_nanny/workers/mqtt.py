@@ -39,7 +39,7 @@ from octoprint_nanny.settings import PluginSettingsMemoize
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-async def build_telemetry_event(event, plugin) -> TelemetryEvent:
+def build_telemetry_event(event, plugin) -> TelemetryEvent:
     environment = plugin.settings.octoprint_environment
     environment = OctoprintEnvironment(
         os=environment.get("os", {}),
@@ -182,7 +182,7 @@ class MQTTPublisherWorker:
         loop.close()
 
     async def publish_octoprint_event_telemetry(self, event):
-        payload = await build_telemetry_event(event, self.plugin)
+        payload = build_telemetry_event(event, self.plugin)
         return self.plugin_settings.mqtt_client.publish_octoprint_event(
             payload.to_dict()
         )
