@@ -50,7 +50,7 @@ class PluginSettingsMemoize:
         self._print_session_pb = None
         self._octoprint_environment = None
 
-    async def reset_print_session(self):
+    async def reset_print_session(self, **kwargs):
         if self._print_session_rest is not None:
             await self.rest_client.update_print_session(
                 self._print_session_rest.session,

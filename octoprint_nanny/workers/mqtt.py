@@ -90,6 +90,7 @@ class MQTTManager:
         self.subscriber_worker = MQTTSubscriberWorker(
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
+        self._workers = [self.publisher_worker, self.subscriber_worker]
 
     def _drain(self):
         """
@@ -133,7 +134,7 @@ class MQTTManager:
             self._worker_threads.append(thread)
             thread.start()
 
-    def shutdown(self):
+    def shutdown(self, **kwargs):
         logger.warning("MMQTTManager shutdown initiated")
         for worker in self._workers:
             worker.shutdown()
@@ -244,8 +245,10 @@ class MQTTPublisherWorker:
             logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
             tracked = self.plugin_settings.event_is_tracked(event_type)
             if tracked:
-                await self.publish_octoprint_event_telemetry(event)
-
+                try:
+                    await self.publish_octoprint_event_telemetry(event)
+                except Exception as e:
+                    logger.error(f"Error in publish_octoprint_event_telemetry {e}")
             handler_fns = self._callbacks.get(event_type)
             if handler_fns is None:
                 logger.debug(f"No {self.__class__} handler registered for {event_type}")
