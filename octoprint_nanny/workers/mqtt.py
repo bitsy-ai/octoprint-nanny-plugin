@@ -87,7 +87,6 @@ class MQTTManager:
         self.subscriber_worker = MQTTSubscriberWorker(
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
-        self._workers = [self.publisher_worker, self.subscriber_worker]
 
     def _reset(self):
         self.exit = threading.Event()
