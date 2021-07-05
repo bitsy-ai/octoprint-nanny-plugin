@@ -14,7 +14,7 @@ import PIL
 import io
 import beeline
 import base64
-from typing import List, Callable, Dict, Any
+from typing import List, Callable, Dict, Any, Union
 import print_nanny_client
 
 from octoprint.events import Events
@@ -35,6 +35,7 @@ from octoprint_nanny.types import (
 )
 from octoprint_nanny.clients.protobuf import build_monitoring_image
 from octoprint_nanny.settings import PluginSettingsMemoize
+from octoprint_nanny.clients.mqtt import MQTTClient
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
@@ -87,6 +88,9 @@ class MQTTManager:
         self.subscriber_worker = MQTTSubscriberWorker(
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
+        self._workers: List[
+            Union[MQTTPublisherWorker, MQTTSubscriberWorker, MQTTClient]
+        ] = []
 
     def _reset(self):
         self.exit = threading.Event()
@@ -105,6 +109,7 @@ class MQTTManager:
             logger.warning(
                 "MQTTManager.start was called without device registration set, ignoring"
             )
+            return
 
         logger.info("MQTTManager.start was called")
 
