@@ -88,7 +88,9 @@ class MQTTManager:
         self.subscriber_worker = MQTTSubscriberWorker(
             self.mqtt_receive_queue, self.plugin, self.plugin_settings
         )
-        self._workers:List[Union[MQTTPublisherWorker, MQTTSubscriberWorker, MQTTClient]] = []
+        self._workers: List[
+            Union[MQTTPublisherWorker, MQTTSubscriberWorker, MQTTClient]
+        ] = []
 
     def _reset(self):
         self.exit = threading.Event()
