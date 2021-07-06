@@ -53,7 +53,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
 
     return TelemetryEvent(
-        print_session=plugin.settings.print_session_rest,
+        print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
