@@ -446,8 +446,8 @@ class PluginSettingsMemoize:
 
     @property
     def webcam_to_octoprint_ws(self):
-        return self.plugin.get_setting('webcam_to_octoprint_ws')
+        return self.plugin.get_setting("webcam_to_octoprint_ws")
 
     @property
     def webcam_to_mqtt(self):
-        return self.plugin.get_setting('webcam_to_mqtt')
+        return self.plugin.get_setting("webcam_to_mqtt")
