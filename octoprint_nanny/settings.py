@@ -5,6 +5,7 @@ import numpy as np
 import octoprint
 import beeline
 import uuid
+from typing import Optional
 
 from print_nanny_client import (
     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
@@ -242,6 +243,12 @@ class PluginSettingsMemoize:
     @property
     def webcam_upload(self):
         return self.plugin.get_setting("webcam_upload")
+
+    @property
+    def print_session_id(self) -> Optional[int]:
+        if self.print_session_rest:
+            return self.print_session_rest.id
+        return None
 
     @property
     def print_session_rest(self):
