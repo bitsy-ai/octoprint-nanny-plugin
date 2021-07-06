@@ -114,7 +114,7 @@ DEFAULT_SETTINGS = dict(
     monitoring_mode=MonitoringModes.ACTIVE_LEARNING.value,
     monitoring_active=False,
     webcam_to_octoprint_ws=True,
-    webcam_to_mqtt=True
+    webcam_to_mqtt=True,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"

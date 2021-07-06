@@ -9,7 +9,7 @@
 
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced Setting') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced Settings') }}</a></li>
     </ul>
 
   <div class="tab-content">
@@ -172,6 +172,18 @@
             <p>The following settings are for advanced configurations or Print Nanny developers. </p>
 
             <div class="control-group">
+                <h4>Webcam Streams</h4>
+                <label class="control-label" for="octoprint_nanny_settings_webcam_to_octoprint_ws">Show webcam stream in OctoPrint UI</label>
+                
+                <div class="controls">
+                    <input 
+                    class="input-xxlarge" 
+                    id="octoprint_nanny_settings_webcam_to_octoprint_ws" 
+                    data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.webcam_to_octoprint_ws" type="checkbox" />
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label class="control-label" for="octoprint_nanny_settings_api_url"><h4>Print Nanny API</h4></label>
                 
                 <div class="controls">
@@ -200,12 +212,6 @@
             </div>
 
 
-            <div id="octoprint_nanny_alert_advanced_settings" class="alert alert-block" data-bind="css: authAlertClass">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-            
-                <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
-                <span data-bind="text: authAlertText"></span>
-            </div>
             <button id="octoprint_nanny_save_advanced_settings" data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
                 Save Advanced Settings
             </button>

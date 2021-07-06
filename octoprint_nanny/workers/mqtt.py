@@ -205,7 +205,10 @@ class MQTTPublisherWorker:
                 metadata_pb=self.plugin_settings.metadata_pb,
             )
             b64_image = base64.b64encode(image_bytes)
-            if self.plugin_settings.monitoring_active and self.plugin_settings.webcam_to_octoprint_ws:
+            if (
+                self.plugin_settings.monitoring_active
+                and self.plugin_settings.webcam_to_octoprint_ws
+            ):
                 self.plugin._event_bus.fire(
                     Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_B64,
                     payload=b64_image,
