@@ -443,3 +443,11 @@ class PluginSettingsMemoize:
             or event_type in PrinterEventType.allowable_values
             or prefix_stripped in PrinterEventType.allowable_values
         )
+
+    @property
+    def webcam_to_octoprint_ws(self):
+        return self.plugin.get_setting('webcam_to_octoprint_ws')
+
+    @property
+    def webcam_to_mqtt(self):
+        return self.plugin.get_setting('webcam_to_mqtt')

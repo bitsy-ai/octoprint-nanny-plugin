@@ -167,6 +167,7 @@ def plugin_settings(
     plugin_settings.current_printer_state = current_printer_state
     plugin_settings.plugin_version = __plugin_version__
     plugin_settings.current_temperatures = current_temperatures
+    plugin_settings.monitoring_frames_per_minute = 60
 
     return plugin_settings
 
