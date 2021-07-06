@@ -75,14 +75,9 @@ def EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES():
     with open("octoprint_nanny/data/images/0.pre.jpg", "rb") as f:
         image = f.read()
     return dict(
-        event_type="plugin_octoprint_nanny_monitoring_frame_b64",
-        event_data=dict(image=image),
+        event_type="plugin_octoprint_nanny_monitoring_frame_bytes",
+        event_data=dict(image=image, ts=datetime.now().timestamp()),
     )
-
-
-@pytest.fixture
-def mock_image():
-    return MockResponse()
 
 
 @pytest.fixture
@@ -167,7 +162,9 @@ def plugin_settings(
     plugin_settings.current_printer_state = current_printer_state
     plugin_settings.plugin_version = __plugin_version__
     plugin_settings.current_temperatures = current_temperatures
-
+    plugin_settings.monitoring_frames_per_minute = 60
+    plugin_settings.webcam_to_mqtt = True
+    plugin_settings.webcam_to_octoprint_ws = True
     return plugin_settings
 
 

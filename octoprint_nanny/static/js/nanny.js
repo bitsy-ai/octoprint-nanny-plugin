@@ -408,6 +408,8 @@ $(function () {
         saveAdvancedSettings = function () {
             console.log('Saving settings')
             OctoPrint.settings.savePluginSettings('octoprint_nanny', {
+                'webcam_to_octoprint_ws': self.settingsViewModel.settings.plugins.webcam_to_octoprint_ws(),
+                'webcam_to_mqtt': self.settingsViewModel.settings.plugins.webcam_to_mqtt(),
                 'ws_url': self.settingsViewModel.settings.plugins.octoprint_nanny.ws_url(),
                 'api_url': self.settingsViewModel.settings.plugins.octoprint_nanny.api_url(),
                 'monitoring_frames_per_minute': self.settingsViewModel.settings.plugins.octoprint_nanny.monitoring_frames_per_minute(),

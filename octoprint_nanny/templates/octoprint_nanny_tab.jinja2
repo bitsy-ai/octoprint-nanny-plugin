@@ -87,12 +87,20 @@
         <hr/>
 
         <h2>Print Nanny Monitoring</h2>
-        <p>Sending notifications to: <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.user_email"></span></strong>
-        </p>
-        <hr/>
-        <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }"/>
+            <div class="alert alert-block" data-bind="hidden: settingsViewModel.settings.plugins.octoprint_nanny.webcam_to_octoprint_ws">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            
+                <h4 class="alert-heading">OctoPrint Streaming Disabled</h4> 
+                <p>Check out the stream in Print Nanny's UI instead: https://www.print-nanny.com/dashboard</p>
+                <p>You can re-enable this in Print Nanny's advanced settings menu by checking the "Show webcam stream in OctoPrint UI" option.</p>
+            </div>
+        <div data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.webcam_to_octoprint_ws" >
+            <p>Sending notifications to: <strong><span data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.user_email"></span></strong>
+            </p>
+            <hr/>
+            <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }"/>
 
-        <hr/>
+            <hr/>
 
             <div class="alert alert-warning" role="alert" data-bind="visible: settingsViewModel.settings.plugins.octoprint_nanny.calibrated() == false">
             <h4 class="alert-heading">Warning! Calibration Required</h4>
@@ -110,6 +118,8 @@
             <button data-bind="{click: calibrate, enable: previewActive() && !calibrationActive() }" type="submit" class="btn btn-warning btn-large">
                 Show Calibration
             </button>
+        </div>
+
     </div>
     <div data-bind="{visible: calibrationActive}">
         <h3>Calibrate Area of Interest</h3>

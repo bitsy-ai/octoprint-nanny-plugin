@@ -67,7 +67,7 @@ async def test_mqtt_send_queue_valid_octoprint_event(mocker, metadata):
 
 @pytest.mark.asyncio
 async def test_mqtt_send_queue_monitoring_frame_raw(
-    mocker, mock_image, plugin_settings
+    mocker, EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES, plugin_settings
 ):
     plugin = mocker.Mock()
 
@@ -85,11 +85,9 @@ async def test_mqtt_send_queue_monitoring_frame_raw(
 
     manager = WorkerManager(plugin, plugin_settings=plugin_settings)
 
-    event = {
-        "event_type": Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES,
-        "event_data": {"image": await mock_image.read(), "ts": 1234},
-    }
-    manager.mqtt_send_queue.put_nowait(event)
+    manager.mqtt_send_queue.put_nowait(
+        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+    )
 
     mock_fn = plugin_settings.mqtt_client.publish_monitoring_image
     mock_fn.return_value = asyncio.Future()
