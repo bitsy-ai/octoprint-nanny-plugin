@@ -8,8 +8,6 @@ import os
 import beeline
 
 from octoprint.events import Events
-
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 import print_nanny_client
 from print_nanny_client import ApiClient as AsyncApiClient
 
@@ -69,7 +67,6 @@ class RestAPIClient:
     def __init__(self, auth_token: str, api_url: str):
         self.api_url = api_url
         self.auth_token = auth_token
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     @property
     def _api_config(self):

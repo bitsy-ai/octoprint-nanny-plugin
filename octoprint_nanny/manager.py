@@ -14,7 +14,6 @@ from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.settings import PluginSettingsMemoize
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.workers.mqtt import MQTTManager
 from octoprint_nanny.workers.monitoring import MonitoringManager
 
@@ -32,9 +31,6 @@ class WorkerManager:
         self.event_loop_thread = threading.Thread(target=self._event_loop_worker)
         self.event_loop_thread.daemon = True
         self.event_loop_thread.start()
-
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
-
         # outbound telemetry messages to MQTT bridge
         self.mqtt_send_queue: queue.Queue = queue.Queue()
         # inbound MQTT command and config messages from MQTT bridge
@@ -99,9 +95,7 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.on_settings_initialized")
     def on_settings_initialized(self):
-        self._honeycomb_tracer.add_global_context(
-            self.plugin_settings.metadata.to_dict()
-        )
+        beeline.add_context(self.plugin_settings.metadata.to_dict())
         self._register_plugin_event_handlers()
         self.mqtt_manager.start()
 
@@ -133,10 +127,9 @@ class WorkerManager:
 
     @beeline.traced("WorkerManager.shutdown")
     async def shutdown(self, **kwargs):
-
+        beeline.add_context(self.plugin_settings.metadata.to_dict())
         await self.monitoring_manager.stop()
         self.mqtt_manager.shutdown()
-        self._honeycomb_tracer.on_shutdown()
 
     ##
     #  Event handlers
