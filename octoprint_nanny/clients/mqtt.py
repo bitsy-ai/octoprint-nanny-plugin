@@ -11,7 +11,6 @@ import sys
 import beeline
 import threading
 from octoprint_nanny.utils.encoder import NumpyEncoder
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 
 
 JWT_EXPIRES_MINUTES = os.environ.get("OCTOPRINT_NANNY_MQTT_JWT_EXPIRES_MINUTES", 1380)
@@ -92,7 +91,6 @@ class MQTTClient:
         self.algorithm = algorithm
 
         self.mqtt_receive_queue = mqtt_receive_queue
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
         self.client = mqtt.Client(client_id=client_id, clean_session=False)
         self.client.tls_set(

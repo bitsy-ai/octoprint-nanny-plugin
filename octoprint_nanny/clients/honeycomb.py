@@ -10,6 +10,13 @@ HONEYCOMB_API_KEY = os.environ.get(
 )
 HONEYCOMB_DEBUG = os.environ.get("HONEYCOMB_DEBUG", False)
 
+beeline.init(
+    writekey=HONEYCOMB_API_KEY,
+    dataset=HONEYCOMB_DATASET,
+    service_name="plugin",
+    debug=HONEYCOMB_DEBUG,
+)
+
 
 class HoneycombTracer:
     def __init__(
