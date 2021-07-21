@@ -55,3 +55,9 @@ jobs:
           fail_ci_if_error: false
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
+      - name: Save MyPi cache (keyed by requirements)
+        uses: actions/cache@v2
+        with:
+          path: |
+            .mypy_cache
+          key: ${{ runner.os }}-${{ hashFiles('requirements.txt') }}
