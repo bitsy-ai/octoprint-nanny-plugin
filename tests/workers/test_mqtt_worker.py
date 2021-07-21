@@ -45,9 +45,8 @@ def test_frame_skipped_monitoring_inactive(
 
 
 @pytest.mark.asyncio
-async def test_handle_config_update(mocker):
+async def test_handle_config_update(mocker, plugin_settings):
     plugin = mocker.Mock()
-    plugin_settings = mocker.Mock()
     mocker.Mock()
     queue = mocker.Mock()
 
