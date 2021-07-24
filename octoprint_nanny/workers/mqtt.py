@@ -21,10 +21,14 @@ import print_nanny_client
 from octoprint.events import Events
 import octoprint
 from print_nanny_client import (
-    TelemetryEventRequest,
-    OctoprintEnvironment,
-    OctoprintPrinterData,
+    TelemetryEventPolymorphicRequest,
+    OctoprintEnvironmentRequest,
+    OctoprintPrinterDataRequest,
 )
+from print_nanny_client.configuration import (
+    Configuration as PrintNannyClientConfiguration,
+)
+
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
@@ -41,9 +45,9 @@ from octoprint_nanny.clients.mqtt import MQTTClient
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-def build_telemetry_event(event, plugin) -> TelemetryEventRequest:
+def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
     environment = plugin.settings.octoprint_environment
-    environment = OctoprintEnvironment(
+    environment = OctoprintEnvironmentRequest(
         os=environment.get("os", {}),
         python=environment.get("python", {}),
         hardware=environment.get("hardware", {}),
@@ -51,9 +55,10 @@ def build_telemetry_event(event, plugin) -> TelemetryEventRequest:
     )
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
-    printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-
-    return TelemetryEventRequest(
+    printer_data = OctoprintPrinterDataRequest(current_z=currentZ, **printer_data)
+    config = PrintNannyClientConfiguration()
+    config.client_side_validation = False
+    return TelemetryEventPolymorphicRequest(
         print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
@@ -63,6 +68,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEventRequest:
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
         ts=datetime.now(pytz.timezone("UTC")).timestamp(),
+        local_vars_configuration=config,
         **event,
     )
 
