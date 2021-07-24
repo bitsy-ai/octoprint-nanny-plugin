@@ -7,6 +7,7 @@ import logging
 import os
 import queue
 import threading
+import sys
 from datetime import datetime
 import logging
 import pytz
@@ -20,14 +21,18 @@ import print_nanny_client
 from octoprint.events import Events
 import octoprint
 from print_nanny_client import (
-    TelemetryEvent,
-    OctoprintEnvironment,
-    OctoprintPrinterData,
+    TelemetryEventPolymorphicRequest,
+    OctoprintEnvironmentRequest,
+    OctoprintPrinterDataRequest,
 )
+from print_nanny_client.configuration import (
+    Configuration as PrintNannyClientConfiguration,
+)
+
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
+from octoprint_nanny.clients.honeycomb import beeline
 from octoprint_nanny.types import (
     MonitoringModes,
     MonitoringFrame,
@@ -40,9 +45,9 @@ from octoprint_nanny.clients.mqtt import MQTTClient
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-def build_telemetry_event(event, plugin) -> TelemetryEvent:
+def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
     environment = plugin.settings.octoprint_environment
-    environment = OctoprintEnvironment(
+    environment = OctoprintEnvironmentRequest(
         os=environment.get("os", {}),
         python=environment.get("python", {}),
         hardware=environment.get("hardware", {}),
@@ -50,9 +55,10 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
     )
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
-    printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
-
-    return TelemetryEvent(
+    printer_data = OctoprintPrinterDataRequest(current_z=currentZ, **printer_data)
+    config = PrintNannyClientConfiguration()
+    config.client_side_validation = False
+    return TelemetryEventPolymorphicRequest(
         print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
@@ -62,6 +68,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
         ts=datetime.now(pytz.timezone("UTC")).timestamp(),
+        local_vars_configuration=config,
         **event,
     )
 
@@ -165,10 +172,18 @@ class MQTTPublisherWorker:
             Events.PRINT_DONE: [plugin_settings.reset_print_session],
             Events.PRINT_FAILED: [plugin_settings.reset_print_session],
             Events.PRINT_CANCELLED: [plugin_settings.reset_print_session],
+            # plugin events are not always registered to octoprint.events.Events object when this class is initialized
+            # instead, reference plugin events by string literal
+            # Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+            "plugin_octoprint_nanny_monitoring_frame_bytes": [
+                self.handle_monitoring_frame_bytes
+            ],
         }
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
-    def register_callbacks(self, callbacks):
+    def register_callbacks(self, callbacks) -> Dict[str, List[Callable]]:
+        """
+        Register callback functions executed during event publish loop
+        """
         for k, v in callbacks.items():
             if self._callbacks.get(k) is None:
                 self._callbacks[k] = [v]
@@ -184,21 +199,32 @@ class MQTTPublisherWorker:
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
+        loop.set_default_executor(
+            concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        )  # TODO Maybe run single-threaded to avoid initializing multiple mqtt clients in backoff/retry situation :thinkface:
         loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
         loop.close()
 
-    async def publish_octoprint_event_telemetry(self, event):
+    def publish_octoprint_event_telemetry(self, event):
         payload = build_telemetry_event(event, self.plugin)
         return self.plugin_settings.mqtt_client.publish_octoprint_event(
             payload.to_dict()
         )
 
-    def handle_monitoring_frame_bytes(self, event: Dict[str, Any]):
+    @beeline.traced("MQTTPublisherWorker.handle_monitoring_frame_bytes")
+    def handle_monitoring_frame_bytes(
+        self, event_type: str, event_data: Dict[str, Any], **kwargs
+    ):
+        assert event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+        beeline.add_context(self.plugin_settings.metadata.to_dict())
         if self.plugin_settings.monitoring_active:
-            image_bytes = event["event_data"]["image"]
+            image_bytes = event_data["image"]
+            byte_size = sys.getsizeof(image_bytes)
             pimage = PIL.Image.open(io.BytesIO(image_bytes))
             (w, h) = pimage.size
+            context = dict(image_bytes=byte_size, image_w=w, image_h=h)
+            beeline.add_context(context)
+
             image = Image(height=h, width=w, data=image_bytes)
 
             monitoring_image = build_monitoring_image(
@@ -221,36 +247,30 @@ class MQTTPublisherWorker:
                     monitoring_image.SerializeToString()
                 )
 
-    @beeline.traced("MQTTPublisherWorker._loop")
-    async def _loop(self):
-        beeline.add_context(self.plugin_settings.metadata.to_dict())
+    async def _loop(self) -> None:
         try:
             event = self.queue.get(timeout=1)
         except queue.Empty as e:
             return
         event_type = event.get("event_type")
-
-        if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-            self.handle_monitoring_frame_bytes(event)
         if event_type is None:
             logger.error(
-                "Ignoring enqueued msg without type declared {event}".format(
+                "MQTTPublisherWorker ignoring msg without event_type {event}".format(
                     event=event
                 )
             )
             return
-
         logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
+
         tracked = self.plugin_settings.event_is_tracked(event_type)
         if tracked:
-            try:
-                await self.publish_octoprint_event_telemetry(event)
-            except Exception as e:
-                logger.error(f"Error in publish_octoprint_event_telemetry {e}")
+            self.publish_octoprint_event_telemetry(event)
+
         handler_fns = self._callbacks.get(event_type)
         if handler_fns is None:
             logger.debug(f"No {self.__class__} handler registered for {event_type}")
             return
+
         for handler_fn in handler_fns:
             logger.debug(f"MQTTPublisherWorker calling handler_fn={handler_fn}")
             if inspect.isawaitable(handler_fn) or inspect.iscoroutinefunction(
@@ -287,7 +307,6 @@ class MQTTSubscriberWorker:
         self._callbacks = {
             "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]
         }
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def run(self):
         self.loop = asyncio.new_event_loop()
@@ -372,10 +391,8 @@ class MQTTSubscriberWorker:
 
     async def _loop(self):
 
-        trace = self._honeycomb_tracer.start_trace()
-        span = self._honeycomb_tracer.start_span(
-            {"name": "WorkerManager.queue.coro_get"}
-        )
+        trace = beeline.start_trace()
+        span = beeline.start_span({"name": "WorkerManager.queue.coro_get"})
 
         try:
             payload = self.queue.get(timeout=1)
@@ -386,8 +403,8 @@ class MQTTSubscriberWorker:
         context = dict(event=payload)
         context.update(self.plugin_settings.metadata.to_dict())
 
-        self._honeycomb_tracer.add_context(context)
-        self._honeycomb_tracer.finish_span(span)
+        beeline.add_context(context)
+        beeline.finish_span(span)
 
         topic = payload.get("topic")
 
@@ -403,7 +420,7 @@ class MQTTSubscriberWorker:
         else:
             logging.error(f"No handler for topic={topic} in _loop")
 
-        self._honeycomb_tracer.finish_trace(trace)
+        beeline.finish_trace(trace)
 
     @beeline.traced("MQTTSubscriberWorker._handle_config_update")
     async def _handle_config_update(self, topic, message):

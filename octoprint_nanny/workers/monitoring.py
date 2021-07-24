@@ -10,10 +10,7 @@ import multiprocessing
 import numpy as np
 import threading
 
-import beeline
-
 from octoprint.events import Events
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import (
     MonitoringModes,
@@ -21,10 +18,11 @@ from octoprint_nanny.types import (
     Image,
 )
 from websockets.legacy.client import connect as ws_connect
-
+from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
-from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+from octoprint_nanny.clients.honeycomb import beeline
+
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
@@ -113,6 +111,7 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._drain")
     def _drain(self):
+        beeline.add_context(self.plugin.settings.metadata.to_dict())
 
         for i, worker in enumerate(self._workers):
             logger.info(f"Shutting down worker={worker} process to drain")
@@ -122,6 +121,8 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._reset")
     def _reset(self):
+        beeline.add_context(self.plugin.settings.metadata.to_dict())
+
         self._predict_worker = MonitoringWorker(
             self.mqtt_send_queue,
             self.plugin,
@@ -132,6 +133,11 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.start")
     async def start(self, print_session=None, **kwargs):
         monitoring_active = self.plugin._settings.get(["monitoring_active"])
+
+        metadata_dict = self.plugin.settings.metadata.to_dict()
+        metadata_dict["monitoring_active"] = monitoring_active
+        beeline.add_context(metadata_dict)
+
         if not monitoring_active:
             self.plugin._settings.set(["monitoring_active"], True)
             self._reset()
@@ -158,6 +164,8 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
+        metadata_dict = self.plugin.settings.metadata.to_dict()
+        beeline.add_context(metadata_dict)
 
         self._drain()
         self.plugin._event_bus.fire(

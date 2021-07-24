@@ -17,10 +17,10 @@ def test_frame_sent_monitoring_active(
     worker = MQTTPublisherWorker(
         queue=queue, plugin=mock_plugin, plugin_settings=mock_plugin.settings
     )
-
     mock_plugin.settings.monitoring_active = True
+
     res = worker.handle_monitoring_frame_bytes(
-        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+        **EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
     )
 
     assert mock_plugin.settings.mqtt_client.called_once()
@@ -37,7 +37,7 @@ def test_frame_skipped_monitoring_inactive(
 
     mock_plugin.settings.monitoring_active = False
     res = worker.handle_monitoring_frame_bytes(
-        EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+        **EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
     )
 
     assert mock_plugin.settings.mqtt_client.called is False

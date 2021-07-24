@@ -27,7 +27,6 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 import octoprint_nanny.exceptions
 from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
@@ -147,7 +146,6 @@ class OctoPrintNannyPlugin(
 
         self.monitoring_active = False
         self.worker_manager = WorkerManager(plugin=self)
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def get_setting(self, key):
         return self._settings.get([key])
@@ -500,15 +498,13 @@ class OctoPrintNannyPlugin(
         )
         # device registration
 
-        span = self._honeycomb_tracer.start_span(context={"name": "get_device_info"})
+        span = beeline.start_span(context={"name": "get_device_info"})
         device_info = self.get_device_info()
 
-        self._honeycomb_tracer.add_context(dict(device_info=device_info))
-        self._honeycomb_tracer.finish_span(span)
+        beeline.add_context(dict(device_info=device_info))
+        beeline.finish_span(span)
 
-        span = self._honeycomb_tracer.start_span(
-            context={"name": "update_or_create_octoprint_device"}
-        )
+        span = beeline.start_span(context={"name": "update_or_create_octoprint_device"})
         try:
             logger.info(
                 f"update_or_create_octoprint_device from device_info={device_info}"
@@ -516,8 +512,8 @@ class OctoPrintNannyPlugin(
             device = await self.worker_manager.plugin.settings.rest_client.update_or_create_octoprint_device(
                 name=device_name, **device_info
             )
-            self._honeycomb_tracer.add_context(dict(device_upserted=device))
-            self._honeycomb_tracer.finish_span(span)
+            beeline.add_context(dict(device_upserted=device))
+            beeline.finish_span(span)
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_REGISTER_DONE,
                 payload={
@@ -761,7 +757,6 @@ class OctoPrintNannyPlugin(
         """
         Called after plugin initialization
         """
-        self._honeycomb_tracer.add_global_context(self.get_device_info())
         self._log_path = self._settings.get_plugin_logfile_path()
         self.worker_manager.on_settings_initialized()
 
