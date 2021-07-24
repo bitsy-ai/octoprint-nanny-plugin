@@ -142,7 +142,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "print-nanny-client==0.8.15",
+    "print-nanny-client==0.8.16",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
