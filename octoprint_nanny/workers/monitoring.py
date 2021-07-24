@@ -111,8 +111,7 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._drain")
     def _drain(self):
-        metadata_dict = self.plugin.settings.metadata.to_dict()
-        beeline.add_context(monitoring_active=monitoring_active, **metadata_dict)
+        beeline.add_context(self.plugin.settings.metadata.to_dict())
 
         for i, worker in enumerate(self._workers):
             logger.info(f"Shutting down worker={worker} process to drain")
@@ -122,8 +121,7 @@ class MonitoringManager:
 
     @beeline.traced("MonitoringManager._reset")
     def _reset(self):
-        metadata_dict = self.plugin.settings.metadata.to_dict()
-        beeline.add_context(monitoring_active=monitoring_active, **metadata_dict)
+        beeline.add_context(self.plugin.settings.metadata.to_dict())
 
         self._predict_worker = MonitoringWorker(
             self.mqtt_send_queue,
@@ -135,8 +133,8 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.start")
     async def start(self, print_session=None, **kwargs):
         monitoring_active = self.plugin._settings.get(["monitoring_active"])
-        metadata_dict = self.plugin.settings.metadata.to_dict()
-        beeline.add_context(monitoring_active=monitoring_active, **metadata_dict)
+        metadata_dict["monitoring_active"] = monitoring_active
+        beeline.add_context(metadata_dict)
 
         if not monitoring_active:
             self.plugin._settings.set(["monitoring_active"], True)

@@ -17,6 +17,10 @@ HONEYCOMB_DEBUG = os.environ.get("HONEYCOMB_DEBUG", False)
 # ref: https://docs.honeycomb.io/getting-data-in/python/beeline/#customizing-sampling-logic
 MAX_INT32 = math.pow(2, 32) - 1
 
+SAMPLE_MAP = {
+    "MQTTPublisherWorker.handle_monitoring_frame_bytes": 100  # equivalent to 1% sample rate
+}
+
 # Deterministic _should_sample taken from https://github.com/honeycombio/beeline-python/blob/1ffe66ed1779143592edf9227d3171cb805216b6/beeline/trace.py#L258-L267
 def _should_sample(trace_id, sample_rate):
     sample_upper_bound = MAX_INT32 / sample_rate
@@ -28,19 +32,29 @@ def _should_sample(trace_id, sample_rate):
 
 
 def honeycomb_event_sampler(fields):
-    # our default sample rate, sample one in every 10 events
-    sample_rate = 10
+    # our default sample rate (sample every event)
+    sample_rate = 1  # 100%
 
+    ##
+    # by response code
+    ##
     response_code = fields.get("response.status_code")
     # False indicates that we should not keep this event
     if response_code == 302:
-        return False, 0
+        return False, 0  # 0%
     elif response_code == 200:
-        # heavily sample healthy requests
-        sample_rate = 100
+        sample_rate = 100  # 1%
     elif response_code >= 500:
         # sample every error request
-        sample_rate = 1
+        sample_rate = 1  # 100%
+
+    ##
+    # by trace name
+    ##
+    trace_name = fields.get("name")
+    maybe_sample_rate = SAMPLE_MAP.get(trace_name)
+    if maybe_sample_rate:
+        sample_rate = maybe_sample_rate
 
     # The truthiness of the first return argument determines whether we keep the
     # event. The second argument, the sample rate, tells Honeycomb what rate the

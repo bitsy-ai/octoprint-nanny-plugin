@@ -165,9 +165,18 @@ class MQTTPublisherWorker:
             Events.PRINT_DONE: [plugin_settings.reset_print_session],
             Events.PRINT_FAILED: [plugin_settings.reset_print_session],
             Events.PRINT_CANCELLED: [plugin_settings.reset_print_session],
+            # plugin events are not always registered to octoprint.events.Events object when this class is initialized
+            # instead, reference plugin events by string literal
+            # Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+            "plugin_octoprint_nanny_monitoring_frame_bytes": [
+                self.handle_monitoring_frame_bytes
+            ],
         }
 
-    def register_callbacks(self, callbacks):
+    def register_callbacks(self, callbacks) -> Dict[str, List[Callable]]:
+        """
+        Register callback functions executed during event publish loop
+        """
         for k, v in callbacks.items():
             if self._callbacks.get(k) is None:
                 self._callbacks[k] = [v]
@@ -183,21 +192,30 @@ class MQTTPublisherWorker:
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=4))
+        loop.set_default_executor(
+            concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        )  # TODO Maybe run single-threaded to avoid initializing multiple mqtt clients in backoff/retry situation :thinkface:
         loop.run_until_complete(asyncio.ensure_future(self.loop_forever()))
         loop.close()
 
-    async def publish_octoprint_event_telemetry(self, event):
+    def publish_octoprint_event_telemetry(self, event):
         payload = build_telemetry_event(event, self.plugin)
         return self.plugin_settings.mqtt_client.publish_octoprint_event(
             payload.to_dict()
         )
 
-    def handle_monitoring_frame_bytes(self, event: Dict[str, Any]):
+    @beeline.traced("MQTTPublisherWorker.handle_monitoring_frame_bytes")
+    def handle_monitoring_frame_bytes(self, event_type: str, event: Dict[str, Any]):
+        assert event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
+        beeline.add_context(self.plugin_settings.metadata.to_dict())
         if self.plugin_settings.monitoring_active:
             image_bytes = event["event_data"]["image"]
+            byte_size = sys.getsizeof(image_bytes)
             pimage = PIL.Image.open(io.BytesIO(image_bytes))
             (w, h) = pimage.size
+            context = dict(image_bytes=byte_size, image_w=w, image_h=h)
+            beeline.add_context(context)
+
             image = Image(height=h, width=w, data=image_bytes)
 
             monitoring_image = build_monitoring_image(
@@ -220,36 +238,33 @@ class MQTTPublisherWorker:
                     monitoring_image.SerializeToString()
                 )
 
-    @beeline.traced("MQTTPublisherWorker._loop")
-    async def _loop(self):
-        beeline.add_context(self.plugin_settings.metadata.to_dict())
+    async def _loop(self) -> None:
         try:
             event = self.queue.get(timeout=1)
         except queue.Empty as e:
             return
         event_type = event.get("event_type")
-
-        if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-            self.handle_monitoring_frame_bytes(event)
         if event_type is None:
             logger.error(
-                "Ignoring enqueued msg without type declared {event}".format(
+                "MQTTPublisherWorker ignoring msg without event_type {event}".format(
                     event=event
                 )
             )
             return
-
         logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
+
+        if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
+            self.handle_monitoring_frame_bytes(event)
+
         tracked = self.plugin_settings.event_is_tracked(event_type)
         if tracked:
-            try:
-                await self.publish_octoprint_event_telemetry(event)
-            except Exception as e:
-                logger.error(f"Error in publish_octoprint_event_telemetry {e}")
+            self.publish_octoprint_event_telemetry(event)
+
         handler_fns = self._callbacks.get(event_type)
         if handler_fns is None:
             logger.debug(f"No {self.__class__} handler registered for {event_type}")
             return
+
         for handler_fn in handler_fns:
             logger.debug(f"MQTTPublisherWorker calling handler_fn={handler_fn}")
             if inspect.isawaitable(handler_fn) or inspect.iscoroutinefunction(
