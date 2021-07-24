@@ -53,7 +53,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterDataRequest(current_z=currentZ, **printer_data)
-    printer_state = printer_data.state.get('text')
+    printer_state = printer_data.state.get("text")
     return TelemetryEventPolymorphicRequest(
         print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
