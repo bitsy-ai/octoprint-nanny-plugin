@@ -1,4 +1,8 @@
+import hashlib
+import math
 import os
+import struct
+
 import beeline
 from beeline.patch.requests import *
 
@@ -10,96 +14,61 @@ HONEYCOMB_API_KEY = os.environ.get(
 )
 HONEYCOMB_DEBUG = os.environ.get("HONEYCOMB_DEBUG", False)
 
+# ref: https://docs.honeycomb.io/getting-data-in/python/beeline/#customizing-sampling-logic
+MAX_INT32 = math.pow(2, 32) - 1
+
+SAMPLE_MAP = {
+    "MQTTPublisherWorker.handle_monitoring_frame_bytes": 100  # equivalent to 1% sample rate
+}
+
+# Deterministic _should_sample taken from https://github.com/honeycombio/beeline-python/blob/1ffe66ed1779143592edf9227d3171cb805216b6/beeline/trace.py#L258-L267
+def _should_sample(trace_id, sample_rate):
+    sample_upper_bound = MAX_INT32 / sample_rate
+    sha1 = hashlib.sha1()
+    sha1.update(trace_id.encode("utf-8"))
+    # convert last 4 digits to int
+    (value,) = struct.unpack("<I", sha1.digest()[-4:])
+    return value < sample_upper_bound
+
+
+def honeycomb_event_sampler(fields):
+    # our default sample rate (sample every event)
+    sample_rate = 1  # 100%
+
+    ##
+    # by response code
+    ##
+    response_code = fields.get("response.status_code", 0)
+    # False indicates that we should not keep this event
+    if response_code == 302:
+        return False, 0  # 0%
+    elif response_code == 200:
+        sample_rate = 100  # 1%
+    elif response_code >= 500:
+        # sample every error request
+        sample_rate = 1  # 100%
+
+    ##
+    # by trace name
+    ##
+    trace_name = fields.get("name")
+    maybe_sample_rate = SAMPLE_MAP.get(trace_name)
+    if maybe_sample_rate:
+        sample_rate = maybe_sample_rate
+
+    # The truthiness of the first return argument determines whether we keep the
+    # event. The second argument, the sample rate, tells Honeycomb what rate the
+    # event was sampled at (important to correctly weight calculations on the data).
+    trace_id = fields.get("trace.trace_id")
+    if _should_sample(trace_id, sample_rate):
+        return True, sample_rate
+    return False, 0
+
+
 beeline.init(
     writekey=HONEYCOMB_API_KEY,
     dataset=HONEYCOMB_DATASET,
     service_name="plugin",
     debug=HONEYCOMB_DEBUG,
+    sampler_hook=honeycomb_event_sampler,
 )
-
-
-class HoneycombTracer:
-    def __init__(
-        self,
-        service_name,
-        sample_rate=1,
-        max_concurrent_batches=10,
-        max_batch_size=100,
-        send_frequency=3,
-        block_on_send=False,
-        block_on_response=False,
-        sampler_hook=None,
-        presend_hook=None,
-        debug=HONEYCOMB_DEBUG,
-    ):
-
-        self.service_name = service_name
-        self.sample_rate = sample_rate
-        self.max_concurrent_batches = max_concurrent_batches
-        self.max_batch_size = max_batch_size
-        self.send_frequency = send_frequency
-        self.block_on_send = block_on_send
-        self.block_on_response = block_on_response
-        self.sampler_hook = sampler_hook
-        self.present_hook = presend_hook
-        self.debug = debug
-
-        beeline.init(
-            writekey=HONEYCOMB_API_KEY,
-            dataset=HONEYCOMB_DATASET,
-            service_name=service_name,
-            debug=debug,
-        )
-        self.context = {}
-
-    def add_global_context(self, context={}):
-        """
-        Context will be added to each trace
-        """
-        self.context.update(context)
-        return self.context
-
-    def add_context(self, context: dict):
-        """
-        Add context field to the currently active span
-        """
-        return beeline.add_context(context)
-
-    def add_context_field(self, name, value):
-        """
-        Add a context field to active span by name
-        """
-        return beeline.add_context_field(name, value)
-
-    def add_rollup_field(self, name, value):
-        """
-        Rollup fields are aggregated (summed) if the same key/value pair appears repeatedly
-        """
-        return beeline.add_rollup_field(name, value)
-
-    def add_trace_field(self, name, value):
-        """
-        Adds a field to the current trace span, in addition to all future spans
-        """
-        return beeline.add_trace_field(name, value)
-
-    def start_span(self, context={}):
-        context = {**self.context, **context}
-        span = beeline.start_span(context=context)
-        return span
-
-    def finish_span(self, span):
-        return beeline.finish_span(span)
-
-    def start_trace(self, context={}):
-        # merge global context and any context passed to this trace
-        # values in context supercede global self.context
-        context = {**self.context, **context}
-        trace = beeline.start_trace(context=context)
-        return trace
-
-    def finish_trace(self, trace):
-        return beeline.finish_trace(trace)
-
-    def on_shutdown(self):
-        return beeline.close()
