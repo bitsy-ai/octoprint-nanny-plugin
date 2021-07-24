@@ -25,9 +25,6 @@ from print_nanny_client import (
     OctoprintEnvironmentRequest,
     OctoprintPrinterDataRequest,
 )
-from print_nanny_client.configuration import (
-    Configuration as PrintNannyClientConfiguration,
-)
 
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
@@ -56,8 +53,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
     printer_data = plugin.settings.current_printer_state
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterDataRequest(current_z=currentZ, **printer_data)
-    config = PrintNannyClientConfiguration()
-    config.client_side_validation = False
+    printer_state = printer_data.state.get("text")
     return TelemetryEventPolymorphicRequest(
         print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
@@ -68,7 +64,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
         ts=datetime.now(pytz.timezone("UTC")).timestamp(),
-        local_vars_configuration=config,
+        printer_state=printer_state,
         **event,
     )
 
