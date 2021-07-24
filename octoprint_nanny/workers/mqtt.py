@@ -27,7 +27,7 @@ from print_nanny_client import (
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 from octoprint_nanny.exceptions import PluginSettingsRequired
 
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
+from octoprint_nanny.clients.honeycomb import beeline
 from octoprint_nanny.types import (
     MonitoringModes,
     MonitoringFrame,
@@ -166,7 +166,6 @@ class MQTTPublisherWorker:
             Events.PRINT_FAILED: [plugin_settings.reset_print_session],
             Events.PRINT_CANCELLED: [plugin_settings.reset_print_session],
         }
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def register_callbacks(self, callbacks):
         for k, v in callbacks.items():
@@ -287,7 +286,6 @@ class MQTTSubscriberWorker:
         self._callbacks = {
             "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]
         }
-        self._honeycomb_tracer = HoneycombTracer(service_name="octoprint_plugin")
 
     def run(self):
         self.loop = asyncio.new_event_loop()
@@ -372,10 +370,8 @@ class MQTTSubscriberWorker:
 
     async def _loop(self):
 
-        trace = self._honeycomb_tracer.start_trace()
-        span = self._honeycomb_tracer.start_span(
-            {"name": "WorkerManager.queue.coro_get"}
-        )
+        trace = beeline.start_trace()
+        span = beeline.start_span({"name": "WorkerManager.queue.coro_get"})
 
         try:
             payload = self.queue.get(timeout=1)
@@ -386,8 +382,8 @@ class MQTTSubscriberWorker:
         context = dict(event=payload)
         context.update(self.plugin_settings.metadata.to_dict())
 
-        self._honeycomb_tracer.add_context(context)
-        self._honeycomb_tracer.finish_span(span)
+        beeline.add_context(context)
+        beeline.finish_span(span)
 
         topic = payload.get("topic")
 
@@ -403,7 +399,7 @@ class MQTTSubscriberWorker:
         else:
             logging.error(f"No handler for topic={topic} in _loop")
 
-        self._honeycomb_tracer.finish_trace(trace)
+        beeline.finish_trace(trace)
 
     @beeline.traced("MQTTSubscriberWorker._handle_config_update")
     async def _handle_config_update(self, topic, message):

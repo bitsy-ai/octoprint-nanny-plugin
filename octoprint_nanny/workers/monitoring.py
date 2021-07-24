@@ -10,10 +10,7 @@ import multiprocessing
 import numpy as np
 import threading
 
-import beeline
-
 from octoprint.events import Events
-from octoprint_nanny.clients.honeycomb import HoneycombTracer
 from octoprint.events import Events
 from octoprint_nanny.types import (
     MonitoringModes,
@@ -21,10 +18,11 @@ from octoprint_nanny.types import (
     Image,
 )
 from websockets.legacy.client import connect as ws_connect
-
+from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 from octoprint_nanny.utils.encoder import NumpyEncoder
-from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+from octoprint_nanny.clients.honeycomb import beeline
+
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.monitoring")
 
