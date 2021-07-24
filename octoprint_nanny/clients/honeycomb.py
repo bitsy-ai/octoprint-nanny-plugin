@@ -38,7 +38,7 @@ def honeycomb_event_sampler(fields):
     ##
     # by response code
     ##
-    response_code = fields.get("response.status_code")
+    response_code = fields.get("response.status_code", 0)
     # False indicates that we should not keep this event
     if response_code == 302:
         return False, 0  # 0%

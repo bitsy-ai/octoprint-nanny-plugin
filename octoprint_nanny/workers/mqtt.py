@@ -7,6 +7,7 @@ import logging
 import os
 import queue
 import threading
+import sys
 from datetime import datetime
 import logging
 import pytz
@@ -205,11 +206,13 @@ class MQTTPublisherWorker:
         )
 
     @beeline.traced("MQTTPublisherWorker.handle_monitoring_frame_bytes")
-    def handle_monitoring_frame_bytes(self, event_type: str, event: Dict[str, Any]):
+    def handle_monitoring_frame_bytes(
+        self, event_type: str, event_data: Dict[str, Any], **kwargs
+    ):
         assert event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES
         beeline.add_context(self.plugin_settings.metadata.to_dict())
         if self.plugin_settings.monitoring_active:
-            image_bytes = event["event_data"]["image"]
+            image_bytes = event_data["image"]
             byte_size = sys.getsizeof(image_bytes)
             pimage = PIL.Image.open(io.BytesIO(image_bytes))
             (w, h) = pimage.size
@@ -252,9 +255,6 @@ class MQTTPublisherWorker:
             )
             return
         logger.debug(f"MQTTPublisherWorker received event_type={event_type}")
-
-        if event_type == Events.PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES:
-            self.handle_monitoring_frame_bytes(event)
 
         tracked = self.plugin_settings.event_is_tracked(event_type)
         if tracked:
