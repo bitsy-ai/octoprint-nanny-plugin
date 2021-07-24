@@ -21,7 +21,7 @@ import print_nanny_client
 from octoprint.events import Events
 import octoprint
 from print_nanny_client import (
-    TelemetryEvent,
+    TelemetryEventRequest,
     OctoprintEnvironment,
     OctoprintPrinterData,
 )
@@ -41,7 +41,7 @@ from octoprint_nanny.clients.mqtt import MQTTClient
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.workers.mqtt")
 
 
-def build_telemetry_event(event, plugin) -> TelemetryEvent:
+def build_telemetry_event(event, plugin) -> TelemetryEventRequest:
     environment = plugin.settings.octoprint_environment
     environment = OctoprintEnvironment(
         os=environment.get("os", {}),
@@ -53,7 +53,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEvent:
     currentZ = printer_data.pop("currentZ")
     printer_data = OctoprintPrinterData(current_z=currentZ, **printer_data)
 
-    return TelemetryEvent(
+    return TelemetryEventRequest(
         print_session=plugin.settings.print_session_id,
         octoprint_environment=environment,
         octoprint_printer_data=printer_data,
