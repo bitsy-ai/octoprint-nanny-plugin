@@ -43,7 +43,7 @@ jobs:
           source .venv/bin/activate && make mypy
       - name: Generate code coverage report
         run: |
-          source .venv/bin/activate && make online-ci-coverage
+          source .venv/bin/activate && make ci-coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

@@ -96,20 +96,10 @@ octoprint-prod:
 	rsync ~/.octoprint ~/.octoprint-prod
 
 test:
-	pytest -p no:warnings --log-level=INFO
+	pytest --log-level=INFO
 
-offline-ci-test:
-	pytest -p no:warnings --log-level=INFO -m "not webapp"
-
-online-ci-test:
-	pytest -p no:warnings --log-level=INFO -m "not webapp" -m "not offline"
-
-offline-ci-coverage:
-	pytest --cov=./ --cov-report=xml -m "not webapp"
-
-online-ci-coverage:
-	pytest --cov=./ --cov-report=xml -m "not webapp" -m "not offline"
-
+ci-coverage:
+	pytest --cov=./ --cov-report=xml --log-level=INFO
 
 install-git-hooks:
 	cp -a hooks/. .git/hooks/
