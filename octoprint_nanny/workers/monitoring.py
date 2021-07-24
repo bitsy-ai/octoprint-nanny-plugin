@@ -133,6 +133,8 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.start")
     async def start(self, print_session=None, **kwargs):
         monitoring_active = self.plugin._settings.get(["monitoring_active"])
+
+        metadata_dict = self.plugin.settings.metadata.to_dict()
         metadata_dict["monitoring_active"] = monitoring_active
         beeline.add_context(metadata_dict)
 
@@ -163,7 +165,7 @@ class MonitoringManager:
     @beeline.traced("MonitoringManager.stop")
     async def stop(self, **kwargs):
         metadata_dict = self.plugin.settings.metadata.to_dict()
-        beeline.add_context(monitoring_active=monitoring_active, **metadata_dict)
+        beeline.add_context(metadata_dict)
 
         self._drain()
         self.plugin._event_bus.fire(
