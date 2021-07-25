@@ -132,6 +132,7 @@ class MQTTManager:
             thread.daemon = True
             self._worker_threads.append(thread)
             thread.start()
+            logger.info(f"Started thread {thread} running {worker.run}")
 
     def shutdown(self, **kwargs):
         logger.warning("MMQTTManager shutdown initiated")
@@ -260,7 +261,12 @@ class MQTTPublisherWorker:
 
         tracked = self.plugin_settings.event_is_tracked(event_type)
         if tracked:
-            self.publish_octoprint_event_telemetry(event)
+            mqtt_msginfo = self.publish_octoprint_event_telemetry(event)
+            logger.debug(f"Published MQTTMessageInfo={mqtt_msginfo}")
+        else:
+            logger.warning(
+                f"MQTTPublisherWorker received untracked event_type={event_type}"
+            )
 
         handler_fns = self._callbacks.get(event_type)
         if handler_fns is None:

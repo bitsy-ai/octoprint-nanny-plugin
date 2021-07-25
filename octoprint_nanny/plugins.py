@@ -743,8 +743,7 @@ class OctoPrintNannyPlugin(
                     f"BrokenPipeError raised on mqtt_send_queue.put_nowait() call, discarding event_type={event_type}"
                 )
         elif event_type in self.VERBOSE_EVENTS:
-            logger.debug(f"Ignoring event_type={event_type} event_data={event_data}")
-
+            pass
         else:
             logger.info(f"Ignoring event_type={event_type} event_data={event_data}")
 
