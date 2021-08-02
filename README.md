@@ -1,7 +1,7 @@
 ![Discord](https://img.shields.io/discord/773452324692688956)
 ![Github Followers](https://img.shields.io/github/followers/leigh-johnson?style=social)
 
-![Tests](https://img.shields.io/github/workflow/status/bitsy-ai/octoprint-nanny-plugin/Test)
+![Tests](https://img.shields.io/github/workflow/status/bitsy-ai/octoprint-nanny-plugin/PyTest%20Coverage%20Report)
 ![Code Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin)
 
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin)
