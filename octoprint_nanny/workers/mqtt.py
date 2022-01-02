@@ -17,9 +17,9 @@ import beeline
 import base64
 from typing import List, Callable, Dict, Any, Union
 
-import print_nanny_client # alpha client
+import print_nanny_client  # alpha client
 
-import printnanny_api_client # beta client
+import printnanny_api_client  # beta client
 
 from octoprint.events import Events
 import octoprint
@@ -63,8 +63,8 @@ def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
         print_nanny_plugin_version=plugin.settings.plugin_version,
-        print_nanny_client_version=print_nanny_client.__version__, # alpha client in print_nanny_client namespace
-        print_nanny_beta_client_version=printnanny_api_client.__version__, # beta client in printnanny_api_client namespace
+        print_nanny_client_version=print_nanny_client.__version__,  # alpha client in print_nanny_client namespace
+        print_nanny_beta_client_version=printnanny_api_client.__version__,  # beta client in printnanny_api_client namespace
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
         ts=datetime.now(pytz.timezone("UTC")).timestamp(),

@@ -1,7 +1,7 @@
 import pytest
 
-from print_nanny_client.protobuf.common_pb2 import PrintSession # alpha api client
-import print_nanny_client # alpha api client
+from print_nanny_client.protobuf.common_pb2 import PrintSession  # alpha api client
+import print_nanny_client  # alpha api client
 from octoprint_nanny.types import Metadata
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 from octoprint_nanny import __plugin_version__

@@ -21,8 +21,8 @@ from pathlib import Path
 from datetime import datetime
 from octoprint.events import Events
 
-import print_nanny_client # alpha client
-import printnanny_api_client # beta client
+import print_nanny_client  # alpha client
+import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import octoprint_nanny.exceptions
@@ -32,10 +32,7 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
 
-from printnanny_api_client import (
-    OctoPrintNannyEvent,
-    OctoTelemetryEvent
-)
+from printnanny_api_client import OctoPrintNannyEvent, OctoTelemetryEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -289,8 +286,8 @@ class OctoPrintNannyPlugin(
             "virtualenv": virtualenv,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "plugin_version": self._plugin_version,
-            "print_nanny_client_version": print_nanny_client.__version__, # alpha client version
-            "print_nanny_beta_client_version": printnanny_api_client.__version__ # beta client version
+            "print_nanny_client_version": print_nanny_client.__version__,  # alpha client version
+            "print_nanny_beta_client_version": printnanny_api_client.__version__,  # beta client version
         }
 
     def _reset_octoprint_device(self):
@@ -684,7 +681,7 @@ class OctoPrintNannyPlugin(
         remote_commands = [
             "remote_command_received",
             "remote_command_failed",
-            "remote_command_success"
+            "remote_command_success",
         ]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry

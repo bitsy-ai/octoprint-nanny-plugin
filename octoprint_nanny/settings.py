@@ -6,7 +6,7 @@ import octoprint
 import beeline
 import uuid
 from typing import Optional
-from printnanny_api_client import OctoTelemetryEvent # beta client
+from printnanny_api_client import OctoTelemetryEvent  # beta client
 
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient
@@ -15,8 +15,8 @@ from octoprint_nanny.types import (
     MonitoringModes,
     Metadata,
 )
-import print_nanny_client # alpha client
-import printnanny_api_client # beta client
+import print_nanny_client  # alpha client
+import printnanny_api_client  # beta client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
