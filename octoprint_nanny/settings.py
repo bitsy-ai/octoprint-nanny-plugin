@@ -6,16 +6,7 @@ import octoprint
 import beeline
 import uuid
 from typing import Optional
-
-# from printnanny_api_client import (
-#     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
-#     OctoPrintEventEventTypeEnum as OctoPrintEventType,
-#     PrintJobStatusEnum,
-#     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
-#     PrinterStateEnum as PrinterEventType,
-# )
-
-from printnanny_api_client import OctoTelemetryEvent
+from printnanny_api_client import OctoTelemetryEvent # beta client
 
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient
@@ -24,7 +15,8 @@ from octoprint_nanny.types import (
     MonitoringModes,
     Metadata,
 )
-import printnanny_api_client
+import print_nanny_client # alpha client
+import printnanny_api_client # beta client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.settings")
 
@@ -294,7 +286,7 @@ class PluginSettingsMemoize:
             logger.info(f"Created print_session={print_session}")
             self._print_session_rest = print_session
             self._print_session_pb = (
-                printnanny_api_client.protobuf.common_pb2.PrintSession(
+                print_nanny_client.protobuf.common_pb2.PrintSession(
                     session=session,
                     id=print_session.id,
                     created_ts=now.timestamp(),
@@ -336,7 +328,7 @@ class PluginSettingsMemoize:
     @property
     def metadata_pb(self):
         ts = datetime.now(pytz.timezone("UTC")).timestamp()
-        metadata = printnanny_api_client.protobuf.monitoring_pb2.Metadata(
+        metadata = print_nanny_client.protobuf.monitoring_pb2.Metadata(
             user_id=self.user_id,
             octoprint_device_id=self.octoprint_device_id,
             cloudiot_device_id=self.cloudiot_device_id,
@@ -349,7 +341,7 @@ class PluginSettingsMemoize:
     @property
     def octoprint_environment_pb(self):
         octoprint_environment = self.octoprint_environment
-        return printnanny_api_client.protobuf.common_pb2.OctoprintEnvironment(
+        return print_nanny_client.protobuf.common_pb2.OctoprintEnvironment(
             plugin_version=self.plugin_version,
             client_version=printnanny_api_client.__version__,
             python_version=octoprint_environment.get("python", {}).get("version"),

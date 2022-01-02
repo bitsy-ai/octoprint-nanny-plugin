@@ -1,6 +1,7 @@
 import pytest
 
-from printnanny_api_client.protobuf.common_pb2 import PrintSession
+from print_nanny_client.protobuf.common_pb2 import PrintSession # alpha api client
+import print_nanny_client # alpha api client
 from octoprint_nanny.types import Metadata
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 from octoprint_nanny import __plugin_version__
@@ -126,7 +127,7 @@ def metadata(octoprint_environment):
 
 @pytest.fixture
 def metadata_pb():
-    return printnanny_api_client.protobuf.monitoring_pb2.Metadata(
+    return print_nanny_client.protobuf.monitoring_pb2.Metadata(
         user_id=1234,
         octoprint_device_id=1234,
         cloudiot_device_id=1234,

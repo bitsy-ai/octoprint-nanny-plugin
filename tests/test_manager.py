@@ -2,6 +2,7 @@ import asyncio
 import pytest
 from asynctest import patch
 
+import print_nanny_client
 import PIL
 import octoprint_nanny.plugins  # import DEFAULT_SETTINGS, OctoPrintNannyPlugin
 from octoprint_nanny.manager import WorkerManager
