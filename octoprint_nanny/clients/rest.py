@@ -8,16 +8,16 @@ import os
 import beeline
 
 from octoprint.events import Events
-import print_nanny_client
-from print_nanny_client import ApiClient as AsyncApiClient
+import printnanny_api_client
+from printnanny_api_client import ApiClient as AsyncApiClient
 
-from print_nanny_client.api.telemetry_api import TelemetryApi
-from print_nanny_client.api.remote_control_api import RemoteControlApi
-from print_nanny_client.api.users_api import UsersApi
-from print_nanny_client.models.octo_print_event_request import OctoPrintEventRequest
-from print_nanny_client.models.print_session_request import PrintSessionRequest
-from print_nanny_client.models.printer_profile_request import PrinterProfileRequest
-from print_nanny_client.models.octo_print_device_request import (
+from printnanny_api_client.api.telemetry_api import TelemetryApi
+from printnanny_api_client.api.remote_control_api import RemoteControlApi
+from printnanny_api_client.api.users_api import UsersApi
+from printnanny_api_client.models.octo_print_event_request import OctoPrintEventRequest
+from printnanny_api_client.models.print_session_request import PrintSessionRequest
+from printnanny_api_client.models.printer_profile_request import PrinterProfileRequest
+from printnanny_api_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
 )
 from octoprint_nanny.utils.encoder import NumpyEncoder
@@ -26,7 +26,7 @@ from octoprint_nanny.utils.encoder import NumpyEncoder
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
 API_CLIENT_EXCEPTIONS = (
-    print_nanny_client.exceptions.ApiException,
+    printnanny_api_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
 MAX_BACKOFF_TIME = int(os.environ.get("OCTOPRINT_NANNY_MAX_BACKOFF_TIME", 120))
@@ -72,7 +72,7 @@ class RestAPIClient:
     def _api_config(self):
         parsed_uri = urllib.parse.urlparse(self.api_url)
         host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
-        config = print_nanny_client.Configuration(host=host)
+        config = printnanny_api_client.Configuration(host=host)
 
         config.access_token = self.auth_token
         return config
@@ -110,7 +110,7 @@ class RestAPIClient:
     )
     async def update_octoprint_device(self, device_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = print_nanny_client.PatchedOctoPrintDeviceRequest(**kwargs)
+            request = printnanny_api_client.PatchedOctoPrintDeviceRequest(**kwargs)
 
             api_instance = RemoteControlApi(api_client=api_client)
             octoprint_device = await api_instance.octoprint_devices_partial_update(
@@ -131,7 +131,7 @@ class RestAPIClient:
     )
     async def update_remote_control_command(self, command_id, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            request = print_nanny_client.models.PatchedRemoteControlCommandRequest(
+            request = printnanny_api_client.models.PatchedRemoteControlCommandRequest(
                 **kwargs
             )
             api_instance = RemoteControlApi(api_client=api_client)
@@ -225,7 +225,7 @@ class RestAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
             request = (
-                print_nanny_client.models.print_session_request.PrintSessionRequest(
+                printnanny_api_client.models.print_session_request.PrintSessionRequest(
                     **kwargs
                 )
             )
@@ -246,7 +246,7 @@ class RestAPIClient:
     async def update_print_session(self, session: str, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = RemoteControlApi(api_client=api_client)
-            request = print_nanny_client.models.patched_print_session_request.PatchedPrintSessionRequest(
+            request = printnanny_api_client.models.patched_print_session_request.PatchedPrintSessionRequest(
                 **kwargs
             )
             print_session = await api_instance.print_session_partial_update(
@@ -325,9 +325,9 @@ class RestAPIClient:
     )
     async def update_or_create_device_calibration(self, **kwargs):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = print_nanny_client.MlOpsApi(api_client=api_client)
+            api_instance = printnanny_api_client.MlOpsApi(api_client=api_client)
 
-            request = print_nanny_client.DeviceCalibrationRequest(**kwargs)
+            request = printnanny_api_client.DeviceCalibrationRequest(**kwargs)
             device_calibration = await api_instance.device_calibration_update_or_create(
                 request
             )

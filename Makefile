@@ -91,10 +91,7 @@ octoprint-local:
 	octoprint serve --host=0.0.0.0 --port=5000
 
 octoprint-prod:
-	rm -rf ~/.octoprint && rsync ~/.octoprint-prod ~/.octoprint
-	cd ~/projects/OctoPrint && . .venv/bin/activate && octoprint serve
-	rsync ~/.octoprint ~/.octoprint-prod
-
+	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
 test:
 	pytest --log-level=INFO
 

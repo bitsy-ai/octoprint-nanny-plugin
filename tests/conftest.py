@@ -1,11 +1,11 @@
 import pytest
 
-from print_nanny_client.protobuf.common_pb2 import PrintSession
+from printnanny_api_client.protobuf.common_pb2 import PrintSession
 from octoprint_nanny.types import Metadata
 from octoprint_nanny.workers.monitoring import MonitoringWorker
 from octoprint_nanny import __plugin_version__
 import uuid
-import print_nanny_client
+import printnanny_api_client
 from datetime import datetime
 import octoprint
 
@@ -116,7 +116,7 @@ def metadata(octoprint_environment):
         user_id=1234,
         octoprint_device_id=1234,
         cloudiot_device_id=1234,
-        client_version=print_nanny_client.__version__,
+        client_version=printnanny_api_client.__version__,
         ts=datetime.now().timestamp(),
         octoprint_environment=octoprint_environment,
         octoprint_version="0.0.0",
@@ -126,7 +126,7 @@ def metadata(octoprint_environment):
 
 @pytest.fixture
 def metadata_pb():
-    return print_nanny_client.protobuf.monitoring_pb2.Metadata(
+    return printnanny_api_client.protobuf.monitoring_pb2.Metadata(
         user_id=1234,
         octoprint_device_id=1234,
         cloudiot_device_id=1234,

@@ -21,7 +21,7 @@ from pathlib import Path
 from datetime import datetime
 from octoprint.events import Events
 
-import print_nanny_client
+import printnanny_api_client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import octoprint_nanny.exceptions
@@ -31,7 +31,7 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
 
-from print_nanny_client import (
+from printnanny_api_client import (
     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
     TelemetryEvent,
@@ -293,7 +293,7 @@ class OctoPrintNannyPlugin(
             "virtualenv": virtualenv,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "plugin_version": self._plugin_version,
-            "print_nanny_client_version": print_nanny_client.__version__,
+            "printnanny_api_client_version": printnanny_api_client.__version__,
         }
 
     def _reset_octoprint_device(self):
@@ -328,7 +328,7 @@ class OctoPrintNannyPlugin(
                 )
                 id_map["octoprint"][profile_id] = created_profile.id
                 id_map["octoprint_nanny"][created_profile.id] = profile_id
-            except print_nanny_client.exceptions.ApiException as e:
+            except printnanny_api_client.exceptions.ApiException as e:
                 # octoprint device was deleted remotely
                 if e.status == 400:
                     try:
@@ -671,7 +671,7 @@ class OctoPrintNannyPlugin(
                 ),
                 500,
             )
-        if isinstance(response, print_nanny_client.models.user.User):
+        if isinstance(response, printnanny_api_client.models.user.User):
             self._settings.set(["auth_token"], auth_token)
             self._settings.set(["auth_valid"], True)
             self._settings.set(["api_url"], api_url)

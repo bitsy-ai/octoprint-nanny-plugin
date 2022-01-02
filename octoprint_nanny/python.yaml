@@ -1,4 +1,4 @@
 ---
 library: asyncio
-packageName: print_nanny_client
+packageName: printnanny_api_client
 packageVersion: '0.1.0'
