@@ -68,7 +68,7 @@ def honeycomb_event_sampler(fields):
 beeline.init(
     writekey=HONEYCOMB_API_KEY,
     dataset=HONEYCOMB_DATASET,
-    service_name="plugin",
+    service_name="octoprint_plugin",
     debug=HONEYCOMB_DEBUG,
     sampler_hook=honeycomb_event_sampler,
 )
