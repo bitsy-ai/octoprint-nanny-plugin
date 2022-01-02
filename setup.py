@@ -145,7 +145,7 @@ plugin_requires = [
     # beta api client supporting Print Nanny OS in 2022
     "printnanny-api-client~=0.34.1",
     # alpha client created for initial octoprint plugin release in Jan 2021
-    "print_nanny_client~=0.8.18",
+    "print_nanny_client==0.8.18",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
