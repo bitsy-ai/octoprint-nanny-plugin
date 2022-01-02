@@ -85,7 +85,6 @@ DEFAULT_SETTINGS = dict(
     mqtt_bridge_primary_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
     mqtt_bridge_backup_root_certificate_url=BACKUP_MQTT_ROOT_CERTIFICATE_URL,
     user_id=None,
-    user_url=None,
     device_manage_url=None,
     device_fingerprint=None,
     device_cloudiot_name=None,
@@ -151,7 +150,6 @@ class OctoPrintNannyPlugin(
         return self._settings.set([key], value)
 
     @beeline.traced("OctoPrintNannyPlugin._test_mqtt_async")
-    @beeline.traced_thread
     async def _test_mqtt_async(self):
         try:
             mqtt_client = self.settings.mqtt_client
@@ -181,13 +179,12 @@ class OctoPrintNannyPlugin(
             )
 
     @beeline.traced("OctoPrintNannyPlugin._test_api_auth_async")
-    @beeline.traced_thread
     async def _test_api_auth_async(self, auth_token, api_url):
         rest_client = RestAPIClient(auth_token=auth_token, api_url=api_url)
         logger.info("Initialized rest_client")
         try:
             user = await rest_client.get_user()
-            logger.info(f"Authenticated as user id={user.id} url={user.url}")
+            logger.info(f"Authenticated as PrintNanny user id={user.id}")
             self._event_bus.fire(
                 Events.PLUGIN_OCTOPRINT_NANNY_CONNECT_TEST_REST_API_SUCCESS,
             )
@@ -212,8 +209,10 @@ class OctoPrintNannyPlugin(
         response = asyncio.run_coroutine_threadsafe(
             self._test_api_auth_async(auth_token, api_url), self.worker_manager.loop
         )
-        result = response.result()
-        return result
+        if response.exception():
+            raise response.exception()
+        else:
+            return response.result()
 
     @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
     def _cpuinfo(self) -> dict:
@@ -257,7 +256,6 @@ class OctoPrintNannyPlugin(
         return meminfo
 
     @beeline.traced("OctoPrintNannyPlugin.get_device_info")
-    @beeline.traced_thread
     def get_device_info(self):
         cpuinfo = self._cpuinfo()
 
@@ -353,7 +351,6 @@ class OctoPrintNannyPlugin(
         return True
 
     @beeline.traced("OctoPrintNannyPlugin._write_keypair")
-    @beeline.traced_thread
     async def _write_keypair(self, device):
         pubkey_filename = os.path.join(self.get_plugin_data_folder(), "public_key.pem")
         privkey_filename = os.path.join(
@@ -390,7 +387,6 @@ class OctoPrintNannyPlugin(
         self._settings.set(["device_public_key"], pubkey_filename)
 
     @beeline.traced("OctoPrintNannyPlugin._download_root_certificates")
-    @beeline.traced_thread
     async def _download_root_certificates(self):
 
         ca_path = os.path.join(
@@ -428,7 +424,6 @@ class OctoPrintNannyPlugin(
         self._settings.set(["backup_ca_cert"], backup_root_ca_filename)
 
     @beeline.traced("OctoPrintNannyPlugin._write_ca_certs")
-    @beeline.traced_thread
     async def _write_ca_certs(self, device):
 
         ca_path = os.path.join(
@@ -487,7 +482,6 @@ class OctoPrintNannyPlugin(
             logger.error(f"Connection to Print Nanny REST API timed out")
 
     @beeline.traced("OctoPrintNannyPlugin._register_device")
-    @beeline.traced_thread
     async def _register_device(self, device_name):
 
         logger.info(
@@ -673,7 +667,6 @@ class OctoPrintNannyPlugin(
             self._settings.set(["auth_valid"], True)
             self._settings.set(["api_url"], api_url)
             self._settings.set(["user_email"], response.email)
-            self._settings.set(["user_url"], response.url)
             self._settings.set(["user_id"], response.id)
 
             self._settings.save()
@@ -821,7 +814,6 @@ class OctoPrintNannyPlugin(
                 self._settings.get(["cloudiot_device_id"]) is None,
                 self._settings.get(["user_email"]) is None,
                 self._settings.get(["user_id"]) is None,
-                self._settings.get(["user_url"]) is None,
                 self._settings.get(["ws_url"]) is None,
                 self._settings.get(["ca_cert"]) is None,
             ]
