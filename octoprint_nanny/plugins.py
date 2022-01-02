@@ -32,11 +32,8 @@ from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
 
 from printnanny_api_client import (
-    PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
-    RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
-    TelemetryEvent,
-    OctoprintEnvironment,
-    OctoprintPrinterData,
+    OctoPrintNannyEvent,
+    OctoTelemetryEvent
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -687,9 +684,13 @@ class OctoPrintNannyPlugin(
         # remove plugin event prefix when registering events (octoprint adds prefix)
         plugin_events = [
             x.replace(self.octoprint_event_prefix, "")
-            for x in PrintNannyPluginEventType.allowable_values
+            for x in OctoPrintNannyEvent.allowable_values
         ]
-        remote_commands = RemoteCommandEventType.allowable_values
+        remote_commands = [
+            "remote_command_received",
+            "remote_command_failed",
+            "remote_command_success"
+        ]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
             "monitoring_frame_bytes",

@@ -91,7 +91,7 @@ octoprint-local:
 	octoprint serve --host=0.0.0.0 --port=5000
 
 octoprint-prod:
-	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
+	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
 test:
 	pytest --log-level=INFO
 

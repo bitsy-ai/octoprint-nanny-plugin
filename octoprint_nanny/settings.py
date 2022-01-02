@@ -7,13 +7,15 @@ import beeline
 import uuid
 from typing import Optional
 
-from printnanny_api_client import (
-    PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
-    OctoPrintEventEventTypeEnum as OctoPrintEventType,
-    PrintJobStatusEnum,
-    RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
-    PrinterStateEnum as PrinterEventType,
-)
+# from printnanny_api_client import (
+#     PrintNannyPluginEventEventTypeEnum as PrintNannyPluginEventType,
+#     OctoPrintEventEventTypeEnum as OctoPrintEventType,
+#     PrintJobStatusEnum,
+#     RemoteCommandEventEventTypeEnum as RemoteCommandEventType,
+#     PrinterStateEnum as PrinterEventType,
+# )
+
+from printnanny_api_client import OctoTelemetryEvent
 
 from octoprint_nanny.clients.mqtt import MQTTClient
 from octoprint_nanny.clients.rest import RestAPIClient
@@ -438,18 +440,7 @@ class PluginSettingsMemoize:
     def event_is_tracked(self, event_type):
         prefix = self.plugin.octoprint_event_prefix
         prefix_stripped = event_type.replace(prefix, "")
-        return (
-            event_type in PrintNannyPluginEventType.allowable_values
-            or prefix_stripped in PrintNannyPluginEventType.allowable_values
-            or event_type in OctoPrintEventType.allowable_values
-            or prefix_stripped in OctoPrintEventType.allowable_values
-            or event_type in PrintJobStatusEnum.allowable_values
-            or prefix_stripped in PrintJobStatusEnum.allowable_values
-            or event_type in RemoteCommandEventType.allowable_values
-            or prefix_stripped in RemoteCommandEventType.allowable_values
-            or event_type in PrinterEventType.allowable_values
-            or prefix_stripped in PrinterEventType.allowable_values
-        )
+        return event_type in OctoTelemetryEvent.allowable_values
 
     @property
     def webcam_to_octoprint_ws(self):
