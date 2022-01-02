@@ -34,7 +34,7 @@ jobs:
         # Runs a set of commands using the runners shell
       - name: Test installation
         run: |
-          .venv/bin/pip install --no-cache-dir install .
+          .venv/bin/pip install --no-deps install .
       - name: Install test dependencies
         run: |
           .venv/bin/pip install -r dev-requirements.txt
