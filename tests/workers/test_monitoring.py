@@ -8,7 +8,7 @@ from octoprint_nanny.workers.monitoring import (
 )
 from octoprint_nanny.workers.mqtt import MQTTPublisherWorker
 
-import print_nanny_client
+import printnanny_api_client
 
 
 @pytest.mark.asyncio

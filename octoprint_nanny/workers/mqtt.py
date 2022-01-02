@@ -16,11 +16,11 @@ import io
 import beeline
 import base64
 from typing import List, Callable, Dict, Any, Union
-import print_nanny_client
+import printnanny_api_client
 
 from octoprint.events import Events
 import octoprint
-from print_nanny_client import (
+from printnanny_api_client import (
     TelemetryEventPolymorphicRequest,
     OctoprintEnvironmentRequest,
     OctoprintPrinterDataRequest,
@@ -60,7 +60,7 @@ def build_telemetry_event(event, plugin) -> TelemetryEventPolymorphicRequest:
         octoprint_printer_data=printer_data,
         temperature=plugin.settings.current_temperatures,
         print_nanny_plugin_version=plugin.settings.plugin_version,
-        print_nanny_client_version=print_nanny_client.__version__,
+        printnanny_api_client_version=printnanny_api_client.__version__,
         octoprint_version=octoprint.util.version.get_octoprint_version_string(),
         octoprint_device=plugin.settings.octoprint_device_id,
         ts=datetime.now(pytz.timezone("UTC")).timestamp(),
@@ -429,7 +429,7 @@ class MQTTSubscriberWorker:
         # add metadata to honeycomb trace context
         beeline.add_context(self.plugin_settings.metadata.to_dict())
 
-        device_config = print_nanny_client.ExperimentDeviceConfig(**message)
+        device_config = printnanny_api_client.ExperimentDeviceConfig(**message)
 
         labels = device_config.artifact.get("labels")
         artifacts = device_config.artifact.get("artifacts")

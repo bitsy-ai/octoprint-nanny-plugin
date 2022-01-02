@@ -1,11 +1,11 @@
 import octoprint
-import print_nanny_client
-from print_nanny_client.protobuf.common_pb2 import (
+import printnanny_api_client
+from printnanny_api_client.protobuf.common_pb2 import (
     OctoprintEnvironment,
     Metadata,
     PrintSession,
 )
-from print_nanny_client.protobuf.monitoring_pb2 import MonitoringImage
+from printnanny_api_client.protobuf.monitoring_pb2 import MonitoringImage
 
 
 def build_monitoring_image(
