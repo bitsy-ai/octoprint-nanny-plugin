@@ -208,7 +208,7 @@ class OctoPrintNannyPlugin(
             self._test_api_auth_async(auth_token, api_url), self.worker_manager.loop
         )
         if response.exception():
-            raise response.exception()
+            return response.exception()
         else:
             return response.result()
 
