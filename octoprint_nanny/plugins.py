@@ -21,7 +21,8 @@ from pathlib import Path
 from datetime import datetime
 from octoprint.events import Events
 
-import printnanny_api_client
+import print_nanny_client # alpha client
+import printnanny_api_client # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 import octoprint_nanny.exceptions
@@ -288,7 +289,8 @@ class OctoPrintNannyPlugin(
             "virtualenv": virtualenv,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "plugin_version": self._plugin_version,
-            "print_client_version": printnanny_api_client.__version__,
+            "print_nanny_client_version": print_nanny_client.__version__, # alpha client version
+            "print_nanny_beta_client_version": printnanny_api_client.__version__ # beta client version
         }
 
     def _reset_octoprint_device(self):
