@@ -11,6 +11,7 @@ aiodns==3.0.0
 aiohttp[speedups]==3.7.4.post0
     # via
     #   OctoPrint-Nanny (setup.py)
+    #   print-nanny-client
     #   printnanny-api-client
 async-timeout==3.0.1
     # via aiohttp
@@ -67,7 +68,7 @@ flask-login==0.5.0
     # via octoprint
 future==0.18.2
     # via octoprint
-honeycomb-beeline==2.17.0
+honeycomb-beeline==2.18.0
     # via OctoPrint-Nanny (setup.py)
 idna==2.10
     # via
@@ -116,14 +117,18 @@ paho-mqtt==1.5.1
     # via OctoPrint-Nanny (setup.py)
 pathtools==0.1.2
     # via watchdog
-pillow==8.2.0
+pillow==8.4.0
     # via OctoPrint-Nanny (setup.py)
 pkginfo==1.7.0
     # via octoprint
-printnanny-api-client==0.33.0
+print-nanny-client==0.8.70
+    # via OctoPrint-Nanny (setup.py)
+printnanny-api-client==0.34.1
     # via OctoPrint-Nanny (setup.py)
 protobuf==3.17.3
-    # via printnanny-api-client
+    # via
+    #   print-nanny-client
+    #   printnanny-api-client
 psutil==5.8.0
     # via octoprint
 pycares==4.0.0
@@ -137,7 +142,9 @@ pylru==1.2.0
 pyserial==3.5
     # via octoprint
 python-dateutil==2.8.1
-    # via printnanny-api-client
+    # via
+    #   print-nanny-client
+    #   printnanny-api-client
 pytz==2021.1
     # via
     #   OctoPrint-Nanny (setup.py)
@@ -162,6 +169,7 @@ sgmllib3k==1.0.0
 six==1.16.0
     # via
     #   libhoney
+    #   print-nanny-client
     #   printnanny-api-client
     #   protobuf
     #   python-dateutil
@@ -176,6 +184,7 @@ unidecode==0.4.21
     # via octoprint
 urllib3==1.26.5
     # via
+    #   print-nanny-client
     #   printnanny-api-client
     #   requests
     #   sentry-sdk
