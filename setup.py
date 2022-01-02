@@ -142,11 +142,14 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "printnanny-api-client~=0.33.0",
+    # new api client supporting printnanny-os in 2022
+    "printnanny-api-client~=0.34.0",
+    # deprecated api client created for initial octoprint plugin release in Jan 2021
+    "printnanny-api-client~=0.8.18",
     "backoff>=1.10.0",
     "pyjwt>=2.0.1",
     "paho-mqtt>=1.5.1",
-    "honeycomb-beeline",
+    "honeycomb-beeline~=2.18.0",
     "websockets>=9.1",
 ] + plugin_requires_third_party_wheels
 
