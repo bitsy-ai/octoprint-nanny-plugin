@@ -173,7 +173,7 @@ class WorkerManager:
         )
         device_calibration = (
             await self.plugin_settings.rest_client.update_or_create_device_calibration(
-                payload
+                **payload
             )
         )
         logger.info(f"Device calibration upsert succeeded {device_calibration}")
