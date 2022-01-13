@@ -311,7 +311,9 @@ class MQTTSubscriberWorker:
         self.plugin = plugin
         self.plugin_settings = plugin_settings
         self._callbacks = {
-            "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong]
+            "plugin_octoprint_nanny_connect_test_mqtt_pong": [self.handle_pong],
+            "connect_test_mqtt_pong": [self.handle_pong]
+
         }
 
     def run(self):

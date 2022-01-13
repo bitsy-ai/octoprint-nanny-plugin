@@ -682,6 +682,7 @@ class OctoPrintNannyPlugin(
             "remote_command_received",
             "remote_command_failed",
             "remote_command_success",
+            "connect_test_mqtt_pong_success"
         ]
         local_only = [
             "monitoring_frame_b64",  # not sent via event telemetry
