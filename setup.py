@@ -138,7 +138,7 @@ plugin_requires = [
     "octoprint>=1.6.0",
     "cryptography>=3.4.7",
     "numpy",
-    "pillow>=8.3.2",
+    "Pillow>=9.0.0",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
