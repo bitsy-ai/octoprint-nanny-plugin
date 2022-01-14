@@ -54,7 +54,7 @@ $(function () {
         self.statusCheckFailed = ko.observable();
 
         self.apiStatusMessage = ko.observable();
-        self.apiStateusClass = ko.observable();
+        self.apiStatusClass = ko.observable();
         self.mqttPingStatusMessage = ko.observable();
         self.mqttPingStatusClass = ko.observable();
         self.mqttPongStatusMessage = ko.observable();
