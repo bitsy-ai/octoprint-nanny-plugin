@@ -1,26 +1,27 @@
 import aiohttp
 import asyncio
+import base64
+import beeline
 import concurrent
 import inspect
+import io
 import json
 import logging
-import os
-import queue
-import threading
-import sys
-from datetime import datetime
 import logging
-import pytz
+import os
 import PIL
-import io
-import beeline
-import base64
+import pytz
+import queue
+import socket
+import sys
+import threading
+from datetime import datetime
 from typing import List, Callable, Dict, Any, Union
 
 import print_nanny_client  # alpha client
 
 import printnanny_api_client  # beta client
-
+import octoprint.util
 from octoprint.events import Events
 import octoprint
 from printnanny_api_client import (
@@ -34,8 +35,6 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 
 from octoprint_nanny.clients.honeycomb import beeline
 from octoprint_nanny.types import (
-    MonitoringModes,
-    MonitoringFrame,
     Image,
 )
 from octoprint_nanny.clients.protobuf import build_monitoring_image
@@ -179,6 +178,9 @@ class MQTTPublisherWorker:
             "plugin_octoprint_nanny_monitoring_frame_bytes": [
                 self.handle_monitoring_frame_bytes
             ],
+            "plugin_backup_backup_created": [
+                self.on_backup_created
+            ]
         }
 
     def register_callbacks(self, callbacks) -> Dict[str, List[Callable]]:
@@ -210,6 +212,17 @@ class MQTTPublisherWorker:
         payload = build_telemetry_event(event, self.plugin)
         return self.plugin_settings.mqtt_client.publish_octoprint_event(
             payload.to_dict()
+        )
+    
+    async def on_backup_created(self, event_type: str, event_data: Dict[str, Any], **kwargs):
+        logger.info(f"Handling {event_type} event_data={event_data}")
+        hostname = socket.gethostname()
+        octoprint_version = octoprint.util.version.get_octoprint_version_string()
+        await self.plugin_settings.rest_client.create_backup(
+            hostname=hostname,
+            name=event_data["name"],
+            octoprint_version=octoprint_version,
+            file=event_data["path"],
         )
 
     @beeline.traced("MQTTPublisherWorker.handle_monitoring_frame_bytes")

@@ -74,6 +74,8 @@ BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 DEFAULT_SETTINGS = dict(
     auth_token=None,
     auth_valid=False,
+    backup_url="https://print-nanny.com/dashboard",
+    backup_auto=False,
     device_registered=False,
     user_email=None,
     min_score_thresh=0.50,
@@ -563,7 +565,18 @@ class OctoPrintNannyPlugin(
     ##
     ## Octoprint api routes + handlers
     ##
-    # def register_custom_routes(self):
+    @octoprint.plugin.BlueprintPlugin.route("/createBackup", methods=["POST"])
+    def create_backup(self):
+        helpers = self._plugin_manager.get_helpers("backup", "create_backup")
+
+        if helpers and "create_backup" in helpers:
+            backup_file = helpers["create_backup"](exclude=["timelapse"])
+            logger.info("Created backup file")
+            return flask.json.jsonify({"ok": 1})
+        else:
+            logger.error("Plugin manager failed to get backup helper")
+            raise Exception("Plugin manager failed to get backup helper")
+
     @beeline.traced(name="OctoPrintNannyPlugin.start_predict")
     @octoprint.plugin.BlueprintPlugin.route("/startMonitoring", methods=["POST"])
     def start_predict(self):
