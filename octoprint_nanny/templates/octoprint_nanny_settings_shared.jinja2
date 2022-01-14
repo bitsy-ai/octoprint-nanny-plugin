@@ -30,19 +30,7 @@
     <div id="{{template_name}}_basic" class="tab-pane active">
       <fieldset>
 
-        <div>          
-            <h2>Login</h2>
-            <p>Request <a href="https://print-nanny.com/request-invite/" target="_blank">an invite to beta test</a>, or sign in if you're already on the list. 😎</p>
-            <p>
-                <a target="_blank" href="https://print-nanny.com/request-invite/" class="btn btn-large btn-primary">
-                Request Account
-                </a>
-
-                <a target="_blank" href="https://www.print-nanny.com/accounts/login/" class="btn btn-secondary btn-large">
-                Login
-                </a>
-            </p>
-            <hr>
+        <div>
             <h2>Link Accounts</h2>
 
             <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
@@ -72,6 +60,37 @@
             
         {% if plugin_octoprint_nanny_settings.device_registered == True %}
             <div class="col-sm">        
+                <h2>Upload Backup</h2>
+                <div class="control-group" title="Start monitoring automatically">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input 
+                                type="checkbox" 
+                                data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.backup_auto" 
+                                id="octoprint_nanny_settings_backup_auto">Automatically backup OctoPrint
+                        </label>
+                        <p>If checked, your OctoPrint settings will be backed up to Print Nanny Cloud daily.<p>
+                    </div>
+
+                    <button
+                    id="octoprint_nanny_settings_backup_now"
+                    data-bind="{click: createBackup }" 
+                    type="submit" 
+                    class="btn btn-primary btn-large">
+                        Backup Now
+                    </button>
+                    <a href="{{plugin_octoprint_nanny_settings.backup_url}}>
+                        <button
+                        id="octoprint_nanny_settings_backup_view" 
+                        type="submit" 
+                        class="btn btn-secondary btn-large">
+                            View Backups
+                        </button>
+                    </a>
+                </div>
+            <br>
+
+            <div class="col-sm">        
                 <h2>Device Info</h2>
                 <div class="control-group">
                     <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Name</strong></label>
@@ -92,7 +111,7 @@
                 id="octoprint_nanny_settings_reset_device"
                 data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
                 type="submit" 
-                class="btn btn-secondary btn">
+                class="btn btn-secondary btn-large">
                     Reset Device Identity
                 </button>
             </div>
