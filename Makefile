@@ -88,7 +88,7 @@ octoprint-local:
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
-	octoprint serve --host=0.0.0.0 --port=5000
+	octoprint serve --host=0.0.0.0 --port=5001
 
 octoprint-prod:
 	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
