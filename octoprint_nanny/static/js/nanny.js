@@ -54,7 +54,7 @@ $(function () {
         self.statusCheckFailed = ko.observable();
 
         self.apiStatusMessage = ko.observable();
-        self.apiStatusClass = ko.observable();
+        self.apiStateusClass = ko.observable();
         self.mqttPingStatusMessage = ko.observable();
         self.mqttPingStatusClass = ko.observable();
         self.mqttPongStatusMessage = ko.observable();
@@ -343,6 +343,22 @@ $(function () {
             }
         });
 
+        self.backupStatus = ko.observable();
+
+        createBackup = function () {
+            self.backupStatus('loading');
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'createBackup'
+            OctoPrint.postJson(url, {})
+                .done((res) => {
+                    self.backupStatus('success');
+                    console.info("Succes POST /createBackup", res)
+                })
+                .fail(e => {
+                    console.error(e)
+                    self.backupStatus('fail');
+                })
+        }
+
         registerDevice = function () {
             self.deviceRegisterProgress = 100 / self.deviceRegisterProgressCompleted;
             self.deviceRegisterProgressPercent(self.deviceRegisterProgress + '%');
@@ -351,7 +367,7 @@ $(function () {
                 'device_name': self.settingsViewModel.settings.plugins.octoprint_nanny.device_name()
             })
                 .done((res) => {
-                    console.log(res)
+                    console.info("Succes POST /registerDevice", res)
                     self.deviceAlertClass(self.deviceAlerts.success.class);
                     self.deviceAlertHeader(self.deviceAlerts.success.header);
                     self.deviceAlertText(self.deviceAlerts.success.text);

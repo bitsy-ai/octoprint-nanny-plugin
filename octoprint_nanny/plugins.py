@@ -565,7 +565,12 @@ class OctoPrintNannyPlugin(
     ##
     ## Octoprint api routes + handlers
     ##
-    # def register_custom_routes(self):
+    @octoprint.plugin.BlueprintPlugin.route("/createBackup", methods=["POST"])
+    def create_backup(self):
+        self._event_bus.fire(
+            Events.PLUGIN_OCTOPRINT_NANNY_DEVICE_BACKUP_START,
+            payload={"msg": "Creating a fresh backup"},
+        )
     @beeline.traced(name="OctoPrintNannyPlugin.start_predict")
     @octoprint.plugin.BlueprintPlugin.route("/startMonitoring", methods=["POST"])
     def start_predict(self):
