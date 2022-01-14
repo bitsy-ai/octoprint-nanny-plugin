@@ -60,9 +60,9 @@
             
         {% if plugin_octoprint_nanny_settings.device_registered == True %}
             <div class="col-sm">        
-                <h2>Upload Backup</h2>
+                <h2>Backup OctoPrint</h2>
                 <div class="control-group" title="Start monitoring automatically">
-                    <div class="controls">
+                    <!-- <div class="controls">
                         <label class="checkbox">
                             <input 
                                 type="checkbox" 
@@ -70,8 +70,8 @@
                                 id="octoprint_nanny_settings_backup_auto">Automatically backup OctoPrint
                         </label>
                         <p>If checked, your OctoPrint settings will be backed up to Print Nanny Cloud daily.<p>
-                    </div>
-
+                    </div> -->
+                    <p>Backup your OctoPrint settings to Print Nanny Cloud.</p>
                     <button
                     id="octoprint_nanny_settings_backup_now"
                     data-bind="{click: createBackup }" 

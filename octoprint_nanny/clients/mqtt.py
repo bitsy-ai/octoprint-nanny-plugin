@@ -157,7 +157,7 @@ class MQTTClient:
                     {"topic": self.config_topic, "message": parsed_message}
                 )
             except json.decoder.JSONDecodeError:
-                logger.error(
+                logger.warning(
                     f"Failed to decode message on topic={message.topic} payload={message.payload} message={parsed_message}"
                 )
         else:
