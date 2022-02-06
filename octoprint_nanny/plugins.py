@@ -16,6 +16,7 @@ import octoprint.plugin
 import octoprint.util
 import pytz
 from typing import Dict
+import socket
 
 from pathlib import Path
 from datetime import datetime
@@ -31,7 +32,7 @@ from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
-
+from octoprint_nanny.utils.printnanny_os import printnanny_cli_version, printnanny_image_version, printnanny_config, printnanny_dash_url
 from printnanny_api_client import OctoPrintNannyEvent, OctoTelemetryEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -110,6 +111,10 @@ DEFAULT_SETTINGS = dict(
     monitoring_active=False,
     webcam_to_octoprint_ws=True,
     webcam_to_mqtt=True,
+    hostname=socket.gethostname(),
+    printnanny_cli_version=printnanny_cli_version(),
+    printnanny_image_version=printnanny_image_version(),
+    printnanny_config=printnanny_config()
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -802,6 +807,7 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
+            "dash_url": printnanny_dash_url()
         }
 
     ## Wizard plugin mixin
@@ -810,25 +816,15 @@ class OctoPrintNannyPlugin(
         return 0
 
     def is_wizard_required(self):
-
+        self._settings.set(["printnanny_cli_version"], printnanny_cli_version())
+        self._settings.set(["printnanny_image_version"], printnanny_image_version())
+        self._settings.set(["printnanny_config"], printnanny_config())
         return any(
             [
-                self._settings.get(["api_url"]) is None,
                 self._settings.get(["auth_token"]) is None,
-                self._settings.get(["auth_valid"]) is False,
-                self._settings.get(["device_private_key"]) is None,
-                self._settings.get(["device_public_key"]) is None,
-                self._settings.get(["device_fingerprint"]) is None,
-                self._settings.get(["octoprint_device_id"]) is None,
-                self._settings.get(["device_serial"]) is None,
-                self._settings.get(["device_registered"]) is False,
-                self._settings.get(["device_manage_url"]) is None,
-                self._settings.get(["device_cloudiot_name"]) is None,
-                self._settings.get(["cloudiot_device_id"]) is None,
-                self._settings.get(["user_email"]) is None,
-                self._settings.get(["user_id"]) is None,
-                self._settings.get(["ws_url"]) is None,
-                self._settings.get(["ca_cert"]) is None,
+                self._settings.get(["printnanny_cli_version"]) is None,
+                self._settings.get(["printnanny_image_version"]) is None,
+                self._settings.get(["printnanny_config"]) is None
             ]
         )
 
