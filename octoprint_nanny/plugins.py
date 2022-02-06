@@ -31,7 +31,7 @@ from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.workers.mqtt import build_telemetry_event
-
+from octoprint_nanny.utils import printnanny_cli_version, printnanny_image_version
 from printnanny_api_client import OctoPrintNannyEvent, OctoTelemetryEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -110,6 +110,8 @@ DEFAULT_SETTINGS = dict(
     monitoring_active=False,
     webcam_to_octoprint_ws=True,
     webcam_to_mqtt=True,
+    printnanny_cli_version=printnanny_cli_version(),
+    printnanny_image_version=printnanny_image_version()
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
