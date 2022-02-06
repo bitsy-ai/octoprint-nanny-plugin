@@ -5,7 +5,7 @@
     <p>Learn more @ <a href="https://www.print-nanny.com/">https://www.print-nanny.com/</a>
     <p><a href="https://discord.gg/YK7qnv5KjB">Join the Discord server </a> or email leigh@print-nanny.com to report an issue.</p>
     <hr>
-{% if not plugin_octoprint_nanny_settings.printnanny_cli_version or not plugin_octoprint_nanny_settings.printnanny_os_version %}
+{% if plugin_octoprint_nanny_settings.printnanny_cli_version is none or plugin_octoprint_nanny_settings.printnanny_os_version is none %}
         <div class="alert alert-block alert-warning">    
             <h2>
                 <strong>Failed to Detect PrintNanny OS Version</strong>
