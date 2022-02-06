@@ -20,3 +20,6 @@ def printnanny_image_version() -> Optional[str]:
         return
     logger.info(f"Found printnanny_image_version={p.stdout}")
     return p.stdout
+
+def printnanny_login_url() -> str:
+    pass
