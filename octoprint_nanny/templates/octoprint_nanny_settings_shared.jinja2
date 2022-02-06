@@ -27,7 +27,7 @@
 
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced Settings') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('View Config') }}</a></li>
     </ul>
 
   <div class="tab-content">
@@ -35,225 +35,19 @@
       <fieldset>
 
         <div>
-            <h2>Link Accounts</h2>
+            {% if plugin_octoprint_nanny_settings.printnanny_config.api.bearer_access_token is none %}
+            <h2>Log into PrintNanny</h2>
+            <a href="{{ plugin_octoprint_nanny_dash_url }}" class="btn btn-primary btn-large">Link Account</a>
+            {% else %}
 
-            <p>Copy your authentication token from <a target="_blank" href="https://print-nanny.com/dashboard">https://print-nanny.com/dashboard</a>
-            and paste it below.</p>
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_auth_token_basic"><strong>Authentication Token</strong></label>
-                <div class="controls">
-                    <input 
-                        id="octoprint_nanny_settings_auth_token_basic" 
-                        class="input-xxlarge"
-                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.auth_token" type="text" />
-                </div>
-            </div>
-            <div id="octoprint_nanny_alert_auth" class="alert alert-block" data-bind="{css: authAlertClass, visible: authAlertClass }">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-            
-                <h4 class="alert-heading"><span data-bind="text: authAlertHeader"></span></h4> 
-                <span data-bind="text: authAlertText"></span>
-            </div>
-
-            <button id="octoprint_nanny_test_auth_token" data-bind="click: testAuthTokenInput" type="submit" class="btn btn-primary btn-large">
-                Test Connection
-            </button>
+            {% endif %}
         </div>
-        <hr>
-
-            
-        {% if plugin_octoprint_nanny_settings.device_registered == True %}
-            <div class="col-sm">        
-                <h2>Backup OctoPrint</h2>
-                <div class="control-group" title="Start monitoring automatically">
-                    <!-- <div class="controls">
-                        <label class="checkbox">
-                            <input 
-                                type="checkbox" 
-                                data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.backup_auto" 
-                                id="octoprint_nanny_settings_backup_auto">Automatically backup OctoPrint
-                        </label>
-                        <p>If checked, your OctoPrint settings will be backed up to Print Nanny Cloud daily.<p>
-                    </div> -->
-                    <p>Backup your OctoPrint settings to Print Nanny Cloud.</p>
-                    <button
-                    id="octoprint_nanny_settings_backup_now"
-                    data-bind="{click: createBackup }" 
-                    type="submit" 
-                    class="btn btn-primary btn-large">
-                        Backup Now
-                    </button>
-                    <a href="{{plugin_octoprint_nanny_settings.backup_url}}>
-                        <button
-                        id="octoprint_nanny_settings_backup_view" 
-                        type="submit" 
-                        class="btn btn-secondary btn-large">
-                            View Backups
-                        </button>
-                    </a>
-                </div>
-            <br>
-
-            <div class="col-sm">        
-                <h2>Device Info</h2>
-                <div class="control-group">
-                    <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Name</strong></label>
-                    <div class="controls">
-                        <input 
-                            id="octoprint_nanny_settings_device_name" 
-                            class="input-xxlarge"
-                            data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" type="text" />
-                    </div>
-                    <label class="control-label" for="octoprint_nanny_settings_device_fingerprint"><strong>Fingerprint</strong></label>
-                    <pre id="octoprint_nanny_settings_device_fingerprint" data-bind="text: settingsViewModel.settings.plugins.octoprint_nanny.device_fingerprint">
-                    </pre>
-                </div>
-                <a id="octoprint_nanny_settings_manage_device" class="btn btn-primary btn-large" href="{{plugin_octoprint_nanny_settings.device_manage_url}}" target="_blank">
-                    Manage Device
-                </a>
-                <button
-                id="octoprint_nanny_settings_reset_device"
-                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
-                type="submit" 
-                class="btn btn-secondary btn-large">
-                    Reset Device Identity
-                </button>
-            </div>
-            <br>
-            <div class="col-sm">
-                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">🆔 Requesting a new device identity...</4>
-                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Your device was issued a new identity.</h4>
-                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">Refresh the page to see your new fingerprint.</h4>
-
-                <div class="progress progress-striped" data-bind="visible: deviceRegisterProgressPercent() !== undefined, css: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !== '100%' ? 'active': 'inactive'">
-                    <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
-                </div> 
-            </div>
-            <div class="control-group" title="Start monitoring automatically">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start" id="octoprint_nanny_settings_auto_start"> Auto-start monitoring when print job begins
-                    </label>
-                </div>
-            </div>
-        {% else %}
-        <div>            
-            <h2>Device Registration</h2>
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_device_name"><strong>Give this OctoPrint device a name:</strong></label>
-                <div class="controls">
-                    <input 
-                        id="octoprint_nanny_settings_device_name" 
-                        class="input-xxlarge"
-                        data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.device_name" 
-                        type="text" />
-                </div>
-            </div>
-            <div id="octoprint_nanny_alert_device_registration" class="alert alert-block" data-bind="{ css: deviceAlertClass, visible: deviceAlertClass}">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-            
-                <h4 class="alert-heading"><span data-bind="text: deviceAlertHeader"></span></h4> 
-                <span data-bind="text: deviceAlertText"></span>
-            </div>
-
-            <button 
-                data-bind="{click: registerDevice, enable: settingsViewModel.settings.plugins.octoprint_nanny.auth_valid }" 
-                id="octoprint_nanny_device_registration"
-                type="submit" 
-                class="btn btn-primary btn-large">
-                Start Registration
-            </button>
-            <br>
-                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !=='100%'">⏳ Print Nanny is registering your device... </4>
-                <h4 data-bind="visible: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() =='100%'">✅ Success! Print Nanny now recognizes this device.</h4>
-            <div class="progress progress-striped" data-bind="visible: deviceRegisterProgressPercent() !== undefined, css: deviceRegisterProgressPercent() !== undefined && deviceRegisterProgressPercent() !== '100%' ? 'active': 'inactive'">
-                <div class="bar" data-bind="style: {width: deviceRegisterProgressPercent }"></div>
-            </div>
-            <div class="control-group" title="Start monitoring automatically">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.auto_start" id="octoprint_nanny_settings_auto_start"> Auto-start monitoring when print job begins
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        {% endif %}
-        <hr>
-        <div>
-            <h2>Test Webcam</h2>
-            <p>Enter your webcam's <strong>snapshot url</strong> below. </p>
-            <div class="control-group">
-               <label class="control-label" for="octoprint_nanny_settings_snapshot_url"><strong>Snapshot URL</strong></label>
-               <div class="controls">
-                   <input 
-                       id="octoprint_nanny_settings_auth_token" 
-                       class="input-xxlarge"
-                       data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.snapshot_url" type="text" />
-               </div>
-           </div>
-           <button data-bind="{click: testSnapshotUrl }" type="submit" class="btn btn-primary btn-large">
-               Capture Snapshot
-           </button>
-           <p>If the image below is broken after you click the Capture Snapshot button, double-check your snapshot url.</p>
-           <img id="tab_plugin_octoprint_nanny_preview" data-bind="attr: { src: imageData }, visible: imageData() !== undefined"/>
-   
-
-        </div>
-
       </fieldset>
       </div>
     <div id="{{template_name}}_advanced" class="tab-pane">
-        <fieldset>
-            <legend>Warning! Advanced Settings </legend>
-            <p>The following settings are for advanced configurations or Print Nanny developers. </p>
-
-            <div class="control-group">
-                <h4>Webcam Streams</h4>
-                <label class="control-label" for="octoprint_nanny_settings_webcam_to_octoprint_ws">Show webcam stream in OctoPrint UI</label>
-                
-                <div class="controls">
-                    <input 
-                    class="input-xxlarge" 
-                    id="octoprint_nanny_settings_webcam_to_octoprint_ws" 
-                    data-bind="checked: settingsViewModel.settings.plugins.octoprint_nanny.webcam_to_octoprint_ws" type="checkbox" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_api_url"><h4>Print Nanny API</h4></label>
-                
-                <div class="controls">
-                    <input 
-                    class="input-xxlarge" 
-                    id="octoprint_nanny_settings_api_url" 
-                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.api_url" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_ws_url"><h4>Websocket URL</h4></label>
-                <div class="controls">
-                    <input id="octoprint_nanny_settings_ws_url" 
-                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.ws_url" type="text" />
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label" for="octoprint_nanny_settings_mqtt_bridge_port"><h4>MQTT Bridge Port</h4></label>
-                <p>Valid ports are <strong>8883</strong> and <strong>443</strong>.</p>
-                <div class="controls">
-                    <input id="octoprint_nanny_settings_mqtt_bridge_port" 
-                    data-bind="textInput: settingsViewModel.settings.plugins.octoprint_nanny.mqtt_bridge_port" type="text" />
-                </div>
-            </div>
-
-
-            <button id="octoprint_nanny_save_advanced_settings" data-bind="click: saveAdvancedSettings" type="submit" class="btn btn-primary btn-large">
-                Save Advanced Settings
-            </button>
-
-        </fieldset>
+<pre>
+{{ plugin_octoprint_nanny_settings.printnanny_config }}
+</pre>
     </div>
 
   </div>

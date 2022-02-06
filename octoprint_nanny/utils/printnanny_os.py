@@ -45,3 +45,13 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
         logger.error(e)
         logger.error(f"Failed to decode printnanny config: {stdout}")
         return None
+
+def printnanny_dash_url() -> Optional[str]:
+    config = printnanny_config()
+    hostname = socket.gethostname()
+    if config is None:
+        logger.warning("Failed to read printnanny config, using defaults for printnanny_dash_url")
+        base_path = "/"
+    else:
+        base_path = config.get("dash", {}).get("base_path", "/")
+    return f"//{hostname}{base_path}login"
