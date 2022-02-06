@@ -8,7 +8,11 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 def printnanny_cli_version() -> Optional[str]:
     cmd = ["printnanny", "--version"]
-    p = subprocess.run(cmd, capture_output=True)
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+    except FileNotFoundError as e:
+        logger.error(e)
+        return None
     stdout = p.stdout.decode('utf-8')
     stderr = p.stderr.decode('utf-8')
     if p.returncode != 0:
@@ -20,6 +24,11 @@ def printnanny_cli_version() -> Optional[str]:
 def printnanny_image_version() -> Optional[str]:
     cmd = ["cat", "/boot/image_version.txt"]
     p = subprocess.run(cmd, capture_output=True)
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+    except FileNotFoundError as e:
+        logger.error(e)
+        return None
     stdout = p.stdout.decode('utf-8')
     stderr = p.stderr.decode('utf-8')
     if p.returncode != 0:
@@ -31,7 +40,11 @@ def printnanny_image_version() -> Optional[str]:
 def printnanny_config() -> Optional[Dict[str, Any]]:
     hostname = socket.gethostname()
     cmd = ["printnanny", "config", "get"]
-    p = subprocess.run(cmd, capture_output=True)
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+    except FileNotFoundError as e:
+        logger.error(e)
+        return None
     stdout = p.stdout.decode('utf-8')
     stderr = p.stderr.decode('utf-8')
     if p.returncode != 0:
