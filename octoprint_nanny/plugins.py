@@ -819,9 +819,9 @@ class OctoPrintNannyPlugin(
         self._settings.set(["printnanny_cli_version"], printnanny_cli_version())
         self._settings.set(["printnanny_image_version"], printnanny_image_version())
         self._settings.set(["printnanny_config"], printnanny_config())
+        
         return any(
             [
-                self._settings.get(["auth_token"]) is None,
                 self._settings.get(["printnanny_cli_version"]) is None,
                 self._settings.get(["printnanny_image_version"]) is None,
                 self._settings.get(["printnanny_config"]) is None
