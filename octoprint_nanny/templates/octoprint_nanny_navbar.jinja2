@@ -1,14 +1,3 @@
-<a href="#tab_plugin_octoprint_nanny" data-toggle="tab">
-<i class="fa fa-circle-notch fa-spin" data-bind="visible: statusCheckActive()">
-</i> 
-<span data-bind="visible: statusCheckActive()"> 
-Checking your connection to</span>
-<i class="fa fa-check" data-bind="visible: statusCheckSuccess()">
-</i> 
-<span data-bind="visible: statusCheckSuccess()"> 
-Connected to </span>
-<i class="fa fa-exclamation-triangle" data-bind="visible: statusCheckFailed()">
-</i> 
-<span data-bind="visible: statusCheckFailed()"> 
-Failed to reach </span>
-Print Nanny</a>
+<a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}">
+Print Nanny
+</a>
