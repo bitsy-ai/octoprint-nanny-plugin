@@ -27,7 +27,7 @@
 
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('View Config') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced & Debug Settings') }}</a></li>
     </ul>
 
   <div class="tab-content">
@@ -39,7 +39,12 @@
             <h2>Log into PrintNanny</h2>
             <a href="{{ plugin_octoprint_nanny_dash_url }}" class="btn btn-primary btn-large">Link Account</a>
             {% else %}
-
+            <div class="alert alert-block alert-success">    
+                <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</h3>
+                <br>
+                <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
+                <a target="_blank" href="#{{template_name}}_advanced" data-toggle="tab"><button class= "btn btn-primary btn-large">View Config</button></a>
+            </div>
             {% endif %}
         </div>
       </fieldset>
