@@ -44,116 +44,19 @@ plugin_license = "AGPL"
 class Python2NotSupported(Exception):
     pass
 
-
-class CPUNotSupported(Exception):
-    pass
-
-
-if sys.version_info.major == 2:
-    raise Python2NotSupported(
-        "Sorry, OctoPrint Nanny does not support Python2. Please upgrade to Python3 and try again. If you run OctoPi 0.17.0+, check out this guide to upgrade: https://octoprint.org/blog/2020/09/10/upgrade-to-py3/"
-    )
-    sys.exit(1)
-
-###
-# Raspberry Pi OS and OctoPi distribute images with a 64-bit kernel space and a 32-bit userspace
-# On these systems, os.uname().machine will return "aarch64" (64-bit hardware detected)
-# Instead, use platform.architecture() to detect whether the Python interpreter was installed with 32-bit or 64-bit address space
-#
-# Here's an example:
-#
-# 64-bit kernel and 64-bit userland
-# >>> import platform; platform.architecture()
-# ('64bit', 'ELF')
-# >>> import os; os.uname().machine
-# 'aarch64'
-#
-# 64-bit kernel and 32-bit userland
-# >>> import platform; platform.architecture()
-# ('32bit', 'ELF')
-# >>> import os; os.uname().machine
-# 'aarch64'
-#
-# 32-bit kernel & userland
-# >>> import platform; platform.architecture()
-# ('32bit', 'ELF')
-# >>> import os; os.uname().machine
-# 'arm7l'
-#
-# https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/63
-# Credit to @CTFishUSA for debugging this issue!
-###
-
-# hardware layer : software layer : wheel
-plugin_requires_third_party_wheel_map = {
-    "armv7l": {"32bit": []},
-    "aarch64": {
-        "32bit": [],
-        "64bit": [],
-    },
-    "x86_64": {"64bit": []},
-}
-
-offline_requires_third_party_wheel_map = {
-    "armv7l": {
-        "32bit": [
-            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl",
-        ]
-    },
-    "aarch64": {
-        "32bit": [
-            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_armv7l.whl"
-        ],
-        "64bit": [
-            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_aarch64.whl"
-        ],
-    },
-    "x86_64": {
-        "64bit": [
-            "tflite_runtime @ https://github.com/google-coral/pycoral/releases/download/v1.0.1/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl",
-        ]
-    },
-}
-
-
-hardware_arch = os.uname().machine
-software_arch, _ = platform.architecture()
-
-if hardware_arch in plugin_requires_third_party_wheel_map.keys():
-    plugin_requires_third_party_wheels = plugin_requires_third_party_wheel_map[
-        hardware_arch
-    ][software_arch]
-    offline_requires_third_party_wheels = offline_requires_third_party_wheel_map[
-        hardware_arch
-    ][software_arch]
-else:
-    raise CPUNotSupported(
-        "Sorry, OctoPrint Nanny does not support {} architechture. Please open a Github issue for support. https://github.com/bitsy-ai/octoprint-nanny-plugin/issues/new".format(
-            hardware_arch
-        )
-    )
-    sys.exit(1)
-
 plugin_requires = [
-    "octoprint>=1.6.0",
+    "octoprint==1.8.0rc2",
     "cryptography>=3.4.7",
-    "numpy",
-    "Pillow>=9.0.0",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
     # beta api client supporting Print Nanny OS in 2022
-    "printnanny-api-client~=0.40.5",
+    "printnanny-api-client~=0.65",
     # alpha client created for initial octoprint plugin release in Jan 2021
-    "print_nanny_client==0.8.18",
     "backoff>=1.10.0",
-    "pyjwt>=2.0.1",
-    "paho-mqtt>=1.5.1",
     "honeycomb-beeline~=2.18.0",
     "websockets>=9.1",
-] + plugin_requires_third_party_wheels
-
-offline_requires = ["pandas>=1.2.2"] + offline_requires_third_party_wheels
+]
 
 dev_requires = [
     "pytest",
@@ -161,8 +64,8 @@ dev_requires = [
     "pytest-mock",
     "pytest-asyncio",
     "twine",
-] + offline_requires
-extra_requires = {"dev": dev_requires, "offline": offline_requires}
+]
+extra_requires = {"dev": dev_requires}
 
 
 ### --------------------------------------------------------------------------------------------------------------------
