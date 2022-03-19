@@ -367,7 +367,6 @@ class OctoPrintNannyPlugin(
         logger.info("Running on_settings_initialized handler")
 
         self._log_path = self._settings.get_plugin_logfile_path()
-        self.worker_manager.on_settings_initialized()
 
     ## Progress plugin
 
