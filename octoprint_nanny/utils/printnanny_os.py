@@ -12,7 +12,6 @@ PRINTNANNY_PROFILE = environ.get("PRINTNANNY_PROFILE", "default")
 
 def printnanny_version() -> Optional[Dict[str, str]]:
     cmd = [PRINTNANNY_BIN, "version"]
-    p = subprocess.run(cmd, capture_output=True)
     try:
         p = subprocess.run(cmd, capture_output=True)
     except FileNotFoundError as e:
