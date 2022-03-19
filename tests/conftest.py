@@ -1,9 +1,7 @@
 import pytest
 
-from print_nanny_client.protobuf.common_pb2 import PrintSession  # alpha api client
 import print_nanny_client  # alpha api client
 from octoprint_nanny.types import Metadata
-from octoprint_nanny.workers.monitoring import MonitoringWorker
 from octoprint_nanny import __plugin_version__
 import uuid
 import printnanny_api_client
@@ -82,16 +80,6 @@ def EVENT_PLUGIN_OCTOPRINT_NANNY_MONITORING_FRAME_BYTES():
 
 
 @pytest.fixture
-def calibration():
-    return MonitoringWorker.calc_calibration(
-        0.2,
-        0.2,
-        0.8,
-        0.8,
-    )
-
-
-@pytest.fixture
 def octoprint_environment():
     return {
         "os": {"id": "linux", "platform": "linux", "bits": 32},
@@ -143,30 +131,6 @@ def pytest_addoption(parser):
         default=False,
         help="enable benchmark tests",
     )
-
-
-@pytest.fixture
-def plugin_settings(
-    mocker, metadata, metadata_pb, current_printer_state, current_temperatures
-):
-    plugin_settings = mocker.Mock()
-    plugin_settings.metadata = metadata
-
-    pb = PrintSession()
-    pb.id = 1
-    pb.session = uuid.uuid4().hex
-    pb.created_ts = datetime.now().timestamp()
-    pb.datesegment = "2021/01/01"
-    plugin_settings.print_session_pb = pb
-
-    plugin_settings.metadata_pb = metadata_pb
-    plugin_settings.current_printer_state = current_printer_state
-    plugin_settings.plugin_version = __plugin_version__
-    plugin_settings.current_temperatures = current_temperatures
-    plugin_settings.monitoring_frames_per_minute = 60
-    plugin_settings.webcam_to_mqtt = True
-    plugin_settings.webcam_to_octoprint_ws = True
-    return plugin_settings
 
 
 @pytest.fixture
