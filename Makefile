@@ -78,6 +78,9 @@ octoprint-sandbox:
 	octoprint serve
 
 octoprint-local:
+	PRINTNANNY_PROFILE=local \
+	PRINTNANNY_BIN="$(HOME)/projects/printnanny-cli/target/debug/printnanny-cli" \
+	PRINTNANNY_CONFIG="$(HOME)/projects/printnanny-cli/env/Local.toml" \
 	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4 \
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \

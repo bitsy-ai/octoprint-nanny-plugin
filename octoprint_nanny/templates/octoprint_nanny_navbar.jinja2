@@ -1,3 +1,5 @@
-<a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}">
+{% if plugin_octoprint_nanny_settings.printnanny_os.device is defined %}
+<a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_os.device.dashboard_url }}">
 Print Nanny
 </a>
+{% endif %}
