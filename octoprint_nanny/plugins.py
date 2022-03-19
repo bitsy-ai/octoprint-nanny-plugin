@@ -24,7 +24,6 @@ from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
     printnanny_config,
-    printnanny_dash_url,
 )
 from printnanny_api_client import OctoPrintNannyEvent
 
@@ -341,8 +340,7 @@ class OctoPrintNannyPlugin(
             "settings": {
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
-            },
-            "dash_url": printnanny_dash_url(),
+            }
         }
 
     ## Wizard plugin mixin

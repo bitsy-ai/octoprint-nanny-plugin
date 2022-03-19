@@ -31,14 +31,14 @@
       <fieldset>
 
         <div>
-            {% if plugin_octoprint_nanny_settings.printnanny_os.api.bearer_access_token is none %}
+            {% if plugin_octoprint_nanny_settings.printnanny_os.user is undefined %}
             <h2>Log into PrintNanny</h2>
-            <a href="/" class="btn btn-primary btn-large">Link Account</a>
+            <a href="{{ plugin_octoprint_nanny_settings.printnanny_os.dash.base_url }}" class="btn btn-primary btn-large">Link Account</a>
             {% else %}
             <div class="alert alert-block alert-success">    
-                <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</h3>
+                <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_os.user.email }}</h3>
                 <br>
-                <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
+                <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_os.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_os.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
                 <a target="_blank" href="#{{template_name}}_advanced" data-toggle="tab"><button class= "btn btn-primary btn-large">View Config</button></a>
             </div>
             {% endif %}
@@ -47,7 +47,7 @@
       </div>
     <div id="{{template_name}}_advanced" class="tab-pane">
 <pre>
-{{ plugin_octoprint_nanny_settings.printnanny_config }}
+{{ plugin_octoprint_nanny_settings.printnanny_os }}
 </pre>
     </div>
 
