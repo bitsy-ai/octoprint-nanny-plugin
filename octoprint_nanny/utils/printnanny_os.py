@@ -20,7 +20,7 @@ def printnanny_version() -> Optional[Dict[str, str]]:
     stdout = p.stdout.decode('utf-8')
     stderr = p.stderr.decode('utf-8')
     if p.returncode != 0:
-        logger.warning(f"Failed to get printnanny_image_version cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}")
+        logger.warning(f"Failed to get printnanny_version cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}")
         return None
     logger.info(f"Running printnanny_version={stdout}")
     try:
