@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import base64
-import hashlib
 import io
 import json
 import os
@@ -15,26 +13,20 @@ import octoprint.util
 from typing import Dict
 import socket
 
-from pathlib import Path
-from datetime import datetime
 from octoprint.events import Events
 
 import print_nanny_client  # alpha client
 import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
-import octoprint_nanny.exceptions
-from octoprint_nanny.clients.rest import RestAPIClient, API_CLIENT_EXCEPTIONS
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.exceptions import PluginSettingsRequired
-from octoprint_nanny.types import MonitoringModes
 from octoprint_nanny.utils.printnanny_os import (
-    printnanny_cli_version,
-    printnanny_image_version,
+    printnanny_version,
     printnanny_config,
     printnanny_dash_url,
 )
-from printnanny_api_client import OctoPrintNannyEvent, OctoTelemetryEvent
+from printnanny_api_client import OctoPrintNannyEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -74,48 +66,10 @@ DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.google.com/roots.pem"
 BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
 DEFAULT_SETTINGS = dict(
-    auth_token=None,
-    auth_valid=False,
-    backup_url="https://print-nanny.com/dashboard",
+    printnanny_version=printnanny_version(),
+    printnanny_os=printnanny_config(),
     backup_auto=False,
-    device_registered=False,
-    user_email=None,
-    min_score_thresh=0.50,
-    monitoring_frames_per_minute=60,
-    mqtt_bridge_hostname=DEFAULT_MQTT_BRIDGE_HOSTNAME,
-    mqtt_bridge_port=DEFAULT_MQTT_BRIDGE_PORT,
-    mqtt_bridge_primary_root_certificate_url=DEFAULT_MQTT_ROOT_CERTIFICATE_URL,
-    mqtt_bridge_backup_root_certificate_url=BACKUP_MQTT_ROOT_CERTIFICATE_URL,
-    user_id=None,
-    device_manage_url=None,
-    device_fingerprint=None,
-    device_cloudiot_name=None,
-    cloudiot_device_id=None,
-    octoprint_device_id=None,
-    device_name=platform.node(),
-    device_private_key=None,
-    device_public_key=None,
-    device_serial=None,
-    user=None,
-    calibrated=False,
-    calibrate_x0=None,
-    calibrate_y0=None,
-    calibrate_x1=None,
-    calibrate_y1=None,
-    api_url=DEFAULT_API_URL,
-    ws_url=DEFAULT_WS_URL,
-    snapshot_url=DEFAULT_SNAPSHOT_URL,
-    ca_cert=None,
-    auto_start=True,
-    webcam_upload=True,
-    monitoring_mode=MonitoringModes.ACTIVE_LEARNING.value,
-    monitoring_active=False,
-    webcam_to_octoprint_ws=True,
-    webcam_to_mqtt=True,
-    hostname=socket.gethostname(),
-    printnanny_cli_version=printnanny_cli_version(),
-    printnanny_image_version=printnanny_image_version(),
-    printnanny_config=printnanny_config(),
+    wizard_complete=-1
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -137,7 +91,7 @@ class OctoPrintNannyPlugin(
 
     octoprint_event_prefix = "plugin_octoprint_nanny_"
     plugin_identifier = "octoprint_nanny"
-    VERBOSE_EVENTS = [Events.Z_CHANGE, "plugin_octoprint_nanny_monitoring_frame_b64"]
+    VERBOSE_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, *args, **kwargs):
         # User interactive
@@ -397,17 +351,7 @@ class OctoPrintNannyPlugin(
         return 0
 
     def is_wizard_required(self):
-        self._settings.set(["printnanny_cli_version"], printnanny_cli_version())
-        self._settings.set(["printnanny_image_version"], printnanny_image_version())
-        self._settings.set(["printnanny_config"], printnanny_config())
-
-        return any(
-            [
-                self._settings.get(["printnanny_cli_version"]) is None,
-                self._settings.get(["printnanny_image_version"]) is None,
-                self._settings.get(["printnanny_config"]) is None,
-            ]
-        )
+        return self._settings.get(["wizard_complete"]) < self.get_wizard_version()
 
     ##~~ AssetPlugin mixin
 
