@@ -1,12 +1,9 @@
 import pytest
 
-import print_nanny_client  # alpha api client
 from octoprint_nanny.types import Metadata
 from octoprint_nanny import __plugin_version__
-import uuid
 import printnanny_api_client
 from datetime import datetime
-import octoprint
 
 
 class MockResponse(object):
