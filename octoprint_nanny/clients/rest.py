@@ -20,7 +20,7 @@ from printnanny_api_client.models.printer_profile_request import PrinterProfileR
 from printnanny_api_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
 )
-from octoprint_nanny.utils.encoder import NumpyEncoder
+from octoprint_nanny.utils.encoder import JSONEncoder
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
@@ -333,9 +333,13 @@ class RestAPIClient:
             )
             return device_calibration
 
-    async def create_backup(self, hostname: str, name: str, octoprint_version: str, file: str):
+    async def create_backup(
+        self, hostname: str, name: str, octoprint_version: str, file: str
+    ):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = printnanny_api_client.OctoprintBackupsApi(api_client=api_client)
+            api_instance = printnanny_api_client.OctoprintBackupsApi(
+                api_client=api_client
+            )
 
             backup = await api_instance.octoprint_backups_create(
                 hostname,

@@ -1,21 +1,14 @@
 import json
 from enum import Enum
-import numpy as np
 import datetime
 from io import BytesIO
 import base64
 import PIL
 
 
-class NumpyEncoder(json.JSONEncoder):
+class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (datetime.date, datetime.datetime)):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
             return obj.isoformat()
         elif isinstance(obj, BytesIO):
             obj.seek(0)
