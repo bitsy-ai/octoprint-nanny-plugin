@@ -34,16 +34,14 @@
 
         <div>
             {% if plugin_octoprint_nanny_settings.printnanny_os.user is undefined %}
-            <h2>Log into PrintNanny</h2>
+            <h3>Log into PrintNanny</h3>
             <a href="{{ plugin_octoprint_nanny_settings.printnanny_os.dash.base_url }}" class="btn btn-primary btn-large">Link Account</a>
             <p>You'll be redirected to another page to log into your PrintNanny account</p>
             {% else %}
-            <div class="alert alert-block alert-success">    
-                <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_os.user.email }}</h3>
-                <br>
-                <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_os.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_os.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
-                <a target="_blank" href="#{{template_name}}_advanced" data-toggle="tab"><button class= "btn btn-primary btn-large">View Config</button></a>
-            </div>
+            <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_os.user.email }}</h3>
+            <br>
+            <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_os.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_os.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
+            <a target="_blank" href="#{{template_name}}_advanced" data-toggle="tab"><button class= "btn btn-primary btn-large">View Config</button></a>
             {% endif %}
         </div>
       </fieldset>
