@@ -1,6 +1,6 @@
 import aiohttp
 import logging
-import urllib
+import urllib.parse
 import hashlib
 import backoff
 import os
