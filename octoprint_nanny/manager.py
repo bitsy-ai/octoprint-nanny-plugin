@@ -4,10 +4,8 @@ import concurrent
 import logging
 import queue
 import threading
-from typing import Optional
 
 from octoprint.events import Events
-import octoprint.filemanager
 
 from octoprint_nanny.clients.rest import API_CLIENT_EXCEPTIONS
 

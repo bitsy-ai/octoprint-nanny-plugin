@@ -1,6 +1,5 @@
 import pytest
 
-from octoprint_nanny.types import Metadata
 from octoprint_nanny import __plugin_version__
 import printnanny_api_client
 from datetime import datetime
