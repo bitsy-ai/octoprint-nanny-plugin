@@ -3,11 +3,9 @@ import logging
 import urllib
 import hashlib
 import backoff
-import json
 import os
 import beeline
 
-from octoprint.events import Events
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
 
@@ -15,7 +13,6 @@ from printnanny_api_client.api.telemetry_api import TelemetryApi
 from printnanny_api_client.api.remote_control_api import RemoteControlApi
 from printnanny_api_client.api.users_api import UsersApi
 from printnanny_api_client.models.octo_print_event_request import OctoPrintEventRequest
-from printnanny_api_client.models.print_session_request import PrintSessionRequest
 from printnanny_api_client.models.printer_profile_request import PrinterProfileRequest
 from printnanny_api_client.models.octo_print_device_request import (
     OctoPrintDeviceRequest,
