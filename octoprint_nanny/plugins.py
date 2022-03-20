@@ -15,7 +15,6 @@ import socket
 
 from octoprint.events import Events
 
-import print_nanny_client  # alpha client
 import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
@@ -190,7 +189,6 @@ class OctoPrintNannyPlugin(
             "virtualenv": virtualenv,
             "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
             "plugin_version": self._plugin_version,
-            "print_nanny_client_version": print_nanny_client.__version__,  # alpha client version
             "print_nanny_beta_client_version": printnanny_api_client.__version__,  # beta client version
         }
 
