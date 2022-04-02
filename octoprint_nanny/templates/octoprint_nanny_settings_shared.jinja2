@@ -22,11 +22,9 @@
 </div>
 {% else %}
 </div>
-<form class="form">
-
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced & Debug Settings') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Configure') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Debug Settings') }}</a></li>
     </ul>
 
   <div class="tab-content">
@@ -49,10 +47,9 @@
       </div>
     <div id="{{template_name}}_advanced" class="tab-pane">
 <pre>
-{{ plugin_octoprint_nanny_settings.printnanny_os }}
+{{ plugin_octoprint_nanny_os }}
 </pre>
     </div>
 
-  </div>
-</form>
+</div>
 {% endif %}

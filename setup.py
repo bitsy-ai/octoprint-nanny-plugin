@@ -44,7 +44,9 @@ plugin_license = "AGPL"
 class Python2NotSupported(Exception):
     pass
 
+
 plugin_requires = [
+    "aiortc",
     "octoprint==1.8.0rc2",
     "cryptography>=3.4.7",
     "typing_extensions ; python_version < '3.8'",

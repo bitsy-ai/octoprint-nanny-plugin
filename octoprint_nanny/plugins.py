@@ -67,7 +67,7 @@ DEFAULT_SETTINGS = dict(
     printnanny_version=printnanny_version(),
     printnanny_os=printnanny_config(),
     backup_auto=False,
-    wizard_complete=-1
+    wizard_complete=-1,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -338,7 +338,8 @@ class OctoPrintNannyPlugin(
             "settings": {
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
-            }
+            },
+            "os": json.dumps(self._settings.get(["printnanny_os"]), indent=2),
         }
 
     ## Wizard plugin mixin
