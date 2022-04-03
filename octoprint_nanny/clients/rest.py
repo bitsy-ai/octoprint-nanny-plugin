@@ -10,11 +10,6 @@ import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
 
 from printnanny_api_client.api.users_api import UsersApi
-from printnanny_api_client.models.octo_print_event_request import OctoPrintEventRequest
-from printnanny_api_client.models.printer_profile_request import PrinterProfileRequest
-from printnanny_api_client.models.octo_print_device_request import (
-    OctoPrintDeviceRequest,
-)
 from octoprint_nanny.utils.encoder import JSONEncoder
 
 
