@@ -47,7 +47,7 @@ class Python2NotSupported(Exception):
 
 plugin_requires = [
     "aiortc",
-    "octoprint==1.8.0rc2",
+    "octoprint==1.8.0rc3",
     "cryptography>=3.4.7",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
