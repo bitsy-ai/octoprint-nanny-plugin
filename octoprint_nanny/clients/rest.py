@@ -9,7 +9,6 @@ import beeline
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
 
-from printnanny_api_client.api.remote_control_api import RemoteControlApi
 from printnanny_api_client.api.users_api import UsersApi
 from printnanny_api_client.models.octo_print_event_request import OctoPrintEventRequest
 from printnanny_api_client.models.printer_profile_request import PrinterProfileRequest
@@ -90,94 +89,64 @@ class RestAPIClient:
             user = await api_instance.users_me_retrieve()
             return user
 
-    @beeline.traced("RestAPIClient.update_or_create_gcode_file")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_or_create_gcode_file(
-        self, event_data, gcode_file_path, octoprint_device_id
-    ):
-        gcode_f = open(gcode_file_path, "rb")
-        file_hash = hashlib.md5(gcode_f.read()).hexdigest()
-        gcode_f.seek(0)
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = RemoteControlApi(api_client=api_client)
-            # https://github.com/aio-libs/aiohttp/issues/3652
-            # in a multi-part form request (file upload), octoprint_device is accepted as a string and deserialized to an integer on the server-side
+    # @beeline.traced("RestAPIClient.update_or_create_printer_profile")
+    # @backoff.on_exception(
+    #     backoff.expo,
+    #     aiohttp.ClientConnectionError,
+    #     logger=logger,
+    #     max_time=MAX_BACKOFF_TIME,
+    #     jitter=backoff.random_jitter,
+    #     giveup=fatal_code,
+    #     on_backoff=backoff_hdlr,
+    #     on_giveup=giveup_hdlr,
+    # )
+    # async def update_or_create_printer_profile(
+    #     self, printer_profile, octoprint_device_id
+    # ):
+    #     """
+    #     https://github.com/OctoPrint/OctoPrint/blob/f67c15a9a47794a68be9aed4f2d5a12a87e70179/src/octoprint/printer/profile.py#L46
+    #     """
 
-            gcode_file = await api_instance.gcode_files_update_or_create(
-                name=event_data["name"],
-                file_hash=file_hash,
-                file=gcode_f,
-                octoprint_device=str(octoprint_device_id),
-            )
-            logger.info(f"Upserted gcode_file {gcode_file}")
-            return gcode_file
+    #     async with AsyncApiClient(self._api_config) as api_client:
+    #         # printer profile
+    #         # TODO re-enable with OctoPrintApi module
+    #         # api_instance = RemoteControlApi(api_client=api_client)
 
-    @beeline.traced("RestAPIClient.update_or_create_printer_profile")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_or_create_printer_profile(
-        self, printer_profile, octoprint_device_id
-    ):
-        """
-        https://github.com/OctoPrint/OctoPrint/blob/f67c15a9a47794a68be9aed4f2d5a12a87e70179/src/octoprint/printer/profile.py#L46
-        """
+    #         # cooerce duck-typed fields
+    #         if type(printer_profile["volume"]["custom_box"]) is bool:
+    #             volume_custom_box = {}
+    #         else:
+    #             volume_custom_box = printer_profile["volume"]["custom_box"]
 
-        async with AsyncApiClient(self._api_config) as api_client:
-            # printer profile
-            api_instance = RemoteControlApi(api_client=api_client)
-
-            # cooerce duck-typed fields
-            if type(printer_profile["volume"]["custom_box"]) is bool:
-                volume_custom_box = {}
-            else:
-                volume_custom_box = printer_profile["volume"]["custom_box"]
-
-            request = PrinterProfileRequest(
-                octoprint_device=octoprint_device_id,
-                octoprint_key=printer_profile["id"],
-                axes_e_inverted=printer_profile["axes"]["e"]["inverted"],
-                axes_x_inverted=printer_profile["axes"]["x"]["inverted"],
-                axes_y_inverted=printer_profile["axes"]["y"]["inverted"],
-                axes_z_inverted=printer_profile["axes"]["z"]["inverted"],
-                axes_e_speed=printer_profile["axes"]["e"]["speed"],
-                axes_x_speed=printer_profile["axes"]["x"]["speed"],
-                axes_y_speed=printer_profile["axes"]["y"]["speed"],
-                axes_z_speed=printer_profile["axes"]["z"]["speed"],
-                extruder_count=printer_profile["extruder"]["count"],
-                extruder_nozzle_diameter=printer_profile["extruder"]["nozzleDiameter"],
-                extruder_shared_nozzle=printer_profile["extruder"]["sharedNozzle"],
-                name=printer_profile["name"],
-                model=printer_profile["model"],
-                heated_bed=printer_profile["heatedBed"],
-                heated_chamber=printer_profile["heatedChamber"],
-                volume_custom_box=volume_custom_box,
-                volume_depth=printer_profile["volume"]["depth"],
-                volume_formfactor=printer_profile["volume"]["formFactor"],
-                volume_height=printer_profile["volume"]["height"],
-                volume_origin=printer_profile["volume"]["origin"],
-                volume_width=printer_profile["volume"]["width"],
-            )
-            printer_profile = await api_instance.printer_profiles_update_or_create(
-                request
-            )
-            return printer_profile
+    #         request = PrinterProfileRequest(
+    #             octoprint_device=octoprint_device_id,
+    #             octoprint_key=printer_profile["id"],
+    #             axes_e_inverted=printer_profile["axes"]["e"]["inverted"],
+    #             axes_x_inverted=printer_profile["axes"]["x"]["inverted"],
+    #             axes_y_inverted=printer_profile["axes"]["y"]["inverted"],
+    #             axes_z_inverted=printer_profile["axes"]["z"]["inverted"],
+    #             axes_e_speed=printer_profile["axes"]["e"]["speed"],
+    #             axes_x_speed=printer_profile["axes"]["x"]["speed"],
+    #             axes_y_speed=printer_profile["axes"]["y"]["speed"],
+    #             axes_z_speed=printer_profile["axes"]["z"]["speed"],
+    #             extruder_count=printer_profile["extruder"]["count"],
+    #             extruder_nozzle_diameter=printer_profile["extruder"]["nozzleDiameter"],
+    #             extruder_shared_nozzle=printer_profile["extruder"]["sharedNozzle"],
+    #             name=printer_profile["name"],
+    #             model=printer_profile["model"],
+    #             heated_bed=printer_profile["heatedBed"],
+    #             heated_chamber=printer_profile["heatedChamber"],
+    #             volume_custom_box=volume_custom_box,
+    #             volume_depth=printer_profile["volume"]["depth"],
+    #             volume_formfactor=printer_profile["volume"]["formFactor"],
+    #             volume_height=printer_profile["volume"]["height"],
+    #             volume_origin=printer_profile["volume"]["origin"],
+    #             volume_width=printer_profile["volume"]["width"],
+    #         )
+    #         printer_profile = await api_instance.printer_profiles_update_or_create(
+    #             request
+    #         )
+    #         return printer_profile
 
     async def create_backup(
         self, hostname: str, name: str, octoprint_version: str, file: str
