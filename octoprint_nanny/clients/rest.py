@@ -74,69 +74,6 @@ class RestAPIClient:
         config.access_token = self.auth_token
         return config
 
-    @beeline.traced("RestAPIClient.update_or_create_octoprint_device")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_or_create_octoprint_device(self, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            request = OctoPrintDeviceRequest(**kwargs)
-            api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_update_or_create(
-                request
-            )
-            return octoprint_device
-
-    @beeline.traced("RestAPIClient.update_octoprint_device")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_octoprint_device(self, device_id, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            request = printnanny_api_client.PatchedOctoPrintDeviceRequest(**kwargs)
-
-            api_instance = RemoteControlApi(api_client=api_client)
-            octoprint_device = await api_instance.octoprint_devices_partial_update(
-                device_id, patched_octo_print_device_request=request
-            )
-            return octoprint_device
-
-    @beeline.traced("RestAPIClient.update_remote_control_command")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_remote_control_command(self, command_id, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            request = printnanny_api_client.models.PatchedRemoteControlCommandRequest(
-                **kwargs
-            )
-            api_instance = RemoteControlApi(api_client=api_client)
-            command = await api_instance.commands_partial_update(
-                command_id, patched_remote_control_command_request=request
-            )
-            return command
-
     @beeline.traced("RestAPIClient.get_user")
     @backoff.on_exception(
         backoff.expo,
@@ -207,50 +144,6 @@ class RestAPIClient:
             logger.info(f"Upserted gcode_file {gcode_file}")
             return gcode_file
 
-    @beeline.traced("RestAPIClient.create_print_session")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def create_print_session(self, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = RemoteControlApi(api_client=api_client)
-            request = (
-                printnanny_api_client.models.print_session_request.PrintSessionRequest(
-                    **kwargs
-                )
-            )
-            print_session = await api_instance.print_sessions_create(request)
-            return print_session
-
-    @beeline.traced("RestAPIClient.update_print_session")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_print_session(self, session: str, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = RemoteControlApi(api_client=api_client)
-            request = printnanny_api_client.models.patched_print_session_request.PatchedPrintSessionRequest(
-                **kwargs
-            )
-            print_session = await api_instance.print_session_partial_update(
-                session, patched_print_session_request=request
-            )
-            return print_session
-
     @beeline.traced("RestAPIClient.update_or_create_printer_profile")
     @backoff.on_exception(
         backoff.expo,
@@ -308,27 +201,6 @@ class RestAPIClient:
                 request
             )
             return printer_profile
-
-    @beeline.traced("RestAPIClient.update_or_create_device_calibration")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def update_or_create_device_calibration(self, **kwargs):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = printnanny_api_client.MlOpsApi(api_client=api_client)
-
-            request = printnanny_api_client.DeviceCalibrationRequest(**kwargs)
-            device_calibration = await api_instance.device_calibration_update_or_create(
-                request
-            )
-            return device_calibration
 
     async def create_backup(
         self, hostname: str, name: str, octoprint_version: str, file: str
