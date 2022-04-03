@@ -24,7 +24,6 @@ from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
     printnanny_config,
 )
-from printnanny_api_client import OctoPrintNannyEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -273,11 +272,6 @@ class OctoPrintNannyPlugin(
             raise Exception("Plugin manager failed to get backup helper")
 
     def register_custom_events(self):
-        # remove plugin event prefix when registering events (octoprint adds prefix)
-        plugin_events = [
-            x.replace(self.octoprint_event_prefix, "")
-            for x in OctoPrintNannyEvent.allowable_values
-        ]
         remote_commands = [
             "remote_command_received",
             "remote_command_failed",
@@ -288,7 +282,7 @@ class OctoPrintNannyPlugin(
             "monitoring_frame_b64",  # not sent via event telemetry
             "monitoring_frame_bytes",
         ]
-        return plugin_events + remote_commands + local_only
+        return remote_commands + local_only
 
     def on_shutdown(self):
         logger.info("Running on_shutdown handler")

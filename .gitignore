@@ -24,3 +24,4 @@ coverage.xml
 
 .venv
 .octoprint
+.mypy_cache
