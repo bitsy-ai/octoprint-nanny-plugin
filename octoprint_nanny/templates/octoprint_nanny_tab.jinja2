@@ -1,9 +1,11 @@
 <link rel="stylesheet" href="https://unpkg.com/jcrop/dist/jcrop.css">
 <script src="https://unpkg.com/jcrop"></script>
 
+{% if plugin_octoprint_nanny_settings.printnanny_config is not none %}
 <span class="video-stream-app">
     <video-stream 
         mode="local"
         device-id="{{ plugin_octoprint_nanny_settings.printnanny_config.device.id }}"
         offline-image="plugin/octoprint_nanny/static/img/sleeping.pong" />
 </span>
+{% endif %}

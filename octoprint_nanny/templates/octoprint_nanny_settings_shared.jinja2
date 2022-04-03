@@ -36,7 +36,7 @@
             <h3>Log into PrintNanny</h3>
             <a href="{{ plugin_octoprint_nanny_settings.printnanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link Account</a>
             <p>You'll be redirected to another page to log into your PrintNanny account</p>
-            {% else %}
+            {% elif  plugin_octoprint_nanny_settings.printnanny_config is not none %}
             <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</h3>
             <br>
             <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
