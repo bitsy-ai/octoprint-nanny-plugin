@@ -90,28 +90,6 @@ class RestAPIClient:
             user = await api_instance.users_me_retrieve()
             return user
 
-    @beeline.traced("RestAPIClient.create_octoprint_event")
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientConnectionError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-        jitter=backoff.random_jitter,
-        giveup=fatal_code,
-        on_backoff=backoff_hdlr,
-        on_giveup=giveup_hdlr,
-    )
-    async def create_octoprint_event(self, event_type, event_data):
-        async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = TelemetryApi(api_client=api_client)
-            request = OctoPrintEventRequest(
-                event_type=event_type,
-                event_data=event_data,
-                print_nanny_plugin_version=event_data["metadata"]["plugin_version"],
-                octoprint_version=event_data["metadata"]["octoprint_version"],
-            )
-            return await api_instance.octoprint_events_create(request)
-
     @beeline.traced("RestAPIClient.update_or_create_gcode_file")
     @backoff.on_exception(
         backoff.expo,
