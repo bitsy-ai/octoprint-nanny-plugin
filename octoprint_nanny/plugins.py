@@ -309,7 +309,6 @@ class OctoPrintNannyPlugin(
         )
 
         self._octoprint_environment = environment
-        self.worker_manager.plugin.settings.on_environment_detected(environment)
 
     def on_settings_initialized(self):
         """
