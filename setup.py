@@ -53,7 +53,7 @@ plugin_requires = [
     "pytz",
     "aiohttp[speedups]>=3.7.4",
     # beta api client supporting Print Nanny OS in 2022
-    "printnanny-api-client~=0.65",
+    "printnanny-api-client~=0.71",
     # alpha client created for initial octoprint plugin release in Jan 2021
     "backoff>=1.10.0",
     "honeycomb-beeline~=2.18.0",
