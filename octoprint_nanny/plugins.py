@@ -24,7 +24,6 @@ from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
     printnanny_config,
 )
-from printnanny_api_client import OctoPrintNannyEvent
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 

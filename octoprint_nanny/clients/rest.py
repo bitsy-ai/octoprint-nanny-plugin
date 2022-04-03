@@ -206,7 +206,7 @@ class RestAPIClient:
         self, hostname: str, name: str, octoprint_version: str, file: str
     ):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = printnanny_api_client.OctoprintBackupsApi(
+            api_instance = printnanny_api_client.OctoprintApi(
                 api_client=api_client
             )
 
