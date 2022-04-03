@@ -10,6 +10,7 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/local/bin/printnanny")
 PRINTNANNY_PROFILE = environ.get("PRINTNANNY_PROFILE", "default")
 
+
 def printnanny_version() -> Optional[Dict[str, str]]:
     cmd = [PRINTNANNY_BIN, "version"]
     try:
@@ -17,10 +18,12 @@ def printnanny_version() -> Optional[Dict[str, str]]:
     except FileNotFoundError as e:
         logger.error(e)
         return None
-    stdout = p.stdout.decode('utf-8')
-    stderr = p.stderr.decode('utf-8')
+    stdout = p.stdout.decode("utf-8")
+    stderr = p.stderr.decode("utf-8")
     if p.returncode != 0:
-        logger.warning(f"Failed to get printnanny_version cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}")
+        logger.warning(
+            f"Failed to get printnanny_version cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+        )
         return None
     logger.info(f"Running printnanny_version={stdout}")
     try:
@@ -39,10 +42,12 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
     except FileNotFoundError as e:
         logger.error(e)
         return None
-    stdout = p.stdout.decode('utf-8')
-    stderr = p.stderr.decode('utf-8')
+    stdout = p.stdout.decode("utf-8")
+    stderr = p.stderr.decode("utf-8")
     if p.returncode != 0:
-        logger.warning(f"Failed to get printnanny config cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}")
+        logger.warning(
+            f"Failed to get printnanny config cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+        )
         return None
     try:
         config = json.loads(stdout)

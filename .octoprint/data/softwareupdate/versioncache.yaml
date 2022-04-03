@@ -1,0 +1,73 @@
+__version: 1.8.0rc2
+file_check:
+  available: false
+  compatible: true
+  disabled: false
+  error: null
+  hash: 1fd5482b4fa54235531810fa4bf95620
+  information:
+    local:
+      name: 2021.2.23
+      value: 2021.2.23
+    needs_online: true
+    remote:
+      name: 2021.2.23
+      release_notes: https://github.com/OctoPrint/OctoPrint-FileCheck/releases/tag/2021.2.23
+      value: 2021.2.23
+  online: true
+  possible: true
+  timestamp: 1649011743.9241948
+firmware_check:
+  available: false
+  compatible: true
+  disabled: false
+  error: null
+  hash: 2cc0c5c664767763a036f68d2318d063
+  information:
+    local:
+      name: 2021.10.11
+      value: 2021.10.11
+    needs_online: true
+    remote:
+      name: 2021.10.11
+      release_notes: https://github.com/OctoPrint/OctoPrint-FirmwareCheck/releases/tag/2021.10.11
+      value: 2021.10.11
+  online: true
+  possible: true
+  timestamp: 1649011743.924772
+octoprint:
+  available: true
+  compatible: true
+  disabled: false
+  error: null
+  hash: dbd9899c5465ae92b4b94cbd8cff2b29
+  information:
+    local:
+      name: 1.8.0rc2
+      value: 1.8.0rc2
+    needs_online: true
+    remote:
+      name: 1.7.3
+      release_notes: https://github.com/OctoPrint/OctoPrint/releases/tag/1.7.3
+      value: 1.7.3
+  online: true
+  possible: true
+  timestamp: 1649011744.0214984
+octoprint_nanny:
+  available: false
+  compatible: true
+  disabled: false
+  error: null
+  hash: f9b5c4a63750e582983b07f6ee3e5857
+  information:
+    local:
+      name: 0.9.1
+      value: 0.9.1
+    needs_online: true
+    remote:
+      name: 0.9.1
+      release_notes: https://github.com/bitsy-ai/octoprint-nanny-plugin/releases/tag/0.9.1
+      value: 0.9.1
+  online: true
+  possible: true
+  timestamp: 1649011743.9886777

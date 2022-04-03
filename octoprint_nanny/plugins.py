@@ -65,7 +65,7 @@ BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
 DEFAULT_SETTINGS = dict(
     printnanny_version=printnanny_version(),
-    printnanny_os=printnanny_config(),
+    printnanny_config=printnanny_config(),
     backup_auto=False,
     wizard_complete=-1,
 )

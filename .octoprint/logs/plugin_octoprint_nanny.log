@@ -1,0 +1,5 @@
+2022-04-03 11:49:04,025 - octoprint.plugins.octoprint_nanny - plugins - 139806325065472 - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>
+2022-04-03 11:50:44,136 - octoprint.plugins.octoprint_nanny - plugins - 139807057905472 - INFO - Running on_shutdown handler
+2022-04-03 11:50:49,222 - octoprint.plugins.octoprint_nanny - plugins - 139938003670784 - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>
+2022-04-03 11:52:42,828 - octoprint.plugins.octoprint_nanny - plugins - 139938870769472 - INFO - Running on_shutdown handler
+2022-04-03 11:52:47,393 - octoprint.plugins.octoprint_nanny - plugins - 140372986541824 - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>

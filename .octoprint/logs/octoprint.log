@@ -1,0 +1,384 @@
+2022-04-03 11:48:59,735 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:48:59,736 - octoprint.startup - INFO - Starting OctoPrint 1.8.0rc2
+2022-04-03 11:48:59,737 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:48:59,740 - octoprint.util.connectivity.connectivity_checker - INFO - Connectivity state is currently: online
+2022-04-03 11:48:59,740 - octoprint.util.connectivity.connectivity_checker - INFO - Connecting to 1.1.1.1:53 is working
+2022-04-03 11:48:59,740 - octoprint.util.connectivity.connectivity_checker - INFO - Resolving octoprint.org is working
+2022-04-03 11:48:59,742 - octoprint.plugin.core - INFO - Loading plugins from /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins, /home/leigh/projects/octoprint-nanny-plugin/.octoprint/plugins and installed plugin packages...
+2022-04-03 11:48:59,955 - octoprint.plugin.core - INFO - Plugin Pi Support Plugin (2022.3.1) did not pass check, not loading.
+2022-04-03 11:49:00,022 - octoprint.plugins.octoprint_nanny.clients.rest - INFO - OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4
+2022-04-03 11:49:00,041 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny_version cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'version'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:49:00,058 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny config cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'config', 'get'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:49:00,075 - octoprint.plugin.core - INFO - Found 18 plugin(s) providing 18 mixin implementations, 36 hook handlers
+2022-04-03 11:49:00,082 - octoprint.server.heartbeat - INFO - Starting server heartbeat, 900.0s interval
+2022-04-03 11:49:00,085 - octoprint.server - INFO - Intermediary server started
+2022-04-03 11:49:00,085 - octoprint.printer.profile - ERROR - Profile _default does not exist, creating _default again and setting it as default
+2022-04-03 11:49:00,088 - octoprint.filemanager.storage - INFO - Initializing the file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads...
+2022-04-03 11:49:00,089 - octoprint.filemanager.storage - INFO - ... file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads initialized successfully.
+2022-04-03 11:49:00,089 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_SHOW (needs: "Need(method='role', value='plugin_action_command_notification_show')")
+2022-04-03 11:49:00,090 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_CLEAR (needs: "Need(method='role', value='plugin_action_command_notification_clear')")
+2022-04-03 11:49:00,090 - octoprint.server - INFO - Added new permission from plugin action_command_prompt: PLUGIN_ACTION_COMMAND_PROMPT_INTERACT (needs: "Need(method='role', value='plugin_action_command_prompt_interact')")
+2022-04-03 11:49:00,090 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_READ (needs: "Need(method='role', value='plugin_announcements_read')")
+2022-04-03 11:49:00,090 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_MANAGE (needs: "Need(method='role', value='plugin_announcements_read'), Need(method='role', value='plugin_announcements_manage')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_ADMIN (needs: "Need(method='role', value='plugin_appkeys_admin')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_GRANT (needs: "Need(method='role', value='plugin_appkeys_user')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin backup: PLUGIN_BACKUP_ACCESS (needs: "Need(method='role', value='plugin_backup_access')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin firmware_check: PLUGIN_FIRMWARE_CHECK_DISPLAY (needs: "Need(method='role', value='plugin_firmware_check_display')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin logging: PLUGIN_LOGGING_MANAGE (needs: "Need(method='role', value='plugin_logging_manage')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_LIST (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_MANAGE (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_INSTALL (needs: "Need(method='role', value='plugin_pluginmanager_install'), Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CHECK (needs: "Need(method='role', value='plugin_softwareupdate_check')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_UPDATE (needs: "Need(method='role', value='plugin_softwareupdate_update')")
+2022-04-03 11:49:00,091 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CONFIGURE (needs: "Need(method='role', value='plugin_softwareupdate_configure')")
+2022-04-03 11:49:00,337 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:49:00,569 - octoprint.util.pip - INFO - Version of pip is 22.0.4
+2022-04-03 11:49:00,573 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:49:00,573 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:49:00,575 - octoprint.plugin.core - INFO - Initialized 18 plugin implementation(s)
+2022-04-03 11:49:00,598 - octoprint.plugins.octoprint_nanny - INFO - Running on_settings_initialized handler
+2022-04-03 11:49:00,598 - octoprint.plugin.core - INFO - 18 plugin(s) registered with the system:
+|  Action Command Notification Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_notification
+|  Action Command Prompt Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_prompt
+|  Announcement Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/announcements
+|  Anonymous Usage Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/tracking
+|  Application Keys Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/appkeys
+|  Backup & Restore (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/backup
+|  Core Wizard (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/corewizard
+|  Discovery (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/discovery
+|  Error Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/errortracking
+|  Event Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/eventmanager
+|  File Check (2021.2.23) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_file_check
+|  Firmware Check (2021.10.11) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_firmware_check
+|  GCode Viewer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/gcodeviewer
+|  Logging (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/logging
+|  OctoPrint Nanny (0.9.1) = /home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny
+|  Plugin Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/pluginmanager
+|  Software Update (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/softwareupdate
+|  Virtual Printer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/virtual_printer
+Prefix legend: ! = disabled, # = blacklisted, * = incompatible
+2022-04-03 11:49:00,623 - octoprint.plugins.octoprint_nanny - INFO - Running on_environment_detectedp handler args=() kwargs={}
+2022-04-03 11:49:00,623 - octoprint.environment - INFO - Detected environment is Python 3.8.10 under Linux (linux). Details:
+|  hardware:
+|    cores: 64
+|    freq: 3700.0
+|    ram: 134937571328
+|  os:
+|    bits: 64
+|    id: linux
+|    platform: linux
+|  python:
+|    pip: 22.0.4
+|    version: 3.8.10
+|    virtualenv: /home/leigh/projects/octoprint-nanny-plugin/.venv
+2022-04-03 11:49:00,625 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/webassets...
+2022-04-03 11:49:00,625 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-cache...
+2022-04-03 11:49:00,625 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-manifest.json...
+2022-04-03 11:49:00,691 - octoprint.server - INFO - Shutting down intermediary server...
+2022-04-03 11:49:01,093 - octoprint.server - INFO - Intermediary server shut down
+2022-04-03 11:49:01,094 - octoprint.events - INFO - Processing startup event, this is our first event
+2022-04-03 11:49:01,094 - octoprint.events - INFO - Adding 0 events to queue that were held back before startup event
+2022-04-03 11:49:01,096 - octoprint.filemanager - INFO - Adding backlog items from all storage types to analysis queue...
+2022-04-03 11:49:01,097 - octoprint.server.util.watchdog - INFO - Running initial scan on watched folder...
+2022-04-03 11:49:01,098 - octoprint.filemanager - INFO - Added 0 items from storage type "local" to analysis queue
+2022-04-03 11:49:01,098 - octoprint.server.util.watchdog - INFO - ... initial scan done.
+2022-04-03 11:49:01,913 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._http._tcp.local.' for _http._tcp.local.
+2022-04-03 11:49:02,726 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._octoprint._tcp.local.' for _octoprint._tcp.local.
+2022-04-03 11:49:02,728 - octoprint.plugins.discovery - INFO - Registered OctoPrint instance on aurora for SSDP
+2022-04-03 11:49:02,734 - octoprint.plugins.octoprint_nanny - INFO - Running on_startup handler args=('0.0.0.0', 5001) kwargs={}
+2022-04-03 11:49:02,734 - octoprint.server - INFO - Listening on http://0.0.0.0:5001
+2022-04-03 11:49:03,021 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:49:03,022 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:49:03,022 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:49:03,024 - octoprint.plugins.softwareupdate - INFO - Minimum free storage across all update relevant locations is 188.4GB. That is considered sufficient for updating.
+2022-04-03 11:49:03,024 - octoprint.plugins.softwareupdate - INFO - Fetching check overlays from https://plugins.octoprint.org/update_check_overlay.json
+2022-04-03 11:49:03,272 - octoprint.plugins.announcements - INFO - Loaded channel _important from https://octoprint.org/feeds/important.xml in 0.48s
+2022-04-03 11:49:03,572 - octoprint.plugins.pluginmanager - INFO - Loaded plugin repository data from https://plugins.octoprint.org/plugins.json
+2022-04-03 11:49:03,775 - octoprint.plugins.announcements - INFO - Loaded channel _releases from https://octoprint.org/feeds/releases.xml in 0.48s
+2022-04-03 11:49:03,923 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:49:03,923 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:49:03,924 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:49:04,023 - octoprint.plugins.softwareupdate - INFO - Saved version cache to disk
+2022-04-03 11:49:04,024 - octoprint.plugins.octoprint_nanny - INFO - Running on_after_startup handler args=() kwargs={}
+2022-04-03 11:49:04,025 - octoprint.plugins.octoprint_nanny - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>
+2022-04-03 11:49:04,237 - octoprint.plugins.pluginmanager - INFO - Loaded plugin notices data from https://plugins.octoprint.org/notices.json
+2022-04-03 11:49:04,280 - octoprint.plugins.announcements - INFO - Loaded channel _blog from https://octoprint.org/feeds/octoblog.xml in 0.48s
+2022-04-03 11:49:04,815 - octoprint.plugins.announcements - INFO - Loaded channel _plugins from https://plugins.octoprint.org/feed.xml in 0.48s
+2022-04-03 11:49:04,896 - octoprint.server.util.flask.PreemptiveCache - INFO - Adding entry for / and {'path': '/', 'base_url': 'http://localhost:5001/', 'query_string': 'l10n=en', '_timestamp': 1649011744.8968554, '_count': 1}
+2022-04-03 11:49:05,348 - octoprint.plugins.announcements - INFO - Loaded channel _octopi from https://octoprint.org/feeds/octopi.xml in 0.51s
+2022-04-03 11:49:05,482 - octoprint.util.jinja - ERROR - Caught exception while compiling template index.jinja2 at line 147
+Traceback (most recent call last):
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/util/jinja.py", line 255, in _handle_body
+    return caller()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 814, in __call__
+    return self._invoke(arguments, autoescape)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 828, in _invoke
+    rv = self._func(*arguments)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/templates/index.jinja2", line 344, in macro
+  File "/home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny/templates/octoprint_nanny_tab.jinja2", line 13, in root
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/environment.py", line 474, in getattr
+    return getattr(obj, attribute)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 910, in __getattr__
+    return self._fail_with_undefined_error()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 903, in _fail_with_undefined_error
+    raise self._undefined_exception(self._undefined_message)
+jinja2.exceptions.UndefinedError: 'None' has no attribute 'device'
+2022-04-03 11:49:05,813 - asyncio - WARNING - Executing <Task finished name='Task-14' coro=<RequestHandler._execute() done, defined at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/web.py:1660> result=None created at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/gen.py:867> took 1.021 seconds
+2022-04-03 11:49:06,055 - octoprint.server.util.sockjs - INFO - New connection from client: 127.0.0.1
+2022-04-03 11:50:43,203 - octoprint.server - INFO - Shutting down...
+2022-04-03 11:50:44,123 - octoprint.server - INFO - Calling on_shutdown on plugins
+2022-04-03 11:50:44,123 - octoprint.events - INFO - Processing shutdown event, this will be our last event
+2022-04-03 11:50:44,124 - octoprint.events - INFO - Event loop shut down
+2022-04-03 11:50:44,136 - octoprint.plugins.octoprint_nanny - INFO - Running on_shutdown handler
+2022-04-03 11:50:44,137 - octoprint.server - INFO - Goodbye!
+2022-04-03 11:50:45,378 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:50:45,379 - octoprint.startup - INFO - Starting OctoPrint 1.8.0rc2
+2022-04-03 11:50:45,380 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:50:45,431 - octoprint.util.connectivity.connectivity_checker - INFO - Connectivity state is currently: online
+2022-04-03 11:50:45,431 - octoprint.util.connectivity.connectivity_checker - INFO - Connecting to 1.1.1.1:53 is working
+2022-04-03 11:50:45,431 - octoprint.util.connectivity.connectivity_checker - INFO - Resolving octoprint.org is working
+2022-04-03 11:50:45,433 - octoprint.plugin.core - INFO - Loading plugins from /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins, /home/leigh/projects/octoprint-nanny-plugin/.octoprint/plugins and installed plugin packages...
+2022-04-03 11:50:45,648 - octoprint.plugin.core - INFO - Plugin Pi Support Plugin (2022.3.1) did not pass check, not loading.
+2022-04-03 11:50:45,715 - octoprint.plugins.octoprint_nanny.clients.rest - INFO - OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4
+2022-04-03 11:50:45,736 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny_version cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'version'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:50:45,754 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny config cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'config', 'get'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:50:45,768 - octoprint.plugin.core - INFO - Found 18 plugin(s) providing 18 mixin implementations, 36 hook handlers
+2022-04-03 11:50:45,777 - octoprint.server.heartbeat - INFO - Starting server heartbeat, 900.0s interval
+2022-04-03 11:50:45,779 - octoprint.server - INFO - Intermediary server started
+2022-04-03 11:50:45,782 - octoprint.filemanager.storage - INFO - Initializing the file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads...
+2022-04-03 11:50:45,782 - octoprint.filemanager.storage - INFO - ... file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads initialized successfully.
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_SHOW (needs: "Need(method='role', value='plugin_action_command_notification_show')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_CLEAR (needs: "Need(method='role', value='plugin_action_command_notification_clear')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin action_command_prompt: PLUGIN_ACTION_COMMAND_PROMPT_INTERACT (needs: "Need(method='role', value='plugin_action_command_prompt_interact')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_READ (needs: "Need(method='role', value='plugin_announcements_read')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_MANAGE (needs: "Need(method='role', value='plugin_announcements_read'), Need(method='role', value='plugin_announcements_manage')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_ADMIN (needs: "Need(method='role', value='plugin_appkeys_admin')")
+2022-04-03 11:50:45,784 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_GRANT (needs: "Need(method='role', value='plugin_appkeys_user')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin backup: PLUGIN_BACKUP_ACCESS (needs: "Need(method='role', value='plugin_backup_access')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin firmware_check: PLUGIN_FIRMWARE_CHECK_DISPLAY (needs: "Need(method='role', value='plugin_firmware_check_display')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin logging: PLUGIN_LOGGING_MANAGE (needs: "Need(method='role', value='plugin_logging_manage')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_LIST (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_MANAGE (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_INSTALL (needs: "Need(method='role', value='plugin_pluginmanager_install'), Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CHECK (needs: "Need(method='role', value='plugin_softwareupdate_check')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_UPDATE (needs: "Need(method='role', value='plugin_softwareupdate_update')")
+2022-04-03 11:50:45,785 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CONFIGURE (needs: "Need(method='role', value='plugin_softwareupdate_configure')")
+2022-04-03 11:50:45,807 - octoprint.plugins.softwareupdate - INFO - Loaded version cache from disk
+2022-04-03 11:50:46,042 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:50:46,277 - octoprint.util.pip - INFO - Version of pip is 22.0.4
+2022-04-03 11:50:46,280 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:50:46,280 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:50:46,284 - octoprint.plugin.core - INFO - Initialized 18 plugin implementation(s)
+2022-04-03 11:50:46,286 - octoprint.plugins.octoprint_nanny - INFO - Running on_settings_initialized handler
+2022-04-03 11:50:46,287 - octoprint.plugin.core - INFO - 18 plugin(s) registered with the system:
+|  Action Command Notification Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_notification
+|  Action Command Prompt Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_prompt
+|  Announcement Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/announcements
+|  Anonymous Usage Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/tracking
+|  Application Keys Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/appkeys
+|  Backup & Restore (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/backup
+|  Core Wizard (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/corewizard
+|  Discovery (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/discovery
+|  Error Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/errortracking
+|  Event Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/eventmanager
+|  File Check (2021.2.23) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_file_check
+|  Firmware Check (2021.10.11) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_firmware_check
+|  GCode Viewer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/gcodeviewer
+|  Logging (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/logging
+|  OctoPrint Nanny (0.9.1) = /home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny
+|  Plugin Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/pluginmanager
+|  Software Update (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/softwareupdate
+|  Virtual Printer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/virtual_printer
+Prefix legend: ! = disabled, # = blacklisted, * = incompatible
+2022-04-03 11:50:46,310 - octoprint.plugins.octoprint_nanny - INFO - Running on_environment_detectedp handler args=() kwargs={}
+2022-04-03 11:50:46,310 - octoprint.environment - INFO - Detected environment is Python 3.8.10 under Linux (linux). Details:
+|  hardware:
+|    cores: 64
+|    freq: 3700.0
+|    ram: 134937571328
+|  os:
+|    bits: 64
+|    id: linux
+|    platform: linux
+|  python:
+|    pip: 22.0.4
+|    version: 3.8.10
+|    virtualenv: /home/leigh/projects/octoprint-nanny-plugin/.venv
+2022-04-03 11:50:46,314 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/webassets...
+2022-04-03 11:50:46,314 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-cache...
+2022-04-03 11:50:46,315 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-manifest.json...
+2022-04-03 11:50:46,386 - octoprint.server - INFO - Shutting down intermediary server...
+2022-04-03 11:50:46,790 - octoprint.server - INFO - Intermediary server shut down
+2022-04-03 11:50:46,792 - octoprint.events - INFO - Processing startup event, this is our first event
+2022-04-03 11:50:46,792 - octoprint.events - INFO - Adding 0 events to queue that were held back before startup event
+2022-04-03 11:50:46,792 - octoprint.filemanager - INFO - Adding backlog items from all storage types to analysis queue...
+2022-04-03 11:50:46,794 - octoprint.server.util.watchdog - INFO - Running initial scan on watched folder...
+2022-04-03 11:50:46,795 - octoprint.filemanager - INFO - Added 0 items from storage type "local" to analysis queue
+2022-04-03 11:50:46,796 - octoprint.server.util.watchdog - INFO - ... initial scan done.
+2022-04-03 11:50:47,607 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._http._tcp.local.' for _http._tcp.local.
+2022-04-03 11:50:48,417 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._octoprint._tcp.local.' for _octoprint._tcp.local.
+2022-04-03 11:50:48,419 - octoprint.plugins.discovery - INFO - Registered OctoPrint instance on aurora for SSDP
+2022-04-03 11:50:48,420 - octoprint.plugins.octoprint_nanny - INFO - Running on_startup handler args=('0.0.0.0', 5001) kwargs={}
+2022-04-03 11:50:48,426 - octoprint.server - INFO - Listening on http://0.0.0.0:5001
+2022-04-03 11:50:48,483 - octoprint.plugins.pluginmanager - INFO - Loaded plugin repository data from disk, was still valid
+2022-04-03 11:50:48,626 - octoprint.plugins.pluginmanager - INFO - Loaded notice data from disk, was still valid
+2022-04-03 11:50:48,631 - asyncio - WARNING - Executing <Handle BaseAsyncIOLoop._handle_events(7, 1) created at /usr/lib/python3.8/asyncio/selector_events.py:259> took 0.160 seconds
+2022-04-03 11:50:48,642 - octoprint.server.util.sockjs - INFO - New connection from client: 127.0.0.1
+2022-04-03 11:50:48,717 - octoprint.plugins.softwareupdate - INFO - Fetching check overlays from https://plugins.octoprint.org/update_check_overlay.json
+2022-04-03 11:50:48,719 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:50:48,719 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:50:48,719 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:50:48,721 - octoprint.plugins.softwareupdate - INFO - Minimum free storage across all update relevant locations is 188.2GB. That is considered sufficient for updating.
+2022-04-03 11:50:49,222 - octoprint.plugins.octoprint_nanny - INFO - Running on_after_startup handler args=() kwargs={}
+2022-04-03 11:50:49,222 - octoprint.plugins.octoprint_nanny - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>
+2022-04-03 11:50:49,269 - asyncio - WARNING - Executing <Task finished name='Task-21' coro=<RequestHandler._execute() done, defined at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/web.py:1660> result=None created at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/gen.py:867> took 0.579 seconds
+2022-04-03 11:50:49,270 - octoprint.server.preemptive_cache - INFO - Preemptively caching / (ui _default) for {'base_url': 'http://localhost:5001/', 'path': '/', 'query_string': 'l10n=en'}
+2022-04-03 11:50:49,877 - octoprint.util.jinja - ERROR - Caught exception while compiling template index.jinja2 at line 147
+Traceback (most recent call last):
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/util/jinja.py", line 255, in _handle_body
+    return caller()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 814, in __call__
+    return self._invoke(arguments, autoescape)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 828, in _invoke
+    rv = self._func(*arguments)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/templates/index.jinja2", line 344, in macro
+  File "/home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny/templates/octoprint_nanny_tab.jinja2", line 13, in root
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/environment.py", line 474, in getattr
+    return getattr(obj, attribute)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 910, in __getattr__
+    return self._fail_with_undefined_error()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 903, in _fail_with_undefined_error
+    raise self._undefined_exception(self._undefined_message)
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'device'
+2022-04-03 11:50:50,190 - octoprint.server.preemptive_cache - INFO - ... done in 0.92s
+2022-04-03 11:52:42,698 - octoprint.server - INFO - Shutting down...
+2022-04-03 11:52:42,813 - octoprint.server - INFO - Calling on_shutdown on plugins
+2022-04-03 11:52:42,814 - octoprint.events - INFO - Processing shutdown event, this will be our last event
+2022-04-03 11:52:42,814 - octoprint.events - INFO - Event loop shut down
+2022-04-03 11:52:42,828 - octoprint.plugins.octoprint_nanny - INFO - Running on_shutdown handler
+2022-04-03 11:52:42,828 - octoprint.server - INFO - Goodbye!
+2022-04-03 11:52:43,750 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:52:43,751 - octoprint.startup - INFO - Starting OctoPrint 1.8.0rc2
+2022-04-03 11:52:43,751 - octoprint.startup - INFO - ******************************************************************************
+2022-04-03 11:52:43,799 - octoprint.util.connectivity.connectivity_checker - INFO - Connectivity state is currently: online
+2022-04-03 11:52:43,799 - octoprint.util.connectivity.connectivity_checker - INFO - Connecting to 1.1.1.1:53 is working
+2022-04-03 11:52:43,799 - octoprint.util.connectivity.connectivity_checker - INFO - Resolving octoprint.org is working
+2022-04-03 11:52:43,801 - octoprint.plugin.core - INFO - Loading plugins from /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins, /home/leigh/projects/octoprint-nanny-plugin/.octoprint/plugins and installed plugin packages...
+2022-04-03 11:52:44,026 - octoprint.plugin.core - INFO - Plugin Pi Support Plugin (2022.3.1) did not pass check, not loading.
+2022-04-03 11:52:44,096 - octoprint.plugins.octoprint_nanny.clients.rest - INFO - OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4
+2022-04-03 11:52:44,115 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny_version cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'version'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:52:44,133 - octoprint.plugins.octoprint_nanny.utils - WARNING - Failed to get printnanny config cmd=['/home/leigh/projects/printnanny-cli/target/debug/printnanny-cli', 'config', 'get'] returncode=1 stdout= stderr=Error: missing field `octoprint_url` for key "default.device" in ../printnanny-cli/.tmp/test/PrintNannyLicense.json JSON file
+
+2022-04-03 11:52:44,150 - octoprint.plugin.core - INFO - Found 18 plugin(s) providing 18 mixin implementations, 36 hook handlers
+2022-04-03 11:52:44,158 - octoprint.server.heartbeat - INFO - Starting server heartbeat, 900.0s interval
+2022-04-03 11:52:44,160 - octoprint.server - INFO - Intermediary server started
+2022-04-03 11:52:44,162 - octoprint.filemanager.storage - INFO - Initializing the file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads...
+2022-04-03 11:52:44,163 - octoprint.filemanager.storage - INFO - ... file metadata for /home/leigh/projects/octoprint-nanny-plugin/.octoprint/uploads initialized successfully.
+2022-04-03 11:52:44,163 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_SHOW (needs: "Need(method='role', value='plugin_action_command_notification_show')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin action_command_notification: PLUGIN_ACTION_COMMAND_NOTIFICATION_CLEAR (needs: "Need(method='role', value='plugin_action_command_notification_clear')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin action_command_prompt: PLUGIN_ACTION_COMMAND_PROMPT_INTERACT (needs: "Need(method='role', value='plugin_action_command_prompt_interact')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_READ (needs: "Need(method='role', value='plugin_announcements_read')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin announcements: PLUGIN_ANNOUNCEMENTS_MANAGE (needs: "Need(method='role', value='plugin_announcements_read'), Need(method='role', value='plugin_announcements_manage')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_ADMIN (needs: "Need(method='role', value='plugin_appkeys_admin')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin appkeys: PLUGIN_APPKEYS_GRANT (needs: "Need(method='role', value='plugin_appkeys_user')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin backup: PLUGIN_BACKUP_ACCESS (needs: "Need(method='role', value='plugin_backup_access')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin firmware_check: PLUGIN_FIRMWARE_CHECK_DISPLAY (needs: "Need(method='role', value='plugin_firmware_check_display')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin logging: PLUGIN_LOGGING_MANAGE (needs: "Need(method='role', value='plugin_logging_manage')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_LIST (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_MANAGE (needs: "Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin pluginmanager: PLUGIN_PLUGINMANAGER_INSTALL (needs: "Need(method='role', value='plugin_pluginmanager_install'), Need(method='role', value='plugin_pluginmanager_manage')")
+2022-04-03 11:52:44,164 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CHECK (needs: "Need(method='role', value='plugin_softwareupdate_check')")
+2022-04-03 11:52:44,165 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_UPDATE (needs: "Need(method='role', value='plugin_softwareupdate_update')")
+2022-04-03 11:52:44,165 - octoprint.server - INFO - Added new permission from plugin softwareupdate: PLUGIN_SOFTWAREUPDATE_CONFIGURE (needs: "Need(method='role', value='plugin_softwareupdate_configure')")
+2022-04-03 11:52:44,181 - octoprint.plugins.softwareupdate - INFO - Loaded version cache from disk
+2022-04-03 11:52:44,414 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:52:44,639 - octoprint.util.pip - INFO - Version of pip is 22.0.4
+2022-04-03 11:52:44,643 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:52:44,643 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:52:44,647 - octoprint.plugin.core - INFO - Initialized 18 plugin implementation(s)
+2022-04-03 11:52:44,650 - octoprint.plugins.octoprint_nanny - INFO - Running on_settings_initialized handler
+2022-04-03 11:52:44,651 - octoprint.plugin.core - INFO - 18 plugin(s) registered with the system:
+|  Action Command Notification Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_notification
+|  Action Command Prompt Support (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/action_command_prompt
+|  Announcement Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/announcements
+|  Anonymous Usage Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/tracking
+|  Application Keys Plugin (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/appkeys
+|  Backup & Restore (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/backup
+|  Core Wizard (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/corewizard
+|  Discovery (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/discovery
+|  Error Tracking (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/errortracking
+|  Event Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/eventmanager
+|  File Check (2021.2.23) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_file_check
+|  Firmware Check (2021.10.11) (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint_firmware_check
+|  GCode Viewer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/gcodeviewer
+|  Logging (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/logging
+|  OctoPrint Nanny (0.9.1) = /home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny
+|  Plugin Manager (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/pluginmanager
+|  Software Update (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/softwareupdate
+|  Virtual Printer (bundled) = /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/plugins/virtual_printer
+Prefix legend: ! = disabled, # = blacklisted, * = incompatible
+2022-04-03 11:52:44,678 - octoprint.plugins.octoprint_nanny - INFO - Running on_environment_detectedp handler args=() kwargs={}
+2022-04-03 11:52:44,679 - octoprint.environment - INFO - Detected environment is Python 3.8.10 under Linux (linux). Details:
+|  hardware:
+|    cores: 64
+|    freq: 3700.0
+|    ram: 134937571328
+|  os:
+|    bits: 64
+|    id: linux
+|    platform: linux
+|  python:
+|    pip: 22.0.4
+|    version: 3.8.10
+|    virtualenv: /home/leigh/projects/octoprint-nanny-plugin/.venv
+2022-04-03 11:52:44,682 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/webassets...
+2022-04-03 11:52:44,682 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-cache...
+2022-04-03 11:52:44,682 - octoprint.server - INFO - Reset webasset folder /home/leigh/projects/octoprint-nanny-plugin/.octoprint/generated/.webassets-manifest.json...
+2022-04-03 11:52:44,747 - octoprint.server - INFO - Shutting down intermediary server...
+2022-04-03 11:52:44,981 - octoprint.server - INFO - Intermediary server shut down
+2022-04-03 11:52:44,982 - octoprint.events - INFO - Processing startup event, this is our first event
+2022-04-03 11:52:44,982 - octoprint.events - INFO - Adding 0 events to queue that were held back before startup event
+2022-04-03 11:52:44,982 - octoprint.filemanager - INFO - Adding backlog items from all storage types to analysis queue...
+2022-04-03 11:52:44,984 - octoprint.server.util.watchdog - INFO - Running initial scan on watched folder...
+2022-04-03 11:52:44,985 - octoprint.filemanager - INFO - Added 0 items from storage type "local" to analysis queue
+2022-04-03 11:52:44,985 - octoprint.server.util.watchdog - INFO - ... initial scan done.
+2022-04-03 11:52:45,797 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._http._tcp.local.' for _http._tcp.local.
+2022-04-03 11:52:46,608 - octoprint.plugins.discovery - INFO - Registered 'OctoPrint instance on aurora._octoprint._tcp.local.' for _octoprint._tcp.local.
+2022-04-03 11:52:46,610 - octoprint.plugins.discovery - INFO - Registered OctoPrint instance on aurora for SSDP
+2022-04-03 11:52:46,615 - octoprint.plugins.octoprint_nanny - INFO - Running on_startup handler args=('0.0.0.0', 5001) kwargs={}
+2022-04-03 11:52:46,616 - octoprint.server - INFO - Listening on http://0.0.0.0:5001
+2022-04-03 11:52:46,672 - octoprint.plugins.pluginmanager - INFO - Loaded plugin repository data from disk, was still valid
+2022-04-03 11:52:46,822 - octoprint.plugins.pluginmanager - INFO - Loaded notice data from disk, was still valid
+2022-04-03 11:52:46,889 - octoprint.util.pip - INFO - Using "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python3 -m pip" as command to invoke pip
+2022-04-03 11:52:46,889 - octoprint.util.pip - INFO - pip installs to /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages (writable -> yes), --user flag needed -> no, virtual env -> yes
+2022-04-03 11:52:46,889 - octoprint.util.pip - INFO - ==> pip ok -> yes
+2022-04-03 11:52:46,892 - octoprint.plugins.softwareupdate - INFO - Minimum free storage across all update relevant locations is 188.1GB. That is considered sufficient for updating.
+2022-04-03 11:52:46,892 - octoprint.plugins.softwareupdate - INFO - Fetching check overlays from https://plugins.octoprint.org/update_check_overlay.json
+2022-04-03 11:52:47,000 - octoprint.server.util.sockjs - INFO - New connection from client: 127.0.0.1
+2022-04-03 11:52:47,392 - octoprint.plugins.octoprint_nanny - INFO - Running on_after_startup handler args=() kwargs={}
+2022-04-03 11:52:47,393 - octoprint.plugins.octoprint_nanny - INFO - Logger file handler added <CleaningTimedRotatingFileHandler /home/leigh/projects/octoprint-nanny-plugin/.octoprint/logs/plugin_octoprint_nanny.log (DEBUG)>
+2022-04-03 11:52:47,442 - asyncio - WARNING - Executing <Task finished name='Task-21' coro=<RequestHandler._execute() done, defined at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/web.py:1660> result=None created at /home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/tornado/gen.py:867> took 0.390 seconds
+2022-04-03 11:52:47,443 - octoprint.server.preemptive_cache - INFO - Preemptively caching / (ui _default) for {'base_url': 'http://localhost:5001/', 'path': '/', 'query_string': 'l10n=en'}
+2022-04-03 11:52:48,045 - octoprint.util.jinja - ERROR - Caught exception while compiling template index.jinja2 at line 147
+Traceback (most recent call last):
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/util/jinja.py", line 255, in _handle_body
+    return caller()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 814, in __call__
+    return self._invoke(arguments, autoescape)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 828, in _invoke
+    rv = self._func(*arguments)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/octoprint/templates/index.jinja2", line 344, in macro
+  File "/home/leigh/projects/octoprint-nanny-plugin/octoprint_nanny/templates/octoprint_nanny_tab.jinja2", line 13, in root
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/environment.py", line 474, in getattr
+    return getattr(obj, attribute)
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 910, in __getattr__
+    return self._fail_with_undefined_error()
+  File "/home/leigh/projects/octoprint-nanny-plugin/.venv/lib/python3.8/site-packages/jinja2/runtime.py", line 903, in _fail_with_undefined_error
+    raise self._undefined_exception(self._undefined_message)
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'printnanny_os'
+2022-04-03 11:52:48,355 - octoprint.server.preemptive_cache - INFO - ... done in 0.91s
