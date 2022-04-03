@@ -7,6 +7,9 @@ PRINT_NANNY_USER ?= "leigh"
 OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
 OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
+
+.octoprint:
+	mkdir .octoprint
 mypy:
 	mypy octoprint_nanny/
 
@@ -77,7 +80,7 @@ octoprint-sandbox:
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
 	octoprint serve
 
-octoprint-local:
+octoprint-local: .octoprint
 	PRINTNANNY_PROFILE=local \
 	PRINTNANNY_BIN="$(HOME)/projects/printnanny-cli/target/debug/printnanny-cli" \
 	PRINTNANNY_CONFIG="$(HOME)/projects/printnanny-cli/env/Local.toml" \
@@ -91,7 +94,7 @@ octoprint-local:
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
-	octoprint serve --host=0.0.0.0 --port=5001
+	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
 octoprint-prod:
 	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000

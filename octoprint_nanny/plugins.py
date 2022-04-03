@@ -65,9 +65,9 @@ BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
 DEFAULT_SETTINGS = dict(
     printnanny_version=printnanny_version(),
-    printnanny_os=printnanny_config(),
+    printnanny_config=printnanny_config(),
     backup_auto=False,
-    wizard_complete=-1
+    wizard_complete=-1,
 )
 
 Events.PRINT_PROGRESS = "PrintProgress"
@@ -309,7 +309,6 @@ class OctoPrintNannyPlugin(
         )
 
         self._octoprint_environment = environment
-        self.worker_manager.plugin.settings.on_environment_detected(environment)
 
     def on_settings_initialized(self):
         """
@@ -338,7 +337,8 @@ class OctoPrintNannyPlugin(
             "settings": {
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
-            }
+            },
+            "os": json.dumps(self._settings.get(["printnanny_os"]), indent=2),
         }
 
     ## Wizard plugin mixin

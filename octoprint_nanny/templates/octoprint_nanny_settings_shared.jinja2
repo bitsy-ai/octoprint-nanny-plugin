@@ -22,11 +22,9 @@
 </div>
 {% else %}
 </div>
-<form class="form">
-
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Basic Settings') }}</a></li>
-        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Advanced & Debug Settings') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Configure') }}</a></li>
+        <li><a href="#{{template_name}}_advanced" data-toggle="tab">{{ _('Debug Settings') }}</a></li>
     </ul>
 
   <div class="tab-content">
@@ -34,14 +32,14 @@
       <fieldset>
 
         <div>
-            {% if plugin_octoprint_nanny_settings.printnanny_os.user is undefined %}
+            {% if plugin_octoprint_nanny_settings.printnanny_config.user is undefined %}
             <h3>Log into PrintNanny</h3>
-            <a href="{{ plugin_octoprint_nanny_settings.printnanny_os.dash.base_url }}" class="btn btn-primary btn-large">Link Account</a>
+            <a href="{{ plugin_octoprint_nanny_settings.printnanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link Account</a>
             <p>You'll be redirected to another page to log into your PrintNanny account</p>
-            {% else %}
-            <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_os.user.email }}</h3>
+            {% elif  plugin_octoprint_nanny_settings.printnanny_config is not none %}
+            <h3>Logged in as {{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</h3>
             <br>
-            <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_os.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_os.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
+            <a target="_blank" href="{{ plugin_octoprint_nanny_settings.printnanny_config.api.base_path }}{{ plugin_octoprint_nanny_settings.printnanny_config.device.dashboard_url }}"><button class= "btn btn-primary btn-large">Manage Device</button></a>
             <a target="_blank" href="#{{template_name}}_advanced" data-toggle="tab"><button class= "btn btn-primary btn-large">View Config</button></a>
             {% endif %}
         </div>
@@ -49,10 +47,9 @@
       </div>
     <div id="{{template_name}}_advanced" class="tab-pane">
 <pre>
-{{ plugin_octoprint_nanny_settings.printnanny_os }}
+{{ plugin_octoprint_nanny_os }}
 </pre>
     </div>
 
-  </div>
-</form>
+</div>
 {% endif %}
