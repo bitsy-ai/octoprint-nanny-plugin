@@ -1,12 +1,18 @@
 {% if plugin_octoprint_nanny_settings.printnanny_config and plugin_octoprint_nanny_settings.printnanny_config.api %}
 <script src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-vendor.js"></script>
 <script src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
+{% if plugin_octoprint_nanny_settings.printnanny_config.api.bearer_access_token %}
+<script>
+window.PRINTNANNY_API_TOKEN = "{{ plugin_octoprint_nanny_settings.printnanny_config.api.bearer_access_token }}"
+</script>
+{% endif %}
+
 {% endif %}
 {% if plugin_octoprint_nanny_settings.printnanny_config is not none %}
-<span class="video-stream-app">
-    <video-stream 
-        mode="local"
+<span class="janus-stream-app">
+    <janus-stream 
         device-id="{{ plugin_octoprint_nanny_settings.printnanny_config.device.id }}"
-        offline-image="plugin/octoprint_nanny/static/img/sleeping.png" />
+        offline-image="plugin/octoprint_nanny/static/img/sleeping.png"
+        config-type="edge" />
 </span>
 {% endif %}
