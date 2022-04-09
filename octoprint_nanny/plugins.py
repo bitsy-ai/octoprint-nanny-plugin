@@ -350,7 +350,7 @@ class OctoPrintNannyPlugin(
         # core UI here.
         return dict(
             js=["js/nanny.js"],
-            css=["css/nanny.css"],
+            css=["css/printnanny.css"],
             less=["less/nanny.less"],
             img=["img/wizard_example.jpg"],
         )
