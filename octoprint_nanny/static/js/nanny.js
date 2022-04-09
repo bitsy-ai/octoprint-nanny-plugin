@@ -59,7 +59,7 @@ $(function () {
         self.mqttPingStatusClass = ko.observable();
         self.mqttPongStatusMessage = ko.observable();
         self.mqttPongStatusClass = ko.observable();
-    
+
 
 
         testConnectionsAsync = function () {
@@ -98,7 +98,7 @@ $(function () {
         //     testConnectionsAsync();
         // }
 
-        showMonitoringFrame = function (payload){
+        showMonitoringFrame = function (payload) {
             if (self.previewActive() == false) {
                 self.previewActive(true);
             }
@@ -107,8 +107,8 @@ $(function () {
 
         OctoPrint.socket.onMessage("*", function (message) {
             console.log(message)
-            if (message && message.data && message.data.type ){
-                switch(message.data.type){
+            if (message && message.data && message.data.type) {
+                switch (message.data.type) {
                     case 'plugin_octoprint_nanny_monitoring_frame_b64':
                         return showMonitoringFrame(message.data.payload)
                     case 'plugin_octoprint_nanny_monitoring_reset':
@@ -228,6 +228,10 @@ $(function () {
 
     }
 
+    PrintNannyTabViewModel.prototype.koDescendantsComplete = function (node) {
+        $vm.$forceUpdate();
+    }
+
     OCTOPRINT_VIEWMODELS.push({
         construct: PrintNannyTabViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
@@ -277,10 +281,10 @@ $(function () {
         self.imageData = ko.observable();
         self.deviceRegisterProgressPercent = ko.observable();
         self.deviceRegisterProgress = 0;
-        self.deviceRegisterProgressCompleted = 6;        
+        self.deviceRegisterProgressCompleted = 6;
 
-        self.onAfterBinding = function(){
-            if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid){
+        self.onAfterBinding = function () {
+            if (!self.settingsViewModel.settings.plugins.octoprint_nanny.auth_valid) {
                 self.authAlertHeader = self.authAlerts.warning.header
                 self.authAlertText = self.authAlerts.warning.text
                 self.authAlertClass = self.authAlerts.warning.class
