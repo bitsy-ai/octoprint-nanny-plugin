@@ -10,8 +10,9 @@ import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
-from typing import Dict
 import socket
+from typing import Dict
+from datetime import datetime
 
 from octoprint.events import Events
 
@@ -19,7 +20,6 @@ import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 from octoprint_nanny.manager import WorkerManager
-from octoprint_nanny.exceptions import PluginSettingsRequired
 from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
     printnanny_config,
@@ -325,7 +325,7 @@ class OctoPrintNannyPlugin(
     ## Template plugin
 
     def get_template_vars(self):
-        return {
+        custom = {
             # @ todo is there a covenience method to get all plugin settings?
             # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=settings%20get#octoprint.plugin.PluginSettings.get
             "settings": {
@@ -334,6 +334,7 @@ class OctoPrintNannyPlugin(
             },
             "os": json.dumps(self._settings.get(["printnanny_os"]), indent=2),
         }
+        return custom
 
     ## Wizard plugin mixin
 

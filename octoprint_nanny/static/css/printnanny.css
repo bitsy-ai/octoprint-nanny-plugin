@@ -1,7 +1,10 @@
 /* TODO: Have your plugin's CSS files generated to here. */
 
-#navbar_plugin_octoprint_nanny {
+/* Remove .active styles on PrintNanny Cloud button when PrintNanny Cam button is selected*/
+#navbar .navbar-inner .brand,
+#navbar .navbar-inner .nav>li>a.no-active {
     text-shadow: none;
     box-shadow: none;
     color: #333333;
+    background-color: rgba(0, 0, 0, 0);
 }
