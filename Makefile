@@ -4,8 +4,11 @@
 
 PRINT_NANNY_USER ?= "leigh"
 
+OCTOPRINT_NANNY_STATIC_URL ?= "http://aurora:8000/static/"
 OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
 OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
+
+PRINTNANNY_CONFIG ?= "$(HOME)/printnanny-cli/.tmp/test"
 
 
 .octoprint:
@@ -76,6 +79,7 @@ octoprint-sandbox:
 	OCTOPRINT_NANNY_SNAPSHOT_URL="https://localhost:8080/?action=snapshot" \
 	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \
 	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
+	OCTOPRINT_NANNY_STATIC_URL="${OCTOPRINT_NANNY_STATIC_URL}" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
 	octoprint serve
@@ -88,10 +92,8 @@ octoprint-local: .octoprint
 	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
 	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \
 	OCTOPRINT_NANNY_WS_URL="${OCTOPRINT_NANNY_WS_URL}" \
-	OCTOPRINT_NANNY_IOT_DEVICE_REGISTRY="octoprint-devices" \
-	OCTOPRINT_NANNY_SNAPSHOT_URL="http://localhost:8080/?action=snapshot" \
-	OCTOPRINT_NANNY_HONEYCOMB_DATASET="print_nanny_plugin_sandbox" \
-	OCTOPRINT_NANNY_HONEYCOMB_API_KEY="84ed521e04aad193f543d5a078ad2708" \
+	OCTOPRINT_NANNY_STATIC_URL="${OCTOPRINT_NANNY_STATIC_URL}" \
+	OCTOPRINT_NANNY_HONEYCOMB_DATASET="printnanny_plugin_sandbox" \
 	PYTHONASYNCIODEBUG=True \
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
