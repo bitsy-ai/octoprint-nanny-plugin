@@ -1,5 +1,6 @@
 {% if plugin_octoprint_nanny_settings.printnanny_config and plugin_octoprint_nanny_settings.printnanny_config.api %}
-<script src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static }}/vue/js/janusStream.js"></script>
+<script src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-vendor.js"></script>
+<script src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
 {% endif %}
 {% if plugin_octoprint_nanny_settings.printnanny_config is not none %}
 <span class="video-stream-app">
