@@ -3,16 +3,11 @@ import logging
 import io
 import json
 import os
-import platform
-import socket
 import beeline
-import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
-import socket
 from typing import Dict
-from datetime import datetime
 
 from octoprint.events import Events
 
