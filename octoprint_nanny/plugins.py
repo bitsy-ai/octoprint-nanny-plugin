@@ -99,12 +99,6 @@ class OctoPrintNannyPlugin(
 
         self.worker_manager = WorkerManager(plugin=self)
 
-    def get_setting(self, key):
-        return self._settings.get([key])
-
-    def set_setting(self, key, value):
-        return self._settings.set([key], value)
-
     def _test_api_auth(self, auth_token: str, api_url: str):
         response = asyncio.run_coroutine_threadsafe(
             self._test_api_auth_async(auth_token, api_url), self.worker_manager.loop
@@ -113,96 +107,6 @@ class OctoPrintNannyPlugin(
             return response.exception()
         else:
             return response.result()
-
-    @beeline.traced("OctoPrintNannyPlugin._cpuinfo")
-    def _cpuinfo(self) -> dict:
-        """
-        Dict from /proc/cpu
-        Keys lowercased for portability
-        {'processor': '3', 'model name': 'ARMv7 Processor rev 3 (v7l)', 'BogoMIPS': '270.00',
-        'Features': 'half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm crc32', 'CPU implementer': '0x41',
-        'CPU architecture': '7', 'CPU variant': '0x0', 'CPU part': '0xd08', 'CPU revision': '3', 'Hardware': 'BCM2711',
-        'Revision': 'c03111', 'Serial': '100000003fa9a39b', 'Model': 'Raspberry Pi 4 Model B Rev 1.1'}
-        """
-        cpuinfo = {
-            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
-            for x in open("/proc/cpuinfo").read().split("\n")
-            if len(x.split(":")) > 1
-        }
-        logger.info(f"/proc/cpuinfo:\n {cpuinfo}")
-        return cpuinfo
-
-    @beeline.traced("OctoPrintNannyPlugin._meminfo")
-    def _meminfo(self) -> dict:
-        """
-        Dict from /proc/meminfo
-        Keys lowercased for portability
-
-            {'MemTotal': '3867172 kB', 'MemFree': '1241596 kB', 'MemAvailable': '3019808 kB', 'Buffers': '131336 kB', 'Cached': '1641988 kB',
-            'SwapCached': '1372 kB', 'Active': '1015728 kB', 'Inactive': '1469520 kB', 'Active(anon)': '564560 kB', 'Inactive(anon)': '65344 kB', '
-            Active(file)': '451168 kB', 'Inactive(file)': '1404176 kB', 'Unevictable': '16 kB', 'Mlocked': '16 kB', 'HighTotal': '3211264 kB',
-            'HighFree': '841456 kB', 'LowTotal': '655908 kB', 'LowFree': '400140 kB', 'SwapTotal': '102396 kB', 'SwapFree': '91388 kB',
-            'Dirty': '20 kB', 'Writeback': '0 kB', 'AnonPages': '710936 kB', 'Mapped': '239040 kB', 'Shmem': '3028 kB', 'KReclaimable': '82948 kB',
-            'Slab': '105028 kB', 'SReclaimable': '82948 kB', 'SUnreclaim': '22080 kB', 'KernelStack': '2400 kB', 'PageTables': '8696 kB', 'NFS_Unstable': '0 kB',
-            'Bounce': '0 kB', 'WritebackTmp': '0 kB', 'CommitLimit': '2035980 kB', 'Committed_AS': '1755048 kB', 'VmallocTotal': '245760 kB', 'VmallocUsed': '5732 kB',
-            'VmallocChunk': '0 kB', 'Percpu': '512 kB', 'CmaTotal': '262144 kB', 'CmaFree': '242404 kB'}
-        """
-        meminfo = {
-            x.split(":")[0].strip().lower(): x.split(":")[1].strip().lower()
-            for x in open("/proc/meminfo").read().split("\n")
-            if len(x.split(":")) > 1
-        }
-        logger.info(f"/proc/meminfo:\n {meminfo}")
-        return meminfo
-
-    @beeline.traced("OctoPrintNannyPlugin.get_device_info")
-    def get_device_info(self):
-        cpuinfo = self._cpuinfo()
-
-        # @todo warn if neon acceleration is not supported
-        cpu_flags = cpuinfo.get("features")
-        if isinstance(cpu_flags, str):
-            cpu_flags = cpu_flags.split()
-
-        # processors are zero indexed
-        cores = int(cpuinfo.get("processor")) + 1
-        # covnert kB string like '3867172 kB' to int
-        ram = int(self._meminfo().get("memtotal").split()[0])
-
-        logger.info(f"Runtime environment:\n {self._octoprint_environment}")
-        python_version = self._octoprint_environment.get("python", {}).get("version")
-        pip_version = self._octoprint_environment.get("python", {}).get("pip")
-        virtualenv = self._octoprint_environment.get("python", {}).get("virtualenv")
-
-        return {
-            "model": cpuinfo.get("model"),
-            "platform": platform.platform(),
-            "cpu_flags": cpu_flags,
-            "hardware": cpuinfo.get("hardware"),
-            "revision": cpuinfo.get("revision"),
-            "serial": cpuinfo.get("serial", socket.gethostname()),
-            "cores": cores,
-            "ram": ram,
-            "python_version": python_version,
-            "pip_version": pip_version,
-            "virtualenv": virtualenv,
-            "octoprint_version": octoprint.util.version.get_octoprint_version_string(),
-            "plugin_version": self._plugin_version,
-            "print_nanny_beta_client_version": printnanny_api_client.__version__,  # beta client version
-        }
-
-    def _reset_octoprint_device(self):
-        logger.warning("Resetting local device settings")
-        self._settings.set(["device_private_key"], None)
-        self._settings.set(["device_public_key"], None)
-        self._settings.set(["device_fingerprint"], None)
-        self._settings.set(["octoprint_device_id"], None)
-        self._settings.set(["device_serial"], None)
-        self._settings.set(["device_manage_url"], None)
-        self._settings.set(["device_cloudiot_name"], None)
-        self._settings.set(["cloudiot_device_id"], None)
-        self._settings.set(["device_registered"], False)
-        self._settings.save()
 
     @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs) -> bool:
@@ -249,12 +153,6 @@ class OctoPrintNannyPlugin(
             f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
         )
         return True
-
-    @beeline.traced("OctoPrintNannyPlugin._test_snapshot_url")
-    async def _test_snapshot_url(self, url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as res:
-                return await res.read()
 
     ##
     ## Octoprint api routes + handlers

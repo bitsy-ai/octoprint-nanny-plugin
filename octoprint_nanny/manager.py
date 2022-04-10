@@ -15,7 +15,7 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.manager")
 
 class WorkerManager:
     """
-    Coordinates MQTTManager and MonitoringManager classes
+    Manages an asynio event loop running in a separate ThreadPool
     """
 
     def __init__(self, plugin):
