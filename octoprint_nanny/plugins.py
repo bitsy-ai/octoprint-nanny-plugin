@@ -7,13 +7,14 @@ import beeline
 import flask
 import octoprint.plugin
 import octoprint.util
-from typing import Dict
+from typing import Any, Dict
 
 from octoprint.events import Events
 
 import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
+from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
@@ -88,13 +89,9 @@ class OctoPrintNannyPlugin(
     VERBOSE_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, *args, **kwargs):
-        # User interactive
-        self._calibration = None
-
         self._log_path = None
-        self._octoprint_environment = {}
-
         self.worker_manager = WorkerManager(plugin=self)
+        super().__init__(*args, **kwargs)
 
     def _test_api_auth(self, auth_token: str, api_url: str):
         response = asyncio.run_coroutine_threadsafe(
@@ -189,8 +186,10 @@ class OctoPrintNannyPlugin(
         logger.info("Running on_after_startup handler args=%s kwargs=%s", args, kwargs)
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
-    def on_event(self, event_type, event_data):
-        pass
+    def on_event(self, event: str, payload: Dict[Any, Any]):
+        events_enabled = self._settings.get(["events_enabled"])
+        socket = self._settings.get(["printnanny_config"]).get("events_socket")
+        try_handle_event(event, payload, socket=socket, events_enabled=events_enabled)
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(

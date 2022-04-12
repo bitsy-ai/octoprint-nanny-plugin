@@ -1,8 +1,11 @@
 import pytest
-
+import os
 from octoprint_nanny import __plugin_version__
-import printnanny_api_client
+from octoprint.plugin import plugin_manager as plugin_manager_factory
+from octoprint.plugin.core import PluginManager
 from datetime import datetime
+
+from octoprint_nanny.plugins import OctoPrintNannyPlugin
 
 
 class MockResponse(object):
@@ -96,51 +99,13 @@ def octoprint_environment():
 
 
 @pytest.fixture
-def metadata(octoprint_environment):
-    return Metadata(
-        user_id=1234,
-        octoprint_device_id=1234,
-        cloudiot_device_id=1234,
-        client_version=printnanny_api_client.__version__,
-        ts=datetime.now().timestamp(),
-        octoprint_environment=octoprint_environment,
-        octoprint_version="0.0.0",
-        plugin_version=__plugin_version__,
-    )
+def plugin_manager() -> PluginManager:
+    plugin_folders = [os.getcwd()]
+    m = plugin_manager_factory(init=True, plugin_folders=plugin_folders)
+    # m.reload_plugins(startup=True)
+    return m
 
 
 @pytest.fixture
-def metadata_pb():
-    return print_nanny_client.protobuf.monitoring_pb2.Metadata(
-        user_id=1234,
-        octoprint_device_id=1234,
-        cloudiot_device_id=1234,
-        ts=datetime.now().timestamp(),
-    )
-
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--benchmark",
-        action="store_true",
-        dest="benchmark",
-        default=False,
-        help="enable benchmark tests",
-    )
-
-
-@pytest.fixture
-def mock_plugin(mocker, plugin_settings):
-    plugin = mocker.Mock()
-    plugin.settings = plugin_settings
-    return plugin
-
-
-def pytest_collection_modifyitems(config, items):
-    if config.getoption("--benchmark"):
-        # --runslow given in cli: do not skip slow tests
-        return
-    skip_slow = pytest.mark.skip(reason="need --benchmark option to run")
-    for item in items:
-        if "benchmark" in item.keywords:
-            item.add_marker(skip_slow)
+def plugin(plugin_manager) -> OctoPrintNannyPlugin:
+    return plugin_manager.plugins.get("octoprint_nanny").implementation

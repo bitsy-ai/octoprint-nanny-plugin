@@ -105,7 +105,7 @@ octoprint-local: .octoprint printnanny-cli-debug
 octoprint-prod:
 	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
 test:
-	pytest --log-level=INFO
+	pytest --log-level=DEBUG
 
 ci-coverage:
 	pytest --cov=./ --cov-report=xml --log-level=INFO
