@@ -116,7 +116,7 @@ pathvalidate==2.5.0
     # via octoprint
 pkginfo==1.8.2
     # via octoprint
-printnanny-api-client==0.75.1
+printnanny-api-client==0.77.1
     # via OctoPrint-Nanny (setup.py)
 protobuf==3.19.4
     # via printnanny-api-client
