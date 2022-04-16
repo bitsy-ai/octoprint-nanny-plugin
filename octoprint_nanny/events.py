@@ -1,13 +1,16 @@
 import logging
+import socket
+import json
 from typing import Dict, Any, Optional
 
-from printnanny_api_client.models.polymorphic_event_request import (
-    PolymorphicEventRequest,
-)
+# TODO descriminator models not getting generated in python?
+import printnanny_api_client.models
 from octoprint_nanny.exceptions import SetupIncompleteError
+from octoprint_nanny.utils import printnanny_config
 
 logger = logging.getLogger(__name__)
 # see available events: https://docs.octoprint.org/en/master/events/index.html#id5
+
 PUBLISH_EVENTS = [
     "Startup",  # server
     "Shutdown",  # server
@@ -28,20 +31,56 @@ PUBLISH_EVENTS = [
 
 
 def should_publish_event(event: str) -> bool:
-    return event in PUBLISH_EVENTS
+    return event in PUBLISH_EVENTS.keys()
 
-def event_request(event, payload: Dict[Any, Any]) -> PolymorphicEventRequest:
 
+def event_request(
+    event: str, payload: Dict[Any, Any], device: int, octoprint_install: int
+) -> printnanny_api_client.models.OctoPrintEventRequest:
+    return printnanny_api_client.models.OctoPrintEventRequest(
+        model="OctoPrintEvent",
+        source=printnanny_api_client.models.EventSource.OCTOPRINT,
+        event_name=event,
+        payload=payload,
+        device=device,
+        octoprint_install=octoprint_install,
+    )
+
+
+def try_write_socket(
+    request: printnanny_api_client.models.OctoPrintEventRequest, events_socket: str
+):
+    data = json.dumps(request.to_dict()).encode("utf-8")
+    logger.debug(
+        "Publishing data %s to socket %s",
+        data,
+        events_socket,
+    )
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.connect(events_socket)
+        client.sendall(data)
+        client.close()
+        logger.debug("Closed socket %s", events_socket)
 
 
 def try_publish_event(
-    event: str, payload: Dict[Any, Any], socket: str
-) -> Optional[PolymorphicEventRequest]:
+    event: str, payload: Dict[Any, Any]
+) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
     if should_publish_event(event):
-        logger.debug("Publishing event %s payload %s to socket %s")
+        config = printnanny_config()
+        device = config.get("device", {}).get("id")
+        octoprint_install = config.get("octoprint_install", {}).get("id")
+        if device is None:
+            raise ValueError("printnanny_config.device is not set")
+        if octoprint_install is None:
+            raise ValueError("printnanny_config.octoprint_install is not set")
+        try:
+            req = event_request(event, payload, device, octoprint_install)
+            try_write_socket(req, config.events_socket)
+        except Exception as e:
+            logger.error("Error publishing event=%s error=%s", event, e)
     else:
         logger.debug("Ignoring event %s", event)
-        return None
 
 
 def try_handle_event(
@@ -49,7 +88,7 @@ def try_handle_event(
     payload: Dict[Any, Any],
     socket: Optional[str] = None,
     events_enabled: bool = True,
-) -> Optional[PolymorphicEventRequest]:
+) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
     if events_enabled:
         if socket is None:
             raise SetupIncompleteError()
