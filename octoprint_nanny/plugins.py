@@ -188,7 +188,14 @@ class OctoPrintNannyPlugin(
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
         events_enabled = self._settings.get(["events_enabled"])
-        socket = self._settings.get(["printnanny_config"]).get("events_socket")
+        config = self._settings.get(["printnanny_config"])
+        if config is None:
+            logger.warning(
+                "PrintNanny OS not detected or device is not registered. Ignoring event %s",
+                event,
+            )
+            return
+        socket = config.get("events_socket")
         try_handle_event(event, payload, socket=socket, events_enabled=events_enabled)
 
     def on_environment_detected(self, environment, *args, **kwargs):

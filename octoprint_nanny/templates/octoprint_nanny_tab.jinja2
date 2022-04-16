@@ -6,13 +6,11 @@
         config-type="edge" />
 </span>
 {% endif %}
-{% if plugin_octoprint_nanny_settings.printnanny_config.api.bearer_access_token %}
+
+{% if plugin_octoprint_nanny_settings.printnanny_config and plugin_octoprint_nanny_settings.printnanny_config.api %}
 <script type="text/javascript">
 window.PRINTNANNY_API_TOKEN = "{{ plugin_octoprint_nanny_settings.printnanny_config.api.bearer_access_token }}"
 </script>
-{% endif %}
-
-{% if plugin_octoprint_nanny_settings.printnanny_config and plugin_octoprint_nanny_settings.printnanny_config.api %}
 <script type="text/javascript" src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-vendor.js"></script>
 <script type="text/javascript" src="{{ plugin_octoprint_nanny_settings.printnanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
 
