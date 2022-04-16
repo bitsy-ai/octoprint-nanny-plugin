@@ -70,10 +70,13 @@ def try_publish_event(
     if should_publish_event(event):
         device = config.get("device", {}).get("id")
         octoprint_install = config.get("octoprint_install", {}).get("id")
+        socket = config.get("events_socket")
         if device is None:
-            raise ValueError("printnanny_config.device is not set")
+            raise SetupIncompleteError("printnanny_config.device is not set")
         if octoprint_install is None:
-            raise ValueError("printnanny_config.octoprint_install is not set")
+            raise SetupIncompleteError("printnanny_config.octoprint_install is not set")
+        if socket is None:
+            raise SetupIncompleteError("printnanny_config.events_socket is not set")
         try:
             req = event_request(event, payload, device, octoprint_install)
             try_write_socket(req, config["events_socket"])
@@ -93,8 +96,6 @@ def try_handle_event(
     events_enabled: bool = True,
 ) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
     if events_enabled:
-        if socket is None:
-            raise SetupIncompleteError()
         return try_publish_event(event, payload, config)
     logger.debug(
         "Skipping publish for event=%s, events_enabled=%s", event, events_enabled
