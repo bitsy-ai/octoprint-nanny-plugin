@@ -195,8 +195,7 @@ class OctoPrintNannyPlugin(
                 event,
             )
             return
-        socket = config.get("events_socket")
-        try_handle_event(event, payload, socket=socket, events_enabled=events_enabled)
+        try_handle_event(event, payload, config=config, events_enabled=events_enabled)
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(

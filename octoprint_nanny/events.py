@@ -31,7 +31,7 @@ PUBLISH_EVENTS = [
 
 
 def should_publish_event(event: str) -> bool:
-    return event in PUBLISH_EVENTS.keys()
+    return event in PUBLISH_EVENTS
 
 
 def event_request(
@@ -49,7 +49,7 @@ def event_request(
 
 def try_write_socket(
     request: printnanny_api_client.models.OctoPrintEventRequest, events_socket: str
-):
+) -> None:
     data = json.dumps(request.to_dict()).encode("utf-8")
     logger.debug(
         "Publishing data %s to socket %s",
@@ -61,13 +61,13 @@ def try_write_socket(
         client.sendall(data)
         client.close()
         logger.debug("Closed socket %s", events_socket)
+    return
 
 
 def try_publish_event(
-    event: str, payload: Dict[Any, Any]
+    event: str, payload: Dict[Any, Any], config: Dict[Any, Any]
 ) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
     if should_publish_event(event):
-        config = printnanny_config()
         device = config.get("device", {}).get("id")
         octoprint_install = config.get("octoprint_install", {}).get("id")
         if device is None:
@@ -76,23 +76,27 @@ def try_publish_event(
             raise ValueError("printnanny_config.octoprint_install is not set")
         try:
             req = event_request(event, payload, device, octoprint_install)
-            try_write_socket(req, config.events_socket)
+            try_write_socket(req, config["events_socket"])
+            return req
         except Exception as e:
             logger.error("Error publishing event=%s error=%s", event, e)
+            return None
     else:
         logger.debug("Ignoring event %s", event)
+        return None
 
 
 def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
-    socket: Optional[str] = None,
+    config: Dict[Any, Any],
     events_enabled: bool = True,
 ) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
     if events_enabled:
         if socket is None:
             raise SetupIncompleteError()
-        return try_publish_event(event, payload, socket)
+        return try_publish_event(event, payload, config)
     logger.debug(
         "Skipping publish for event=%s, events_enabled=%s", event, events_enabled
     )
+    return None
