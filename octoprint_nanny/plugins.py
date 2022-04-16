@@ -3,22 +3,18 @@ import logging
 import io
 import json
 import os
-import platform
-import socket
 import beeline
-import aiohttp.client_exceptions
 import flask
 import octoprint.plugin
 import octoprint.util
-import socket
-from typing import Dict
-from datetime import datetime
+from typing import Any, Dict
 
 from octoprint.events import Events
 
 import printnanny_api_client  # beta client
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
+from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
@@ -66,6 +62,8 @@ DEFAULT_SETTINGS = dict(
     printnanny_version=printnanny_version(),
     printnanny_config=printnanny_config(),
     backup_auto=False,
+    analytics_enabled=False,
+    events_enabled=False,
     wizard_complete=-1,
 )
 
@@ -91,13 +89,9 @@ class OctoPrintNannyPlugin(
     VERBOSE_EVENTS = [Events.Z_CHANGE]
 
     def __init__(self, *args, **kwargs):
-        # User interactive
-        self._calibration = None
-
         self._log_path = None
-        self._octoprint_environment = {}
-
         self.worker_manager = WorkerManager(plugin=self)
+        super().__init__(*args, **kwargs)
 
     def _test_api_auth(self, auth_token: str, api_url: str):
         response = asyncio.run_coroutine_threadsafe(
@@ -192,8 +186,16 @@ class OctoPrintNannyPlugin(
         logger.info("Running on_after_startup handler args=%s kwargs=%s", args, kwargs)
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
-    def on_event(self, event_type, event_data):
-        pass
+    def on_event(self, event: str, payload: Dict[Any, Any]):
+        events_enabled = self._settings.get(["events_enabled"])
+        config = self._settings.get(["printnanny_config"])
+        if config is None:
+            logger.warning(
+                "PrintNanny OS not detected or device is not registered. Ignoring event %s",
+                event,
+            )
+            return
+        try_handle_event(event, payload, config=config, events_enabled=events_enabled)
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
@@ -231,6 +233,11 @@ class OctoPrintNannyPlugin(
                 for key in self.get_settings_defaults().keys()
             },
             "os": json.dumps(self._settings.get(["printnanny_os"]), indent=2),
+            "urls": {
+                "getting_started_guide": "https://bitsy-ai.notion.site/Getting-Started-with-Print-Nanny-OS-817bc65297ff44a085120c663dced5f3",
+                "discord_invite": "https://discord.gg/sf23bk2hPr",
+                "cloud": "https://printnanny.ai",
+            },
         }
         return custom
 
