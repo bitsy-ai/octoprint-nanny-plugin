@@ -117,7 +117,7 @@ printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 printnanny-test-profile:
 	cd $(PRINTNANNY_CLI_WORKSPACE) && PRINTNANNY_PREFIX=$(PRINTNANNY_PREFIX) make test-profile
 
-printnanny-dash-debug: printnanny-cli-debug printnanny-test-profile
+printnanny-dash-debug: $(PRINTNANNY_CONFIG) printnanny-cli-debug printnanny-test-profile
 	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
 
 octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
