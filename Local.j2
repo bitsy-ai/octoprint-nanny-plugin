@@ -15,7 +15,7 @@ base_url = "http://127.0.0.1:9001"
 private_key = "{{ TMP_DIR }}/local/keys/ec_private.pem"
 public_key = "{{ TMP_DIR }}/local/keys/ec_public.pem"
 ca_certs = ["{{ TMP_DIR }}/local/ca-certificates/gtsltsr.crt"]
-fingerprint = "56:15:e8:d5:90:4a:69:12:c3:7d:a4:bf:d4:55:a7:18"
+fingerprint = "{{ FINGERPRINT }}"
 fingerprint_algorithm = "md5"
 cipher = "secp256r1"
 

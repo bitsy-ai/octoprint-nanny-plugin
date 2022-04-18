@@ -34,6 +34,7 @@ $(PRINTNANNY_CONFIG): $(TMP_DIR)
 	PIP_VERSION=$(PIP_VERSION) \
 	PYTHON_VERSION=$(PYTHON_VERSION) \
 	PRINTNANNY_PLUGIN_VERSION=$(PRINTNANNY_PLUGIN_VERSION) \
+	FINGERPRINT=$(shell openssl md5 -c .tmp/local/keys/ec_public.pem | cut -f2 -d ' ') \
 	j2 Local.j2 > $(PRINTNANNY_CONFIG)
 
 .octoprint:
@@ -116,7 +117,7 @@ printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 printnanny-test-profile:
 	cd $(PRINTNANNY_CLI_WORKSPACE) && PRINTNANNY_PREFIX=$(PRINTNANNY_PREFIX) make test-profile
 
-printnanny-dash-debug: printnanny-test-profile
+printnanny-dash-debug: printnanny-cli-debug printnanny-test-profile
 	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
 
 octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
