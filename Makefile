@@ -24,7 +24,7 @@ $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
 $(PRINTNANNY_CLI_WORKSPACE): $(TMP_DIR)
-	cd $(TMP_DIR) && git clone --branch $(PRINTNANNY_CLI_GIT_BRANCH) $(PRINTNANNY_CLI_GIT_REPO)
+	cd $(TMP_DIR) && git clone --branch $(PRINTNANNY_CLI_GIT_BRANCH) $(PRINTNANNY_CLI_GIT_REPO) || cd $(PRINTNANNY_CLI_WORKSPACE) && git checkout $(PRINTNANNY_CLI_GIT_BRANCH) && git pull
 
 $(PRINTNANNY_CONFIG): $(TMP_DIR)
 	TMP_DIR=$(TMP_DIR) \
@@ -80,6 +80,7 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean: clean-dist clean-pyc clean-build
+	rm -rf $(TMP_DIR)
 
 sdist: ## builds source package
 	python3 setup.py sdist && ls -l dist
