@@ -1,0 +1,51 @@
+name = "local"
+firstboot_file = "{{ WORKSPACE }}/Local.toml"
+install_dir = "{{ TMP_DIR }}/local"
+data_dir = "{{ TMP_DIR }}/local/data"
+runtime_dir = "{{ TMP_DIR }}/local/run"
+events_socket = "{{ TMP_DIR }}/local/events.sock"
+
+[api]
+base_path = "http://{{ HOSTNAME }}:8000"
+
+[dash]
+base_url = "http://127.0.0.1:9001"
+
+[mqtt]
+private_key = "{{ TMP_DIR }}/local/keys/ec_private.pem"
+public_key = "{{ TMP_DIR }}/local/keys/ec_public.pem"
+ca_certs = ["{{ TMP_DIR }}/local/ca-certificates/gtsltsr.crt"]
+fingerprint = "56:15:e8:d5:90:4a:69:12:c3:7d:a4:bf:d4:55:a7:18"
+fingerprint_algorithm = "md5"
+cipher = "secp256r1"
+
+[octoprint_install_request]
+device = 0
+octoprint_version = "devel"
+pip_version = "{{ PIP_VERSION }}"
+python_version = "{{ PYTHON_VERSION }}"
+printnanny_plugin_version = "{{ PRINTNANNY_PLUGIN_VERSION }}"
+
+
+[janus_edge_request]
+device = 0
+api_domain = "{{ HOSTNAME }}"
+rtp_domain = "{{ HOSTNAME }}"
+admin_port = 7088
+admin_url = "http://{{ HOSTNAME }}:7088/admin"
+api_port = 8088
+api_url = "http://{{ HOSTNAME }}:8088/janus"
+websocket_url = "ws://{{ HOSTNAME }}:8188"
+ws_port = 8188
+config_type = "edge"
+active = false
+secret = "debug"
+pin = "1234"
+info = {}
+rtp_port = 5000
+
+[janus_edge_request.auth]
+api_token = "debug"
+admin_secret = "debug"
+config_type = "edge"
+user = 0
