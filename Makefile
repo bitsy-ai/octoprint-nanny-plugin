@@ -15,6 +15,7 @@ PRINTNANNY_CLI_WORKSPACE ?=$(TMP_DIR)/printnanny-cli
 PRINTNANNY_CLI_GIT_REPO ?=git@github.com:bitsy-ai/printnanny-cli.git
 PRINTNANNY_CLI_GIT_BRANCH ?=main
 PRINTNANNY_BIN=$(PRINTNANNY_CLI_WORKSPACE)/target/debug/printnanny-cli
+PRINTNANNY_PREFIX=$(TMP_DIR)/local
 PRINTNANNY_CONFIG=$(TMP_DIR)/Local.toml
 PIP_VERSION=$(shell python -c 'import pip; print(pip.__version__)')
 PYTHON_VERSION=$(shell python -c 'import platform; print(platform.python_version())')
@@ -111,6 +112,12 @@ octoprint-sandbox:
 
 printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 	cd $(PRINTNANNY_CLI_WORKSPACE) && cargo build --workspace
+
+printnanny-test-profile:
+	cd $(PRINTNANNY_CLI_WORKSPACE) && PRINTNANNY_PREFIX=$(PRINTNANNY_PREFIX) make test-profile
+
+printnanny-dash-debug: printnanny-test-profile
+	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
 
 octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
 	PRINTNANNY_PROFILE=local \
