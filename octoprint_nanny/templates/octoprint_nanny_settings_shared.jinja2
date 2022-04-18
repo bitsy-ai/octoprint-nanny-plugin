@@ -21,7 +21,7 @@
             <a target="_blank" href="{{ plugin_octoprint_nanny_urls.cloud }}"><button class= "btn btn-primary btn-large">Learn More about PrintNanny OS</button></a>
         </div>
 {% endif %}
-{% if plugin_octoprint_nanny_settings.printnanny_config %}
+{% if plugin_octoprint_nanny_settings.printnanny_config != none %}
 </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Settings') }}</a></li>

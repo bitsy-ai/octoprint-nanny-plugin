@@ -2,15 +2,40 @@
 
 .PHONY: clean-settings mypy
 
-PRINT_NANNY_USER ?= "leigh"
+PRINT_NANNY_USER ?=leigh
 
 OCTOPRINT_NANNY_STATIC_URL ?= "http://aurora:8000/static/"
 OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
 OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
-PRINTNANNY_CLI_WORKSPACE="$(HOME)/projects/printnanny-cli"
-PRINTNANNY_BIN="$(PRINTNANNY_CLI_WORKSPACE)/target/debug/printnanny-cli"
-PRINTNANNY_CONFIG="$(HOME)/projects/printnanny-cli/env/Local.toml"
+WORKSPACE ?=$(shell pwd)
+TMP_DIR ?=$(WORKSPACE)/.tmp
+OCTOPRINT_CONFIG_DIR ?=$(WORKSPACE)/.octoprint
+PRINTNANNY_CLI_WORKSPACE ?=$(TMP_DIR)/printnanny-cli
+PRINTNANNY_CLI_GIT_REPO ?=git@github.com:bitsy-ai/printnanny-cli.git
+PRINTNANNY_CLI_GIT_BRANCH ?=main
+PRINTNANNY_BIN=$(PRINTNANNY_CLI_WORKSPACE)/target/debug/printnanny-cli
+PRINTNANNY_PREFIX=$(TMP_DIR)/local
+PRINTNANNY_CONFIG=$(TMP_DIR)/Local.toml
+PIP_VERSION=$(shell python -c 'import pip; print(pip.__version__)')
+PYTHON_VERSION=$(shell python -c 'import platform; print(platform.python_version())')
+PRINTNANNY_PLUGIN_VERSION=$(shell git rev-parse HEAD)
+
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+$(PRINTNANNY_CLI_WORKSPACE): $(TMP_DIR)
+	cd $(TMP_DIR) && git clone --branch $(PRINTNANNY_CLI_GIT_BRANCH) $(PRINTNANNY_CLI_GIT_REPO) || cd $(PRINTNANNY_CLI_WORKSPACE) && git checkout $(PRINTNANNY_CLI_GIT_BRANCH) && git pull
+
+$(PRINTNANNY_CONFIG): $(TMP_DIR)
+	TMP_DIR=$(TMP_DIR) \
+	WORKSPACE=$(WORKSPACE) \
+	HOSTNAME=$(shell cat /etc/hostname) \
+	PIP_VERSION=$(PIP_VERSION) \
+	PYTHON_VERSION=$(PYTHON_VERSION) \
+	PRINTNANNY_PLUGIN_VERSION=$(PRINTNANNY_PLUGIN_VERSION) \
+	FINGERPRINT=$(shell openssl md5 -c .tmp/local/keys/ec_public.pem | cut -f2 -d ' ') \
+	j2 Local.j2 > $(PRINTNANNY_CONFIG)
 
 .octoprint:
 	mkdir .octoprint
@@ -57,6 +82,7 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean: clean-dist clean-pyc clean-build
+	rm -rf $(TMP_DIR)
 
 sdist: ## builds source package
 	python3 setup.py sdist && ls -l dist
@@ -85,10 +111,16 @@ octoprint-sandbox:
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=False \
 	octoprint serve
 
-printnanny-cli-debug:
+printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 	cd $(PRINTNANNY_CLI_WORKSPACE) && cargo build --workspace
 
-octoprint-local: .octoprint printnanny-cli-debug
+printnanny-test-profile:
+	cd $(PRINTNANNY_CLI_WORKSPACE) && PRINTNANNY_PREFIX=$(PRINTNANNY_PREFIX) make test-profile
+
+printnanny-dash-debug: $(PRINTNANNY_CONFIG) printnanny-cli-debug printnanny-test-profile
+	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
+
+octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
 	PRINTNANNY_PROFILE=local \
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
