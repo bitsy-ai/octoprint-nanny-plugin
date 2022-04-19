@@ -24,7 +24,7 @@
 {% if plugin_octoprint_nanny_settings.printnanny_config != none %}
 </div>
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Settings') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account') }}</a></li>
         <li><a href="#{{template_name}}_about" data-toggle="tab">{{ _('About') }}</a></li>
     </ul>
 
@@ -37,7 +37,7 @@
             <h3>Log into PrintNanny</h3>
             <a href="{{ plugin_octoprint_nanny_settings.printnanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
             <p>You'll be redirected to another page to log into your PrintNanny account</p>
-            {% elif  plugin_octoprint_nanny_settings.printnanny_config is not none %}
+            {% else  plugin_octoprint_nanny_settings.printnanny_config %}
             <h3>Welcome to PrintNanny OS (OctoPrint Edition)</h3>
             <p>🙌 Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</strong></p>
             <br>
@@ -45,10 +45,13 @@
             {% endif %}
         </div>
       </fieldset>
-      </div>
+    </div>
     <div id="{{template_name}}_about" class="tab-pane">
 
     </div>
 
 </div>
 {% endif %}
+<script type="text/javascript">
+PRINTNANNY_CONFIG = 
+</script>
