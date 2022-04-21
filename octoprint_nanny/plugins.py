@@ -58,15 +58,6 @@ DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
 DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.google.com/roots.pem"
 BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
 
-DEFAULT_SETTINGS = dict(
-    printnanny_version=printnanny_version(),
-    printnanny_config=printnanny_config(),
-    backup_auto=False,
-    analytics_enabled=False,
-    events_enabled=False,
-    wizard_complete=-1,
-)
-
 Events.PRINT_PROGRESS = "PrintProgress"
 
 
@@ -220,6 +211,14 @@ class OctoPrintNannyPlugin(
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
+        DEFAULT_SETTINGS = dict(
+            printnanny_version=printnanny_version(),
+            printnanny_config=printnanny_config(),
+            backup_auto=False,
+            analytics_enabled=False,
+            events_enabled=False,
+            wizard_complete=-1,
+        )
         return DEFAULT_SETTINGS
 
     ## Template plugin
