@@ -48,6 +48,7 @@ jobs:
           files: ./.coverage/cobertura.xml
           directory: ./coverage/
           env_vars: OS,PYTHON
+          flags: mypy
           name: mypy
           fail_ci_if_error: true
           path_to_write_report: ./coverage/codecov_report.txt
