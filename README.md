@@ -2,7 +2,8 @@
 ![Github Followers](https://img.shields.io/github/followers/leigh-johnson?style=social)
 
 ![Tests](https://img.shields.io/github/workflow/status/bitsy-ai/octoprint-nanny-plugin/PyTest%20Coverage%20Report)
-![Code Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin)
+![Mypy Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin?flag=mypy&label=mypy%20coverage)
+![unittest Coverage](https://img.shields.io/codecov/c/github/bitsy-ai/octoprint-nanny-plugin?flag=unittest&label=unittest%20coverage)
 
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin)
 ![Release](https://img.shields.io/github/release-date-pre/bitsy-ai/octoprint-nanny-plugin)
