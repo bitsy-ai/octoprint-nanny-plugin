@@ -42,6 +42,15 @@ $(PRINTNANNY_CONFIG): $(TMP_DIR)
 mypy:
 	mypy octoprint_nanny/
 
+clean-coverage:
+	rm -rf .coverage
+.coverage:
+	mkdir -p .coverage
+
+mypy-coveage: clean-coverage .coverage
+	mypy octoprint_nanny/ --any-exprs-report .coverage/ --txt-report .coverage/ --cobertura-xml-report .coverage/
+
+
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/

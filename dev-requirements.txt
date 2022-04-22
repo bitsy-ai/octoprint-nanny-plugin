@@ -9,7 +9,7 @@ asyncmock
 asynctest
 pytest-benchmark
 pygal
-mypy
+mypy[reports]
 types-Werkzeug
 types-six
 types-pytz
