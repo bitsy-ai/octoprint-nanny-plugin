@@ -45,7 +45,7 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./.coverage/cobertura.xml
+          files: ./.coverage/index.xml,./.coverage/any-exprs.txt
           directory: ./coverage/
           env_vars: OS,PYTHON
           flags: mypy
