@@ -7,7 +7,7 @@
     <a target="_blank" href="{{ plugin_octoprint_nanny_urls.discord_invite }}"><button class="btn btn-secondary">Join Discord</button></a>
     <a target="_blank" href="mailto:leigh@printnanny.ai?subject=Question about OctoPrint + PrintNanny"><button class="btn btn-secondary">Email leigh@printnanny.ai</button></a>
     <hr>
-{% if plugin_octoprint_nanny_settings.printnanny_version is none %}
+{% if plugin_octoprint_nanny_os_version is none %}
         <div class="alert alert-block alert-warning">    
             <h2>
                 <strong>Failed to Detect PrintNanny OS Version</strong>
@@ -22,7 +22,7 @@
             <a target="_blank" href="{{ plugin_octoprint_nanny_urls.cloud }}"><button class= "btn btn-primary btn-large">Learn More about PrintNanny OS</button></a>
         </div>
 {% endif %}
-{% if plugin_octoprint_nanny_settings.printnanny_config != none %}
+{% if plugin_octoprint_nanny_config != none %}
 </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account') }}</a></li>
@@ -34,13 +34,13 @@
       <fieldset>
 
         <div>
-            {% if plugin_octoprint_nanny_settings.printnanny_config.user is undefined %}
+            {% if plugin_octoprint_nanny_config.user is undefined %}
             <h3>Log into PrintNanny</h3>
-            <a href="{{ plugin_octoprint_nanny_settings.printnanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
+            <a href="{{ plugin_octoprint_nanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
             <p>You'll be redirected to another page to log into your PrintNanny account</p>
             {% else %}
             <h3>Welcome to PrintNanny OS (OctoPrint Edition)</h3>
-            <p>✅ Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_settings.printnanny_config.user.email }}</strong></p>
+            <p>✅ Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_config.user.email }}</strong></p>
             <br>
 
             {% endif %}

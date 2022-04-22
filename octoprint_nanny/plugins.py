@@ -212,8 +212,6 @@ class OctoPrintNannyPlugin(
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         DEFAULT_SETTINGS = dict(
-            printnanny_version=printnanny_version(),
-            printnanny_config=printnanny_config(),
             backup_auto=False,
             analytics_enabled=False,
             events_enabled=False,
@@ -225,13 +223,14 @@ class OctoPrintNannyPlugin(
 
     def get_template_vars(self):
         custom = {
+            "config": printnanny_config(),
             # @ todo is there a covenience method to get all plugin settings?
             # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=settings%20get#octoprint.plugin.PluginSettings.get
             "settings": {
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "os": json.dumps(self._settings.get(["printnanny_os"]), indent=2),
+            "os_version": printnanny_version(),
             "urls": {
                 "getting_started_guide": "https://bitsy-ai.notion.site/Getting-Started-with-Print-Nanny-OS-817bc65297ff44a085120c663dced5f3",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
