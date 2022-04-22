@@ -42,13 +42,13 @@ jobs:
         run: |
           source .venv/bin/activate && make ci-coverage
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           directory: ./coverage/reports/
           env_vars: OS,PYTHON
-          name: codecov-umbrella
+          name: pytest
           fail_ci_if_error: true
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true

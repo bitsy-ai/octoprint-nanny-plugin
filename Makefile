@@ -47,7 +47,7 @@ clean-coverage:
 .coverage:
 	mkdir -p .coverage
 
-mypy-coveage: clean-coverage .coverage
+mypy-coverage: clean-coverage .coverage
 	mypy octoprint_nanny/ --any-exprs-report .coverage/ --txt-report .coverage/ --cobertura-xml-report .coverage/
 
 

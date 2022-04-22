@@ -48,7 +48,7 @@ jobs:
           files: .coverage/types-of-anys.txt,.coverage/any-exprs.txt,.coverage/cobertura.xml
           directory: ./coverage/
           env_vars: OS,PYTHON
-          name: codecov-umbrella
+          name: mypy
           fail_ci_if_error: true
           path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
