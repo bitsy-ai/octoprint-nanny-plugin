@@ -48,7 +48,8 @@ clean-coverage:
 	mkdir -p .coverage
 
 mypy-coverage: clean-coverage .coverage
-	mypy octoprint_nanny/ --any-exprs-report .coverage/ --txt-report .coverage/ --xml-report .coverage/
+	mypy octoprint_nanny/ \
+		--cobertura-xml-report .coverage/ 
 
 
 clean-build: ## remove build artifacts
