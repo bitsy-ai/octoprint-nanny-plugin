@@ -1,5 +1,4 @@
 import asyncio
-import beeline
 import concurrent
 import logging
 import queue

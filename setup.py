@@ -1,9 +1,6 @@
 # coding=utf-8
-
-import os
-import platform
 import sys
-import setuptools
+import traceback
 
 
 ########################################################################################################################
@@ -54,7 +51,6 @@ plugin_requires = [
     # beta api client supporting PrintNanny OS in 2022
     "printnanny-api-client==0.78.3",
     "backoff>=1.10.0",
-    "honeycomb-beeline~=2.18.0",
 ]
 
 dev_requires = [
@@ -106,8 +102,9 @@ additional_setup_parameters = {
 from setuptools import setup
 
 try:
-    import octoprint_setuptools
-except:
+    from octoprint_nanny.vendor import octoprint_setuptools
+except Exception as e:
+    traceback.print_exc()
     print(
         "Could not import OctoPrint's setuptools, are you sure you are running that under "
         "the same python installation that OctoPrint is installed under?"
@@ -134,7 +131,7 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
 )
 
 if len(additional_setup_parameters):
-    from octoprint.util import dict_merge
+    from octoprint_nanny.utils.dict_merge import dict_merge
 
     setup_parameters = dict_merge(setup_parameters, additional_setup_parameters)
 

@@ -15,4 +15,5 @@ types-six
 types-pytz
 types-requests
 types-Flask
+types-setuptools
 j2cli

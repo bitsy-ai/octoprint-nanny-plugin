@@ -1,16 +1,13 @@
 import aiohttp
 import logging
 import urllib.parse
-import hashlib
 import backoff
 import os
-import beeline
 
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
 
 from printnanny_api_client.api.users_api import UsersApi
-from octoprint_nanny.utils.encoder import JSONEncoder
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
@@ -67,7 +64,6 @@ class RestAPIClient:
         config.access_token = self.auth_token
         return config
 
-    @beeline.traced("RestAPIClient.get_user")
     @backoff.on_exception(
         backoff.expo,
         aiohttp.ClientConnectionError,
@@ -84,7 +80,6 @@ class RestAPIClient:
             user = await api_instance.users_me_retrieve()
             return user
 
-    # @beeline.traced("RestAPIClient.update_or_create_printer_profile")
     # @backoff.on_exception(
     #     backoff.expo,
     #     aiohttp.ClientConnectionError,
@@ -147,9 +142,7 @@ class RestAPIClient:
         self, hostname: str, name: str, octoprint_version: str, file: str
     ):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = printnanny_api_client.OctoprintApi(
-                api_client=api_client
-            )
+            api_instance = printnanny_api_client.OctoprintApi(api_client=api_client)
 
             backup = await api_instance.octoprint_backups_create(
                 hostname,
