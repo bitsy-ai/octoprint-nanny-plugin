@@ -21,6 +21,8 @@ PIP_VERSION=$(shell python -c 'import pip; print(pip.__version__)')
 PYTHON_VERSION=$(shell python -c 'import platform; print(platform.python_version())')
 PRINTNANNY_PLUGIN_VERSION=$(shell git rev-parse HEAD)
 
+BITBAKE_RECIPE ?= $(HOME)/projects/poky/meta-bitsy/meta-printnanny/recipes-core/python3-octoprint-nanny
+
 $(TMP_DIR):
 	mkdir -p $(TMP_DIR)
 
@@ -154,3 +156,7 @@ ci-coverage:
 
 install-git-hooks:
 	cp -a hooks/. .git/hooks/
+
+
+bitbake:
+	pipoe --package octoprint-nanny --python python3 --outdir $(BITBAKE_RECIPE) --default-license AGPLv3
