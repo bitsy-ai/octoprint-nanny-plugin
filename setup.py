@@ -46,7 +46,7 @@ class Python2NotSupported(Exception):
 
 
 plugin_requires = [
-    "octoprint==1.8.0rc5",
+    "octoprint==1.8.1",
     "cryptography>=3.4.7",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
