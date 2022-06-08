@@ -17,7 +17,7 @@ plugin_package = "octoprint_nanny"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
-plugin_name = "OctoPrint Nanny"
+plugin_name = "OctoPrintNanny"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
 plugin_version = "0.10.0"
