@@ -1,5 +1,6 @@
 # coding=utf-8
 import sys
+import traceback
 
 
 ########################################################################################################################
@@ -103,7 +104,7 @@ from setuptools import setup
 try:
     from octoprint_nanny.vendor import octoprint_setuptools
 except Exception as e:
-    print(e)
+    traceback.print_exc()
     print(
         "Could not import OctoPrint's setuptools, are you sure you are running that under "
         "the same python installation that OctoPrint is installed under?"
