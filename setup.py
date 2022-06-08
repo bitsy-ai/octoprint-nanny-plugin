@@ -50,7 +50,6 @@ plugin_requires = [
     # beta api client supporting PrintNanny OS in 2022
     "printnanny-api-client==0.78.3",
     "backoff>=1.10.0",
-    "honeycomb-beeline~=2.18.0",
 ]
 
 dev_requires = [

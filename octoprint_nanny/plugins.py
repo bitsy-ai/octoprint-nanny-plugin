@@ -3,7 +3,6 @@ import logging
 import io
 import json
 import os
-import beeline
 import flask
 import octoprint.plugin
 import octoprint.util
@@ -93,7 +92,6 @@ class OctoPrintNannyPlugin(
         else:
             return response.result()
 
-    @beeline.traced("OctoPrintNannyPlugin.sync_printer_profiles")
     async def sync_printer_profiles(self, **kwargs) -> bool:
         octoprint_device_id = self.get_setting("octoprint_device_id")
         if octoprint_device_id is None:
@@ -260,7 +258,6 @@ class OctoPrintNannyPlugin(
         )
 
     ##~~ Softwareupdate hook
-    @beeline.traced(name="OctoPrintNannyPlugin.get_update_information")
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update
         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html

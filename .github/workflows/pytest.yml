@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install --upgrade setuptools wheel twine octoprint pip-tools
+          .venv/bin/pip install --upgrade setuptools wheel twine pip-tools
         # Runs a set of commands using the runners shell
       - name: Test installation
         run: |
