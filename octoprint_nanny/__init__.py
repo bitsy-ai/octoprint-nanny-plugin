@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from .plugins import OctoPrintNannyPlugin
 
-__plugin_name__ = "OctoPrintNanny"
+__plugin_name__ = "OctoPrint-Nanny"
 
 __plugin_pythoncompat__ = ">=3,<4"  # only python 3
 
