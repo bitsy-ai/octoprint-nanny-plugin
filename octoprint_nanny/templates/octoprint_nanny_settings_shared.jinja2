@@ -1,4 +1,3 @@
-<!-- hero -->
 <div class="row-fluid">
     <a href="{{ plugin_octoprint_nanny_urls.cloud }}"><img src="plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
     <hr>
@@ -7,49 +6,49 @@
     <a target="_blank" href="{{ plugin_octoprint_nanny_urls.discord_invite }}"><button class="btn btn-secondary">Join Discord</button></a>
     <a target="_blank" href="mailto:leigh@printnanny.ai?subject=Question about OctoPrint + PrintNanny"><button class="btn btn-secondary">Email leigh@printnanny.ai</button></a>
     <hr>
-{% if plugin_octoprint_nanny_os_version is none %}
+    {{ plugin_octoprint_nanny_versions }}
+{% if plugin_octoprint_nanny_os_version is none or plugin_octoprint_nanny_os_version == "dev" %}
         <div class="alert alert-block alert-warning">    
             <h2>
-                <strong>Failed to Detect PrintNanny OS Version</strong>
+                <strong>⛔ PrintNanny OS v1.x is Required</strong>
             </h2>
-            <h4>Thank you for trying out the OctoPrint Plugin! 💜 
+            <h4>
+                Unfortunately, you're not running a supported version of PrintNanny OS.
             </h4>
             <br>
             <h4>
-                Unfortunately, you're not running a supported version of PrintNanny OS. Please follow the <a href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}" target="_blank">Getting Started Guide</a>
+                Please follow the guide below to install PrintNanny OS (OctoPrint Edition). 
             </h4>
             <br>
-            <a target="_blank" href="{{ plugin_octoprint_nanny_urls.cloud }}"><button class= "btn btn-primary btn-large">Learn More about PrintNanny OS</button></a>
+
+            <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}"><button class= "btn btn-primary btn-large">Getting Started Guide</button></a>
         </div>
 {% endif %}
-{% if plugin_octoprint_nanny_config != none %}
 </div>
+<div class="row-fluid">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account') }}</a></li>
         <li><a href="#{{template_name}}_about" data-toggle="tab">{{ _('About') }}</a></li>
     </ul>
 
-  <div class="tab-content">
-    <div id="{{template_name}}_basic" class="tab-pane active">
-      <fieldset>
+    <div class="tab-content">
+        <div id="{{template_name}}_basic" class="tab-pane active">
+            <fieldset>
 
-        <div>
-            {% if plugin_octoprint_nanny_config.user is undefined %}
-            <h3>Log into PrintNanny</h3>
-            <a href="{{ plugin_octoprint_nanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
-            <p>You'll be redirected to another page to log into your PrintNanny account</p>
-            {% else %}
-            <h3>Welcome to PrintNanny OS (OctoPrint Edition)</h3>
-            <p>✅ Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_config.user.email }}</strong></p>
-            <br>
-
-            {% endif %}
+                <div>
+                    {% if plugin_octoprint_nanny_config.printnanny_user is undefined %}
+                    <h3>🔐 Log into PrintNanny</h3>
+                    <a href="{{ plugin_octoprint_nanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
+                    {% else %}
+                    <h3>✅ Welcome to PrintNanny OS (OctoPrint Edition)</h3>
+                    <p>Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_config.user.email }}</strong></p>
+                    <br>
+                    {% endif %}
+                </div>
+            </fieldset>
         </div>
-      </fieldset>
-    </div>
-    <div id="{{template_name}}_about" class="tab-pane">
+        <div id="{{template_name}}_about" class="tab-pane">
 
+        </div>
     </div>
-
 </div>
-{% endif %}

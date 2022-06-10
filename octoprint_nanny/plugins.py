@@ -18,6 +18,7 @@ from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     printnanny_version,
     printnanny_config,
+    printnanny_user,
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -228,13 +229,14 @@ class OctoPrintNannyPlugin(
                 key: self._settings.get([key])
                 for key in self.get_settings_defaults().keys()
             },
-            "os_version": printnanny_version(),
             "urls": {
                 "getting_started_guide": "https://bitsy-ai.notion.site/Getting-Started-with-Print-Nanny-OS-817bc65297ff44a085120c663dced5f3",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "cloud": "https://printnanny.ai",
             },
+            "printnanny_user": printnanny_user(),
         }
+        custom.update(printnanny_version())
         return custom
 
     ## Wizard plugin mixin
