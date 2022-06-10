@@ -35,7 +35,7 @@ $(document).ready(function () {
             server: server,
             iceServers: iceServers,
             // Should the Janus API require authentication, you can specify either the API secret or user token here too
-            //		token: "mytoken",
+            token: window.JANUS_EDGE_API_TOKEN,
             //	or
             //		apisecret: "serversecret",
             success: function () {

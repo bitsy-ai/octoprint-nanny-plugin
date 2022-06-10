@@ -21,6 +21,8 @@ from octoprint_nanny.utils.printnanny_os import (
     printnanny_config,
     printnanny_user,
     printnanny_device,
+    janus_edge_hostname,
+    janus_edge_api_token,
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -238,6 +240,8 @@ class OctoPrintNannyPlugin(
             },
             "printnanny_user": printnanny_user(),
             "printnanny_device": printnanny_device(),
+            "janus_edge_hostname": janus_edge_hostname(),
+            "janus_edge_api_token": janus_edge_api_token(),
         }
         custom.update(printnanny_version())
         logger.info("get_template_vars=%s", custom)
