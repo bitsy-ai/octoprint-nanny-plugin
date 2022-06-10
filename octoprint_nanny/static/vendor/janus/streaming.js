@@ -211,7 +211,7 @@ $(document).ready(function () {
                       stream.addTrack(track.clone());
                       remoteTracks[mid] = stream;
                       Janus.log("Created remote video stream:", stream);
-                      $('#' + mstreamId).append('<video class="rounded centered hide" id="remotevideo' + mid + '" width="100%" height="100%" playsinline/>');
+                      $('#' + mstreamId).append('<video class="embed-responsive-item" id="remotevideo' + mid + '" playsinline/>');
                       $('#remotevideo' + mid).get(0).volume = 0;
                       // Use a custom timer for this stream
                       if (!bitrateTimer[mid]) {
@@ -413,7 +413,7 @@ function startStream() {
     if ($('#mstream0').length === 0) {
       addPanel("0", mid);
       // No remote video yet
-      $('#mstream0').append('<video class="rounded centered waitingvideo" id="waitingvideo0" width="100%" height="100%" />');
+      $('#mstream0').append('<video class="embed-responsive-item" id="waitingvideo0" />');
     }
     if (mid) {
       if (spinner[mid] == null) {
@@ -434,7 +434,7 @@ function startStream() {
       if ($('#mstream' + mid).length === 0) {
         addPanel(mid, mid, label);
         // No remote media yet
-        $('#mstream' + mid).append('<video class="rounded centered waitingvideo" id="waitingvideo' + mid + '" width="100%" height="100%" />');
+        $('#mstream' + mid).append('<video class="embed-responsive-item" id="waitingvideo' + mid + '" width="100%" height="100%" />');
       }
       if (spinner[mid] == null) {
         var target = document.getElementById('mstream' + mid);
@@ -490,7 +490,7 @@ function addPanel(panelId, mid, desc) {
     '				<span class="label label-info hide" id="curbitrate' + mid + '"></span>' +
     '			</h3>' +
     '		</div>' +
-    '		<div class="panel-body" id="mstream' + panelId + '"></div>' +
+    '		<div class="embed-responsive embed-responsive-16by9" id="mstream' + panelId + '"></div>' +
     '	</div>' +
     '</div>'
   );
