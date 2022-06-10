@@ -1,4 +1,4 @@
-<div id="#tab_plugin_octoprint_nanny">
+<div id="tab_plugin_octoprint_nanny">
     {% if plugin_octoprint_nanny_printnanny_device != none %}
     <span class="janus-stream-app">
         <janus-stream 
@@ -20,4 +20,7 @@
     <script type="text/javascript" src="{{ plugin_octoprint_nanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
 
     {% endif %}
+
+    {% include 'octoprint_nanny_janus.jinja2' %}
+
 </div>

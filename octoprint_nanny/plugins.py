@@ -257,7 +257,7 @@ class OctoPrintNannyPlugin(
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return dict(
-            js=["js/nanny.js"],
+            js=["js/nanny.js", "vendor/janus/janus.js", "vendor/janus/settings.js"],
             css=["css/printnanny.css"],
             less=["less/nanny.less"],
             img=["img/wizard_example.jpg"],
