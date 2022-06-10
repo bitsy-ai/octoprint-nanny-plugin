@@ -16,9 +16,11 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
+    printnanny_device,
     printnanny_version,
     printnanny_config,
     printnanny_user,
+    printnanny_device,
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -235,8 +237,10 @@ class OctoPrintNannyPlugin(
                 "cloud": "https://printnanny.ai",
             },
             "printnanny_user": printnanny_user(),
+            "printnanny_device": printnanny_device(),
         }
         custom.update(printnanny_version())
+        logger.info("get_template_vars=%s", custom)
         return custom
 
     ## Wizard plugin mixin

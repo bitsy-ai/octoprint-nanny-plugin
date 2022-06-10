@@ -1,8 +1,8 @@
-{% if plugin_octoprint_nanny_config != none %}
-<a style="display: inline-block" class="inline-block no-active" target="_blank" href="{{ plugin_octoprint_nanny_config.api.base_path }}{{ plugin_octoprint_nanny_config.device.dashboard_url }}">
+{% if plugin_octoprint_nanny_printnanny_device != none %}
+<a style="display: inline-block" class="inline-block no-active" target="_blank" href="{{ plugin_octoprint_nanny_config.api.base_path }}{{ plugin_octoprint_nanny_printnanny_device.dashboard_url }}">
 <i class="fa fa-solid fa-cloud"></i> PrintNanny Cloud
 </a>
+{% endif %}
 <a  style="display: inline-block" target="_blank" href="#tab_plugin_octoprint_nanny" data-toggle="tab">
 <i class="fa fa-solid fa-video"></i> PrintNanny Cam
 </a>
-{% endif %}
