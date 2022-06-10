@@ -65,7 +65,7 @@ $(document).ready(function () {
                   },
                   error: function (error) {
                     Janus.error("  -- Error attaching plugin... ", error);
-                    bootbox.alert("Error attaching plugin... " + error);
+                    alert("Error attaching plugin... " + error);
                   },
                   iceState: function (state) {
                     Janus.log("ICE state changed to " + state);
@@ -116,7 +116,7 @@ $(document).ready(function () {
                         }
                       }
                     } else if (msg["error"]) {
-                      bootbox.alert(msg["error"]);
+                      alert(msg["error"]);
                       stopStream();
                       return;
                     }
@@ -143,7 +143,7 @@ $(document).ready(function () {
                           },
                           error: function (error) {
                             Janus.error("WebRTC error:", error);
-                            bootbox.alert("WebRTC error... " + error.message);
+                            alert("WebRTC error... " + error.message);
                           }
                         });
                     }
@@ -295,7 +295,7 @@ $(document).ready(function () {
             },
             error: function (error) {
               Janus.error(error);
-              bootbox.alert(error, function () {
+              alert(error, function () {
                 window.location.reload();
               });
             },
@@ -318,7 +318,7 @@ function updateStreamsList() {
         $('#update-streams').removeClass('fa-spin').unbind('click').click(updateStreamsList);
       }, 500);
       if (!result) {
-        bootbox.alert("Got no response to our query for available streams");
+        alert("Got no response to our query for available streams");
         return;
       }
       if (result["list"]) {
@@ -392,7 +392,7 @@ function getStreamInfo() {
 function startStream() {
   Janus.log("Selected video id #" + selectedStream);
   if (!selectedStream || !streamsList[selectedStream]) {
-    bootbox.alert("Select a stream from the list");
+    alert("Select a stream from the list");
     return;
   }
   $('#streamset').attr('disabled', true);
