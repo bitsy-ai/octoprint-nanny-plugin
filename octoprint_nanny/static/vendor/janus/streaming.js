@@ -22,288 +22,287 @@ $(document).ready(function () {
   Janus.init({
     debug: "all", callback: function () {
       // Use a button to start the demo
-      $('#start').one('click', function () {
-        $(this).attr('disabled', true).unbind('click');
-        // Make sure the browser supports WebRTC
-        if (!Janus.isWebrtcSupported()) {
-          alert("No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser");
-          return;
-        }
-        // Create session
-        janus = new Janus(
-          {
-            server: server,
-            iceServers: iceServers,
-            // Should the Janus API require authentication, you can specify either the API secret or user token here too
-            token: window.JANUS_EDGE_API_TOKEN,
-            //	or
-            //		apisecret: "serversecret",
-            success: function () {
-              // Attach to Streaming plugin
-              janus.attach(
-                {
-                  plugin: "janus.plugin.streaming",
-                  opaqueId: opaqueId,
-                  success: function (pluginHandle) {
-                    $('#details').remove();
-                    streaming = pluginHandle;
-                    Janus.log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
-                    // Setup streaming session
-                    $('#update-streams').click(updateStreamsList);
-                    updateStreamsList();
-                    $('#start').removeAttr('disabled').html("Stop")
-                      .click(function () {
-                        $(this).attr('disabled', true);
-                        for (var i in bitrateTimer)
-                          clearInterval(bitrateTimer[i]);
-                        bitrateTimer = {};
-                        janus.destroy();
-                        $('#streamslist').attr('disabled', true);
-                        $('#watch').attr('disabled', true).unbind('click');
-                        $('#start').attr('disabled', true).html("Bye").unbind('click');
+      $(this).attr('disabled', true).unbind('click');
+      // Make sure the browser supports WebRTC
+      if (!Janus.isWebrtcSupported()) {
+        alert("No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser");
+        return;
+      }
+      // Create session
+      janus = new Janus(
+        {
+          server: server,
+          iceServers: iceServers,
+          // Should the Janus API require authentication, you can specify either the API secret or user token here too
+          token: window.JANUS_EDGE_API_TOKEN,
+          //	or
+          //		apisecret: "serversecret",
+          success: function () {
+            // Attach to Streaming plugin
+            janus.attach(
+              {
+                plugin: "janus.plugin.streaming",
+                opaqueId: opaqueId,
+                success: function (pluginHandle) {
+                  $('#details').remove();
+                  streaming = pluginHandle;
+                  Janus.log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
+                  // Setup streaming session
+                  $('#update-streams').click(updateStreamsList);
+                  updateStreamsList();
+                  $('#start').removeAttr('disabled').html("Stop")
+                    .click(function () {
+                      $(this).attr('disabled', true);
+                      for (var i in bitrateTimer)
+                        clearInterval(bitrateTimer[i]);
+                      bitrateTimer = {};
+                      janus.destroy();
+                      $('#streamslist').attr('disabled', true);
+                      $('#watch').attr('disabled', true).unbind('click');
+                      $('#start').attr('disabled', true).html("Bye").unbind('click');
+                    });
+                },
+                error: function (error) {
+                  Janus.error("  -- Error attaching plugin... ", error);
+                  alert("Error attaching plugin... " + error);
+                },
+                iceState: function (state) {
+                  Janus.log("ICE state changed to " + state);
+                },
+                webrtcState: function (on) {
+                  Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
+                },
+                slowLink: function (uplink, lost, mid) {
+                  Janus.warn("Janus reports problems " + (uplink ? "sending" : "receiving") +
+                    " packets on mid " + mid + " (" + lost + " lost packets)");
+                },
+                onmessage: function (msg, jsep) {
+                  Janus.debug(" ::: Got a message :::", msg);
+                  var result = msg["result"];
+                  if (result) {
+                    if (result["status"]) {
+                      var status = result["status"];
+                      if (status === 'starting')
+                        $('#status').removeClass('hide').text("Starting, please wait...").show();
+                      else if (status === 'started')
+                        $('#status').removeClass('hide').text("Started").show();
+                      else if (status === 'stopped')
+                        stopStream();
+                    } else if (msg["streaming"] === "event") {
+                      // Does this event refer to a mid in particular?
+                      var mid = result["mid"] ? result["mid"] : "0";
+                      // Is simulcast in place?
+                      var substream = result["substream"];
+                      var temporal = result["temporal"];
+                      if ((substream !== null && substream !== undefined) || (temporal !== null && temporal !== undefined)) {
+                        if (!simulcastStarted[mid]) {
+                          simulcastStarted[mid] = true;
+                          addSimulcastButtons(mid);
+                        }
+                        // We just received notice that there's been a switch, update the buttons
+                        updateSimulcastButtons(mid, substream, temporal);
+                      }
+                      // Is VP9/SVC in place?
+                      var spatial = result["spatial_layer"];
+                      temporal = result["temporal_layer"];
+                      if ((spatial !== null && spatial !== undefined) || (temporal !== null && temporal !== undefined)) {
+                        if (!svcStarted[mid]) {
+                          svcStarted[mid] = true;
+                          addSvcButtons(mid);
+                        }
+                        // We just received notice that there's been a switch, update the buttons
+                        updateSvcButtons(mid, spatial, temporal);
+                      }
+                    }
+                  } else if (msg["error"]) {
+                    alert(msg["error"]);
+                    stopStream();
+                    return;
+                  }
+                  if (jsep) {
+                    Janus.debug("Handling SDP as well...", jsep);
+                    var stereo = (jsep.sdp.indexOf("stereo=1") !== -1);
+                    // Offer from the plugin, let's answer
+                    streaming.createAnswer(
+                      {
+                        jsep: jsep,
+                        // We want recvonly audio/video and, if negotiated, datachannels
+                        media: { audioSend: false, videoSend: false, data: true },
+                        customizeSdp: function (jsep) {
+                          if (stereo && jsep.sdp.indexOf("stereo=1") == -1) {
+                            // Make sure that our offer contains stereo too
+                            jsep.sdp = jsep.sdp.replace("useinbandfec=1", "useinbandfec=1;stereo=1");
+                          }
+                        },
+                        success: function (jsep) {
+                          Janus.debug("Got SDP!", jsep);
+                          var body = { request: "start" };
+                          streaming.send({ message: body, jsep: jsep });
+                          $('#watch').html("Stop").removeAttr('disabled').unbind('click').click(stopStream);
+                        },
+                        error: function (error) {
+                          Janus.error("WebRTC error:", error);
+                          alert("WebRTC error... " + error.message);
+                        }
                       });
-                  },
-                  error: function (error) {
-                    Janus.error("  -- Error attaching plugin... ", error);
-                    alert("Error attaching plugin... " + error);
-                  },
-                  iceState: function (state) {
-                    Janus.log("ICE state changed to " + state);
-                  },
-                  webrtcState: function (on) {
-                    Janus.log("Janus says our WebRTC PeerConnection is " + (on ? "up" : "down") + " now");
-                  },
-                  slowLink: function (uplink, lost, mid) {
-                    Janus.warn("Janus reports problems " + (uplink ? "sending" : "receiving") +
-                      " packets on mid " + mid + " (" + lost + " lost packets)");
-                  },
-                  onmessage: function (msg, jsep) {
-                    Janus.debug(" ::: Got a message :::", msg);
-                    var result = msg["result"];
-                    if (result) {
-                      if (result["status"]) {
-                        var status = result["status"];
-                        if (status === 'starting')
-                          $('#status').removeClass('hide').text("Starting, please wait...").show();
-                        else if (status === 'started')
-                          $('#status').removeClass('hide').text("Started").show();
-                        else if (status === 'stopped')
-                          stopStream();
-                      } else if (msg["streaming"] === "event") {
-                        // Does this event refer to a mid in particular?
-                        var mid = result["mid"] ? result["mid"] : "0";
-                        // Is simulcast in place?
-                        var substream = result["substream"];
-                        var temporal = result["temporal"];
-                        if ((substream !== null && substream !== undefined) || (temporal !== null && temporal !== undefined)) {
-                          if (!simulcastStarted[mid]) {
-                            simulcastStarted[mid] = true;
-                            addSimulcastButtons(mid);
-                          }
-                          // We just received notice that there's been a switch, update the buttons
-                          updateSimulcastButtons(mid, substream, temporal);
+                  }
+                },
+                onremotetrack: function (track, mid, on) {
+                  Janus.debug("Remote track (mid=" + mid + ") " + (on ? "added" : "removed") + ":", track);
+                  var mstreamId = "mstream" + mid;
+                  if (streamsList[selectedStream] && streamsList[selectedStream].legacy)
+                    mstreamId = "mstream0";
+                  if (!on) {
+                    // Track removed, get rid of the stream and the rendering
+                    var stream = remoteTracks[mid];
+                    if (stream) {
+                      try {
+                        var tracks = stream.getTracks();
+                        for (var i in tracks) {
+                          var mst = tracks[i];
+                          if (mst)
+                            mst.stop();
                         }
-                        // Is VP9/SVC in place?
-                        var spatial = result["spatial_layer"];
-                        temporal = result["temporal_layer"];
-                        if ((spatial !== null && spatial !== undefined) || (temporal !== null && temporal !== undefined)) {
-                          if (!svcStarted[mid]) {
-                            svcStarted[mid] = true;
-                            addSvcButtons(mid);
-                          }
-                          // We just received notice that there's been a switch, update the buttons
-                          updateSvcButtons(mid, spatial, temporal);
-                        }
-                      }
-                    } else if (msg["error"]) {
-                      alert(msg["error"]);
-                      stopStream();
-                      return;
+                      } catch (e) { }
                     }
-                    if (jsep) {
-                      Janus.debug("Handling SDP as well...", jsep);
-                      var stereo = (jsep.sdp.indexOf("stereo=1") !== -1);
-                      // Offer from the plugin, let's answer
-                      streaming.createAnswer(
-                        {
-                          jsep: jsep,
-                          // We want recvonly audio/video and, if negotiated, datachannels
-                          media: { audioSend: false, videoSend: false, data: true },
-                          customizeSdp: function (jsep) {
-                            if (stereo && jsep.sdp.indexOf("stereo=1") == -1) {
-                              // Make sure that our offer contains stereo too
-                              jsep.sdp = jsep.sdp.replace("useinbandfec=1", "useinbandfec=1;stereo=1");
-                            }
-                          },
-                          success: function (jsep) {
-                            Janus.debug("Got SDP!", jsep);
-                            var body = { request: "start" };
-                            streaming.send({ message: body, jsep: jsep });
-                            $('#watch').html("Stop").removeAttr('disabled').unbind('click').click(stopStream);
-                          },
-                          error: function (error) {
-                            Janus.error("WebRTC error:", error);
-                            alert("WebRTC error... " + error.message);
-                          }
-                        });
-                    }
-                  },
-                  onremotetrack: function (track, mid, on) {
-                    Janus.debug("Remote track (mid=" + mid + ") " + (on ? "added" : "removed") + ":", track);
-                    var mstreamId = "mstream" + mid;
-                    if (streamsList[selectedStream] && streamsList[selectedStream].legacy)
-                      mstreamId = "mstream0";
-                    if (!on) {
-                      // Track removed, get rid of the stream and the rendering
-                      var stream = remoteTracks[mid];
-                      if (stream) {
-                        try {
-                          var tracks = stream.getTracks();
-                          for (var i in tracks) {
-                            var mst = tracks[i];
-                            if (mst)
-                              mst.stop();
-                          }
-                        } catch (e) { }
-                      }
-                      $('#remotevideo' + mid).remove();
-                      if (track.kind === "video") {
-                        remoteVideos--;
-                        if (remoteVideos === 0) {
-                          // No video, at least for now: show a placeholder
-                          if ($('#' + mstreamId + ' .no-video-container').length === 0) {
-                            $('#' + mstreamId).append(
-                              '<div class="no-video-container">' +
-                              '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
-                              '<span class="no-video-text">No remote video available</span>' +
-                              '</div>');
-                          }
-                        }
-                      }
-                      delete remoteTracks[mid];
-                      return;
-                    }
-                    // If we're here, a new track was added
-                    var stream = null;
-                    if (track.kind === "audio") {
-                      // New audio track: create a stream out of it, and use a hidden <audio> element
-                      stream = new MediaStream();
-                      stream.addTrack(track.clone());
-                      remoteTracks[mid] = stream;
-                      Janus.log("Created remote audio stream:", stream);
-                      $('#' + mstreamId).append('<audio class="hide" id="remotevideo' + mid + '" playsinline/>');
-                      $('#remotevideo' + mid).get(0).volume = 0;
+                    $('#remotevideo' + mid).remove();
+                    if (track.kind === "video") {
+                      remoteVideos--;
                       if (remoteVideos === 0) {
                         // No video, at least for now: show a placeholder
                         if ($('#' + mstreamId + ' .no-video-container').length === 0) {
                           $('#' + mstreamId).append(
-                            '<div class="no-video-container audioonly">' +
+                            '<div class="no-video-container">' +
                             '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
-                            '<span class="no-video-text">No webcam available</span>' +
+                            '<span class="no-video-text">No remote video available</span>' +
                             '</div>');
                         }
                       }
-                    } else {
-                      // New video track: create a stream out of it
-                      remoteVideos++;
-                      $('.no-video-container').remove();
-                      stream = new MediaStream();
-                      stream.addTrack(track.clone());
-                      remoteTracks[mid] = stream;
-                      Janus.log("Created remote video stream:", stream);
-                      $('#' + mstreamId).append('<video class="embed-responsive-item" id="remotevideo' + mid + '" playsinline/>');
-                      $('#remotevideo' + mid).get(0).volume = 0;
-                      // Use a custom timer for this stream
-                      if (!bitrateTimer[mid]) {
-                        $('#curbitrate' + mid).removeClass('hide').show();
-                        bitrateTimer[mid] = setInterval(function () {
-                          if (!$("#remotevideo" + mid).get(0))
-                            return;
-                          // Display updated bitrate, if supported
-                          var bitrate = streaming.getBitrate(mid);
-                          $('#curbitrate' + mid).text(bitrate);
-                          // Check if the resolution changed too
-                          var width = $("#remotevideo" + mid).get(0).videoWidth;
-                          var height = $("#remotevideo" + mid).get(0).videoHeight;
-                          if (width > 0 && height > 0)
-                            $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
-                        }, 1000);
-                      }
                     }
-                    // Play the stream and hide the spinner when we get a playing event
-                    $("#remotevideo" + mid).bind("playing", function (ev) {
-                      $('.waitingvideo').remove();
-                      if (spinner[mid])
-                        spinner[mid].stop();
-                      spinner[mid] = null;
-                      if (!this.videoWidth)
-                        return;
-                      $('#' + ev.target.id).removeClass('hide').show();
-                      var width = this.videoWidth;
-                      var height = this.videoHeight;
-                      $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
-                      if (Janus.webRTCAdapter.browserDetails.browser === "firefox") {
-                        // Firefox Stable has a bug: width and height are not immediately available after a playing
-                        setTimeout(function () {
-                          var width = $('#' + ev.target.id).get(0).videoWidth;
-                          var height = $('#' + ev.target.id).get(0).videoHeight;
-                          $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
-                        }, 2000);
-                      }
-                    });
-                    Janus.attachMediaStream($('#remotevideo' + mid).get(0), stream);
-                    $('#remotevideo' + mid).get(0).play();
-                    // $('#remotevideo' + mid).get(0).volume = 1;
-                  },
-                  ondataopen: function (data) {
-                    Janus.log("The DataChannel is available!");
-                    $('.waitingvideo').remove();
-                    $('#mstream' + dataMid).append(
-                      '<input class="form-control" type="text" id="datarecv" disabled></input>'
-                    );
-                    for (var i in spinner) {
-                      if (spinner[i])
-                        spinner[i].stop();
-                    }
-                    spinner = {};
-                  },
-                  ondata: function (data) {
-                    Janus.debug("We got data from the DataChannel!", data);
-                    $('#datarecv').val(data);
-                  },
-                  oncleanup: function () {
-                    Janus.log(" ::: Got a cleanup notification :::");
-                    $('#videos').empty();
-                    for (var i in bitrateTimer)
-                      clearInterval(bitrateTimer[i]);
-                    bitrateTimer = {};
-                    for (var i in spinner) {
-                      if (spinner[i])
-                        spinner[i].stop();
-                    }
-                    spinner = {};
-                    simulcastStarted = false;
-                    remoteTracks = {};
-                    remoteVideos = 0;
-                    dataMid = null;
-                    $('#streamset').removeAttr('disabled');
-                    $('#streamslist').removeAttr('disabled');
-                    $('#watch').html("Watch or Listen").removeAttr('disabled')
-                      .unbind('click').click(startStream);
+                    delete remoteTracks[mid];
+                    return;
                   }
-                });
-            },
-            error: function (error) {
-              Janus.error(error);
-              alert(error, function () {
-                window.location.reload();
+                  // If we're here, a new track was added
+                  var stream = null;
+                  if (track.kind === "audio") {
+                    // New audio track: create a stream out of it, and use a hidden <audio> element
+                    stream = new MediaStream();
+                    stream.addTrack(track.clone());
+                    remoteTracks[mid] = stream;
+                    Janus.log("Created remote audio stream:", stream);
+                    $('#' + mstreamId).append('<audio class="hide" id="remotevideo' + mid + '" playsinline/>');
+                    $('#remotevideo' + mid).get(0).volume = 0;
+                    if (remoteVideos === 0) {
+                      // No video, at least for now: show a placeholder
+                      if ($('#' + mstreamId + ' .no-video-container').length === 0) {
+                        $('#' + mstreamId).append(
+                          '<div class="no-video-container audioonly">' +
+                          '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
+                          '<span class="no-video-text">No webcam available</span>' +
+                          '</div>');
+                      }
+                    }
+                  } else {
+                    // New video track: create a stream out of it
+                    remoteVideos++;
+                    $('.no-video-container').remove();
+                    stream = new MediaStream();
+                    stream.addTrack(track.clone());
+                    remoteTracks[mid] = stream;
+                    Janus.log("Created remote video stream:", stream);
+                    $('#' + mstreamId).append('<video class="embed-responsive-item" id="remotevideo' + mid + '" playsinline/>');
+                    $('#remotevideo' + mid).get(0).volume = 0;
+                    // Use a custom timer for this stream
+                    if (!bitrateTimer[mid]) {
+                      $('#curbitrate' + mid).removeClass('hide').show();
+                      bitrateTimer[mid] = setInterval(function () {
+                        if (!$("#remotevideo" + mid).get(0))
+                          return;
+                        // Display updated bitrate, if supported
+                        var bitrate = streaming.getBitrate(mid);
+                        $('#curbitrate' + mid).text(bitrate);
+                        // Check if the resolution changed too
+                        var width = $("#remotevideo" + mid).get(0).videoWidth;
+                        var height = $("#remotevideo" + mid).get(0).videoHeight;
+                        if (width > 0 && height > 0)
+                          $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
+                      }, 1000);
+                    }
+                  }
+                  // Play the stream and hide the spinner when we get a playing event
+                  $("#remotevideo" + mid).bind("playing", function (ev) {
+                    $('.waitingvideo').remove();
+                    if (spinner[mid])
+                      spinner[mid].stop();
+                    spinner[mid] = null;
+                    if (!this.videoWidth)
+                      return;
+                    $('#' + ev.target.id).removeClass('hide').show();
+                    var width = this.videoWidth;
+                    var height = this.videoHeight;
+                    $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
+                    if (Janus.webRTCAdapter.browserDetails.browser === "firefox") {
+                      // Firefox Stable has a bug: width and height are not immediately available after a playing
+                      setTimeout(function () {
+                        var width = $('#' + ev.target.id).get(0).videoWidth;
+                        var height = $('#' + ev.target.id).get(0).videoHeight;
+                        $('#curres' + mid).removeClass('hide').text(width + 'x' + height).show();
+                      }, 2000);
+                    }
+                  });
+                  Janus.attachMediaStream($('#remotevideo' + mid).get(0), stream);
+                  $('#remotevideo' + mid).get(0).play();
+                  // $('#remotevideo' + mid).get(0).volume = 1;
+                },
+                ondataopen: function (data) {
+                  Janus.log("The DataChannel is available!");
+                  $('.waitingvideo').remove();
+                  $('#mstream' + dataMid).append(
+                    '<input class="form-control" type="text" id="datarecv" disabled></input>'
+                  );
+                  for (var i in spinner) {
+                    if (spinner[i])
+                      spinner[i].stop();
+                  }
+                  spinner = {};
+                },
+                ondata: function (data) {
+                  Janus.debug("We got data from the DataChannel!", data);
+                  $('#datarecv').val(data);
+                },
+                oncleanup: function () {
+                  Janus.log(" ::: Got a cleanup notification :::");
+                  $('#videos').empty();
+                  for (var i in bitrateTimer)
+                    clearInterval(bitrateTimer[i]);
+                  bitrateTimer = {};
+                  for (var i in spinner) {
+                    if (spinner[i])
+                      spinner[i].stop();
+                  }
+                  spinner = {};
+                  simulcastStarted = false;
+                  remoteTracks = {};
+                  remoteVideos = 0;
+                  dataMid = null;
+                  $('#streamset').removeAttr('disabled');
+                  $('#streamslist').removeAttr('disabled');
+                  $('#watch').html("Watch or Listen").removeAttr('disabled')
+                    .unbind('click').click(startStream);
+                }
               });
-            },
-            destroyed: function () {
+          },
+          error: function (error) {
+            Janus.error(error);
+            alert(error, function () {
               window.location.reload();
-            }
-          });
-      });
+            });
+          },
+          destroyed: function () {
+            window.location.reload();
+          }
+        });
+
     }
   });
 });
