@@ -253,7 +253,7 @@ $(document).ready(function () {
                     });
                     Janus.attachMediaStream($('#remotevideo' + mid).get(0), stream);
                     $('#remotevideo' + mid).get(0).play();
-                    $('#remotevideo' + mid).get(0).volume = 1;
+                    // $('#remotevideo' + mid).get(0).volume = 1;
                   },
                   ondataopen: function (data) {
                     Janus.log("The DataChannel is available!");

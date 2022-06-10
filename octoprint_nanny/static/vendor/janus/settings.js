@@ -80,5 +80,5 @@ else
 // janus.js will fallback to the Google STUN server by default:
 //
 var iceServers = [
-  { urls: "stun.l.google.com:19302" }
+  { urls: "stun:stun.l.google.com:19302" }
 ]
