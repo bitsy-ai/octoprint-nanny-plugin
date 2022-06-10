@@ -243,7 +243,9 @@ class OctoPrintNannyPlugin(
             "janus_edge_hostname": janus_edge_hostname(),
             "janus_edge_api_token": janus_edge_api_token(),
         }
-        custom.update(printnanny_version())
+        version_info = printnanny_version()
+        if version_info is not None:
+            custom.update(version_info)
         logger.info("get_template_vars=%s", custom)
         return custom
 
