@@ -1,0 +1,39 @@
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.1.1/adapter.min.js" ></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+
+<script type="text/javascript">
+    window.JANUS_EDGE_HOSTNAME = "{{ plugin_octoprint_nanny_janus_edge_hostname }}"
+    window.JANUS_EDGE_API_TOKEN = "{{ plugin_octoprint_nanny_janus_edge_api_token }}"
+
+</script>
+<script type="text/javascript" src="plugin/octoprint_nanny/static/vendor/janus/janus.js"></script>
+<script type="text/javascript" src="plugin/octoprint_nanny/static/vendor/janus/settings.js"></script>
+<script type="text/javascript" src="plugin/octoprint_nanny/static/vendor/janus/streaming.js"></script>
+
+
+<h3 class="panel-title">WebRTC Camera Streams</h3>
+<div class="panel-body" id="list">
+    <div class="btn-group btn-group-sm">
+        <button class="btn btn-primary" autocomplete="off" id="watch">Start</button>
+        <div class="btn-group btn-group-sm">
+            <button autocomplete="off" id="streamset" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                Available streams: <span class="caret"></span>
+            </button>
+            <ul id="streamslist" class="dropdown-menu" role="menu">
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row hide" id="info">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-info-circle"></i> Metadata</h3>
+        </div>
+        <div class="panel-body">
+            <pre id="metadata" style="word-break: break-word;"></pre>
+        </div>
+    </div>
+</div>
+<div id="videos">
+</div>

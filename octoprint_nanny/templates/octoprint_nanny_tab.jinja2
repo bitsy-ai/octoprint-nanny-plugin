@@ -1,4 +1,4 @@
-<div id="#tab_plugin_octoprint_nanny">
+<div id="tab_plugin_octoprint_nanny">
     {% if plugin_octoprint_nanny_printnanny_device != none %}
     <span class="janus-stream-app">
         <janus-stream 
@@ -8,6 +8,7 @@
     </span>
     {% else %}
     <h3>🔐 Log into PrintNanny</h3>
+    <p>Link your PrintNanny account to automatically monitor print jobs, upload backups, and keep your files in sync.</p>
     <a href="{{ plugin_octoprint_nanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
     {% endif %}
 
@@ -20,4 +21,7 @@
     <script type="text/javascript" src="{{ plugin_octoprint_nanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
 
     {% endif %}
+
+    {% include 'octoprint_nanny_janus.jinja2' %}
+
 </div>

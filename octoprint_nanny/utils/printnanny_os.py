@@ -105,3 +105,11 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
         logger.error(e)
         logger.error(f"Failed to decode printnanny config: {stdout}")
         return None
+
+
+def janus_edge_hostname() -> str:
+    return environ.get("JANUS_EDGE_HOSTNAME", "localhost")
+
+
+def janus_edge_api_token() -> str:
+    return environ.get("JANUS_EDGE_API_TOKEN", "janustoken")

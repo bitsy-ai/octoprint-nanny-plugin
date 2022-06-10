@@ -21,6 +21,8 @@ from octoprint_nanny.utils.printnanny_os import (
     printnanny_config,
     printnanny_user,
     printnanny_device,
+    janus_edge_hostname,
+    janus_edge_api_token,
 )
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -238,8 +240,12 @@ class OctoPrintNannyPlugin(
             },
             "printnanny_user": printnanny_user(),
             "printnanny_device": printnanny_device(),
+            "janus_edge_hostname": janus_edge_hostname(),
+            "janus_edge_api_token": janus_edge_api_token(),
         }
-        custom.update(printnanny_version())
+        version_info = printnanny_version()
+        if version_info is not None:
+            custom.update(version_info)
         logger.info("get_template_vars=%s", custom)
         return custom
 
@@ -257,7 +263,7 @@ class OctoPrintNannyPlugin(
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return dict(
-            js=["js/nanny.js"],
+            js=["js/nanny.js", "vendor/janus/janus.js", "vendor/janus/settings.js"],
             css=["css/printnanny.css"],
             less=["less/nanny.less"],
             img=["img/wizard_example.jpg"],
