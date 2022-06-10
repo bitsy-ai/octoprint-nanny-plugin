@@ -11,47 +11,29 @@
 <script type="text/javascript" src="plugin/octoprint_nanny/static/vendor/janus/settings.js"></script>
 <script type="text/javascript" src="plugin/octoprint_nanny/static/vendor/janus/streaming.js"></script>
 
-<div class="container">
-	<div class="row">
-			<div class="container hide" id="streams">
-				<div class="col-md-6">
-					<div class="row">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h3 class="panel-title">Streams <i id="update-streams" class="fa fa-refresh" title="Update list of streams" style="cursor: pointer;"></i></h3>
-							</div>
-							<div class="panel-body" id="list">
-								<div class="btn-group btn-group-sm">
-									<button class="btn btn-primary" autocomplete="off" id="watch">Watch or Listen</button>
-									<div class="btn-group btn-group-sm">
-										<button autocomplete="off" id="streamset" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-											Streams list<span class="caret"></span>
-										</button>
-										<ul id="streamslist" class="dropdown-menu" role="menu">
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row hide" id="info">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h3 class="panel-title"><i class="fa fa-info-circle"></i> Metadata</h3>
-							</div>
-							<div class="panel-body">
-								<pre id="metadata" style="word-break: break-word;"></pre>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6" id="videos">
-				</div>
-			</div>
-		</div>
-	</div>
 
-	<hr>
-	<div class="footer">
-	</div>
+<h3 class="panel-title">WebRTC Camera Streams</h3>
+<div class="panel-body" id="list">
+    <div class="btn-group btn-group-sm">
+        <button class="btn btn-primary" autocomplete="off" id="watch">Start</button>
+        <div class="btn-group btn-group-sm">
+            <button autocomplete="off" id="streamset" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                Available streams: <span class="caret"></span>
+            </button>
+            <ul id="streamslist" class="dropdown-menu" role="menu">
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row hide" id="info">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-info-circle"></i> Metadata</h3>
+        </div>
+        <div class="panel-body">
+            <pre id="metadata" style="word-break: break-word;"></pre>
+        </div>
+    </div>
+</div>
+<div id="videos">
 </div>
