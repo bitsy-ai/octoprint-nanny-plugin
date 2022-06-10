@@ -7,7 +7,7 @@ import socket
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
-PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/local/bin/printnanny")
+PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
 PRINTNANNY_PROFILE = environ.get("PRINTNANNY_PROFILE", "default")
 
 
