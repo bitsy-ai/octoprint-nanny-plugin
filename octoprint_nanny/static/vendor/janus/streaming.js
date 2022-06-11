@@ -409,7 +409,8 @@ function startStream() {
     if ($('#mstream0').length === 0) {
       addPanel("0", mid);
       // No remote video yet
-      // $('#mstream0').append('<video style="width: 100%"id="waitingvideo0" />');
+      // TODO add a "waiting" video/image
+      // $('#mstream0').append('<video style="width: 100%"id="waitingvideo0" class="waitingvideo" />');
     }
     if (mid) {
       if (spinner[mid] == null) {
@@ -430,7 +431,8 @@ function startStream() {
       if ($('#mstream' + mid).length === 0) {
         addPanel(mid, mid, label);
         // No remote media yet
-        $('#mstream' + mid).append('<video style="width: 100%" id="waitingvideo' + mid + '" width="100%" height="100%" />');
+        // TODO add a "waiting" video/image
+        // $('#mstream' + mid).append('<video style="width: 100%" id="waitingvideo' + mid + '" width="100%" height="100%" class="waitingvideo" />');
       }
       if (spinner[mid] == null) {
         var target = document.getElementById('mstream' + mid);
