@@ -17,15 +17,12 @@ var streamsList = {};
 var selectedStream = null;
 
 
-$(document).ready(function () {
-  // Initialize the library (all console debuggers enabled)
+function initializeJanus() {
   Janus.init({
     debug: "all", callback: function () {
-      // Use a button to start the demo
-      $(this).attr('disabled', true).unbind('click');
       // Make sure the browser supports WebRTC
       if (!Janus.isWebrtcSupported()) {
-        alert("No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser");
+        console.error("No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser");
         return;
       }
       // Create session
@@ -64,7 +61,7 @@ $(document).ready(function () {
                 },
                 error: function (error) {
                   Janus.error("  -- Error attaching plugin... ", error);
-                  alert("Error attaching plugin... " + error);
+                  console.error("Error attaching plugin... " + error);
                 },
                 iceState: function (state) {
                   Janus.log("ICE state changed to " + state);
@@ -115,7 +112,7 @@ $(document).ready(function () {
                       }
                     }
                   } else if (msg["error"]) {
-                    alert(msg["error"]);
+                    console.error(msg["error"]);
                     stopStream();
                     return;
                   }
@@ -142,7 +139,7 @@ $(document).ready(function () {
                         },
                         error: function (error) {
                           Janus.error("WebRTC error:", error);
-                          alert("WebRTC error... " + error.message);
+                          console.error("WebRTC error... " + error.message);
                         }
                       });
                   }
@@ -294,7 +291,7 @@ $(document).ready(function () {
           },
           error: function (error) {
             Janus.error(error);
-            alert(error, function () {
+            console.error(error, function () {
               window.location.reload();
             });
           },
@@ -305,7 +302,7 @@ $(document).ready(function () {
 
     }
   });
-});
+}
 
 function updateStreamsList() {
   $('#update-streams').unbind('click').addClass('fa-spin');
@@ -317,7 +314,7 @@ function updateStreamsList() {
         $('#update-streams').removeClass('fa-spin').unbind('click').click(updateStreamsList);
       }, 500);
       if (!result) {
-        alert("Got no response to our query for available streams");
+        console.error("Got no response to our query for available streams");
         return;
       }
       if (result["list"]) {
@@ -391,7 +388,7 @@ function getStreamInfo() {
 function startStream() {
   Janus.log("Selected video id #" + selectedStream);
   if (!selectedStream || !streamsList[selectedStream]) {
-    alert("Select a stream from the list");
+    console.error("Select a stream from the list");
     return;
   }
   $('#streamset').attr('disabled', true);

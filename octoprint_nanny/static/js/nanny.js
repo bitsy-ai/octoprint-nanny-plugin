@@ -35,6 +35,14 @@
 $(function () {
     function PrintNannyTabViewModel(parameters) {
         let self = this;
+        self.onAfterBinding = function () {
+            initializeJanus()
+        }
+    }
+
+
+    function PrintNannyTabViewModelDeprecated(parameters) {
+        let self = this;
         self.apiClient = null;
 
         // assign the injected parameters, e.g.:
@@ -93,10 +101,6 @@ $(function () {
                     self.statusCheckFailed(true);
                 });
         }
-
-        // self.onAfterBinding = function(){
-        //     testConnectionsAsync();
-        // }
 
         showMonitoringFrame = function (payload) {
             if (self.previewActive() == false) {
