@@ -430,7 +430,7 @@ function startStream() {
       if ($('#mstream' + mid).length === 0) {
         addPanel(mid, mid, label);
         // No remote media yet
-        $('#mstream' + mid).append('<video style="width: 100%" id="waitingvideo' + mid + '" width="100%" height="100%" />');
+        // $('#mstream' + mid).append('<video style="width: 100%" id="waitingvideo' + mid + '" width="100%" height="100%" />');
       }
       if (spinner[mid] == null) {
         var target = document.getElementById('mstream' + mid);
