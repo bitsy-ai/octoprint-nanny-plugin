@@ -1,25 +1,8 @@
 <div id="tab_plugin_octoprint_nanny">
-    {% if plugin_octoprint_nanny_printnanny_device != none %}
-    <span class="janus-stream-app">
-        <janus-stream 
-            device-id="{{ plugin_octoprint_nanny_printnanny_device.id }}"
-            offline-image="plugin/octoprint_nanny/static/img/sleeping.png"
-            config-type="edge" />
-    </span>
-    {% else %}
+    {% if plugin_octoprint_nanny_printnanny_user != none %}
     <h3>🔐 Log into PrintNanny</h3>
     <p>Link your PrintNanny account to automatically monitor print jobs, upload backups, and keep your files in sync.</p>
     <a href="{{ plugin_octoprint_nanny_config.dash.base_url }}" class="btn btn-primary btn-large">Link PrintNanny Account</a>
-    {% endif %}
-
-    {% if plugin_octoprint_nanny_config and plugin_octoprint_nanny_config.api is defined %}
-    <script type="text/javascript">
-    window.PRINTNANNY_API_TOKEN = "{{ plugin_octoprint_nanny_config.api.bearer_access_token }}"
-    window.PRINTNANNY_API_PROXY = "{{ plugin_octoprint_nanny_config.printnanny_cloud_proxy.url }}"
-    </script>
-    <script type="text/javascript" src="{{ plugin_octoprint_nanny_config.api.static_url }}vue/js/printnanny-vendor.js"></script>
-    <script type="text/javascript" src="{{ plugin_octoprint_nanny_config.api.static_url }}vue/js/printnanny-janusStream.js"></script>
-
     {% endif %}
 
     {% include 'octoprint_nanny_janus.jinja2' %}
