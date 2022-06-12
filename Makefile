@@ -135,7 +135,7 @@ printnanny-test-profile:
 printnanny-dash-debug: $(PRINTNANNY_CONFIG) printnanny-cli-debug printnanny-test-profile
 	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
 
-octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
+dev: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
 	PRINTNANNY_PROFILE=local \
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
@@ -149,8 +149,6 @@ octoprint-local: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
 	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
-octoprint-prod:
-	PYTHONASYNCIODEBUG=True octoprint serve --host=0.0.0.0 --port=5000
 test:
 	pytest --log-level=DEBUG
 

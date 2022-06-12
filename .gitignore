@@ -27,3 +27,4 @@ coverage.xml
 .mypy_cache
 
 .tmp
+config.yaml
