@@ -16,13 +16,17 @@ var simulcastStarted = {}, svcStarted = {};
 var streamsList = {};
 var selectedStream = null;
 
+var knockout = null;
 
-function initializeJanus() {
+// parameter "knockout" is nanny.js PrintNannyTabViewModel context
+function initializeJanus(knockout) {
+  knockout = knockout;
   Janus.init({
     debug: "all", callback: function () {
       // Make sure the browser supports WebRTC
       if (!Janus.isWebrtcSupported()) {
-        console.error("No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser");
+        let msg = "No WebRTC support detected. Please send an email to leigh@printnanny.ai with your Operating System and Browser"
+        knockout.error(msg);
         return;
       }
       // Create session
@@ -55,13 +59,12 @@ function initializeJanus() {
                       bitrateTimer = {};
                       janus.destroy();
                       $('#streamslist').attr('disabled', true);
-                      $('#watch').attr('disabled', true).unbind('click');
                       $('#start').attr('disabled', true).html("Bye").unbind('click');
                     });
                 },
                 error: function (error) {
-                  Janus.error("  -- Error attaching plugin... ", error);
-                  console.error("Error attaching plugin... " + error);
+                  let msg = "Error attaching WebRTC plugin... " + error;
+                  knockout.error(msg)
                 },
                 iceState: function (state) {
                   Janus.log("ICE state changed to " + state);
@@ -112,8 +115,10 @@ function initializeJanus() {
                       }
                     }
                   } else if (msg["error"]) {
-                    console.error(msg["error"]);
+                    let msg = msg["error"];
+                    knockout.error(msg);
                     stopStream();
+                    knockout.nnstreamerStop();
                     return;
                   }
                   if (jsep) {
@@ -135,11 +140,10 @@ function initializeJanus() {
                           Janus.debug("Got SDP!", jsep);
                           var body = { request: "start" };
                           streaming.send({ message: body, jsep: jsep });
-                          $('#watch').html("Stop").removeAttr('disabled').unbind('click').click(stopStream);
                         },
                         error: function (error) {
-                          Janus.error("WebRTC error:", error);
-                          console.error("WebRTC error... " + error.message);
+                          let msg = "WebRTC error:" + error.message;
+                          knockout.error(msg);
                         }
                       });
                   }
@@ -284,16 +288,11 @@ function initializeJanus() {
                   dataMid = null;
                   $('#streamset').removeAttr('disabled');
                   $('#streamslist').removeAttr('disabled');
-                  $('#watch').html("Start").removeAttr('disabled')
-                    .unbind('click').click(startStream);
                 }
               });
           },
           error: function (error) {
-            Janus.error(error);
-            console.error(error, function () {
-              window.location.reload();
-            });
+            knockout.error(error)
           },
           destroyed: function () {
             window.location.reload();
@@ -314,13 +313,14 @@ function updateStreamsList() {
         $('#update-streams').removeClass('fa-spin').unbind('click').click(updateStreamsList);
       }, 500);
       if (!result) {
-        console.error("Got no response to our query for available streams");
+        let msg = "Received no response to query for available WebRTC streams"
+        knockout.error(msg);
+        knockout.disableStart(true);
         return;
       }
       if (result["list"]) {
         $('#streams').removeClass('hide').show();
         $('#streamslist').empty();
-        $('#watch').attr('disabled', true).unbind('click');
         var list = result["list"];
         if (list && Array.isArray(list)) {
           list.sort(function (a, b) {
@@ -362,7 +362,6 @@ function updateStreamsList() {
           return false;
 
         });
-        $('#watch').removeAttr('disabled').unbind('click').click(startStream);
       }
     }
   });
@@ -388,12 +387,11 @@ function getStreamInfo() {
 function startStream() {
   Janus.log("Selected video id #" + selectedStream);
   if (!selectedStream || !streamsList[selectedStream]) {
-    console.error("Select a stream from the list");
+    alert("Select a stream from the list");
     return;
   }
   $('#streamset').attr('disabled', true);
   $('#streamslist').attr('disabled', true);
-  $('#watch').attr('disabled', true).unbind('click');
   // Add some panels to host the remote streams
   if (streamsList[selectedStream].legacy) {
     // At max 1-audio/1-video, so use a single panel
@@ -461,7 +459,6 @@ function startStream() {
 }
 
 function stopStream() {
-  $('#watch').attr('disabled', true).unbind('click');
   var body = { request: "stop" };
   streaming.send({ message: body });
   streaming.hangup();

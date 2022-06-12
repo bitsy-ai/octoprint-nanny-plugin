@@ -6,7 +6,7 @@ import os
 import flask
 import octoprint.plugin
 import octoprint.util
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from octoprint.events import Events
 
@@ -157,18 +157,16 @@ class OctoPrintNannyPlugin(
             logger.error("Plugin manager failed to get backup helper")
             raise Exception("Plugin manager failed to get backup helper")
 
-    def register_custom_events(self):
+    def register_custom_events(self) -> List[str]:
         remote_commands = [
             "remote_command_received",
             "remote_command_failed",
             "remote_command_success",
             "connect_test_mqtt_pong_success",
+            "nnstreamer_start",
+            "nnstreamer_stop",
         ]
-        local_only = [
-            "monitoring_frame_b64",  # not sent via event telemetry
-            "monitoring_frame_bytes",
-        ]
-        return remote_commands + local_only
+        return remote_commands
 
     def on_shutdown(self):
         logger.info("Running on_shutdown handler")
