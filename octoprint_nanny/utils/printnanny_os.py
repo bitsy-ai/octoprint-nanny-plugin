@@ -59,30 +59,6 @@ def printnanny_device() -> Optional[Dict[Any, Any]]:
         return None
 
 
-def printnanny_version() -> Optional[Dict[str, str]]:
-    cmd = [PRINTNANNY_BIN, "version"]
-    try:
-        p = subprocess.run(cmd, capture_output=True)
-    except FileNotFoundError as e:
-        logger.error(e)
-        return None
-    stdout = p.stdout.decode("utf-8")
-    stderr = p.stderr.decode("utf-8")
-    if p.returncode != 0:
-        logger.warning(
-            f"Failed to get printnanny_version cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
-        )
-        return None
-    logger.info(f"Running printnanny_version={stdout}")
-    try:
-        version = json.loads(stdout)
-        return version
-    except json.JSONDecodeError as e:
-        logger.error(e)
-        logger.error(f"Failed to decode printnanny config: {stdout}")
-        return None
-
-
 def printnanny_config() -> Optional[Dict[str, Any]]:
     cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
     try:
@@ -115,9 +91,29 @@ def janus_edge_api_token() -> str:
     return environ.get("JANUS_EDGE_API_TOKEN", "janustoken")
 
 
-def etc_os_release() -> str:
+def issue_txt() -> str:
     """
-    Captures the contents of /etc/os-release as plain text
+    Captured the contents of /boot/issue.txt as plain text
     """
-    f = open("/etc/os-release", "r")
-    return f.read().strip()
+    try:
+        result = open("/boot/issue.txt", "r").read().strip()
+    except Exception as e:
+        logger.error("Failed to read /boot/issue.txt %s", e)
+        result = "Failed to read /boot/issue.txt"
+    return result
+
+
+def etc_os_release() -> Dict[str, str]:
+    """
+    Captures the contents of /etc/os-release as a dictionary
+    """
+    f = open("/etc/os-release", "r").read()
+    result = dict(ID="unknown")
+    try:
+        lines = f.strip().split("\n")
+        for line in lines:
+            k, v = line.split("=")
+            result[k] = v
+    except Exception as e:
+        logger.error("Error parsing contents of /etc/os-release %s", e)
+    return result

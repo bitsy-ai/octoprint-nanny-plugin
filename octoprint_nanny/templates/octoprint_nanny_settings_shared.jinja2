@@ -7,20 +7,18 @@
     <a target="_blank" href="mailto:leigh@printnanny.ai?subject=Question about OctoPrint + PrintNanny"><button class="btn btn-secondary">Email leigh@printnanny.ai</button></a>
     <hr>
     {{ plugin_octoprint_nanny_versions }}
-{% if plugin_octoprint_nanny_os_version is none or plugin_octoprint_nanny_os_version == "dev" %}
+{% if plugin_octoprint_nanny_etc_os_release.ID != "printnanny"%}
         <div class="alert alert-block alert-warning">    
             <h2>
                 <strong>⛔ PrintNanny OS v1.x is Required</strong>
             </h2>
-            <h4>
-                Unfortunately, you're not running a supported version of PrintNanny OS.
-            </h4>
-            <br>
+
+            <p>Failed to detect PrintNanny OS version from /etc/os-release</p>
+<pre>{{ plugin_octoprint_nanny_etc_os_release}}</pre>
             <h4>
                 Please follow the guide below to install PrintNanny OS (OctoPrint Edition). 
             </h4>
             <br>
-
             <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}"><button class= "btn btn-primary btn-large">Getting Started Guide</button></a>
         </div>
 {% endif %}
@@ -54,7 +52,7 @@
             <a target="_blank" href="https://github.com/bitsy-ai/printnanny-os/issues/new/choose" class="btn btn-secondary">Create New Issue</a>
             <hr>
             <pre>
-{{ plugin_octoprint_nanny_etc_os_release }}</pre>
+{{ plugin_octoprint_nanny_issue_txt }}</pre>
         </div>
     </div>
 </div>
