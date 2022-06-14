@@ -15,7 +15,8 @@
 <h3 class="panel-title">WebRTC Camera Streams</h3>
 <div class="panel-body" id="list">
     <div class="btn-group btn-group-sm">
-        <button class="btn btn-primary" autocomplete="off" id="watch">Start</button>
+        <button class="btn btn-primary" id="octoprint_nanny_start" data-bind="{ click: nnstreamerStart, visible: showStart }">Start</button>
+        <button class="btn btn-primary" id="octoprint_nanny_start" data-bind="{click: nnstreamerStop, visible: !showStart }">Stop</button>
         <div class="btn-group btn-group-sm">
             <button autocomplete="off" id="streamset" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                 Available streams: <span class="caret"></span>
@@ -23,6 +24,11 @@
             <ul id="streamslist" class="dropdown-menu" role="menu">
             </ul>
         </div>
+    </div>
+</div>
+<hr>
+<div data-bind="visible: errorMessages().length > 0" class="row" id="octoprint_nanny_webrtc_errors">
+    <div class="alert alert-danger span7" data-bind="text: errorMessages">
     </div>
 </div>
 <div class="row hide" id="info">

@@ -117,7 +117,7 @@ Janus.useDefaultDependencies = function (deps) {
       }
 
       var fetching = f(url, fetchOptions).catch(function (error) {
-        return p.reject({ message: 'Probably a network error, is the server down?', error: error });
+        return p.reject({ message: 'Connection to WebRTC server failed ' + url, error: error });
       });
 
       /*
