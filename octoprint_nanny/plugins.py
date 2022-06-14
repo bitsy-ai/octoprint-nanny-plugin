@@ -16,6 +16,7 @@ from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
+    issue_txt,
     printnanny_device,
     printnanny_version,
     printnanny_config,
@@ -225,13 +226,6 @@ class OctoPrintNannyPlugin(
 
     def get_template_vars(self):
         custom = {
-            "config": printnanny_config(),
-            # @ todo is there a covenience method to get all plugin settings?
-            # https://docs.octoprint.org/en/master/modules/plugin.html?highlight=settings%20get#octoprint.plugin.PluginSettings.get
-            "settings": {
-                key: self._settings.get([key])
-                for key in self.get_settings_defaults().keys()
-            },
             "urls": {
                 "getting_started_guide": "https://bitsy-ai.notion.site/Getting-Started-with-Print-Nanny-OS-817bc65297ff44a085120c663dced5f3",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
@@ -241,12 +235,10 @@ class OctoPrintNannyPlugin(
             "printnanny_device": printnanny_device(),
             "janus_edge_hostname": janus_edge_hostname(),
             "janus_edge_api_token": janus_edge_api_token(),
+            "issue_txt": issue_txt(),
             "etc_os_release": etc_os_release(),
+            "config": printnanny_config(),
         }
-        version_info = printnanny_version()
-        if version_info is not None:
-            custom.update(version_info)
-        logger.info("get_template_vars=%s", custom)
         return custom
 
     ## Wizard plugin mixin

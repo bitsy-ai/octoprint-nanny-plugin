@@ -115,9 +115,29 @@ def janus_edge_api_token() -> str:
     return environ.get("JANUS_EDGE_API_TOKEN", "janustoken")
 
 
-def etc_os_release() -> str:
+def issue_txt() -> str:
     """
-    Captures the contents of /etc/os-release as plain text
+    Captured the contents of /boot/issue.txt as plain text
     """
-    f = open("/etc/os-release", "r")
-    return f.read().strip()
+    try:
+        result = open("/boot/issue.txt", "r").read().strip()
+    except Exception as e:
+        logger.error("Failed to read /boot/issue.txt %s", e)
+        result = "Failed to read /boot/issue.txt"
+    return result
+
+
+def etc_os_release() -> Dict[str, str]:
+    """
+    Captures the contents of /etc/os-release as a dictionary
+    """
+    f = open("/etc/os-release", "r").read()
+    result = dict(ID="unknown")
+    try:
+        lines = f.strip().split("\n")
+        for line in lines:
+            k, v = line.split("=")
+            result[k] = v
+    except Exception as e:
+        logger.error("Error parsing contents of /etc/os-release %s", e)
+    return result
