@@ -28,7 +28,7 @@
 <div class="row-fluid">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account') }}</a></li>
-        <li><a href="#{{template_name}}_about" data-toggle="tab">{{ _('About') }}</a></li>
+        <li><a href="#{{template_name}}_report_issue" data-toggle="tab">{{ _('Report an Issue') }}</a></li>
     </ul>
 
     <div class="tab-content">
@@ -47,8 +47,14 @@
                 </div>
             </fieldset>
         </div>
-        <div id="{{template_name}}_about" class="tab-pane">
-
+        <div id="{{template_name}}_report_issue" class="tab-pane">
+            
+            <h3>ℹ️ Please include the info below when opening an issue.</h3>
+            <a target="_blank" href="https://github.com/bitsy-ai/printnanny-os/issues" class="btn btn-primary">Search Open Issues</a>
+            <a target="_blank" href="https://github.com/bitsy-ai/printnanny-os/issues/new/choose" class="btn btn-secondary">Create New Issue</a>
+            <hr>
+            <pre>
+{{ plugin_octoprint_nanny_etc_os_release }}</pre>
         </div>
     </div>
 </div>
