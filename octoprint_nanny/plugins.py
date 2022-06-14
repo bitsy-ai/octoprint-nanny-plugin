@@ -18,7 +18,6 @@ from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     issue_txt,
     printnanny_device,
-    printnanny_version,
     printnanny_config,
     printnanny_user,
     printnanny_device,
