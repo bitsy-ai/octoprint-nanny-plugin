@@ -113,3 +113,11 @@ def janus_edge_hostname() -> str:
 
 def janus_edge_api_token() -> str:
     return environ.get("JANUS_EDGE_API_TOKEN", "janustoken")
+
+
+def etc_os_release() -> str:
+    """
+    Captures the contents of /etc/os-release as plain text
+    """
+    f = open("/etc/os-release", "r")
+    return f.read().strip()
