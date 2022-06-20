@@ -226,7 +226,7 @@ class OctoPrintNannyPlugin(
     def get_template_vars(self):
         custom = {
             "urls": {
-                "getting_started_guide": "https://bitsy-ai.notion.site/Getting-Started-with-Print-Nanny-OS-817bc65297ff44a085120c663dced5f3",
+                "getting_started_guide": "https://github.com/bitsy-ai/printnanny-os/blob/main/docs/INSTALL.MD",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "cloud": "https://printnanny.ai",
             },
