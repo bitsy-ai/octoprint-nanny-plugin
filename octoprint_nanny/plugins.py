@@ -17,10 +17,7 @@ from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     issue_txt,
-    printnanny_device,
     printnanny_config,
-    printnanny_user,
-    printnanny_device,
     janus_edge_hostname,
     janus_edge_api_token,
     etc_os_release,
@@ -230,8 +227,6 @@ class OctoPrintNannyPlugin(
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "cloud": "https://printnanny.ai",
             },
-            "printnanny_user": printnanny_user(),
-            "printnanny_device": printnanny_device(),
             "janus_edge_hostname": janus_edge_hostname(),
             "janus_edge_api_token": janus_edge_api_token(),
             "issue_txt": issue_txt(),
