@@ -106,3 +106,8 @@ def etc_os_release() -> Dict[str, str]:
     except Exception as e:
         logger.error("Error parsing contents of /etc/os-release %s", e)
     return result
+
+
+def is_printnanny_os() -> bool:
+    osrelease = etc_os_release()
+    return osrelease.get("ID") == "printnanny"
