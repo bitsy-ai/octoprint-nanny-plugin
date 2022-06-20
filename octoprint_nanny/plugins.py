@@ -15,6 +15,7 @@ from octoprint_nanny.utils.printnanny_os import (
     janus_edge_hostname,
     janus_edge_api_token,
     etc_os_release,
+    is_printnanny_os,
 )
 from octoprint_nanny.utils.logger import configure_logger
 
@@ -48,6 +49,7 @@ class OctoPrintNannyPlugin(
     def __init__(self, *args, **kwargs):
         self._log_path = None
         self.worker_manager = WorkerManager(plugin=self)
+        self.is_printnanny_os = is_printnanny_os()
         super().__init__(*args, **kwargs)
 
     ##
@@ -82,15 +84,13 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        events_enabled = self._settings.get(["events_enabled"])
-        config = self._settings.get(["printnanny_config"])
-        if config is None:
+        if is_printnanny_os():
+            try_handle_event(event, payload)
+        else:
             logger.warning(
                 "PrintNanny OS not detected or device is not registered. Ignoring event %s",
                 event,
             )
-            return
-        try_handle_event(event, payload, config=config, events_enabled=events_enabled)
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
