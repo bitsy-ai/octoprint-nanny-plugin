@@ -1,5 +1,5 @@
 <div class="row-fluid">
-    <a href="{{ plugin_octoprint_nanny_urls.cloud }}"><img src="plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
+    <a href="{{ plugin_octoprint_nanny_urls.webapp }}"><img src="plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
     <hr>
     <h3>⁉️ Help & Support</h3>
     <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}" target="_blank"><button class="btn btn-primary">Getting Started Guide</button></a>
@@ -9,7 +9,7 @@
 </div>
 <div class="row-fluid">
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account Info') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Settings') }}</a></li>
         <li><a href="#{{template_name}}_report_issue" data-toggle="tab">{{ _('Report an Issue') }}</a></li>
     </ul>
 
@@ -21,8 +21,8 @@
                                 <strong>⛔ PrintNanny OS is Required</strong>
                             </h2>
 
-                            <p>Failed to detect PrintNanny OS version from /etc/os-release</p>
-                <pre>{{ plugin_octoprint_nanny_etc_os_release}}</pre>
+                            <p>Failed to detect PrintNanny OS version from /etc/os-release.</p>
+                <pre>{{ plugin_octoprint_nanny_etc_os_release }}</pre>
                             <h4>
                                 Please follow the guide below to install PrintNanny OS (OctoPrint Edition). 
                             </h4>
@@ -30,18 +30,11 @@
                             <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}"><button class= "btn btn-primary btn-large">Getting Started Guide</button></a>
                 </div>
                 {% else %}
-                <h3>✅ Welcome to PrintNanny OS (OctoPrint Edition)</h3>
-                    {% if plugin_octoprint_nanny_config.user is not none %}
-                    <p>Your PrintNanny account is connected: <strong>{{ plugin_octoprint_nanny_config.user.email }}</strong></p>
-                    {% else %}
-                    <p>There was a problem loading your account info:</p>
-                    <pre>
-                    Command: {{ plugin_octoprint_nanny_config.cmd }}
-                    Stdout: {{ plugin_octoprint_nanny_config.stdout }}
-                    StdErr: {{ plugin_octoprint_nanny_config.stderr }}
-                    Returncode: {{ plugin_octoprint_nanny_config.returncode }}
-                    </pre>
-                    {% endif %}
+                <h2>Settings</h2>
+
+                <a href="{{ plugin_octoprint_nanny_urls.webapp }}/alerts/settings">Alert Settings</a>
+
+
                 {% endif %}
         </div>
         <div id="{{template_name}}_report_issue" class="tab-pane">

@@ -1,7 +1,4 @@
-import asyncio
 import logging
-import io
-import json
 import os
 import flask
 import octoprint.plugin
@@ -9,9 +6,6 @@ import octoprint.util
 from typing import Any, Dict, List
 
 from octoprint.events import Events
-
-import printnanny_api_client  # beta client
-from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
 
 from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
@@ -22,44 +16,14 @@ from octoprint_nanny.utils.printnanny_os import (
     janus_edge_api_token,
     etc_os_release,
 )
+from octoprint_nanny.utils.logger import configure_logger
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
-def configure_logger(logger, logfile_path):
-
-    file_logging_handler = CleaningTimedRotatingFileHandler(
-        logfile_path,
-        when="D",
-        backupCount=7,
-    )
-    file_logging_handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s - %(name)s - %(module)s - %(thread)d - %(levelname)s - %(message)s"
-        )
-    )
-    file_logging_handler.setLevel(logging.DEBUG)
-
-    logger.addHandler(file_logging_handler)
-
-    logger.info(f"Logger file handler added {file_logging_handler}")
-
-
-DEFAULT_API_URL = os.environ.get(
-    "OCTOPRINT_NANNY_API_URL", "https://print-nanny.com/api/"
+PRINTNANNY_WEBAPP_BASE_URL = os.environ.get(
+    "PRINTNANNY_WEBAPP_BASE_URL", "https://printnanny.ai"
 )
-DEFAULT_WS_URL = os.environ.get("OCTOPRINT_NANNY_WS_URL", "wss://print-nanny.com/ws/")
-DEFAULT_SNAPSHOT_URL = os.environ.get(
-    "OCTOPRINT_NANNY_SNAPSHOT_URL", "http://localhost:8080/?action=snapshot"
-)
-
-DEFAULT_MQTT_BRIDGE_PORT = os.environ.get("OCTOPRINT_NANNY_MQTT_BRIDGE_PORT", 443)
-DEFAULT_MQTT_BRIDGE_HOSTNAME = os.environ.get(
-    "OCTOPRINT_NANNY_MQTT_HOSTNAME", "mqtt.2030.ltsapis.goog"
-)
-DEFAULT_MQTT_ROOT_CERTIFICATE_URL = "https://pki.google.com/roots.pem"
-BACKUP_MQTT_ROOT_CERTIFICATE_URL = "https://pki.goog/gsr4/GSR4.crt"
-
 Events.PRINT_PROGRESS = "PrintProgress"
 
 
@@ -86,64 +50,10 @@ class OctoPrintNannyPlugin(
         self.worker_manager = WorkerManager(plugin=self)
         super().__init__(*args, **kwargs)
 
-    def _test_api_auth(self, auth_token: str, api_url: str):
-        response = asyncio.run_coroutine_threadsafe(
-            self._test_api_auth_async(auth_token, api_url), self.worker_manager.loop
-        )
-        if response.exception():
-            return response.exception()
-        else:
-            return response.result()
-
-    async def sync_printer_profiles(self, **kwargs) -> bool:
-        octoprint_device_id = self.get_setting("octoprint_device_id")
-        if octoprint_device_id is None:
-            return False
-        logger.info(
-            f"Syncing printer profiles for octoprint_device_id={octoprint_device_id}"
-        )
-        printer_profiles = self._printer_profile_manager.get_all()
-
-        # on sync, cache a local map of octoprint id <-> print nanny id mappings for debugging
-        id_map: Dict[str, Dict[str, int]] = {"octoprint": {}, "octoprint_nanny": {}}
-        for profile_id, profile in printer_profiles.items():
-            try:
-                created_profile = await self.worker_manager.plugin.settings.rest_client.update_or_create_printer_profile(
-                    profile, octoprint_device_id
-                )
-                id_map["octoprint"][profile_id] = created_profile.id
-                id_map["octoprint_nanny"][created_profile.id] = profile_id
-            except printnanny_api_client.exceptions.ApiException as e:
-                # octoprint device was deleted remotely
-                if e.status == 400:
-                    try:
-                        res = json.loads(e.body)
-                        if res.get("octoprint_device") is not None:
-                            self._reset_octoprint_device()
-                    except ValueError as e2:  # not all responses are JSON serializable right now (e.g. django default responses)
-                        pass
-                logger.error(f"Error syncing printer profiles {e.body}")
-                return False
-            except asyncio.TimeoutError as e:
-                logger.error(f"Connection to Print Nanny REST API timed out")
-                return False
-
-        logger.info(f"Synced {len(printer_profiles)} printer_profile")
-
-        filename = os.path.join(
-            self.get_plugin_data_folder(), "printer_profile_id_map.json"
-        )
-        with io.open(filename, "w+", encoding="utf-8") as f:
-            json.dump(id_map, f)
-        logger.info(
-            f"Wrote id map for {len(printer_profiles)} printer profiles to {filename}"
-        )
-        return True
-
     ##
     ## Octoprint api routes + handlers
     ##
-    @octoprint.plugin.BlueprintPlugin.route("/createBackup", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/backup", methods=["POST"])
     def create_backup(self):
         helpers = self._plugin_manager.get_helpers("backup", "create_backup")
 
@@ -156,15 +66,10 @@ class OctoPrintNannyPlugin(
             raise Exception("Plugin manager failed to get backup helper")
 
     def register_custom_events(self) -> List[str]:
-        remote_commands = [
-            "remote_command_received",
-            "remote_command_failed",
-            "remote_command_success",
-            "connect_test_mqtt_pong_success",
+        return [
             "nnstreamer_start",
             "nnstreamer_stop",
         ]
-        return remote_commands
 
     def on_shutdown(self):
         logger.info("Running on_shutdown handler")
@@ -211,8 +116,6 @@ class OctoPrintNannyPlugin(
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         DEFAULT_SETTINGS = dict(
-            backup_auto=False,
-            analytics_enabled=False,
             events_enabled=False,
             wizard_complete=-1,
         )
@@ -225,7 +128,7 @@ class OctoPrintNannyPlugin(
             "urls": {
                 "getting_started_guide": "https://github.com/bitsy-ai/printnanny-os/blob/main/docs/INSTALL.MD",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
-                "cloud": "https://printnanny.ai",
+                "webapp": PRINTNANNY_WEBAPP_BASE_URL,
             },
             "janus_edge_hostname": janus_edge_hostname(),
             "janus_edge_api_token": janus_edge_api_token(),
