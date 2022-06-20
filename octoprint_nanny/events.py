@@ -91,13 +91,9 @@ def try_publish_event(
             raise SetupIncompleteError(
                 "PrintNanny conf.d [octoprint_server] is not set"
             )
-        try:
-            req = event_request(event, payload, device, octoprint_server)
-            try_write_socket(req, socket)
-            return req
-        except Exception as e:
-            logger.error("Error publishing event=%s error=%s", event, e)
-            return None
+        req = event_request(event, payload, device, octoprint_server)
+        try_write_socket(req, socket)
+        return req
     else:
         logger.debug("Ignoring event %s", event)
         return None
@@ -113,3 +109,4 @@ def try_handle_event(
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s", event, payload, e
         )
+        return None

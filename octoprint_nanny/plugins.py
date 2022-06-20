@@ -134,7 +134,7 @@ class OctoPrintNannyPlugin(
             "janus_edge_api_token": janus_edge_api_token(),
             "issue_txt": issue_txt(),
             "etc_os_release": etc_os_release(),
-            "config": printnanny_config(),
+            "config": load_printnanny_config(),
         }
         return custom
 

@@ -20,12 +20,10 @@ class PrintNannyConfig(TypedDict):
     config: Dict[str, Any]
 
 
-def load_printnanny_config() -> Optional[Dict[str, Any]]:
+def load_printnanny_config() -> PrintNannyConfig:
     cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
-    user = None
-    alert_settings = None
-    device = None
     returncode = None
+    config: Dict[str, Any] = dict()
 
     # run /usr/bin/printnanny config show -F json
     try:
@@ -38,7 +36,11 @@ def load_printnanny_config() -> Optional[Dict[str, Any]]:
                 f"Failed to get printnanny config cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
             )
             return PrintNannyConfig(
-                cmd=cmd, stdout=stdout, returncode=returncode, config=config
+                cmd=cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                config=config,
             )
     # FileNotFoundError thrown when PRINTNANNY_BIN is not found
     except FileNotFoundError as e:
@@ -49,15 +51,13 @@ def load_printnanny_config() -> Optional[Dict[str, Any]]:
     # parse JSON
     try:
         config = json.loads(stdout)
-        logger.info("Parsed PrintNanny config JSON")
-        user = config.get("user")
-        device = config.get("device")
-        alert_settings = config.get("alert_settings")
+        logger.info("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(
         cmd=cmd,
         stdout=stdout,
+        stderr=stderr,
         config=config,
         returncode=returncode,
     )
