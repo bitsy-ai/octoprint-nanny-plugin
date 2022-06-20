@@ -21,7 +21,11 @@ def test_handle_events_enabled_true(mock_try_write_socket, mock_printnanny_confi
         stdout="",
         stderr="",
         returncode=0,
-        config={"device": {"id": 1}, "paths": {"events_socket": "test.sock"}},
+        config={
+            "device": {"id": 1},
+            "paths": {"events_socket": "test.sock"},
+            "octoprint_server": {"id": 1},
+        },
     )
     try_handle_event(
         "Startup",

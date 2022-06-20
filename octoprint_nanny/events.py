@@ -63,7 +63,7 @@ def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
 
 
 def event_request(
-    event: str, payload: Dict[Any, Any], device: int
+    event: str, payload: Dict[Any, Any], device: int, octoprint_server: int
 ) -> printnanny_api_client.models.OctoPrintEventRequest:
     return printnanny_api_client.models.OctoPrintEventRequest(
         model="OctoPrintEvent",
@@ -71,6 +71,7 @@ def event_request(
         event_name=event,
         payload=payload,
         device=device,
+        octoprint_server=octoprint_server,
     )
 
 
@@ -99,21 +100,24 @@ def try_publish_event(
     """
     if should_publish_event(event, payload):
         config = load_printnanny_config()["config"]
-
-        import pdb
-
-        pdb.set_trace()
         if config is None:
             raise SetupIncompleteError("PrintNanny conf.d is not set")
         device = config.get("device", {}).get("id")
         socket = config.get("paths", {}).get("events_socket")
+        octoprint_server = config.get("octoprint_server", {}).get("id")
         if device is None:
-            raise SetupIncompleteError("PrintNanny conf.d device is not set")
+            raise SetupIncompleteError("PrintNanny conf.d [device] is not set")
         if socket is None:
-            raise SetupIncompleteError("printnanny_config.events_socket is not set")
+            raise SetupIncompleteError(
+                "PrintNanny conf.d [paths.events_socket] is not set"
+            )
+        if octoprint_server is None:
+            raise SetupIncompleteError(
+                "PrintNanny conf.d [octoprint_server] is not set"
+            )
         try:
-            req = event_request(event, payload, device)
-            try_write_socket(req, config["events_socket"])
+            req = event_request(event, payload, device, octoprint_server)
+            try_write_socket(req, socket)
             return req
         except Exception as e:
             logger.error("Error publishing event=%s error=%s", event, e)
