@@ -6,7 +6,6 @@ from typing import Dict, Any, Optional
 # TODO descriminator models not getting generated in python?
 import printnanny_api_client.models
 from octoprint_nanny.exceptions import SetupIncompleteError
-from octoprint_nanny.utils.printnanny_os import printnanny_config
 
 logger = logging.getLogger(__name__)
 # see available events: https://docs.octoprint.org/en/master/events/index.html#id5
