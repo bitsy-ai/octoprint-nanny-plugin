@@ -17,9 +17,7 @@ class PrintNannyConfig(TypedDict):
     stderr: str
     returncode: Optional[int]
 
-    device: Optional[printnanny_api_client.models.Device]
-    user: Optional[printnanny_api_client.models.User]
-    alert_settings: Optional[printnanny_api_client.models.AlertSettings]
+    config: Dict[str, Any]
 
 
 def printnanny_config() -> Optional[Dict[str, Any]]:
@@ -40,12 +38,7 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
                 f"Failed to get printnanny config cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
             )
             return PrintNannyConfig(
-                cmd=cmd,
-                stdout=stdout,
-                user=user,
-                returncode=returncode,
-                device=device,
-                alert_settings=alert_settings,
+                cmd=cmd, stdout=stdout, returncode=returncode, config=config
             )
     # FileNotFoundError thrown when PRINTNANNY_BIN is not found
     except FileNotFoundError as e:
@@ -65,10 +58,8 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
     return PrintNannyConfig(
         cmd=cmd,
         stdout=stdout,
-        user=user,
+        config=config,
         returncode=returncode,
-        device=device,
-        alert_settings=alert_settings,
     )
 
 

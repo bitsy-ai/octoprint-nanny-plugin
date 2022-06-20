@@ -2,6 +2,7 @@ import logging
 import socket
 import json
 from typing import Dict, Any, Optional
+from octoprint_nanny.utils.printnanny_os import PrintNannyConfig
 
 # TODO descriminator models not getting generated in python?
 import printnanny_api_client.models
@@ -34,7 +35,7 @@ def should_publish_event(event: str) -> bool:
 
 
 def event_request(
-    event: str, payload: Dict[Any, Any], device: int, octoprint_install: int
+    event: str, payload: Dict[Any, Any], device: int
 ) -> printnanny_api_client.models.OctoPrintEventRequest:
     return printnanny_api_client.models.OctoPrintEventRequest(
         model="OctoPrintEvent",
@@ -42,7 +43,6 @@ def event_request(
         event_name=event,
         payload=payload,
         device=device,
-        octoprint_install=octoprint_install,
     )
 
 
@@ -64,20 +64,21 @@ def try_write_socket(
 
 
 def try_publish_event(
-    event: str, payload: Dict[Any, Any], config: Dict[Any, Any]
+    event: str, payload: Dict[Any, Any], topic="octoprint_events"
 ) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
+    """
+    Publish event to MQTT
+    """
     if should_publish_event(event):
+        config = PrintNannyConfig
         device = config.get("device", {}).get("id")
-        octoprint_install = config.get("octoprint_install", {}).get("id")
         socket = config.get("events_socket")
         if device is None:
-            raise SetupIncompleteError("printnanny_config.device is not set")
-        if octoprint_install is None:
-            raise SetupIncompleteError("printnanny_config.octoprint_install is not set")
+            raise SetupIncompleteError("PrintNanny conf.d device is not set")
         if socket is None:
             raise SetupIncompleteError("printnanny_config.events_socket is not set")
         try:
-            req = event_request(event, payload, device, octoprint_install)
+            req = event_request(event, payload, device)
             try_write_socket(req, config["events_socket"])
             return req
         except Exception as e:
@@ -91,12 +92,10 @@ def try_publish_event(
 def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
-    config: Dict[Any, Any],
-    events_enabled: bool = True,
 ) -> Optional[printnanny_api_client.models.OctoPrintEventRequest]:
-    if events_enabled:
-        return try_publish_event(event, payload, config)
-    logger.debug(
-        "Skipping publish for event=%s, events_enabled=%s", event, events_enabled
-    )
-    return None
+    try:
+        return try_publish_event(event, payload)
+    except Exception as e:
+        logger.error(
+            "Error on publish for event=%s, payload=%s error=%s", event, payload, e
+        )

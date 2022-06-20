@@ -136,17 +136,9 @@ printnanny-dash-debug: $(PRINTNANNY_CONFIG) printnanny-cli-debug printnanny-test
 	cd $(PRINTNANNY_CLI_WORKSPACE)/dash && cargo run -- --config $(PRINTNANNY_CONFIG)
 
 dev: .octoprint printnanny-cli-debug $(PRINTNANNY_CONFIG)
-	PRINTNANNY_PROFILE=local \
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
-	OCTOPRINT_NANNY_MAX_BACKOFF_TIME=4 \
-	OCTOPRINT_NANNY_GCP_PROJECT_ID="print-nanny-sandbox" \
-	OCTOPRINT_NANNY_API_URL="${OCTOPRINT_NANNY_API_URL}" \
-	OCTOPRINT_NANNY_WS_URL="${OCTOPRINT_NANNY_WS_URL}" \
-	OCTOPRINT_NANNY_STATIC_URL="${OCTOPRINT_NANNY_STATIC_URL}" \
-	OCTOPRINT_NANNY_HONEYCOMB_DATASET="printnanny_plugin_sandbox" \
 	PYTHONASYNCIODEBUG=True \
-	OCTOPRINT_NANNY_HONEYCOMB_DEBUG=True \
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
 test:
