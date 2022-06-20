@@ -11,7 +11,7 @@ from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     issue_txt,
-    printnanny_config,
+    load_printnanny_config,
     janus_edge_hostname,
     janus_edge_api_token,
     etc_os_release,

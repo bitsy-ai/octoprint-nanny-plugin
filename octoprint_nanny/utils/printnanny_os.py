@@ -20,7 +20,7 @@ class PrintNannyConfig(TypedDict):
     config: Dict[str, Any]
 
 
-def printnanny_config() -> Optional[Dict[str, Any]]:
+def load_printnanny_config() -> Optional[Dict[str, Any]]:
     cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
     user = None
     alert_settings = None

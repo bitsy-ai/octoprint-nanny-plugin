@@ -1,7 +1,7 @@
+from octoprint_nanny.utils.printnanny_os import PrintNannyConfig
 import pytest
-from unittest.mock import patch, MagicMock
-from octoprint_nanny.events import try_handle_event
-from octoprint_nanny.exceptions import SetupIncompleteError
+from unittest.mock import patch
+from octoprint_nanny.events import should_publish_event, try_handle_event
 
 
 @patch("octoprint_nanny.events.try_write_socket")
@@ -9,29 +9,41 @@ def test_handle_untracked_event(mock_try_write_socket):
     try_handle_event(
         "someuntrackedevent",
         dict(),
-        dict(
-            octoprint_install=dict(id=1), device=dict(id=1), events_socket="test.sock"
-        ),
-        events_enabled=True,
     )
     assert not mock_try_write_socket.called
 
 
+@patch("octoprint_nanny.events.load_printnanny_config")
 @patch("octoprint_nanny.events.try_write_socket")
-def test_handle_events_enabled_true(mock_try_write_socket):
+def test_handle_events_enabled_true(mock_try_write_socket, mock_printnanny_config):
+    mock_printnanny_config.return_value = PrintNannyConfig(
+        cmd=["mock", "cmd"],
+        stdout="",
+        stderr="",
+        returncode=0,
+        config={"device": {"id": 1}, "paths": {"events_socket": "test.sock"}},
+    )
     try_handle_event(
         "Startup",
         dict(),
-        dict(
-            octoprint_install=dict(id=1), device=dict(id=1), events_socket="test.sock"
-        ),
-        events_enabled=True,
     )
-    assert mock_try_write_socket.called
+    assert mock_try_write_socket.called is True
 
 
-@patch("octoprint_nanny.events.try_write_socket")
-def test_handle_setup_incomplete(mock_try_write_socket):
-    with pytest.raises(SetupIncompleteError):
-        try_handle_event("Startup", dict(), dict(), events_enabled=True)
-    assert not mock_try_write_socket.called
+@patch("octoprint_nanny.events.load_printnanny_config")
+def test_should_publish_print_progress(mock_printnanny_config):
+    mock_printnanny_config.return_value = PrintNannyConfig(
+        cmd=["mock", "cmd"],
+        stdout="",
+        stderr="",
+        returncode=0,
+        config={"alert_settings": {"print_progress_percent": 25}},
+    )
+    event = "PrintProgress"
+    payload = dict(
+        progress=25, path="path/to/fake/print", storage="mock_filename.gcode"
+    )
+
+    result = should_publish_event(event, payload)
+
+    assert result is True
