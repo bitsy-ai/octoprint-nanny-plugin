@@ -49,7 +49,7 @@ $(TMP_DIR)/workspace:
 
 $(PRINTNANNY_KEYS):
 	mkdir -p $(PRINTNANNY_KEYS)
-	$(PRINTNANNY_BIN) generate-keys --output $(PRINTNANNY_KEYS)
+	$(PRINTNANNY_BIN) config generate-keys --output $(PRINTNANNY_KEYS)
 
 $(PRINTNANNY_CLI_WORKSPACE): $(TMP_DIR)/workspace
 	cd $(TMP_DIR)/workspace && git clone --branch $(PRINTNANNY_CLI_GIT_BRANCH) $(PRINTNANNY_CLI_GIT_REPO) || (cd $(PRINTNANNY_CLI_WORKSPACE) && git checkout $(PRINTNANNY_CLI_GIT_BRANCH) && git pull)
@@ -69,11 +69,10 @@ $(PRINTNANNY_CONFIG): $(TMP_DIR)
 	j2 Local.j2 > $(PRINTNANNY_CONFIG)
 
 $(PRINTNANNY_OS_RELEASE): $(TMP_DIR)/cfg
-	cp tests/fixtures/os-release $(TMP_DIR)/os-release
+	cp tests/fixtures/os-release $(PRINTNANNY_OS_RELEASE)
 
 .octoprint:
 	mkdir .octoprint
-
 
 mypy:
 	mypy octoprint_nanny/
@@ -145,7 +144,7 @@ dev-other-os: .octoprint
 
 check-license: $(PRINTNANNY_OS_RELEASE) printnanny-cli-debug $(PRINTNANNY_KEYS) $(PRINTNANNY_CONFD) $(PRINTNANNY_CONFIG)
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
-	strace $(PRINTNANNY_BIN) -vvv check-license
+	$(PRINTNANNY_BIN) -vvv check-license
 
 dev: .octoprint check-license
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
