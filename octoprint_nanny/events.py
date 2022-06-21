@@ -1,4 +1,5 @@
 import logging
+from shutil import ExecError
 import socket
 import json
 from typing import Dict, Any, Optional
@@ -55,7 +56,7 @@ def try_write_socket(
     request: printnanny_api_client.models.OctoPrintEventRequest, events_socket: str
 ) -> None:
     data = json.dumps(request.to_dict()).encode("utf-8")
-    logger.debug(
+    logger.info(
         "Publishing data %s to socket %s",
         data,
         events_socket,
@@ -80,7 +81,7 @@ def try_publish_event(
             raise SetupIncompleteError("PrintNanny conf.d is not set")
         device = config.get("device", {}).get("id")
         socket = config.get("paths", {}).get("events_socket")
-        octoprint_server = config.get("octoprint_server", {}).get("id")
+        octoprint_server = config.get("octoprint", {}).get("server", {}).get("id")
         if device is None:
             raise SetupIncompleteError("PrintNanny conf.d [device] is not set")
         if socket is None:
@@ -89,10 +90,15 @@ def try_publish_event(
             )
         if octoprint_server is None:
             raise SetupIncompleteError(
-                "PrintNanny conf.d [octoprint_server] is not set"
+                "PrintNanny conf.d [octoprint.server] is not set"
             )
         req = event_request(event, payload, device, octoprint_server)
-        try_write_socket(req, socket)
+        try:
+            try_write_socket(req, socket)
+        except Exception as e:
+            logger.error(
+                "Error writing event=%s to socket=%s error=%s", event, socket, repr(e)
+            )
         return req
     else:
         logger.debug("Ignoring event %s", event)
@@ -107,6 +113,9 @@ def try_handle_event(
         return try_publish_event(event, payload)
     except Exception as e:
         logger.error(
-            "Error on publish for event=%s, payload=%s error=%s", event, payload, e
+            "Error on publish for event=%s, payload=%s error=%s",
+            event,
+            payload,
+            repr(e),
         )
         return None
