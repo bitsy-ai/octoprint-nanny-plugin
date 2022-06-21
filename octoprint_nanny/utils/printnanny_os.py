@@ -87,7 +87,9 @@ def etc_os_release() -> Dict[str, str]:
     """
     Captures the contents of /etc/os-release as a dictionary
     """
-    f = open("/etc/os-release", "r").read()
+    config = load_printnanny_config()
+    os_release = config["config"].get("paths", {}).get("os_release", "/etc/os-release")
+    f = open(os_release, "r").read()
     result = dict(ID="unknown")
     try:
         lines = f.strip().split("\n")
@@ -95,7 +97,7 @@ def etc_os_release() -> Dict[str, str]:
             k, v = line.split("=")
             result[k] = v
     except Exception as e:
-        logger.error("Error parsing contents of /etc/os-release %s", e)
+        logger.error("Error parsing contents of %s %s", os_release, e)
     return result
 
 
