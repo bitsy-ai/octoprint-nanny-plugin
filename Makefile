@@ -144,7 +144,14 @@ dev-other-os: .octoprint
 check-license: $(PRINTNANNY_OS_RELEASE) printnanny-cli-debug $(PRINTNANNY_KEYS) $(PRINTNANNY_CONFD) $(PRINTNANNY_CONFIG)
 	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv check-license
 
-dev: .octoprint check-license
+$(TMP_DIR)/ca-certs:
+	mkdir -p $(TMP_DIR)/ca-certs
+	curl https://pki.goog/gtsltsr/gtsltsr.crt > "$(TMP_DIR)/ca-certs/gtsltsr.crt"
+
+$(TMP_DIR)/events.sock: check-license $(TMP_DIR)/ca-certs
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe
+
+dev: .octoprint $(TMP_DIR)/events.sock
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
 	PYTHONASYNCIODEBUG=True \
@@ -162,3 +169,4 @@ install-git-hooks:
 bitbake:
 	pipoe --package octoprint-nanny --python python3 --outdir $(BITBAKE_RECIPE) --default-license AGPLv3
 	find $(BITBAKE_RECIPE) -type f -exec sed -i.bak "s/RDEPENDS_${PN}/RDEPENDS:${PN}/g" {} \;
+

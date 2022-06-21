@@ -12,9 +12,9 @@ base_path = "{{ OCTOPRINT_CONFIG_DIR }}"
 venv_path = "{{ OCTOPRINT_VENV_DIR }}"
 
 [mqtt]
-private_key = "{{ TMP_DIR }}/local/keys/ec_private.pem"
-public_key = "{{ TMP_DIR }}/local/keys/ec_public.pem"
-ca_certs = ["{{ TMP_DIR }}/local/ca-certificates/gtsltsr.crt"]
+private_key = "{{ TMP_DIR }}/keys/ec_private.pem"
+public_key = "{{ TMP_DIR }}/keys/ec_public.pem"
+ca_certs = ["{{ TMP_DIR }}/ca-certs/gtsltsr.crt"]
 fingerprint = "{{ FINGERPRINT }}"
 fingerprint_algorithm = "md5"
 cipher = "secp256r1"
