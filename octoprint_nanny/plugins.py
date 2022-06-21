@@ -116,7 +116,6 @@ class OctoPrintNannyPlugin(
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         DEFAULT_SETTINGS = dict(
-            events_enabled=False,
             wizard_complete=-1,
         )
         return DEFAULT_SETTINGS

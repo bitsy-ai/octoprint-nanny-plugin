@@ -1,0 +1,15 @@
+ID=printnanny
+ID_LIKE="BitsyLinux"
+BUILD_ID="2022-06-18T18:46:49Z"
+NAME="PrintNanny Linux"
+VERSION="0.1.2 (Amber)"
+VERSION_ID=0.1.2
+PRETTY_NAME="PrintNanny Linux 0.1.2 (Amber)"
+DISTRO_CODENAME="Amber"
+HOME_URL="https://printnanny.ai"
+BUG_REPORT_URL="https://github.com/bitsy-ai/printnanny-os/issues"
+YOCTO_VERSION="4.0.1"
+YOCTO_CODENAME="Kirkstone"
+SDK_VERSION="0.1.2"
+VARIANT="PrintNanny OctoPrint Edition"
+VARIANT_ID=printnanny-octoprint
