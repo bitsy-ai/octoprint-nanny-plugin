@@ -62,9 +62,10 @@ $(function () {
             stopStream();
         }
 
-        OctoPrint.socket.onMessage("*", function (message) {
-            console.log(message);
-        })
+        // TODO enable pass messages to vue app
+        // OctoPrint.socket.onMessage("*", function (message) {
+        //     console.log(message);
+        // })
     }
 
     PrintNannyTabViewModel.prototype.koDescendantsComplete = function (node) {

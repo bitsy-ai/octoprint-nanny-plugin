@@ -4,8 +4,6 @@ import logging
 import json
 import subprocess
 
-import printnanny_api_client.models
-
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
@@ -51,7 +49,7 @@ def load_printnanny_config() -> PrintNannyConfig:
     # parse JSON
     try:
         config = json.loads(stdout)
-        logger.info("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
+        logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(

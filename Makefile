@@ -148,14 +148,17 @@ $(TMP_DIR)/ca-certs:
 	mkdir -p $(TMP_DIR)/ca-certs
 	curl https://pki.goog/gtsltsr/gtsltsr.crt > "$(TMP_DIR)/ca-certs/gtsltsr.crt"
 
-$(TMP_DIR)/events.sock: check-license $(TMP_DIR)/ca-certs
-	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe &
+dev-events-sub: check-license $(TMP_DIR)/ca-certs
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe
 
-dev: .octoprint $(TMP_DIR)/events.sock
+dev-events-pub: check-license $(TMP_DIR)/ca-certs
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event publish
+
+dev: .octoprint check-license
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
 	PYTHONASYNCIODEBUG=True \
-	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
+	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint --debug
 
 test:
 	pytest --log-level=DEBUG

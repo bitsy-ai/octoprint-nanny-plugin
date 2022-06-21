@@ -8,7 +8,6 @@ from typing import Any, Dict, List
 from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
-from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     issue_txt,
     load_printnanny_config,
@@ -48,7 +47,6 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
-        self.worker_manager = WorkerManager(plugin=self)
         self.is_printnanny_os = is_printnanny_os()
         super().__init__(*args, **kwargs)
 
@@ -111,7 +109,11 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, progress):
         octoprint_job = self._printer.get_current_job()
-        pass
+        payload = dict(
+            octoprint_job=octoprint_job, storage=storage, path=path, progress=progress
+        )
+        logger.info("PrintProgress payload%s", payload)
+        self.on_event(Events.PRINT_PROGRESS, payload)
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
