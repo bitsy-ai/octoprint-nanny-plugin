@@ -149,7 +149,7 @@ $(TMP_DIR)/ca-certs:
 	curl https://pki.goog/gtsltsr/gtsltsr.crt > "$(TMP_DIR)/ca-certs/gtsltsr.crt"
 
 $(TMP_DIR)/events.sock: check-license $(TMP_DIR)/ca-certs
-	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe &
 
 dev: .octoprint $(TMP_DIR)/events.sock
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
