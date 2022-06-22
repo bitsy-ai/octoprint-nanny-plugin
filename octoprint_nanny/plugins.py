@@ -8,10 +8,9 @@ from typing import Any, Dict, List
 from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
-from octoprint_nanny.manager import WorkerManager
 from octoprint_nanny.utils.printnanny_os import (
     issue_txt,
-    printnanny_config,
+    load_printnanny_config,
     janus_edge_hostname,
     janus_edge_api_token,
     etc_os_release,
@@ -48,7 +47,6 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
-        self.worker_manager = WorkerManager(plugin=self)
         self.is_printnanny_os = is_printnanny_os()
         super().__init__(*args, **kwargs)
 
@@ -111,12 +109,15 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, progress):
         octoprint_job = self._printer.get_current_job()
-        pass
+        payload = dict(
+            octoprint_job=octoprint_job, storage=storage, path=path, progress=progress
+        )
+        logger.info("PrintProgress payload%s", payload)
+        self.on_event(Events.PRINT_PROGRESS, payload)
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
         DEFAULT_SETTINGS = dict(
-            events_enabled=False,
             wizard_complete=-1,
         )
         return DEFAULT_SETTINGS
@@ -134,7 +135,7 @@ class OctoPrintNannyPlugin(
             "janus_edge_api_token": janus_edge_api_token(),
             "issue_txt": issue_txt(),
             "etc_os_release": etc_os_release(),
-            "config": printnanny_config(),
+            "config": load_printnanny_config(),
         }
         return custom
 

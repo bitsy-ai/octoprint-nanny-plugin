@@ -4,8 +4,6 @@ import logging
 import json
 import subprocess
 
-import printnanny_api_client.models
-
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
@@ -17,17 +15,13 @@ class PrintNannyConfig(TypedDict):
     stderr: str
     returncode: Optional[int]
 
-    device: Optional[printnanny_api_client.models.Device]
-    user: Optional[printnanny_api_client.models.User]
-    alert_settings: Optional[printnanny_api_client.models.AlertSettings]
+    config: Dict[str, Any]
 
 
-def printnanny_config() -> Optional[Dict[str, Any]]:
+def load_printnanny_config() -> PrintNannyConfig:
     cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
-    user = None
-    alert_settings = None
-    device = None
     returncode = None
+    config: Dict[str, Any] = dict()
 
     # run /usr/bin/printnanny config show -F json
     try:
@@ -42,10 +36,9 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
             return PrintNannyConfig(
                 cmd=cmd,
                 stdout=stdout,
-                user=user,
+                stderr=stderr,
                 returncode=returncode,
-                device=device,
-                alert_settings=alert_settings,
+                config=config,
             )
     # FileNotFoundError thrown when PRINTNANNY_BIN is not found
     except FileNotFoundError as e:
@@ -56,19 +49,15 @@ def printnanny_config() -> Optional[Dict[str, Any]]:
     # parse JSON
     try:
         config = json.loads(stdout)
-        logger.info("Parsed PrintNanny config JSON")
-        user = config.get("user")
-        device = config.get("device")
-        alert_settings = config.get("alert_settings")
+        logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(
         cmd=cmd,
         stdout=stdout,
-        user=user,
+        stderr=stderr,
+        config=config,
         returncode=returncode,
-        device=device,
-        alert_settings=alert_settings,
     )
 
 
@@ -96,7 +85,9 @@ def etc_os_release() -> Dict[str, str]:
     """
     Captures the contents of /etc/os-release as a dictionary
     """
-    f = open("/etc/os-release", "r").read()
+    config = load_printnanny_config()
+    os_release = config["config"].get("paths", {}).get("os_release", "/etc/os-release")
+    f = open(os_release, "r").read()
     result = dict(ID="unknown")
     try:
         lines = f.strip().split("\n")
@@ -104,7 +95,7 @@ def etc_os_release() -> Dict[str, str]:
             k, v = line.split("=")
             result[k] = v
     except Exception as e:
-        logger.error("Error parsing contents of /etc/os-release %s", e)
+        logger.error("Error parsing contents of %s %s", os_release, e)
     return result
 
 
