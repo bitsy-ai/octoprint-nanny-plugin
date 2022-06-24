@@ -33,7 +33,7 @@ PRINTNANNY_BIN ?= $(TMP_DIR)/printnanny-cli/target/debug/printnanny-cli
 JANUS_EDGE_HOSTNAME ?= localhost
 JANUS_API_TOKEN ?= janustoken
 
-BITBAKE_RECIPE ?= $(HOME)/projects/poky/meta-bitsy/meta-printnanny/recipes-core/python3-octoprint-nanny
+BITBAKE_RECIPE ?= $(HOME)/projects/poky/meta-bitsy/meta-printnanny/recipes-core/octoprint
 
 $(PRINTNANNY_CONFD):
 	mkdir -p $(PRINTNANNY_CONFD)
