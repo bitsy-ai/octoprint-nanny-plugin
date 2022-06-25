@@ -71,13 +71,13 @@ def janus_edge_api_token() -> str:
 
 def issue_txt() -> str:
     """
-    Captured the contents of /boot/issue.txt as plain text
+    Captured the contents of /etc/issue as plain text
     """
     try:
-        result = open("/boot/issue.txt", "r").read().strip()
+        result = open("/etc/issue", "r").read().strip()
     except Exception as e:
-        logger.error("Failed to read /boot/issue.txt %s", e)
-        result = "Failed to read /boot/issue.txt"
+        logger.error("Failed to read /etc/issue %s", e)
+        result = "Failed to read /etc/issue"
     return result
 
 
