@@ -8,6 +8,7 @@ pytest-cov
 asyncmock
 asynctest
 pipoe
+pip-tools
 pytest-benchmark
 pygal
 mypy[reports]
