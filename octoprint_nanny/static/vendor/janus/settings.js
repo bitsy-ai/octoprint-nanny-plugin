@@ -49,11 +49,7 @@
 // in the presented order. The first working server will be used for
 // the whole session.
 //
-var server = null;
-if (window.location.protocol === 'http:')
-  server = "http://" + window.JANUS_EDGE_HOSTNAME + ":8088/janus";
-else
-  server = "https://" + window.JANUS_EDGE_HOSTNAME + ":8089/janus";
+var server = window.JANUS_EDGE_URL
 
 // When creating a Janus object, we can also specify which STUN/TURN
 // servers we'd like to use to gather additional candidates. This is

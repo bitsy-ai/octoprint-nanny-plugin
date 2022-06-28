@@ -4,12 +4,12 @@ base_url = "http://127.0.0.1:9001"
 [paths]
 os_release = "{{ PRINTNANNY_OS_RELEASE }}"
 events_socket = "{{ TMP_DIR }}/events.sock"
-license = "{{ PRINTNANNY_LICENSE_JSON }}"
+config = "{{ PRINTNANNY_CONFIG_DEV }}"
 confd = "{{ PRINTNANNY_CONFD }}"
 
 [octoprint]
 base_path = "{{ OCTOPRINT_CONFIG_DIR }}"
-venv_path = "{{ OCTOPRINT_VENV_DIR }}"
+python = "{{ OCTOPRINT_VENV_DIR }}/bin/python"
 
 [mqtt]
 private_key = "{{ TMP_DIR }}/keys/ec_private.pem"

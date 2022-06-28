@@ -9,7 +9,7 @@
 </div>
 <div class="row-fluid">
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Settings') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account & Settings') }}</a></li>
         <li><a href="#{{template_name}}_report_issue" data-toggle="tab">{{ _('Report an Issue') }}</a></li>
     </ul>
 
@@ -30,10 +30,15 @@
                             <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}"><button class= "btn btn-primary btn-large">Getting Started Guide</button></a>
                 </div>
                 {% else %}
+                <h2>Account Info</h2>
+
+                <p>
+                    Connected PrintNanny account: {{ plugin_octoprint_nanny_config.config.device.user.email }}
+                </p>
+
                 <h2>Settings</h2>
 
                 <a target="_blank" class="btn btn-large btn-primary" href="{{ plugin_octoprint_nanny_urls.webapp }}/alerts/settings">Configure Alerts</a>
-
 
                 {% endif %}
         </div>

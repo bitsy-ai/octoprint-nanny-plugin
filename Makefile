@@ -17,12 +17,13 @@ PRINTNANNY_CLI_WORKSPACE ?=$(HOME)/projects/printnanny-cli
 PRINTNANNY_CONFD ?= $(TMP_DIR)/cfg/conf.d
 PRINTNANNY_KEYS ?= $(TMP_DIR)/cfg/keys
 
-PRINTNANNY_LICENSE_JSON ?= $(PRINTNANNY_WEBAPP_WORKSPACE)/.tmp/license.json
 PRINTNANNY_CLI_GIT_REPO ?=git@github.com:bitsy-ai/printnanny-cli.git
 PRINTNANNY_CLI_GIT_BRANCH ?=main
 PRINTNANNY_BIN=$(PRINTNANNY_CLI_WORKSPACE)/target/debug/printnanny-cli
 PRINTNANNY_CONFIG=$(TMP_DIR)/cfg/Local.toml
 PRINTNANNY_OS_RELEASE=$(TMP_DIR)/cfg/os-release
+
+PRINTNANNY_CONFIG_DEV=$(TMP_DIR)/cfg/printnanny.toml
 
 PIP_VERSION=$(shell python -c 'import pip; print(pip.__version__)')
 PYTHON_VERSION=$(shell python -c 'import platform; print(platform.python_version())')
@@ -49,7 +50,10 @@ $(TMP_DIR)/workspace:
 
 $(PRINTNANNY_KEYS):
 	mkdir -p $(PRINTNANNY_KEYS)
-	$(PRINTNANNY_BIN) config generate-keys --output $(PRINTNANNY_KEYS)
+
+$(PRINTNANNY_CONFIG_DEV): $(TMP_DIR)/cfg
+	make -C $(PRINTNANNY_WEBAPP_WORKSPACE) dev-config 
+	cp $(PRINTNANNY_WEBAPP_WORKSPACE)/.tmp/printnanny.toml $(PRINTNANNY_CONFIG_DEV)
 
 $(PRINTNANNY_CONFIG): $(TMP_DIR)
 	TMP_DIR=$(TMP_DIR) \
@@ -58,7 +62,7 @@ $(PRINTNANNY_CONFIG): $(TMP_DIR)
 	PIP_VERSION=$(PIP_VERSION) \
 	PYTHON_VERSION=$(PYTHON_VERSION) \
 	PRINTNANNY_PLUGIN_VERSION=$(PRINTNANNY_PLUGIN_VERSION) \
-	PRINTNANNY_LICENSE_JSON=$(PRINTNANNY_LICENSE_JSON) \
+	PRINTNANNY_CONFIG_DEV=$(PRINTNANNY_CONFIG_DEV) \
 	PRINTNANNY_CONFD=$(PRINTNANNY_CONFD) \
 	PRINTNANNY_KEYS=$(PRINTNANNY_KEYS) \
 	PRINTNANNY_OS_RELEASE=$(PRINTNANNY_OS_RELEASE) \
@@ -141,20 +145,20 @@ printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 dev-other-os: .octoprint
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
-check-license: $(PRINTNANNY_OS_RELEASE) printnanny-cli-debug $(PRINTNANNY_KEYS) $(PRINTNANNY_CONFD) $(PRINTNANNY_CONFIG)
-	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv check-license
+setup: $(PRINTNANNY_OS_RELEASE) printnanny-cli-debug $(PRINTNANNY_CONFD) $(PRINTNANNY_CONFIG) $(PRINTNANNY_CONFIG_DEV)
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv config setup
 
 $(TMP_DIR)/ca-certs:
 	mkdir -p $(TMP_DIR)/ca-certs
 	curl https://pki.goog/gtsltsr/gtsltsr.crt > "$(TMP_DIR)/ca-certs/gtsltsr.crt"
 
-dev-events-sub: check-license $(TMP_DIR)/ca-certs
+dev-events-sub: setup $(TMP_DIR)/ca-certs
 	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event subscribe
 
-dev-events-pub: check-license $(TMP_DIR)/ca-certs
+dev-events-pub: setup$(TMP_DIR)/ca-certs
 	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event publish
 
-dev: .octoprint check-license
+dev: .octoprint setup
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
 	PYTHONASYNCIODEBUG=True \
