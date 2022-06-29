@@ -26,101 +26,16 @@
 //     });
 // });
 
-/*
-** 
-** Helpers
-**
-*/
-
-var startPrintNannyWebRTC = function (videoElement, streamUrl, iceServers) {
-    console.warning("PrintNanny startWebRTC called with videoElement, streamUrl, iceServers", videoElement, streamUrl, iceServers)
-}
-
 $(function () {
-    function CameraSettingsViewModel(parameters) {
-        self.testWebcamStreamUrl = function () {
-            var url = self.webcam_streamUrlEscaped();
-            if (!url) {
-                return;
-            }
+    function CameraWarningViewModel(parameters) {
 
-            if (self.testWebcamStreamUrlBusy()) {
-                return;
-            }
-
-            var text = gettext(
-                "If you see your webcam stream below, the entered stream URL is ok."
-            );
-
-            var streamType;
-            try {
-                streamType = self.webcam_streamType();
-            } catch (e) {
-                streamType = "";
-            }
-
-            var webcam_element;
-            var webrtc_peer_connection;
-            if (streamType === "mjpg") {
-                webcam_element = $('<img src="' + url + '">');
-            } else if (streamType === "hls") {
-                webcam_element = $(
-                    '<video id="webcam_hls" muted autoplay style="width: 100%"/>'
-                );
-                video_element = webcam_element[0];
-                if (video_element.canPlayType("application/vnd.apple.mpegurl")) {
-                    video_element.src = url;
-                } else if (Hls.isSupported()) {
-                    var hls = new Hls();
-                    hls.loadSource(url);
-                    hls.attachMedia(video_element);
-                }
-            } else if (isWebRTCAvailable() && streamType === "webrtc") {
-                webcam_element = $(
-                    '<video id="webcam_webrtc" muted autoplay playsinline controls style="width: 100%"/>'
-                );
-                video_element = webcam_element[0];
-
-                webrtc_peer_connection = startPrintNannyWebRTC(
-                    video_element,
-                    url,
-                    self.webcam_streamWebrtcIceServers()
-                );
-            } else {
-                throw "Unknown stream type " + streamType;
-            }
-
-            var message = $("<div id='webcamTestContainer'></div>")
-                .append($("<p></p>"))
-                .append(text)
-                .append(webcam_element);
-
-            self.testWebcamStreamUrlBusy(true);
-            showMessageDialog({
-                title: gettext("Stream test"),
-                message: message,
-                onclose: function () {
-                    self.testWebcamStreamUrlBusy(false);
-                    if (webrtc_peer_connection != null) {
-                        webrtc_peer_connection.close();
-                        webrtc_peer_connection = null;
-                    }
-                }
-            });
-        };
-
+        $('#settings_webcam h3:first-of-type').after('<div class="alert alert-printnanny alert-block"><h4 class="alert-heading">Note from PrintNanny</h4><p>The setting below do not apply to PrintNanny\'s web camera!</p><p> Use PrintNanny\'s Camera settings tab instead. </p><p><a data-toggle="tab" href="#settings_plugin_octoprint_nanny" class="btn btn-primary">Open PrintNanny Settings</a></p></div>')
     }
 
     OCTOPRINT_VIEWMODELS.push({
-        construct: CameraSettingsViewModel,
-        dependencies: [
-            "loginStateViewModel",
-            "accessViewModel",
-            "printerProfilesViewModel",
-            "aboutViewModel",
-            "usersViewModel"
-        ],
-        elements: ["#settings_dialog"]
+        construct: CameraWarningViewModel,
+        dependencies: ["loginStateViewModel", "settingsViewModel"],
+        elements: ["#settings_webcam"]
     });
 });
 
