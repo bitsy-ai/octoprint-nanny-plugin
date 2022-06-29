@@ -32,6 +32,11 @@
 **
 */
 
+var startWebRTC = function (videoElement, streamUrl, iceServers) {
+    console.warning("PrintNanny startWebRTC called with videoElement, streamUrl, iceServers", videoElement, streamUrl, iceServers)
+
+}
+
 $(function () {
     function PrintNannyTabViewModel(parameters) {
         let self = this;
