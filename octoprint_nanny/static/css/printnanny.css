@@ -8,3 +8,13 @@
     color: #333333;
     background-color: rgba(0, 0, 0, 0);
 }
+
+.alert-printnanny {
+    color: #727cf5;
+    background-color: #f0eff7;
+    border-color: #d3cfe7;
+}
+
+.alert-printnanny h4 {
+    color: #727cf5;
+}

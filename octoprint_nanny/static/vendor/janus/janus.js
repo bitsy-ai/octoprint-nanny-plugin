@@ -24,6 +24,9 @@
   OTHER DEALINGS IN THE SOFTWARE.
  */
 
+var startWebRTC = function (videoElement, streamUrl, iceServers) {
+  console.warning("PrintNanny startWebRTC called with videoElement, streamUrl, iceServers", videoElement, streamUrl, iceServers)
+}
 // List of sessions
 Janus.sessions = {};
 
