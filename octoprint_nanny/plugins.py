@@ -1,7 +1,6 @@
 import logging
 import os
 import flask
-import socket
 import octoprint.plugin
 import octoprint.util
 from typing import Any, Dict, List
@@ -118,23 +117,8 @@ class OctoPrintNannyPlugin(
 
     ## SettingsPlugin mixin
     def get_settings_defaults(self):
-        config = load_printnanny_config().get("config", {})
-
-        janus_edge_http_api_url = (
-            config.get("janus_edge", {}).get("api_http_url")
-            or "Failed to read JanusEdgeConfig.api_http_url"
-        )
-        janus_edge_api_token = (
-            config.get("janus_edge", {}).get("api_token")
-            or "Failed to read JanusEdgeConfig.api_token"
-        )
         DEFAULT_SETTINGS = dict(
             wizard_complete=-1,
-            video_device="/dev/video0",
-            edge_monitoring_enabled=True,
-            video_resolution="640x480",
-            janus_edge_http_api_url=janus_edge_http_api_url,
-            janus_edge_api_token=janus_edge_api_token,
         )
         return DEFAULT_SETTINGS
 
