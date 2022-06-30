@@ -42,6 +42,8 @@ $(function () {
 $(function () {
     function PrintNannyTabViewModel(parameters) {
         let self = this;
+        self.loginState = parameters[0];
+        self.settings = parameters[1];
 
         self.showError = ko.observable(false);
         self.showStart = ko.observable(true);
@@ -94,10 +96,12 @@ $(function () {
     function PrintNannySettingsViewModel(parameters) {
 
         let self = this;
+        self.loginState = parameters[0];
+        self.settings = parameters[1];
 
+        self.videoDeviceOptions = ko.observableArray(["/dev/video0"]);
+        self.videoResolutionOptions = ko.observableArray(["640x480"]);
     }
-
-
 
     OCTOPRINT_VIEWMODELS.push({
         construct: PrintNannySettingsViewModel,
