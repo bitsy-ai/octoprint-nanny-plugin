@@ -49,9 +49,9 @@ $(function () {
         self.showStart = ko.observable(true);
         self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
-        self.onAfterBinding = function () {
-            initializeJanus(self)
-        }
+        // self.onAfterBinding = function () {
+        //     initializeJanus(self)
+        // }
 
         self.error = function (msg) {
             console.error(msg);
@@ -87,28 +87,6 @@ $(function () {
         dependencies: ["loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
         elements: ['#tab_plugin_octoprint_nanny', '#navbar_plugin_octoprint_nanny']
-
-    });
-});
-
-
-$(function () {
-    function PrintNannySettingsViewModel(parameters) {
-
-        let self = this;
-        self.loginState = parameters[0];
-        self.settings = parameters[1];
-
-        self.videoDeviceOptions = ko.observableArray(["/dev/video0"]);
-        self.videoResolutionOptions = ko.observableArray(["640x480"]);
-    }
-
-    OCTOPRINT_VIEWMODELS.push({
-        construct: PrintNannySettingsViewModel,
-        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: ["loginStateViewModel", "settingsViewModel"],
-        // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: ['#settings_plugin_octoprint_nanny', '#wizard_plugin_octoprint_nanny']
 
     });
 });
