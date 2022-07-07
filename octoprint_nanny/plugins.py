@@ -3,6 +3,7 @@ import os
 import flask
 import octoprint.plugin
 import octoprint.util
+import socket
 from typing import Any, Dict, List
 
 from octoprint.events import Events
@@ -92,7 +93,7 @@ class OctoPrintNannyPlugin(
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
-            "Running on_environment_detectedp handler args=%s kwargs=%s", args, kwargs
+            "Running on_environment_detected handler args=%s kwargs=%s", args, kwargs
         )
 
         self._octoprint_environment = environment
@@ -105,7 +106,7 @@ class OctoPrintNannyPlugin(
 
         self._log_path = self._settings.get_plugin_logfile_path()
 
-    ## Progress plugin
+    ##~~ Progress plugin
 
     def on_print_progress(self, storage, path, progress):
         octoprint_job = self._printer.get_current_job()
@@ -115,14 +116,21 @@ class OctoPrintNannyPlugin(
         logger.info("PrintProgress payload%s", payload)
         self.on_event(Events.PRINT_PROGRESS, payload)
 
-    ## SettingsPlugin mixin
+    ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
+        janusApiUrl = "http://{}:8088/janus".format(socket.gethostname())
+        janusApiToken = janus_edge_api_token()
+
         DEFAULT_SETTINGS = dict(
-            wizard_complete=-1,
+            janusApiUrl=janusApiUrl,
+            janusApiToken=janusApiToken,
+            janusBitrateInterval=1000,
+            selectedStreamId=None,
+            streamWebrtcIceServers="stun:stun.l.google.com:19302",
         )
         return DEFAULT_SETTINGS
 
-    ## Template plugin
+    ##~~ Template plugin
 
     def get_template_vars(self):
         custom = {
@@ -139,21 +147,31 @@ class OctoPrintNannyPlugin(
         }
         return custom
 
-    ## Wizard plugin mixin
+    ##~~ Wizard plugin mixin
+    def get_settings_version(self):
+        return 1
 
     def get_wizard_version(self):
-        return 0
+        return 1
 
+    ## Require Wizard if PrintNanny user is not detected
     def is_wizard_required(self):
-        return self._settings.get(["wizard_complete"]) < self.get_wizard_version()
+        config = load_printnanny_config()
+        user = config.get("user")
+        return user is None
 
     ##~~ AssetPlugin mixin
-
     def get_assets(self):
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return dict(
-            js=["js/nanny.js", "vendor/janus/janus.js", "vendor/janus/settings.js"],
+            js=[
+                "js/nanny.js",
+                "js/januswebcam_settings.js",
+                "js/januswebcam.js",
+                "vendor/janus/janus.js",
+                "vendor/janus/webrtc-adaptor.js",
+            ],
             css=["css/printnanny.css"],
             less=["less/nanny.less"],
             img=["img/wizard_example.jpg"],

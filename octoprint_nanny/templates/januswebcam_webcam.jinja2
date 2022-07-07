@@ -1,0 +1,9 @@
+<div id="janus_webcam_container">
+    <!-- Init style with display none to hide the content while we are binding -->
+    <div "id="janus_video_container" tabindex="0">
+        <div class="video-controls btn-group action-buttons">
+            <div class="btn btn-mini" data-bind="click: function(data, event) { $root.launchWebcamFullscreen() }"><i class="fas fa-expand"></i></div>
+            <div class="btn btn-mini" data-bind="visible: document.pictureInPictureEnabled, click: function(data, event) {  $root.launchWebcamPictureInPicture() }"><i class="fas fa-images"></i></div>
+        </div>
+    </div>
+</div>

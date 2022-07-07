@@ -49,9 +49,9 @@ $(function () {
         self.showStart = ko.observable(true);
         self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
-        self.onAfterBinding = function () {
-            initializeJanus(self)
-        }
+        // self.onAfterBinding = function () {
+        //     initializeJanus(self)
+        // }
 
         self.error = function (msg) {
             console.error(msg);
@@ -98,15 +98,30 @@ $(function () {
         let self = this;
         self.loginState = parameters[0];
         self.settings = parameters[1];
+        self.janusWebcam = parameters[2];
 
-        self.videoDeviceOptions = ko.observableArray(["/dev/video0"]);
-        self.videoResolutionOptions = ko.observableArray(["640x480"]);
+        self.onBeforeBinding = function () {
+            self.webcamEnabled = self.settings.settings.webcam.webcamEnabled;
+            self.janusApiUrl = self.settings.settings.plugins.octoprint_nanny.janusApiUrl;
+            self.janusApiToken = self.settings.settings.plugins.octoprint_nanny.janusApiToken;
+            self.streamWebrtcIceServers = self.settings.settings.plugins.octoprint_nanny.streamWebrtcIceServers;
+            self.loading = self.janusWebcam.loading;
+            self.active = self.janusWebcam.active;
+            self.ready = self.janusWebcam.ready;
+
+            self.updateStreamsList = self.janusWebcam.updateStreamsList;
+            self.streams = self.janusWebcam.streams;
+            self.startStream = self.janusWebcam.startStream;
+            self.stopStream = self.janusWebcam.stopStream;
+            self.selectedStreamId = self.janusWebcam.selectedStreamId;
+            self.showStartButton = self.janusWebcam.showStartButton;
+        };
     }
 
     OCTOPRINT_VIEWMODELS.push({
         construct: PrintNannySettingsViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: ["loginStateViewModel", "settingsViewModel"],
+        dependencies: ["loginStateViewModel", "settingsViewModel", "janusWebcamViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
         elements: ['#settings_plugin_octoprint_nanny', '#wizard_plugin_octoprint_nanny']
 

@@ -1,0 +1,11 @@
+<div class="control-group" title="{{ _('Janus Gateway Settings') }}">
+    <label class="control-label" for="{{template_name}}-janusApiUrl">{{ _('Janus API URL') }}</label>
+    <div class="controls">
+        <div class="input">
+            <input type="text" class="input-block-level" data-bind="value: janusApiUrl, valueUpdate: 'afterkeydown'" id="{{template_name}}-janusApiUrl">
+        </div>
+        <span class="help-block">
+            <p>{% trans %}Janus Gateway API needs to be reachable from the browser displaying the OctoPrint UI. {% endtrans %}</p>
+        </span>
+    </div>
+</div>

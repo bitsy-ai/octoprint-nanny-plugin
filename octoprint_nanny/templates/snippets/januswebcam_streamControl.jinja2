@@ -1,0 +1,24 @@
+<div class="control-group" title="{{ _('Janus Gateway Settings') }}">
+    <label class="control-label" for="{{template_name}}-janusSelectedStream">
+        Select a video stream
+    </label>
+    <div class="controls">
+        <div class="input-append">
+            <select class="input" 
+                id="{{template_name}}-janusSelectedStream" 
+                data-bind="options: streams,
+                            optionsText: 'description',
+                            optionsValue: 'id',
+                            value: selectedStreamId,
+                            optionsCaption: 'Choose a camera stream...'">
+            </select>
+            <button class="btn btn-primary" type="button" data-bind="click: startStream, visible: showStartButton">{{ _('Start') }}</button>
+            <button class="btn btn-primary" type="button" data-bind="click: stopStream, visible: active">{{ _('Stop') }}</button>
+            <button class="btn" type="button" data-bind="click: updateStreamsList"><i class="fas fa-spinner fa-spin" data-bind="visible: loading"></i> {{ _('Refresh List') }}</button>
+        </div>
+    </div>
+</div>
+<div id="{{template_name}}_janus_stream_metadata">
+</div>
+<div id="{{template_name}}_janus_webcam_videos" class="span8 offset1">
+</div>

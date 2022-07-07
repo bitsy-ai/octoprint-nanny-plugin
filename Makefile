@@ -146,7 +146,7 @@ dev-other-os: .octoprint
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
 setup: $(PRINTNANNY_OS_RELEASE) printnanny-cli-debug $(PRINTNANNY_CONFD) $(PRINTNANNY_CONFIG) $(PRINTNANNY_CONFIG_DEV)
-	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv config setup
+	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv config sync
 
 $(TMP_DIR)/ca-certs:
 	mkdir -p $(TMP_DIR)/ca-certs
