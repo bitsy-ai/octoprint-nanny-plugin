@@ -14,11 +14,18 @@
             </select>
             <button class="btn btn-primary" type="button" data-bind="click: startStream, visible: showStartButton">{{ _('Start') }}</button>
             <button class="btn btn-primary" type="button" data-bind="click: stopStream, visible: active">{{ _('Stop') }}</button>
-            <button class="btn" type="button" data-bind="click: updateStreamsList"><i class="fas fa-spinner fa-spin" data-bind="visible: loading"></i> {{ _('Refresh List') }}</button>
+            <button class="btn" type="button" data-bind="click: reset"><i class="fas fa-spinner fa-spin" data-bind="visible: streamListLoading"></i> {{ _('Refresh') }}</button>
         </div>
     </div>
 </div>
-<div id="{{template_name}}_janus_stream_metadata">
-</div>
-<div id="{{template_name}}_janus_webcam_videos" class="span8 offset1">
+<div>
+    <div data-bind="foreach: errors">
+        <div class="alert alert-danger alert-block"><p data-bind="text: $data"></p>
+        </div>
+    </div>
+    <div class="janus_stream_metadata">
+    </div>
+    <div class="janus_webcam_videos span-8 offset-1">
+        <span data-bind="visible: videoLoading"><i class="fas fa-spinner fa-spin"></i>Loading video stream...</span>
+    </div>
 </div>

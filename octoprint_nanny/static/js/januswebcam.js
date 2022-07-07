@@ -1,14 +1,3 @@
-// var opaqueId = "streamingtest-" + Janus.randomString(12);
-
-// var remoteTracks = {}, remoteVideos = 0, dataMid = null;
-// var bitrateTimer = {};
-// var spinner = {};
-
-// var simulcastStarted = {}, svcStarted = {};
-
-// var streamsList = {};
-// var selectedStream = null;
-
 // Helper to escape XML tags
 function escapeXmlTags(value) {
   if (value) {
@@ -19,30 +8,18 @@ function escapeXmlTags(value) {
 }
 
 $(function () {
+
+  const ROOT_ELEMENT = "#janus_webcam_container";
   function JanusWebcamViewModel(parameters) {
     var self = this;
+
     self.loginState = parameters[0];
     self.settings = parameters[1];
+    self.janusWebcamSettings = parameters[2];
 
-    self.loading = ko.observable(false);
-    self.active = ko.observable(false);
-    self.ready = ko.observable(false);
-
-    self.webcamDisableTimeout = undefined;
-    self.webcamLoaded = ko.observable(false);
-    self.webcamError = ko.observable(false);
-    self.webcamSlowLink = ko.observable(false);
-    self.webcamMuted = ko.observable(true);
-    self.webRTCPeerConnection = null;
     self.webcamElement = null;
-
-
     self.janus = null;
     self.janusStreamingPlugin = null;
-    self.videoLoading = ko.observable(false);
-
-    self.streams = ko.observableArray();
-    self.selectedStreamId = ko.observable();
 
     self.remoteTracks = {};
     self.bitrateTimer = {};
@@ -52,15 +29,35 @@ $(function () {
       return self.ready() && !self.active();
     });
 
+
     self.showVideo = ko.observable(false);
+    self.streamListLoading = ko.observable(false);
+    self.active = ko.observable(false);
+    self.ready = ko.observable(false);
+    self.videoLoading = ko.observable(false);
+    self.streams = ko.observableArray();
+    self.errors = ko.observableArray();
+
+    // set module back to initial state
+    self.reset = function () {
+      self.showVideo(false);
+      self.videoLoading(false);
+
+      self.active(false);
+      self.streamListLoading(false);
+      self.streams([]);
+      self.errors([]);
+      self.ready(false);
+      self.initJanus();
+    }
 
     self.onBeforeBinding = function () {
-      self.janusBitrateInterval = self.settings.settings.plugins.octoprint_nanny.janusBitrateInterval;
-      self.janusApiUrl = self.settings.settings.plugins.octoprint_nanny.janusApiUrl;
-      self.janusApiToken = self.settings.settings.plugins.octoprint_nanny.janusApiToken;
-      self.webcamEnabled = self.settings.settings.webcam.webcamEnabled;
-      self.streamWebrtcIceServers = self.settings.settings.streamWebrtcIceServers;
-      self.selectedStreamId(self.settings.settings.plugins.octoprint_nanny.selectedStreamId);
+      self.janusApiUrl = self.janusWebcamSettings.janusApiUrl;
+      self.janusApiToken = self.janusWebcamSettings.janusApiToken;
+      self.streamWebrtcIceServers = self.janusWebcamSettings.streamWebrtcIceServers;
+      self.selectedStreamId = self.janusWebcamSettings.selectedStreamId;
+      self.janusBitrateInterval = self.janusWebcamSettings.janusBitrateInterval;
+      self.streamWebrtcIceServers = self.janusWebcamSettings.streamWebrtcIceServers;
       self.selectedStreamId.subscribe(function (newValue) {
         if (newValue == undefined) {
           return self.ready(false);
@@ -113,14 +110,10 @@ $(function () {
       if (self.webcamLoaded()) return;
 
       log.debug("Webcam stream loaded");
-      self.webcamLoaded(true);
-      self.webcamError(false);
     };
 
     self.onWebcamErrored = function () {
       log.debug("Webcam stream failed to load/disabled");
-      self.webcamLoaded(false);
-      self.webcamError(true);
     };
 
     self.onTabChange = function (current, previous) {
@@ -139,36 +132,25 @@ $(function () {
       }
     };
 
-    self.onUserPermissionsChanged =
-      self.onUserLoggedIn =
-      self.onUserLoggedOut =
-      function () {
-        self.syncWebcamElements();
-      };
 
     self.onAllBound = function (allViewModels) {
-      self.videoContainer = $("#janus_webcam_videos");
       self.initJanus();
     };
 
-    self.syncWebcamElements = function () {
-      self.webcamElement = document.getElementById("janus_webcam");
-    };
-
-    self.onStartup = function () {
-      self.syncWebcamElements();
-    };
-
     self.updateStreamsList = function () {
-      self.loading(true);
+      self.streamListLoading(true);
       var body = { request: "list" };
+      if (self.janusStreamingPlugin == null) {
+        console.warn("Failed to load Janus Streaming Plugin");
+        return
+      }
       console.log("Sending msg to Janus API:", body);
       self.janusStreamingPlugin.send({
         message: body,
         success: function (result) {
           console.log("Janus stream list: ", result);
           setTimeout(function () {
-            self.loading(false);
+            self.streamListLoading(false);
           }, 500);
           if (!result) {
             let msg = "Received no response to query for available WebRTC streams"
@@ -192,7 +174,7 @@ $(function () {
     self.onJanusError = function (error) {
       let msg = "Error attaching Janus WebRTC plugin... " + error;
       console.error(msg);
-      self.webcamError(true);
+      self.errors.push(msg);
     }
 
     self.onJanusIceSate = function (state) {
@@ -217,11 +199,10 @@ $(function () {
       var result = msg["result"];
       var status = result["status"];
       if (status === 'starting') {
-        self.loading(true);
+        self.videoLoading(true);
         self.active(true);
       }
       else if (status === 'started') {
-        self.loading(false);
         self.active(true);
       }
       else if (status === 'stopped') {
@@ -293,10 +274,10 @@ $(function () {
     // handle remote track received via WebRTC
     self.onJanusRemoteTrack = function (track, mid, on) {
       console.debug("Remote track (mid=" + mid + ") " + (on ? "added" : "removed") + ":", track);
+      var stream = self.remoteTracks[mid];
       // handle track removed
       if (!on) {
         // Track removed, get rid of the stream and the rendering
-        var stream = self.remoteTracks[mid];
         if (stream) {
           try {
             var tracks = stream.getTracks();
@@ -305,27 +286,30 @@ $(function () {
               if (mst)
                 mst.stop();
             }
-          } catch (e) { console.error("Unexpected error cleaning up remote tracks: ", e) }
+          } catch (e) {
+            console.error("Unexpected error cleaning up remote tracks: ", e);
+            self.errors.push(e)
+          }
         }
         delete self.remoteTracks[mid];
         return;
       }
-      // If we're here, a new track was added
-      var stream = null;
       var videoElId = null;
       if (track.kind === "audio") {
         console.warn("Audio tracks are not yet implemented by Janus OctoPrint plugin, ignoring");
-      } else {
+        return
+        // If we're here, a new track was added
+      } else if (stream == undefined) {
         // new video track: create a media stream from track data
         stream = new MediaStream();
         stream.addTrack(track.clone());
         self.remoteTracks[mid] = stream;
         console.log("Created remote video stream:", stream);
 
-        // insert video element into DOM
+        // insert video element into DOM (if does not exist)
         videoElId = 'janus_webcam_video_' + mid;
-        $('#janus_webcam_videos').append('<video style="width: 100%" id="' + videoElId + '" playsinline/>');
-
+        const videoElQuery = ROOT_ELEMENT + ' .janus_webcam_videos';
+        $(videoElQuery).append('<video id="' + videoElId + '" playsinline/>');
         // Use a custom timer for this stream
         if (!self.bitrateTimer[mid]) {
           self.bitrateTimer[mid] = setInterval(function () {
@@ -334,18 +318,17 @@ $(function () {
             self.bitrateText(bitrate);
           }, self.janusBitrateInterval);
         }
+        // attach MediaStream to video element
+        Janus.attachMediaStream($('#' + videoElId).get(0), stream);
+
+        // bind spinner state update to "playing" event
+        $('#' + videoElId).bind("playing", function (ev) {
+          self.videoLoading(false);
+        });
+
+        // trigger "playing" event
+        $('#' + videoElId).get(0).play();
       }
-
-      // attach MediaStream to video element
-      Janus.attachMediaStream($('#' + videoElId).get(0), stream);
-
-      // bind spinner state update to "playing" event
-      $('#' + videoElId).bind("playing", function (ev) {
-        self.videoLoading(false);
-      });
-
-      // trigger "playing" event
-      $('#' + videoElId).get(0).play();
     }
 
     self.onJanusDataOpen = function (_data) {
@@ -397,15 +380,15 @@ $(function () {
         return;
       }
       var janusCfg = {
-        server: self.settings.settings.plugins.octoprint_nanny.janusApiUrl(),
-        iceServers: [{ urls: self.settings.settings.plugins.octoprint_nanny.streamWebrtcIceServers() }],
+        server: self.janusWebcamSettings.janusApiUrl(),
+        iceServers: [{ urls: self.janusWebcamSettings.streamWebrtcIceServers() }],
         success: self.onJanusPluginAttach,
         error: self.onJanusError,
         destroyed: self.onJanusDestroyed
       };
 
       if (self.settings.settings.plugins.octoprint_nanny.janusApiToken() !== null) {
-        janusCfg.token = self.settings.settings.plugins.octoprint_nanny.janusApiToken();
+        janusCfg.token = self.janusWebcamSettings.janusApiToken();
       } else {
         console.warn("Janus Gateway API token is not set!");
       }
@@ -418,7 +401,7 @@ $(function () {
         return
       }
       // Send a request for more info on the selected streaming mountpoint
-      self.loading(true);
+      self.videoLoading(true);
       var body = { request: "info", id: self.selectedStreamId() };
       console.log("Requesting start Janus mountpoint: ", body);
 
@@ -449,6 +432,7 @@ $(function () {
     }
 
     self.initJanus = function () {
+
       Janus.init({
         debug: "all",
         callback: self._initJanusCallback
@@ -462,7 +446,8 @@ $(function () {
     dependencies: [
       "loginStateViewModel",
       "settingsViewModel",
+      "janusWebcamSettingsViewModel"
     ],
-    elements: ["#janus_webcam_container"]
+    elements: [ROOT_ELEMENT]
   });
 });

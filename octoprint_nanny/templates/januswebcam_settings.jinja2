@@ -1,14 +1,15 @@
-<div id="{{template_name}}_webcam_settings">
+<div id="janus_webcam_settings">
     <h3>{{ _('WebRTC Settings') }}</h3>
     <form class="form-horizontal" onsubmit="return false;">
         {% include "snippets/januswebcam_janusApiUrl.jinja2" %}
         {% include "snippets/januswebcam_janusApiToken.jinja2" %}
         {% include "snippets/januswebcam_streamWebrtcIceServers.jinja2" %}
     </form>
-
+</div>
+<div>
     <hr>
     <h3>{{ _('Test Webcam') }}</h3>
     <form class="form-horizontal" onsubmit="return false;">
-    {% include "snippets/januswebcam_streamControl.jinja2" %}
+    {% include "januswebcam_webcam.jinja2" %}
     </form>
 </div>
