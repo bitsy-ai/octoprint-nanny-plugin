@@ -1,29 +1,38 @@
-<div class="control-group" title="{{ _('Janus Gateway Settings') }}">
-    <label class="control-label" for="{{template_name}}-janusSelectedStream">
-        Select a video stream
-    </label>
-    <div class="controls">
-        <div class="input-append">
-            <select class="input" 
-                id="{{template_name}}-janusSelectedStream" 
-                data-bind="options: streams,
-                            optionsText: 'description',
-                            optionsValue: 'id',
-                            value: selectedStreamId,
-                            optionsCaption: 'Choose a camera stream...'">
-            </select>
-            <button class="btn btn-primary" type="button" data-bind="click: startStream, visible: showStartButton">{{ _('Start') }}</button>
-            <button class="btn btn-primary" type="button" data-bind="click: stopStream, visible: active">{{ _('Stop') }}</button>
-            <button class="btn" type="button" data-bind="click: reset"><i class="fas fa-spinner fa-spin" data-bind="visible: streamListLoading"></i> {{ _('Refresh') }}</button>
+<div class="row-fluid">
+    <div class="control-group" title="{{ _('PrintNanny Cam Preview') }}">
+        <label class="control-label" for="{{template_name}}-janusSelectedStream">
+            Select a video stream
+        </label>
+        <div class="controls">
+            <div class="input-append">
+                <select class="input" 
+                    id="{{template_name}}-janusSelectedStream" 
+                    data-bind="options: streams,
+                                optionsText: 'description',
+                                optionsValue: 'id',
+                                value: selectedStreamId,
+                                optionsCaption: 'Choose a camera stream...'">
+                </select>
+                <button class="btn btn-primary" type="button" data-bind="click: startStream, visible: showStartButton">{{ _('Start') }}</button>
+                <button class="btn btn-primary" type="button" data-bind="click: stopStream, visible: active">{{ _('Stop') }}</button>
+                <button class="btn" type="button" data-bind="click: reset"><i class="fas fa-spinner fa-spin" data-bind="visible: streamListLoading"></i> {{ _('Refresh') }}</button>
+            </div>
         </div>
     </div>
 </div>
-<div>
+<div class="row-fluid">
     <div data-bind="foreach: errors">
-        <div class="alert alert-danger alert-block"><p data-bind="text: $data"></p>
-        </div>
+        <div class="alert alert-danger alert-block"><p data-bind="text: $data"></p></div>
     </div>
-    <div class="janus_stream_metadata">
+    <div class="janus_stream_metadata" data-bind="visible: bitrateText">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-info-circle"></i> Video Metadata 
+                <span class="badge" data-bind="text: bitrateText"></span>
+                <span class="badge" data-bind="text: resolutionText" data-bind="visible: resolutionText"></span>
+                </h3>
+            </div>
+        </div>
     </div>
     <div class="janus_webcam_videos span-8 offset-1">
         <span data-bind="visible: videoLoading"><i class="fas fa-spinner fa-spin"></i>Loading video stream...</span>
