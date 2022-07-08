@@ -67,10 +67,7 @@ class OctoPrintNannyPlugin(
             raise Exception("Plugin manager failed to get backup helper")
 
     def register_custom_events(self) -> List[str]:
-        return [
-            "nnstreamer_start",
-            "nnstreamer_stop",
-        ]
+        return []
 
     def on_shutdown(self):
         logger.info("Running on_shutdown handler")
