@@ -114,8 +114,12 @@ class OctoPrintNannyPlugin(
     ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
         config = load_printnanny_config()
-        janusApiUrl = config.get("janus_edge", {}).get("api_http_url", "")
-        janusApiToken = config.get("janus_edge", {}).get("api_token", "")
+        janusApiUrl = (
+            config.get("config", {}).get("janus_edge", {}).get("api_http_url", "")
+        )
+        janusApiToken = (
+            config.get("config", {}).get("janus_edge", {}).get("api_token", "")
+        )
 
         DEFAULT_SETTINGS = dict(
             janusApiUrl=janusApiUrl,
