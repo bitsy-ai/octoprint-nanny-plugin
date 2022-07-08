@@ -40,7 +40,7 @@ $(function () {
 });
 
 $(function () {
-    function PrintNannyTabViewModel(parameters) {
+    function PrintNannyNavbarViewModel(parameters) {
         let self = this;
         self.loginState = parameters[0];
         self.settings = parameters[1];
@@ -70,23 +70,14 @@ $(function () {
             OctoPrint.socket.sendMessage("plugin_octoprint_nanny_nnstreamer_stop");
             stopStream();
         }
-
-        // TODO enable pass messages to vue app
-        // OctoPrint.socket.onMessage("*", function (message) {
-        //     console.log(message);
-        // })
-    }
-
-    PrintNannyTabViewModel.prototype.koDescendantsComplete = function (node) {
-        $vm.$forceUpdate();
     }
 
     OCTOPRINT_VIEWMODELS.push({
-        construct: PrintNannyTabViewModel,
+        construct: PrintNannyNavbarViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: ["loginStateViewModel", "settingsViewModel"],
         // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
-        elements: ['#tab_plugin_octoprint_nanny', '#navbar_plugin_octoprint_nanny']
+        elements: ['#navbar_plugin_octoprint_nanny']
 
     });
 });

@@ -23,7 +23,8 @@ $(function () {
 
     self.remoteTracks = {};
     self.bitrateTimer = {};
-    self.bitrateText = ko.observable();
+    self.bitrateText = ko.observable(false);
+    self.resolutionText = ko.observable(false);
 
     self.showStartButton = ko.pureComputed(function () {
       return self.ready() && !self.active();
@@ -49,6 +50,8 @@ $(function () {
       self.errors([]);
       self.ready(false);
       self.initJanus();
+      self.bitrateText(false);
+      self.resolutionText(false);
     }
 
     self.onBeforeBinding = function () {
@@ -309,13 +312,16 @@ $(function () {
         // insert video element into DOM (if does not exist)
         videoElId = 'janus_webcam_video_' + mid;
         const videoElQuery = ROOT_ELEMENT + ' .janus_webcam_videos';
-        $(videoElQuery).append('<video id="' + videoElId + '" playsinline/>');
+        $(videoElQuery).append('<video style="width: 100%;" id="' + videoElId + '" playsinline/>');
         // Use a custom timer for this stream
         if (!self.bitrateTimer[mid]) {
           self.bitrateTimer[mid] = setInterval(function () {
             // Display updated bitrate, if supported
             var bitrate = self.janusStreamingPlugin.getBitrate(mid);
             self.bitrateText(bitrate);
+            var width = $("#" + videoElId).get(0).videoWidth;
+            var height = $("#" + videoElId).get(0).videoHeight;
+            self.resolutionText(width + "x" + height);
           }, self.janusBitrateInterval);
         }
         // attach MediaStream to video element
