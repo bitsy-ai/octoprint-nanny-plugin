@@ -61,14 +61,6 @@ def load_printnanny_config() -> PrintNannyConfig:
     )
 
 
-def janus_edge_hostname() -> str:
-    return environ.get("JANUS_EDGE_HOSTNAME", "localhost")
-
-
-def janus_edge_api_token() -> str:
-    return environ.get("JANUS_EDGE_API_TOKEN", "janustoken")
-
-
 def issue_txt() -> str:
     """
     Captured the contents of /etc/issue as plain text
