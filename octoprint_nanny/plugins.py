@@ -135,8 +135,6 @@ class OctoPrintNannyPlugin(
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "webapp": PRINTNANNY_WEBAPP_BASE_URL,
             },
-            "janus_edge_hostname": janus_edge_hostname(),
-            "janus_edge_api_token": janus_edge_api_token(),
             "issue_txt": issue_txt(),
             "etc_os_release": etc_os_release(),
             "config": load_printnanny_config(),
