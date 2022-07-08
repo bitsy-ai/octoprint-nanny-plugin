@@ -7,12 +7,10 @@ function escapeXmlTags(value) {
   }
 }
 
-$(function () {
 
-  const ROOT_ELEMENT = "#janus_webcam_container";
+$(function () {
   function JanusWebcamViewModel(parameters) {
     var self = this;
-
     self.loginState = parameters[0];
     self.settings = parameters[1];
     self.janusWebcamSettings = parameters[2];
@@ -138,6 +136,7 @@ $(function () {
 
     self.onAllBound = function (allViewModels) {
       self.initJanus();
+
     };
 
     self.updateStreamsList = function () {
@@ -311,7 +310,19 @@ $(function () {
 
         // insert video element into DOM (if does not exist)
         videoElId = 'janus_webcam_video_' + mid;
-        const videoElQuery = ROOT_ELEMENT + ' .janus_webcam_videos';
+        var parentEl = null;
+        // get a reference to the bound container element
+        for (var i in self._bindings) {
+          if ($(self._bindings[i]).is(":visible")) {
+            parentEl = self._bindings[i];
+          }
+        }
+        if (parentEl == null) {
+          let msg = "Unable to find <video> element in DOM";
+          self.onJanusError(msg);
+          return;
+        }
+        const videoElQuery = parentEl + ' .janus_webcam_videos';
         $(videoElQuery).append('<video style="width: 100%;" id="' + videoElId + '" playsinline/>');
         // Use a custom timer for this stream
         if (!self.bitrateTimer[mid]) {
@@ -438,7 +449,6 @@ $(function () {
     }
 
     self.initJanus = function () {
-
       Janus.init({
         debug: "all",
         callback: self._initJanusCallback
@@ -454,6 +464,10 @@ $(function () {
       "settingsViewModel",
       "janusWebcamSettingsViewModel"
     ],
-    elements: [ROOT_ELEMENT]
+    elements: [
+      "#octoprint_nanny_settings_janus_webcam_container",
+      "#octoprint_nanny_wizard_janus_webcam_container",
+      "#octoprint_nanny_tab_janus_webcam_container"
+    ]
   });
 });
