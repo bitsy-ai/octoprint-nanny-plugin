@@ -17,6 +17,8 @@ $(function () {
   OCTOPRINT_VIEWMODELS.push({
     construct: JanusWebcamSettingsViewModel,
     dependencies: ["loginStateViewModel", "settingsViewModel"],
-    elements: ["#janus_webcam_settings"]
+    elements: [
+      "#janus_webcam_settings",
+    ]
   });
 });

@@ -1,1 +1,3 @@
-{% include 'januswebcam_webcam.jinja2' %}
+{% with template_name = 'octoprint_nanny_tab' %}
+    {% include 'januswebcam_webcam.jinja2' %}
+{% endwith %}
