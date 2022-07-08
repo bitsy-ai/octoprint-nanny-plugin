@@ -11,7 +11,6 @@ function escapeXmlTags(value) {
 $(function () {
   function JanusWebcamViewModel(parameters) {
     var self = this;
-    // get a reference to the bound container element
     self.loginState = parameters[0];
     self.settings = parameters[1];
     self.janusWebcamSettings = parameters[2];
@@ -312,6 +311,7 @@ $(function () {
         // insert video element into DOM (if does not exist)
         videoElId = 'janus_webcam_video_' + mid;
         var parentEl = null;
+        // get a reference to the bound container element
         for (var i in self._bindings) {
           if ($(self._bindings[i]).is(":visible")) {
             parentEl = self._bindings[i];
