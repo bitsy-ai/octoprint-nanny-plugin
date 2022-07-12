@@ -116,11 +116,15 @@ class OctoPrintNannyPlugin(
         config = load_printnanny_config()
         janusApiUrl = (
             config.get("config", {})
-            .get("device.janus_edge", {})
+            .get("device", {})
+            .get("janus_edge", {})
             .get("api_http_url", "")
         )
         janusApiToken = (
-            config.get("config", {}).get("device.janus_edge", {}).get("api_token", "")
+            config.get("config", {})
+            .get("device", {})
+            .get("janus_edge", {})
+            .get("api_token", "")
         )
 
         DEFAULT_SETTINGS = dict(
