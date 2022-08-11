@@ -141,10 +141,11 @@ class OctoPrintNannyPlugin(
     def get_template_vars(self):
         custom = {
             "urls": {
-                "getting_started_guide": "https://github.com/bitsy-ai/printnanny-os/blob/main/docs/INSTALL.MD",
+                "getting_started_guide": "https://docs.printnanny.ai/docs/category/quick-start/",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "webapp": PRINTNANNY_WEBAPP_BASE_URL,
             },
+            "is_printnanny_os": is_printnanny_os(),
             "issue_txt": issue_txt(),
             "etc_os_release": etc_os_release(),
             "config": load_printnanny_config(),
