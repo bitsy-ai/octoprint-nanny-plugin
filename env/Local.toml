@@ -1,0 +1,19 @@
+[dash]
+base_url = "http://127.0.0.1:9001"
+
+[octoprint]
+base_path = "/home/leigh/projects/octoprint-nanny-plugin/.octoprint"
+python = "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python"
+
+[paths]
+etc = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/etc"
+seed_file_pattern = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/PrintNanny*.zip"
+run = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/run"
+log = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/log"
+issue_txt = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/issue.txt"
+events_socket = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/events.sock"
+[api]
+base_path = "http://aurora:8000"
+
+[nats_app]
+nats_uri = "nats://localhost:4222"
