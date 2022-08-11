@@ -15,13 +15,13 @@ class PrintNannyConfig(TypedDict):
     stderr: str
     returncode: Optional[int]
 
-    config: Dict[str, Any]
+    config: Optional[Dict[str, Any]]
 
 
 def load_printnanny_config() -> PrintNannyConfig:
     cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
     returncode = None
-    config: Dict[str, Any] = dict()
+    config = None
 
     # run /usr/bin/printnanny config show -F json
     try:
@@ -42,16 +42,20 @@ def load_printnanny_config() -> PrintNannyConfig:
             )
     # FileNotFoundError thrown when PRINTNANNY_BIN is not found
     except FileNotFoundError as e:
-        logger.error(e)
-        stdout = ""
-        stderr = str(e)
-
+        logger.warning("%s is not installed", PRINTNANNY_BIN)
+        return PrintNannyConfig(
+            cmd=cmd,
+            stdout="",
+            stderr="",
+            returncode=1,
+            config=config,
+        )
     # parse JSON
     try:
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to decode printnanny config: %", e)
+        logger.warning(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(
         cmd=cmd,
         stdout=stdout,
@@ -78,8 +82,13 @@ def etc_os_release() -> Dict[str, str]:
     Captures the contents of /etc/os-release as a dictionary
     """
     config = load_printnanny_config()
-    os_release = config["config"].get("paths", {}).get("os_release", "/etc/os-release")
-    f = open(os_release, "r").read()
+    os_release_path = "/etc/os-release"
+    if config["config"] is not None:
+        os_release_path = (
+            config["config"].get("paths", {}).get("os_release", os_release_path)
+        )
+
+    f = open(os_release_path, "r").read()
     result = dict(ID="unknown")
     try:
         lines = f.strip().split("\n")
@@ -87,7 +96,7 @@ def etc_os_release() -> Dict[str, str]:
             k, v = line.split("=")
             result[k] = v
     except Exception as e:
-        logger.error("Error parsing contents of %s %s", os_release, e)
+        logger.error("Error parsing contents of %s %s", os_release_path, e)
     return result
 
 

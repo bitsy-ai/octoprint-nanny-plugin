@@ -1,12 +1,11 @@
 <div class="alert alert-block alert-warning">    
-    <h2>
-        <strong>⛔ PrintNanny OS is Required</strong>
-    </h2>
+    <h3>
+        <strong>⚠️ You are not running PrintNanny OS</strong>
+    </h3>
 
-    <p>Failed to detect PrintNanny OS version from /etc/os-release.</p>
-<pre>{{ plugin_octoprint_nanny_etc_os_release }}</pre>
+    <p>Sorry, you can't run PrintNanny on your current operating system: {{ plugin_octoprint_nanny_etc_os_release['PRETTY_NAME']}} </p>
     <h4>
-        Please follow the guide below to install PrintNanny OS (OctoPrint Edition). 
+        Follow the guide below to install PrintNanny OS (OctoPrint Edition). 
     </h4>
     <br>
     <a target="_blank" href="{{ plugin_octoprint_nanny_urls.getting_started_guide }}"><button class= "btn btn-primary btn-large">Getting Started Guide</button></a>
