@@ -1,12 +1,19 @@
 import logging
 import json
+from optparse import Option
 import subprocess
 from typing import Dict, Any, Optional
-from octoprint_nanny.utils.printnanny_os import load_printnanny_config, PRINTNANNY_BIN
-
-# TODO descriminator models not getting generated in python?
+from octoprint_nanny.utils.printnanny_os import (
+    load_printnanny_config,
+    PRINTNANNY_PI,
+    PRINTNANNY_OCTOPRINT_SERVER,
+)
 import printnanny_api_client.models
-from octoprint_nanny.exceptions import SetupIncompleteError
+from printnanny_api_client.models import (
+    PolymorphicOctoPrintEventRequest,
+    OctoPrintServerStatusType,
+)
+
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.events")
 # see available events: https://docs.octoprint.org/en/master/events/index.html#id5
@@ -28,6 +35,9 @@ PUBLISH_EVENTS = {
     "PrintCancelled",  # print job
     "PrintPaused",  # print job
     "PrintResumed",  # print job
+    "ClientAuthed",  # client
+    "ClientOpened",  # client
+    "ClientClosed",  # client
 }
 
 
@@ -35,17 +45,27 @@ def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
     return event in PUBLISH_EVENTS
 
 
-# def event_request(
-#     event: str, payload: Dict[Any, Any], device: int, octoprint_server: int
-# ) -> printnanny_api_client.models.OctoPrintEventRequest:
-#     return printnanny_api_client.models.OctoPrintEventRequest(
-#         model="OctoPrintEvent",
-#         source=printnanny_api_client.models.EventSource.OCTOPRINT,
-#         event_name=event,
-#         payload=payload,
-#         device=device,
-#         octoprint_server=octoprint_server,
-#     )
+def event_request(
+    event: str, payload: Dict[Any, Any], device: int, octoprint_server: int
+) -> PolymorphicOctoPrintEventRequest:
+
+    # OctoPrintServerStatus
+    if event == "Startup":
+        return PolymorphicOctoPrintEventRequest(
+            pi=PRINTNANNY_PI,
+            octoprint_server=PRINTNANNY_OCTOPRINT_SERVER,
+            event_type=OctoPrintServerStatusType.STARTUP,
+            payload=None,
+            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
+        )
+    if event == "Shutdown":
+        return PolymorphicOctoPrintEventRequest(
+            pi=PRINTNANNY_PI,
+            octoprint_server=PRINTNANNY_OCTOPRINT_SERVER,
+            event_type=OctoPrintServerStatusType.STARTUP,
+            payload=None,
+            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
+        )
 
 
 # def try_publish_cmd(
@@ -66,24 +86,12 @@ def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
 
 def try_publish_event(event: str, payload: Dict[Any, Any], topic="octoprint_events"):
     """
-    Publish event to MQTT
+    Publish event via PrintNanny CLI
     """
     if should_publish_event(event, payload):
-        pass
-        # config = load_printnanny_config()["config"]
-        # if config is None:
-        #     raise SetupIncompleteError("PrintNanny conf.d is not set")
-        # device = config.get("device", {}).get("id")
-        # octoprint_server = config.get("octoprint", {}).get("server", {}).get("id")
-        # if device is None:
-        #     raise SetupIncompleteError("PrintNanny conf.d [device] is not set")
-        # if octoprint_server is None:
-        #     raise SetupIncompleteError(
-        #         "PrintNanny conf.d [octoprint.server] is not set"
-        #     )
-        # req = event_request(event, payload, device, octoprint_server)
-        # try_publish_cmd(req)
-        # return req
+        req = event_request(event, payload, device, octoprint_server)
+        try_publish_cmd(req)
+        return req
     else:
         logger.debug("Ignoring event %s", event)
         return None
@@ -94,6 +102,15 @@ def try_handle_event(
     payload: Dict[Any, Any],
 ):
     try:
+        # if global config vars are undefined, try loading these
+        if PRINTNANNY_PI is None or PRINTNANNY_OCTOPRINT_SERVER is None:
+            load_printnanny_config()
+        # if global config vars are still undefined, bail
+        if PRINTNANNY_PI is None or PRINTNANNY_OCTOPRINT_SERVER is None:
+            logger.warning(
+                "Ignoring event=%s - failed to load PRINTNANNY_PI and PRINTNANNY_OCTOPRINT_SERVER"
+            )
+            return None
         return try_publish_event(event, payload)
     except Exception as e:
         logger.error(

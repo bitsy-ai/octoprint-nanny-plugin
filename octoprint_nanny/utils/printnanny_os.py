@@ -4,9 +4,14 @@ import logging
 import json
 import subprocess
 
+from printnanny_api_client.models import Pi, OctoPrintServer
+
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
+
+PRINTNANNY_PI: Optional[Pi] = None
+PRINTNANNY_OCTOPRINT_SERVER: Optional[OctoPrintServer] = None
 
 
 class PrintNannyConfig(TypedDict):
@@ -19,7 +24,7 @@ class PrintNannyConfig(TypedDict):
 
 
 def load_printnanny_config() -> PrintNannyConfig:
-    cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
+    cmd = [PRINTNANNY_BIN, "config", "show", "--format", "json"]
     returncode = None
     config = None
 
@@ -50,10 +55,22 @@ def load_printnanny_config() -> PrintNannyConfig:
             returncode=1,
             config=config,
         )
-    # parse JSON
     try:
+        # parse JSON
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
+
+        # try setting global PRINTNANNY_PI var
+        pi = config.get("pi")
+        if pi is not None:
+            global PRINTNANNY_PI
+            PRINTNANNY_PI = Pi(**pi)
+
+        octoprint_server = config.get("octoprint_server")
+        if octoprint_server is not None:
+            global PRINTNANNY_OCTOPRINT_SERVER
+            PRINTNANNY_OCTOPRINT_SERVER = OctoPrintServer(**octoprint_server)
+
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(
