@@ -165,7 +165,7 @@ dev: .octoprint
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
 	PRINTNANNY_DEBUG=True \
 	PYTHONASYNCIODEBUG=True \
-	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint --debug
+	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
 test:
 	pytest --log-level=DEBUG

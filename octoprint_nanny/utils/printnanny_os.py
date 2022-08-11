@@ -10,9 +10,9 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
 PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
+PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
 
 PRINTNANNY_PI: Optional[Pi] = None
-PRINTNANNY_OCTOPRINT_SERVER: Optional[OctoPrintServer] = None
 
 
 class PrintNannyConfig(TypedDict):
@@ -66,11 +66,6 @@ def load_printnanny_config() -> PrintNannyConfig:
         if pi is not None:
             global PRINTNANNY_PI
             PRINTNANNY_PI = Pi(**pi)
-
-        octoprint_server = config.get("octoprint_server")
-        if octoprint_server is not None:
-            global PRINTNANNY_OCTOPRINT_SERVER
-            PRINTNANNY_OCTOPRINT_SERVER = OctoPrintServer(**octoprint_server)
 
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)

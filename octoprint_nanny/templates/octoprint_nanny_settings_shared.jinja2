@@ -8,7 +8,7 @@
     <hr>
 </div>
 <div class="row-fluid">
-    {% if plugin_octoprint_nanny_etc_os_release.ID != "printnanny"%}
+    {% if not plugin_octoprint_nanny_is_printnanny_os %}
         {% include 'octoprint_nanny_unsupported_os.jinja2' %}
 
     {% else %}
@@ -25,7 +25,7 @@
                     <fieldset>
                         <legend><h3>🔐 Account Info</h3></legend>
                         <p>
-                        Connected PrintNanny account: <strong>{{ plugin_octoprint_nanny_config.config.device.user.email }}</strong>
+                        Connected PrintNanny account: <strong>{{ plugin_octoprint_nanny_PRINTNANNY_PI.user.email }}</strong>
                         </p>
 
                     </fieldset>

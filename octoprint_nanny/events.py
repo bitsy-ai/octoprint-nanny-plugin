@@ -3,11 +3,9 @@ import json
 from optparse import Option
 import subprocess
 from typing import Dict, Any, Optional
-from octoprint_nanny.utils.printnanny_os import (
-    load_printnanny_config,
-    PRINTNANNY_PI,
-    PRINTNANNY_OCTOPRINT_SERVER,
-)
+
+from octoprint_nanny.utils import printnanny_os
+
 import printnanny_api_client.models
 from printnanny_api_client.models import (
     PolymorphicOctoPrintEventRequest,
@@ -52,16 +50,16 @@ def event_request(
     # OctoPrintServerStatus
     if event == "Startup":
         return PolymorphicOctoPrintEventRequest(
-            pi=PRINTNANNY_PI,
-            octoprint_server=PRINTNANNY_OCTOPRINT_SERVER,
+            pi=printnanny_os.PRINTNANNY_PI,
+            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
             event_type=OctoPrintServerStatusType.STARTUP,
             payload=None,
             subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
         )
     if event == "Shutdown":
         return PolymorphicOctoPrintEventRequest(
-            pi=PRINTNANNY_PI,
-            octoprint_server=PRINTNANNY_OCTOPRINT_SERVER,
+            pi=printnanny_os.PRINTNANNY_PI,
+            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
             event_type=OctoPrintServerStatusType.STARTUP,
             payload=None,
             subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
@@ -84,17 +82,17 @@ def event_request(
 #         return None
 
 
-def try_publish_event(event: str, payload: Dict[Any, Any], topic="octoprint_events"):
-    """
-    Publish event via PrintNanny CLI
-    """
-    if should_publish_event(event, payload):
-        req = event_request(event, payload, device, octoprint_server)
-        try_publish_cmd(req)
-        return req
-    else:
-        logger.debug("Ignoring event %s", event)
-        return None
+# def try_publish_event(event: str, payload: Dict[Any, Any], topic="octoprint_events"):
+#     """
+#     Publish event via PrintNanny CLI
+#     """
+#     if should_publish_event(event, payload):
+#         req = event_request(event, payload, device, octoprint_server)
+#         try_publish_cmd(req)
+#         return req
+#     else:
+#         logger.debug("Ignoring event %s", event)
+#         return None
 
 
 def try_handle_event(
@@ -103,15 +101,17 @@ def try_handle_event(
 ):
     try:
         # if global config vars are undefined, try loading these
-        if PRINTNANNY_PI is None or PRINTNANNY_OCTOPRINT_SERVER is None:
-            load_printnanny_config()
+        if printnanny_os.PRINTNANNY_PI is None:
+            printnanny_os.load_printnanny_config()
         # if global config vars are still undefined, bail
-        if PRINTNANNY_PI is None or PRINTNANNY_OCTOPRINT_SERVER is None:
+        if printnanny_os.PRINTNANNY_PI is None:
             logger.warning(
-                "Ignoring event=%s - failed to load PRINTNANNY_PI and PRINTNANNY_OCTOPRINT_SERVER"
+                "Ignoring event=%s - failed to load PRINTNANNY_PI=%s",
+                event,
+                printnanny_os.PRINTNANNY_PI,
             )
             return None
-        return try_publish_event(event, payload)
+        # return try_publish_event(event, payload)
     except Exception as e:
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s",
