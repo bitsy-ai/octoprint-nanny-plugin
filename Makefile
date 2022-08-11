@@ -163,6 +163,7 @@ devconfig: $(TMPDIR)/PrintNanny-$(DEV_MACHINE).zip printnanny-cli-debug
 dev: .octoprint
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
 	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
+	PRINTNANNY_DEBUG=True \
 	PYTHONASYNCIODEBUG=True \
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint --debug
 

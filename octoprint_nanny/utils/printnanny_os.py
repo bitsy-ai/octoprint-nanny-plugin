@@ -9,6 +9,7 @@ from printnanny_api_client.models import Pi, OctoPrintServer
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
+PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
 
 PRINTNANNY_PI: Optional[Pi] = None
 PRINTNANNY_OCTOPRINT_SERVER: Optional[OctoPrintServer] = None
@@ -119,4 +120,4 @@ def etc_os_release() -> Dict[str, str]:
 
 def is_printnanny_os() -> bool:
     osrelease = etc_os_release()
-    return osrelease.get("ID") == "printnanny"
+    return osrelease.get("ID") == "printnanny" or PRINTNANNY_DEBUG is True
