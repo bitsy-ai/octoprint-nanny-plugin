@@ -33,7 +33,7 @@ PRINTNANNY_PLUGIN_VERSION=$(shell git rev-parse HEAD)
 
 PRINTNANNY_BIN ?= $(TMPDIR)/printnanny-cli/target/debug/printnanny-cli
 
-BITBAKE_RECIPE ?= $(HOME)/projects/poky/meta-bitsy/meta-printnanny/recipes-core/octoprint
+BITBAKE_RECIPE ?= $(HOME)/projects/poky/meta-bitsy/meta-printnanny/recipes-core/python3-octoprint
 PRINTNANNY_WEBAPP_WORKSPACE ?= $(HOME)/projects/octoprint-nanny-webapp
 PRINTNANNY_CLI_WORKSPACE ?= $(HOME)/projects/printnanny-cli
 
@@ -178,5 +178,5 @@ install-git-hooks:
 
 bitbake:
 	pipoe --package octoprint-nanny --python python3 --outdir $(BITBAKE_RECIPE) --default-license AGPLv3
-	find $(BITBAKE_RECIPE) -type f -exec sed -i.bak "s/RDEPENDS_${PN}/RDEPENDS:${PN}/g" {} \;
+	find $(BITBAKE_RECIPE) -type f -exec sed -i "s/RDEPENDS_${PN}/RDEPENDS:${PN}/g" {} \;
 
