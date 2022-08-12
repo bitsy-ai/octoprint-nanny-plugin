@@ -13,8 +13,8 @@ OctoPrint monitoring & alerting AI.
 
 ## Getting Started
 
-* [Request invitation to closed Beta](https://www.print-nanny.com/request-invite/)
-* [OctoPrint Plugin setup](https://help.print-nanny.com/octoprint-plugin-setup/)
+* [Request invitation to closed Beta](https://printnanny.ai)
+* [Quick Start](https://docs.printnanny.ai/docs/category/quick-start/)
 
 ## Credits
 

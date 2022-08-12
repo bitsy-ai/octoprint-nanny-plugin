@@ -2,14 +2,14 @@
 layout: plugin
 
 id: octoprint_nanny
-title: OctoPrint Nanny
+title: Octo-PrintNanny
 description: Get notified of print defects and safety hazards
 author: Leigh Johnson
 license: GNU AFFERO GENERAL PUBLIC LICENSE
 
 date: 2020-12-25
 
-homepage: https://print-nanny.com
+homepage: https://printnanny.ai
 source: https://github.com/bitsy-ai/octoprint-nanny-plugin
 archive: https://github.com/bitsy-ai/octoprint-nanny-plugin/archive/master.zip
 
@@ -70,7 +70,7 @@ compatibility:
   # OctoPrint versions being supported.
 
   octoprint:
-  - 1.5.0
+  - 1.8.2
 
   # List of compatible operating systems
   #
@@ -117,18 +117,17 @@ compatibility:
 * Smart slicer recommendations - perfect for beginners.
 * Developer API & Webhooks for advanced automation.
 
-Learn more about Print Nanny: https://www.print-nanny.com/
+Learn more about Print Nanny: https://printnanny.ai/
 
 ![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_2.jpg)
 
 
-**Note:** currently in closed Beta. Please [request an invite](https://www.print-nanny.com/request-invite/) if you're interested in a preview of Print Nanny.
+**Note:** currently in closed Beta. Please [request an invite](https://printnanny.ai) if you're interested in a preview of Print Nanny.
 
 ### Setup
 
-1. [Create an account](https://www.print-nanny.com/request-invite/)
-2. Install the OctoPrint Nanny plugin using the Plugin Manager or [clone the Github repo](https://github.com/bitsy-ai/octoprint-nanny-plugin).
-3. Copy your Print Nanny authentication token.
+1. [Request invite](https://printnanny.ai)
+2. Follow the [Quick Start guide](https://docs.printnanny.ai/docs/category/quick-start/).
 
 ![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_4.jpg)
 
