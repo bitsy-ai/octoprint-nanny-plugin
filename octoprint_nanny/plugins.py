@@ -108,28 +108,26 @@ class OctoPrintNannyPlugin(
 
     ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
-        config = printnanny_os.load_printnanny_config()
-        janusApiUrl = (
-            config.get("config", {})
-            .get("device", {})
-            .get("janus_edge", {})
-            .get("api_http_url", "")
-        )
-        janusApiToken = (
-            config.get("config", {})
-            .get("device", {})
-            .get("janus_edge", {})
-            .get("api_token", "")
-        )
+        maybe_config = printnanny_os.load_printnanny_config()
+        config = maybe_config.get("config")
+        if config is not None:
+            janusApiUrl = (
+                config.get("device", {}).get("janus_edge", {}).get("api_http_url", "")
+            )
+            janusApiToken = (
+                config.get("device", {}).get("janus_edge", {}).get("api_token", "")
+            )
 
-        DEFAULT_SETTINGS = dict(
-            janusApiUrl=janusApiUrl,
-            janusApiToken=janusApiToken,
-            janusBitrateInterval=1000,
-            selectedStreamId=None,
-            streamWebrtcIceServers="stun:stun.l.google.com:19302",
-        )
-        return DEFAULT_SETTINGS
+            DEFAULT_SETTINGS = dict(
+                janusApiUrl=janusApiUrl,
+                janusApiToken=janusApiToken,
+                janusBitrateInterval=1000,
+                selectedStreamId=None,
+                streamWebrtcIceServers="stun:stun.l.google.com:19302",
+            )
+            return DEFAULT_SETTINGS
+        else:
+            return dict()
 
     ##~~ Template plugin
 

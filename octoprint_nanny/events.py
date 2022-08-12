@@ -50,7 +50,17 @@ async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
 
 def event_request(
     event: str, payload: Dict[Any, Any]
-) -> PolymorphicOctoPrintEventRequest:
+) -> Optional[PolymorphicOctoPrintEventRequest]:
+
+    # bail if PRINTNANNY_PI is not set
+    if printnanny_os.PRINTNANNY_PI is None:
+        logger.warning(
+            "printnanny_os.PRINTNANNY_PI is not set, refusing to publish event=%s payload %s",
+            event,
+            payload,
+        )
+        return None
+
     # sanitize OctoPrint payloads
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
