@@ -9,12 +9,8 @@ from typing import Any, Dict, List
 from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
-from octoprint_nanny.utils.printnanny_os import (
-    issue_txt,
-    load_printnanny_config,
-    etc_os_release,
-    is_printnanny_os,
-)
+
+from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -46,7 +42,6 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
-        self.is_printnanny_os = is_printnanny_os()
         super().__init__(*args, **kwargs)
 
     ##
@@ -78,7 +73,7 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        if is_printnanny_os():
+        if printnanny_os.is_printnanny_os():
             try_handle_event(event, payload)
         else:
             logger.warning(
@@ -113,42 +108,41 @@ class OctoPrintNannyPlugin(
 
     ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
-        config = load_printnanny_config()
-        janusApiUrl = (
-            config.get("config", {})
-            .get("device", {})
-            .get("janus_edge", {})
-            .get("api_http_url", "")
-        )
-        janusApiToken = (
-            config.get("config", {})
-            .get("device", {})
-            .get("janus_edge", {})
-            .get("api_token", "")
-        )
+        maybe_config = printnanny_os.load_printnanny_config()
+        config = maybe_config.get("config")
+        if config is not None:
+            janusApiUrl = (
+                config.get("device", {}).get("janus_edge", {}).get("api_http_url", "")
+            )
+            janusApiToken = (
+                config.get("device", {}).get("janus_edge", {}).get("api_token", "")
+            )
 
-        DEFAULT_SETTINGS = dict(
-            janusApiUrl=janusApiUrl,
-            janusApiToken=janusApiToken,
-            janusBitrateInterval=1000,
-            selectedStreamId=None,
-            streamWebrtcIceServers="stun:stun.l.google.com:19302",
-        )
-        return DEFAULT_SETTINGS
+            DEFAULT_SETTINGS = dict(
+                janusApiUrl=janusApiUrl,
+                janusApiToken=janusApiToken,
+                janusBitrateInterval=1000,
+                selectedStreamId=None,
+                streamWebrtcIceServers="stun:stun.l.google.com:19302",
+            )
+            return DEFAULT_SETTINGS
+        else:
+            return dict()
 
     ##~~ Template plugin
 
     def get_template_vars(self):
+        printnanny_os.load_printnanny_config()
         custom = {
             "urls": {
                 "getting_started_guide": "https://docs.printnanny.ai/docs/category/quick-start/",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "webapp": PRINTNANNY_WEBAPP_BASE_URL,
             },
-            "is_printnanny_os": is_printnanny_os(),
-            "issue_txt": issue_txt(),
-            "etc_os_release": etc_os_release(),
-            "config": load_printnanny_config(),
+            "is_printnanny_os": printnanny_os.is_printnanny_os(),
+            "issue_txt": printnanny_os.issue_txt(),
+            "etc_os_release": printnanny_os.etc_os_release(),
+            "PRINTNANNY_PI": printnanny_os.PRINTNANNY_PI,
         }
         return custom
 
@@ -161,9 +155,8 @@ class OctoPrintNannyPlugin(
 
     ## Require Wizard if PrintNanny user is not detected
     def is_wizard_required(self):
-        config = load_printnanny_config()
-        user = config.get("user")
-        return user is None
+        printnanny_os.load_printnanny_config()
+        return printnanny_os.PRINTNANNY_PI is None
 
     ##~~ AssetPlugin mixin
     def get_assets(self):

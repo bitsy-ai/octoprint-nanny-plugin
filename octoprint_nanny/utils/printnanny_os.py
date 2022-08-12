@@ -1,12 +1,21 @@
 from os import environ
+from tokenize import maybe
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
+import asyncio
 import subprocess
+
+import printnanny_api_client
+from printnanny_api_client.models import Pi
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
 PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
+PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
+PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
+
+PRINTNANNY_PI: Optional[Pi] = None
 
 
 class PrintNannyConfig(TypedDict):
@@ -18,8 +27,23 @@ class PrintNannyConfig(TypedDict):
     config: Optional[Dict[str, Any]]
 
 
+async def deserialize_pi(pi_dict) -> Pi:
+    async with printnanny_api_client.ApiClient() as client:
+        return client._ApiClient__deserialize(pi_dict, Pi)
+
+
+def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    coroutine = deserialize_pi(pi_dict)
+    result = loop.run_until_complete(coroutine)
+    global PRINTNANNY_PI
+    PRINTNANNY_PI = result
+    return result
+
+
 def load_printnanny_config() -> PrintNannyConfig:
-    cmd = [PRINTNANNY_BIN, "config", "show", "-F", "json"]
+    cmd = [PRINTNANNY_BIN, "config", "show", "--format", "json"]
     returncode = None
     config = None
 
@@ -50,10 +74,15 @@ def load_printnanny_config() -> PrintNannyConfig:
             returncode=1,
             config=config,
         )
-    # parse JSON
     try:
+        # parse JSON
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
+
+        # try setting global PRINTNANNY_PI var
+        pi = config.get("pi")
+        if pi is not None:
+            load_pi_model(pi)
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(
@@ -102,4 +131,4 @@ def etc_os_release() -> Dict[str, str]:
 
 def is_printnanny_os() -> bool:
     osrelease = etc_os_release()
-    return osrelease.get("ID") == "printnanny"
+    return osrelease.get("ID") == "printnanny" or PRINTNANNY_DEBUG is True
