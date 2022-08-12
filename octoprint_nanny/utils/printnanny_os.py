@@ -1,9 +1,11 @@
 from os import environ
+from tokenize import maybe
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
 import subprocess
 
+import printnanny_api_client
 from printnanny_api_client.models import Pi, OctoPrintServer
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
@@ -22,6 +24,14 @@ class PrintNannyConfig(TypedDict):
     returncode: Optional[int]
 
     config: Optional[Dict[str, Any]]
+
+
+def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
+    client = printnanny_api_client.ApiClient()
+    pi = client._ApiClient__deserialize(pi_dict, Pi)
+    global PRINTNANNY_PI
+    PRINTNANNY_PI = pi
+    return pi
 
 
 def load_printnanny_config() -> PrintNannyConfig:
@@ -64,9 +74,7 @@ def load_printnanny_config() -> PrintNannyConfig:
         # try setting global PRINTNANNY_PI var
         pi = config.get("pi")
         if pi is not None:
-            global PRINTNANNY_PI
-            PRINTNANNY_PI = Pi(**pi)
-
+            load_pi_model(pi)
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(

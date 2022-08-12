@@ -44,7 +44,7 @@ def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
 
 
 def event_request(
-    event: str, payload: Dict[Any, Any], device: int, octoprint_server: int
+    event: str, payload: Dict[Any, Any]
 ) -> PolymorphicOctoPrintEventRequest:
 
     # OctoPrintServerStatus
@@ -53,46 +53,53 @@ def event_request(
             pi=printnanny_os.PRINTNANNY_PI,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
             event_type=OctoPrintServerStatusType.STARTUP,
-            payload=None,
+            payload=payload,
             subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
         )
     if event == "Shutdown":
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintServerStatusType.STARTUP,
-            payload=None,
+            event_type=OctoPrintServerStatusType.SHUTDOWN,
+            payload=payload,
             subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
         )
 
 
-# def try_publish_cmd(
-#     request: printnanny_api_client.models.OctoPrintEventRequest,
-# ) -> None:
-#     data = json.dumps(request.to_dict())
-#     cmd = [PRINTNANNY_BIN, "event", "publish", "--data", data]
-#     logger.debug("Running command: %s", cmd)
-#     p = subprocess.run(cmd, capture_output=True)
-#     stdout = p.stdout.decode("utf-8")
-#     stderr = p.stderr.decode("utf-8")
-#     if p.returncode != 0:
-#         logger.error(
-#             f"Command exited non-zero code cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
-#         )
-#         return None
+def try_publish_cmd(
+    request: PolymorphicOctoPrintEventRequest,
+) -> None:
+    payload = json.dumps(request.to_dict())
+    cmd = [
+        printnanny_os.PRINTNANNY_BIN,
+        "nats-publish",
+        request.subject_pattern,
+        request.event_type,
+        "--payload",
+        payload,
+    ]
+    logger.debug("Running command: %s", cmd)
+    p = subprocess.run(cmd, capture_output=True)
+    stdout = p.stdout.decode("utf-8")
+    stderr = p.stderr.decode("utf-8")
+    if p.returncode != 0:
+        logger.error(
+            f"Command exited non-zero code cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+        )
+        return None
 
 
-# def try_publish_event(event: str, payload: Dict[Any, Any], topic="octoprint_events"):
-#     """
-#     Publish event via PrintNanny CLI
-#     """
-#     if should_publish_event(event, payload):
-#         req = event_request(event, payload, device, octoprint_server)
-#         try_publish_cmd(req)
-#         return req
-#     else:
-#         logger.debug("Ignoring event %s", event)
-#         return None
+def try_publish_event(event: str, payload: Dict[Any, Any]):
+    """
+    Publish event via PrintNanny CLI
+    """
+    if should_publish_event(event, payload):
+        req = event_request(event, payload)
+        try_publish_cmd(req)
+        return req
+    else:
+        logger.debug("Ignoring event %s", event)
+        return None
 
 
 def try_handle_event(
@@ -100,18 +107,7 @@ def try_handle_event(
     payload: Dict[Any, Any],
 ):
     try:
-        # if global config vars are undefined, try loading these
-        if printnanny_os.PRINTNANNY_PI is None:
-            printnanny_os.load_printnanny_config()
-        # if global config vars are still undefined, bail
-        if printnanny_os.PRINTNANNY_PI is None:
-            logger.warning(
-                "Ignoring event=%s - failed to load PRINTNANNY_PI=%s",
-                event,
-                printnanny_os.PRINTNANNY_PI,
-            )
-            return None
-        # return try_publish_event(event, payload)
+        return try_publish_event(event, payload)
     except Exception as e:
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s",

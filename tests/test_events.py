@@ -1,7 +1,11 @@
-from octoprint_nanny.utils.printnanny_os import PrintNannyConfig
+import json
 import pytest
 from unittest.mock import patch
+from printnanny_api_client.models import Pi
+
+from octoprint_nanny.utils.printnanny_os import PrintNannyConfig
 from octoprint_nanny.events import should_publish_event, try_handle_event
+from octoprint_nanny.utils import printnanny_os
 
 
 @patch("octoprint_nanny.events.try_publish_cmd")
@@ -13,20 +17,59 @@ def test_handle_untracked_event(mock_try_publish_cmd):
     assert mock_try_publish_cmd.called is False
 
 
-@patch("octoprint_nanny.events.load_printnanny_config")
+MOCK_PI_JSON = """{
+    "id": 2,
+    "last_boot": null,
+    "settings": {
+        "id": 2,
+        "updated_dt": "2022-08-10T15:42:13.176362Z",
+        "cloud_video_enabled": true,
+        "telemetry_enabled": false,
+        "pi": 2
+    },
+    "cloudiot_device": null,
+    "user": {
+        "email": "leigh@print-nanny.com",
+        "id": 1,
+        "first_name": null,
+        "last_name": null,
+        "is_beta_tester": true
+    },
+    "system_info": null,
+    "public_key": null,
+    "octoprint_server": {
+        "id": 2,
+        "settings": null,
+        "octoprint_version": "",
+        "pip_version": "",
+        "python_version": "",
+        "printnanny_plugin_version": "",
+        "created_dt": "2022-08-10T15:42:13.190818Z",
+        "updated_dt": "2022-08-10T15:42:13.190834Z",
+        "user": 1,
+        "pi": 2
+    },
+    "urls": {
+        "swupdate": "http://printnanny.local/update/",
+        "octoprint": "http://printnanny.local/octoprint/"
+    },
+    "sbc": "rpi_4",
+    "edition": "octoprint_lite",
+    "created_dt": "2022-08-10T15:42:12.088147Z",
+    "hostname": "aurora",
+    "fqdn": "printnanny.local",
+    "favorite": false,
+    "setup_finished": false
+}
+"""
+
+MOCK_PI = printnanny_os.load_pi_model(json.loads(MOCK_PI_JSON))
+
+
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
 @patch("octoprint_nanny.events.try_publish_cmd")
 def test_handle_events_enabled_true(mock_try_publish_cmd, mock_printnanny_config):
-    mock_printnanny_config.return_value = PrintNannyConfig(
-        cmd=["mock", "cmd"],
-        stdout="",
-        stderr="",
-        returncode=0,
-        config={
-            "device": {"id": 1},
-            "paths": {"events_socket": "test.sock"},
-            "octoprint": {"server": {"id": 1}},
-        },
-    )
+    printnanny_os.PRINTNANNY_PI = MOCK_PI
     try_handle_event(
         "Startup",
         dict(),
