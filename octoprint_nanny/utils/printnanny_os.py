@@ -3,10 +3,11 @@ from tokenize import maybe
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
+import asyncio
 import subprocess
 
 import printnanny_api_client
-from printnanny_api_client.models import Pi, OctoPrintServer
+from printnanny_api_client.models import Pi
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
@@ -26,12 +27,19 @@ class PrintNannyConfig(TypedDict):
     config: Optional[Dict[str, Any]]
 
 
+async def deserialize_pi(pi_dict) -> Pi:
+    async with printnanny_api_client.ApiClient() as client:
+        return client._ApiClient__deserialize(pi_dict, Pi)
+
+
 def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
-    client = printnanny_api_client.ApiClient()
-    pi = client._ApiClient__deserialize(pi_dict, Pi)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    coroutine = deserialize_pi(pi_dict)
+    result = loop.run_until_complete(coroutine)
     global PRINTNANNY_PI
-    PRINTNANNY_PI = pi
-    return pi
+    PRINTNANNY_PI = result
+    return result
 
 
 def load_printnanny_config() -> PrintNannyConfig:
