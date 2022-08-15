@@ -33,7 +33,8 @@ MOCK_PI_JSON = """{
         "id": 1,
         "first_name": null,
         "last_name": null,
-        "is_beta_tester": true
+        "is_beta_tester": true,
+        "member_badges": []
     },
     "system_info": null,
     "public_key": null,
