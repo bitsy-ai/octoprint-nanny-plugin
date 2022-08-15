@@ -50,7 +50,7 @@ plugin_requires = [
     "pytz",
     "aiohttp[speedups]>=3.7.4",
     # beta api client supporting PrintNanny OS in 2022
-    "printnanny-api-client~=0.100.9",
+    "printnanny-api-client~=0.101.1",
     "backoff>=1.10.0",
 ]
 
