@@ -1,5 +1,6 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/bitsy-ai/octoprint-nanny-plugin)
 ![Release](https://img.shields.io/github/release-date-pre/bitsy-ai/octoprint-nanny-plugin)
+![Monthly Downloads](https://img.shields.io/pypi/dm/octoprint-nanny)
 ![Discord](https://img.shields.io/discord/773452324692688956)
 ![Github Followers](https://img.shields.io/github/followers/leigh-johnson?style=social)
 
