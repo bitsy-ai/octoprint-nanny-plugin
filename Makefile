@@ -8,7 +8,7 @@ OCTOPRINT_NANNY_STATIC_URL ?= "http://aurora:8000/static/"
 OCTOPRINT_NANNY_API_URL ?= "http://aurora:8000/api/"
 OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
-DEV_MACHINE ?= pn-dev
+DEV_MACHINE ?= pn-debug
 
 WORKSPACE ?=$(shell pwd)
 TMPDIR ?=$(WORKSPACE)/.tmp
@@ -153,10 +153,10 @@ printnanny-cli-debug: $(PRINTNANNY_CLI_WORKSPACE)
 # dev-events-pub: setup$(TMPDIR)/ca-certs
 # 	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv event publish
 
-$(TMPDIR)/PrintNanny-$(DEV_MACHINE).zip: $(TMPDIR)
-	cp $(PRINTNANNY_WEBAPP_WORKSPACE)/.tmp/PrintNanny-$(DEV_MACHINE).zip $(TMPDIR)/PrintNanny-$(DEV_MACHINE).zip
+$(TMPDIR)/printnanny-$(DEV_MACHINE).zip: $(TMPDIR)
+	cp $(PRINTNANNY_WEBAPP_WORKSPACE)/.tmp/printnanny-$(DEV_MACHINE).zip $(TMPDIR)/printnanny-$(DEV_MACHINE).zip
 
-devconfig: $(TMPDIR)/PrintNanny-$(DEV_MACHINE).zip printnanny-cli-debug
+devconfig: $(TMPDIR)/printnanny-$(DEV_MACHINE).zip printnanny-cli-debug
 	echo 
 	PRINTNANNY_CONFIG=$(PRINTNANNY_CONFIG) $(PRINTNANNY_BIN) -vvv config init
 
