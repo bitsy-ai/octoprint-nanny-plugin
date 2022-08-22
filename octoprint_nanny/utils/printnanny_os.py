@@ -33,8 +33,11 @@ async def deserialize_pi(pi_dict) -> Pi:
 
 
 def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     coroutine = deserialize_pi(pi_dict)
     result = loop.run_until_complete(coroutine)
     global PRINTNANNY_PI
