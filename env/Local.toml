@@ -7,7 +7,7 @@ python = "/home/leigh/projects/octoprint-nanny-plugin/.venv/bin/python"
 
 [paths]
 etc = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/etc"
-seed_file_pattern = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/PrintNanny*.zip"
+seed_file_pattern = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/printnanny*.zip"
 run = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/run"
 log = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/log"
 issue_txt = "/home/leigh/projects/octoprint-nanny-plugin/.tmp/issue.txt"
