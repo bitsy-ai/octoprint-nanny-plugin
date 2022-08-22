@@ -1,10 +1,11 @@
 from os import environ
+import concurrent.futures
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
 import asyncio
 import subprocess
-from concurrent.futures import ThreadPoolExecutor
+
 import printnanny_api_client
 from printnanny_api_client.models import Pi
 
@@ -26,18 +27,17 @@ class PrintNannyConfig(TypedDict):
     config: Optional[Dict[str, Any]]
 
 
-async def deserialize_pi(pi_dict) -> Pi:
-    async with printnanny_api_client.ApiClient() as client:
-        return client._ApiClient__deserialize(pi_dict, Pi)
+def deserialize_pi(pi_dict) -> Pi:
+    client = printnanny_api_client.ApiClient()
+    return client._ApiClient__deserialize(pi_dict, Pi)
 
 
 def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
+    result = deserialize_pi(pi_dict)
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(deserialize_pi, pi_dict)
-        global PRINTNANNY_PI
-        PRINTNANNY_PI = future.result()
-        return PRINTNANNY_PI
+    global PRINTNANNY_PI
+    PRINTNANNY_PI = result
+    return PRINTNANNY_PI
 
 
 def load_printnanny_config() -> PrintNannyConfig:
