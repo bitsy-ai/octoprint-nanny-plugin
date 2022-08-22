@@ -28,8 +28,8 @@ class PrintNannyConfig(TypedDict):
 
 
 def deserialize_pi(pi_dict) -> Pi:
-    client = printnanny_api_client.ApiClient()
-    return client._ApiClient__deserialize(pi_dict, Pi)
+    client = printnanny_api_client.api_client.ApiClient()
+    return client._ApiClient__deserialize(pi_dict, Pi)  # type: ignore
 
 
 def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
