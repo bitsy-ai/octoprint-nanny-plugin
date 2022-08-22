@@ -180,3 +180,6 @@ bitbake:
 	pipoe --package octoprint-nanny --python python3 --outdir $(BITBAKE_RECIPE) --default-license AGPLv3
 	find $(BITBAKE_RECIPE) -type f -exec sed -i "s/RDEPENDS_${PN}/RDEPENDS:${PN}/g" {} \;
 
+octoprint-bitbake:
+	pipoe --package octoprint --python python3 --outdir $(BITBAKE_RECIPE) --default-license AGPLv3
+	find $(BITBAKE_RECIPE) -type f -exec sed -i "s/RDEPENDS_${PN}/RDEPENDS:${PN}/g" {} \;
