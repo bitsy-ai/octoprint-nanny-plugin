@@ -48,7 +48,11 @@ MOCK_PI_JSON = """{
         "created_dt": "2022-08-10T15:42:13.190818Z",
         "updated_dt": "2022-08-10T15:42:13.190834Z",
         "user": 1,
-        "pi": 2
+        "pi": 2,
+        "base_path": "/home/printnanny/.octoprint",
+        "venv_path": "/home/printnanny/.octoprint/venv",
+        "pip_path": "/home/printnanny/.octoprint/venv/pip",
+        "python_path": "/home/printnanny/.octoprint/venv/python"
     },
     "urls": {
         "swupdate": "http://printnanny.local/update/",
