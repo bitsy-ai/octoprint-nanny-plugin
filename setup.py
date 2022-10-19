@@ -44,7 +44,7 @@ class Python2NotSupported(Exception):
 
 plugin_requires = [
     "case-converter~=1.1.0",
-    "octoprint==1.8.2",
+    "octoprint>=1.8.6",
     "cryptography>=3.4.7",
     "typing_extensions ; python_version < '3.8'",
     "pytz",

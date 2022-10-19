@@ -25,7 +25,12 @@
                     <fieldset>
                         <legend><h3>🔐 Account Info</h3></legend>
                         <p>
-                        Connected PrintNanny account: <strong>{{ plugin_octoprint_nanny_PRINTNANNY_PI.user.email }}</strong>
+                        {% if plugin_octoprint_nanny_PRINTNANNY_PI %}
+                        Connected PrintNanny Cloud account: <strong>{{ plugin_octoprint_nanny_PRINTNANNY_PI.user.email }}</strong>
+                        {% else %}
+                        <p>PrintNanny Cloud account not found!</p>
+                        <a target="_blank" href="https://printnanny.ai/devices" target="_blank"><button class="btn btn-primary">Link Account</button></a>
+                        {% endif %}
                         </p>
 
                     </fieldset>
