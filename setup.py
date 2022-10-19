@@ -27,7 +27,7 @@ plugin_description = """Get notified when defects are detected in your print."""
 plugin_author = "Leigh Johnson"
 
 # The plugin's author's mail address.
-plugin_author_email = "leigh@bitsy.ai"
+plugin_author_email = "leigh@printnanny.ai"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
 plugin_url = "https://github.com/bitsy-ai/octoprint-nanny-plugin"
