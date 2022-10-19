@@ -78,7 +78,7 @@ def load_printnanny_config() -> PrintNannyConfig:
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
 
         # try setting global PRINTNANNY_PI var
-        pi = config.get("pi")
+        pi = config.get("cloud", {}).get("pi")
         if pi is not None:
             load_pi_model(pi)
     except json.JSONDecodeError as e:
