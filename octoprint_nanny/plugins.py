@@ -166,10 +166,6 @@ class OctoPrintNannyPlugin(
         return dict(
             js=[
                 "js/octo_printnanny.js",
-                "js/januswebcam_settings.js",
-                "js/januswebcam.js",
-                "vendor/janus/janus.js",
-                "vendor/janus/webrtc-adaptor.js",
             ],
             css=["css/printnanny.css"],
             less=["less/nanny.less"],
