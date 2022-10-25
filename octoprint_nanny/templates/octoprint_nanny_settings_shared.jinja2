@@ -13,9 +13,7 @@
 
     {% else %}
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('Account Info') }}</a></li>
-        <li><a href="#{{template_name}}_notifications" data-toggle="tab">{{ _('Notifications') }}</a></li>
-        <li><a href="#{{template_name}}_webcam" data-toggle="tab">{{ _('Webcam') }}</a></li>
+        <li class="active"><a href="#{{template_name}}_basic" data-toggle="tab">{{ _('OctoPrint Plugin Settings') }}</a></li>
         <li><a href="#{{template_name}}_report_issue" data-toggle="tab">{{ _('Report an Issue') }}</a></li>
     </ul>
 
@@ -23,16 +21,19 @@
         <div id="{{template_name}}_basic" class="tab-pane active">
                 <form class="form-horizontal">
                     <fieldset>
-                        <legend><h3>🔐 Account Info</h3></legend>
+                        <legend><h3>⚙️ OctoPrint Plugin Settings</h3></legend>
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: settings.settings.plugins.octoprint_nanny.chatEnabled" id="settings-chatEnabled"> Show PrintNanny Chat in OctoPrint.
+                            </label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox">
+                                <input type="checkbox" data-bind="checked: settings.settings.plugins.octoprint_nanny.posthogEnabled" id="settings-posthogEnabled">Send OctoPrint analytics to PrintNanny.
+                                <br>Forwarding analytics helps smooth and improve the PrintNanny + OctoPrint experience.
+                            </label>
+                        </div>
                         <p>
-                        {% if plugin_octoprint_nanny_PRINTNANNY_PI %}
-                        Connected PrintNanny Cloud account: <strong>{{ plugin_octoprint_nanny_PRINTNANNY_PI.user.email }}</strong>
-                        {% else %}
-                        <p>PrintNanny Cloud account not found!</p>
-                        <a target="_blank" href="https://printnanny.ai/devices" target="_blank"><button class="btn btn-primary">Link Account</button></a>
-                        {% endif %}
-                        </p>
-
                     </fieldset>
                 </form>
         </div>

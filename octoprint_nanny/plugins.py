@@ -124,6 +124,8 @@ class OctoPrintNannyPlugin(
                 janusBitrateInterval=1000,
                 selectedStreamId=None,
                 streamWebrtcIceServers="stun:stun.l.google.com:19302",
+                chatEnabled=True,
+                posthogEnabled=False,
             )
             return DEFAULT_SETTINGS
         else:
@@ -153,10 +155,9 @@ class OctoPrintNannyPlugin(
     def get_wizard_version(self):
         return 1
 
-    ## Require Wizard if PrintNanny user is not detected
+    ## OctoPrint Setup Wizard should always be disabled for PrintNanny plugin - setup occurs via PrintNanny OS dashboard
     def is_wizard_required(self):
-        printnanny_os.load_printnanny_config()
-        return printnanny_os.PRINTNANNY_PI is None
+        return False
 
     ##~~ AssetPlugin mixin
     def get_assets(self):
@@ -164,7 +165,7 @@ class OctoPrintNannyPlugin(
         # core UI here.
         return dict(
             js=[
-                "js/nanny.js",
+                "js/octo_printnanny.js",
                 "js/januswebcam_settings.js",
                 "js/januswebcam.js",
                 "vendor/janus/janus.js",
