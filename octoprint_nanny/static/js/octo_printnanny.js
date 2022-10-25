@@ -81,3 +81,45 @@ $(function () {
 
     });
 });
+
+
+$(function () {
+    function CameraWarningViewModel(parameters) {
+
+        $('#settings_webcam h3:first-of-type').after('<div class="alert alert-printnanny alert-block"><h4 class="alert-heading">Note from PrintNanny</h4><p>The setting below do not apply to PrintNanny\'s web camera!</p><p> Use PrintNanny\'s Camera settings tab instead. </p><p><a data-toggle="tab" href="#settings_plugin_octoprint_nanny" class="btn btn-primary">Open PrintNanny Settings</a></p></div>')
+    }
+
+    OCTOPRINT_VIEWMODELS.push({
+        construct: CameraWarningViewModel,
+        dependencies: ["loginStateViewModel", "settingsViewModel"],
+        elements: ["#settings_webcam"]
+    });
+});
+
+$(function () {
+    function PrintNannySettingsViewModel(parameters) {
+        let self = this;
+        self.loginState = parameters[0];
+        self.settings = parameters[1];
+
+        self.showError = ko.observable(false);
+        self.showStart = ko.observable(true);
+        self.disableStart = ko.observable(false);
+        self.errorMessages = ko.observableArray([])
+
+        self.error = function (msg) {
+            console.error(msg);
+            self.showError(true);
+            self.errorMessages.push(msg);
+        }
+    }
+
+    OCTOPRINT_VIEWMODELS.push({
+        construct: PrintNannySettingsViewModel,
+        // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
+        dependencies: ["loginStateViewModel", "settingsViewModel"],
+        // Elements to bind to, e.g. #settings_plugin_nanny, #tab_plugin_nanny, ...
+        elements: ['#settings_plugin_octoprint_nanny']
+
+    });
+});
