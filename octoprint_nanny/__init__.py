@@ -5,7 +5,7 @@ __plugin_name__ = "OctoPrint-Nanny"
 
 __plugin_pythoncompat__ = ">=3,<4"  # only python 3
 
-__plugin_version__ = "0.13.6"
+__plugin_version__ = "0.14.0"
 
 
 def __plugin_load__():
