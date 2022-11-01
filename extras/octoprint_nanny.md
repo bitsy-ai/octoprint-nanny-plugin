@@ -127,7 +127,7 @@ Learn more about Print Nanny: https://printnanny.ai/
 ### Setup
 
 1. [Request invite](https://printnanny.ai)
-2. Follow the [Quick Start guide](https://docs.printnanny.ai/docs/category/quick-start/).
+2. Follow the [Quick Start guide](https://printnanny.ai/docs/category/quick-start/).
 
 ![Print Nanny Dashboard and App](/assets/img/plugins/octoprint_nanny/screenshot_4.jpg)
 

@@ -15,7 +15,7 @@ OctoPrint monitoring & alerting AI.
 ## Getting Started
 
 * [Request invitation to closed Beta](https://printnanny.ai)
-* [Quick Start](https://docs.printnanny.ai/docs/category/quick-start/)
+* [Quick Start](https://printnanny.ai/docs/category/quick-start/)
 
 ## Credits
 

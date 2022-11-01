@@ -137,7 +137,7 @@ class OctoPrintNannyPlugin(
         printnanny_os.load_printnanny_config()
         custom = {
             "urls": {
-                "getting_started_guide": "https://docs.printnanny.ai/docs/category/quick-start/",
+                "getting_started_guide": "https://printnanny.ai/docs/category/quick-start/",
                 "discord_invite": "https://discord.gg/sf23bk2hPr",
                 "webapp": PRINTNANNY_WEBAPP_BASE_URL,
             },
