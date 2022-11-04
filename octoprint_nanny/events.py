@@ -152,32 +152,6 @@ def event_request(
             subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
         )
 
-    # client events
-    elif event == "ClientOpened":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTOPENED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-    elif event == "ClientAuthed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTAUTHED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-    elif event == "ClientClosed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTCLOSED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-
     # printer status events
     elif event == "PrinterStateChanged":
         state_id = payload.get("state_id", "OFFLINE")
