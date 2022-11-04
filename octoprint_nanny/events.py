@@ -1,7 +1,7 @@
 import logging
 import asyncio
-import json
 import nats
+import functools
 import subprocess
 from typing import Dict, Any, Optional
 from caseconverter import kebabcase
@@ -243,7 +243,9 @@ def try_publish_nats(
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
 
     loop = asyncio.get_event_loop()
-    coro = nc.publish(subject, request)
+
+    payload = request.to_str().encode("utf-8")
+    coro = functools.partial(nc.publish, data={"subject": subject, payload: payload})
     future = loop.run_in_executor(thread_pool, coro)
     return future.result()
 

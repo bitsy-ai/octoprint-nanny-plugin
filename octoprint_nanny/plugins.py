@@ -3,6 +3,7 @@ import logging
 import os
 import nats
 import flask
+import functools
 import octoprint.plugin
 import octoprint.util
 
@@ -71,9 +72,12 @@ class OctoPrintNannyPlugin(
             # get asyncio event loop
             loop = asyncio.new_event_loop()
             # schedule task using ThreadPoolExecutor
-            coro = nats.connect(
-                printnanny_os.PRINTNANNY_PI.nats_app.nats_server_uri,
-                user_credentials=printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
+            coro = functools.partial(
+                nats.connect,
+                data={
+                    "servers": [printnanny_os.PRINTNANNY_PI.nats_app.nats_server_uri],
+                    "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
+                },
             )
             future = loop.run_in_executor(self._thread_pool, coro)
             self._nc = future.result()
