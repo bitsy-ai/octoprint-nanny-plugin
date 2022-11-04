@@ -150,14 +150,15 @@ class OctoPrintNannyPlugin(
 
     ##~~ Wizard plugin mixin
     def get_settings_version(self):
-        return 1
+        return 2
 
     def get_wizard_version(self):
-        return 1
+        return 2
 
-    ## OctoPrint Setup Wizard should always be disabled for PrintNanny plugin - setup occurs via PrintNanny OS dashboard
+    ## Show OctoPrint setup wizard if PrintNanny Cloud Nats creds aren't present
     def is_wizard_required(self):
-        return False
+        printnanny_os.load_printnanny_config()
+        return os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False
 
     ##~~ AssetPlugin mixin
     def get_assets(self):
