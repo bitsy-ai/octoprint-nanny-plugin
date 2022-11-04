@@ -51,6 +51,7 @@ plugin_requires = [
     "aiohttp[speedups]>=3.7.4",
     "printnanny-api-client~=0.107.2",
     "backoff>=1.10.0",
+    "nats-py[nkeys]~=2.2.0",
 ]
 
 dev_requires = [

@@ -1,3 +1,19 @@
 {% with template_name = 'octoprint_nanny_wizard' %}
-    {% include 'octoprint_nanny_settings_shared.jinja2' %}
+<div class="row-fluid">
+    <a href="{{ plugin_octoprint_nanny_urls.webapp }}"><img src="plugin/octoprint_nanny/static/img/print_nanny_logo.png"/></a>
+    <hr>
+    <h2>⚠️ PrintNanny Cloud setup incomplete</h2>
+
+
+    <div class="alert alert-printnanny alert-block">
+        <h4 class="alert-heading">Connect PrintNanny Cloud account to receive OctoPrint notifications</h4>
+    
+        <p style="margin-top: 20px">Your PrintNanny Cloud account is not linked to this device yet.</p>
+        <a target="_blank" href="/printnanny/settings" target="_blank"><button class="btn btn-primary btn-large" style="margin-top: 20px">Connect Account</button></a>
+    <br>
+    <a target="_blank" href="https://printnanny.ai/docs/quick-start/connect-printnanny-cloud/"><button class="btn btn-secondary" style="margin-top: 20px">Walkthrough: How to Connect PrintNanny Cloud</button></a>        
+    </div>
+
+    <hr>
+</div>
 {% endwith %}

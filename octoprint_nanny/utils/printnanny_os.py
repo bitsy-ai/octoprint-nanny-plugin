@@ -1,9 +1,7 @@
 from os import environ
-import concurrent.futures
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
-import asyncio
 import subprocess
 
 import printnanny_api_client
@@ -16,6 +14,7 @@ PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
 PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
 
 PRINTNANNY_PI: Optional[Pi] = None
+PRINTNANNY_CLOUD_NATS_CREDS = "/var/lib/printnanny/creds/printnanny-cloud-nats.creds"
 
 
 class PrintNannyConfig(TypedDict):
@@ -81,6 +80,14 @@ def load_printnanny_config() -> PrintNannyConfig:
         pi = config.get("cloud", {}).get("pi")
         if pi is not None:
             load_pi_model(pi)
+
+        paths = config.get("paths", {}).get("lib_dir")
+        if paths is not None:
+            global PRINTNANNY_CLOUD_NATS_CREDS
+            PRINTNANNY_CLOUD_NATS_CREDS = paths.get(
+                "nats_creds", PRINTNANNY_CLOUD_NATS_CREDS
+            )
+
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)
     return PrintNannyConfig(

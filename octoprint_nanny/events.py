@@ -1,9 +1,11 @@
 import logging
 import asyncio
-import json
+import nats
+import functools
 import subprocess
 from typing import Dict, Any, Optional
 from caseconverter import kebabcase
+from concurrent.futures import ThreadPoolExecutor
 
 from octoprint_nanny.utils import printnanny_os
 
@@ -33,9 +35,6 @@ PUBLISH_EVENTS = {
     "PrintCancelled",  # print job
     "PrintPaused",  # print job
     "PrintResumed",  # print job
-    "ClientAuthed",  # client
-    "ClientOpened",  # client
-    "ClientClosed",  # client
 }
 
 
@@ -152,32 +151,6 @@ def event_request(
             subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
         )
 
-    # client events
-    elif event == "ClientOpened":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTOPENED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-    elif event == "ClientAuthed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTAUTHED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-    elif event == "ClientClosed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=printnanny_os.PRINTNANNY_PI.id,
-            octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintClientStatusType.CLIENTCLOSED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintClientStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_CLIENT,
-        )
-
     # printer status events
     elif event == "PrinterStateChanged":
         state_id = payload.get("state_id", "OFFLINE")
@@ -261,39 +234,33 @@ def event_request(
     return None
 
 
-def try_publish_cmd(
+def try_publish_nats(
     request: PolymorphicOctoPrintEventRequest,
-) -> Optional[subprocess.CompletedProcess]:
-    payload = json.dumps(request.to_dict())
-    cmd = [
-        printnanny_os.PRINTNANNY_BIN,
-        "nats-publisher",
-        request.subject_pattern,
-        "--event-type",
-        kebabcase(request.event_type),
-        "--payload",
-        payload,
-    ]
-    logger.debug("Running command: %s", cmd)
-    p = subprocess.run(cmd, capture_output=True)
-    stdout = p.stdout.decode("utf-8")
-    stderr = p.stderr.decode("utf-8")
-    if p.returncode != 0:
-        logger.error(
-            f"Command exited non-zero code cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
-        )
-    return p
+    nc: nats.aio.client.Client,
+    thread_pool: ThreadPoolExecutor,
+):
+
+    subject = request.subject_pattern.replace("{pi_id}", request.pi)
+
+    loop = asyncio.get_event_loop()
+
+    payload = request.to_str().encode("utf-8")
+    coro = functools.partial(nc.publish, data={"subject": subject, payload: payload})
+    future = loop.run_in_executor(thread_pool, coro)
+    return future.result()
 
 
 def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
+    nc: nats.aio.client.Client,
+    thread_pool: ThreadPoolExecutor,
 ) -> Optional[subprocess.CompletedProcess]:
     try:
         if should_publish_event(event, payload):
             req = event_request(event, payload)
             if req is not None:
-                return try_publish_cmd(req)
+                return try_publish_nats(req, nc, thread_pool)
         return None
     except Exception as e:
         logger.error(

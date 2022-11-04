@@ -1,11 +1,14 @@
+import asyncio
 import logging
 import os
+import nats
 import flask
+import functools
 import octoprint.plugin
 import octoprint.util
-import socket
-from typing import Any, Dict, List
 
+from typing import Any, Dict, List
+from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
@@ -20,6 +23,11 @@ PRINTNANNY_WEBAPP_BASE_URL = os.environ.get(
     "PRINTNANNY_WEBAPP_BASE_URL", "https://printnanny.ai"
 )
 Events.PRINT_PROGRESS = "PrintProgress"
+
+DEFAULT_SETTINGS = dict(
+    chatEnabled=True,
+    posthogEnabled=False,
+)
 
 
 class OctoPrintNannyPlugin(
@@ -42,7 +50,37 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
+
+        # create a thread bool for asyncio tasks
+        self._thread_pool = ThreadPoolExecutor(max_workers=8)
+        self._nc = None
+
         super().__init__(*args, **kwargs)
+
+    def _init_nats_connection(self):
+        if self._nc is None:
+            # test nats credential path:
+            if os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False:
+                logger.error(
+                    "Failed to load PrintNanny Cloud NATS credentials from %s",
+                    printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
+                )
+                return
+            if printnanny_os.PRINTNANNY_PI is None:
+                logger.error("Failed to load PRINTNANNY_PI")
+                return
+            # get asyncio event loop
+            loop = asyncio.new_event_loop()
+            # schedule task using ThreadPoolExecutor
+            coro = functools.partial(
+                nats.connect,
+                data={
+                    "servers": [printnanny_os.PRINTNANNY_PI.nats_app.nats_server_uri],
+                    "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
+                },
+            )
+            future = loop.run_in_executor(self._thread_pool, coro)
+            self._nc = future.result()
 
     ##
     ## Octoprint api routes + handlers
@@ -63,18 +101,30 @@ class OctoPrintNannyPlugin(
         return []
 
     def on_shutdown(self):
-        logger.info("Running on_shutdown handler")
+        # drain and shutdown thread pool
+        self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
-        logger.info("Running on_startup handler args=%s kwargs=%s", args, kwargs)
+        # configure nats connection
+        printnanny_os.load_printnanny_config()
+        try:
+            self._init_nats_connection()
+        except Exception as e:
+            logger.error("Error initializing PrintNanny Cloud NATS connection: %s", e)
 
     def on_after_startup(self, *args, **kwargs):
-        logger.info("Running on_after_startup handler args=%s kwargs=%s", args, kwargs)
+        # configure logger first
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
-            try_handle_event(event, payload)
+            if self._nc is None:
+                logger.warning(
+                    "PrintNanny Cloud NATS connection is not initialized, skipping event: %s",
+                    event,
+                )
+                return
+            try_handle_event(event, payload, self._nc, self._thread_pool)
         else:
             logger.warning(
                 "PrintNanny OS not detected or device is not registered. Ignoring event %s",
@@ -108,28 +158,7 @@ class OctoPrintNannyPlugin(
 
     ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
-        maybe_config = printnanny_os.load_printnanny_config()
-        config = maybe_config.get("config")
-        if config is not None:
-            janusApiUrl = (
-                config.get("device", {}).get("janus_edge", {}).get("api_http_url", "")
-            )
-            janusApiToken = (
-                config.get("device", {}).get("janus_edge", {}).get("api_token", "")
-            )
-
-            DEFAULT_SETTINGS = dict(
-                janusApiUrl=janusApiUrl,
-                janusApiToken=janusApiToken,
-                janusBitrateInterval=1000,
-                selectedStreamId=None,
-                streamWebrtcIceServers="stun:stun.l.google.com:19302",
-                chatEnabled=True,
-                posthogEnabled=False,
-            )
-            return DEFAULT_SETTINGS
-        else:
-            return dict()
+        return DEFAULT_SETTINGS
 
     ##~~ Template plugin
 
@@ -150,14 +179,15 @@ class OctoPrintNannyPlugin(
 
     ##~~ Wizard plugin mixin
     def get_settings_version(self):
-        return 1
+        return 2
 
     def get_wizard_version(self):
-        return 1
+        return 2
 
-    ## OctoPrint Setup Wizard should always be disabled for PrintNanny plugin - setup occurs via PrintNanny OS dashboard
+    ## Show OctoPrint setup wizard if PrintNanny Cloud Nats creds aren't present
     def is_wizard_required(self):
-        return False
+        printnanny_os.load_printnanny_config()
+        return os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False
 
     ##~~ AssetPlugin mixin
     def get_assets(self):
