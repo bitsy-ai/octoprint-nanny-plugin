@@ -1,9 +1,11 @@
 import logging
 import asyncio
 import json
+import nats
 import subprocess
 from typing import Dict, Any, Optional
 from caseconverter import kebabcase
+from concurrent.futures import ThreadPoolExecutor
 
 from octoprint_nanny.utils import printnanny_os
 
@@ -33,9 +35,6 @@ PUBLISH_EVENTS = {
     "PrintCancelled",  # print job
     "PrintPaused",  # print job
     "PrintResumed",  # print job
-    "ClientAuthed",  # client
-    "ClientOpened",  # client
-    "ClientClosed",  # client
 }
 
 
@@ -235,39 +234,31 @@ def event_request(
     return None
 
 
-def try_publish_cmd(
+def try_publish_nats(
     request: PolymorphicOctoPrintEventRequest,
-) -> Optional[subprocess.CompletedProcess]:
-    payload = json.dumps(request.to_dict())
-    cmd = [
-        printnanny_os.PRINTNANNY_BIN,
-        "nats-publisher",
-        request.subject_pattern,
-        "--event-type",
-        kebabcase(request.event_type),
-        "--payload",
-        payload,
-    ]
-    logger.debug("Running command: %s", cmd)
-    p = subprocess.run(cmd, capture_output=True)
-    stdout = p.stdout.decode("utf-8")
-    stderr = p.stderr.decode("utf-8")
-    if p.returncode != 0:
-        logger.error(
-            f"Command exited non-zero code cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
-        )
-    return p
+    nc: nats.aio.client.Client,
+    thread_pool: ThreadPoolExecutor,
+):
+
+    subject = request.subject_pattern.replace("{pi_id}", request.pi)
+
+    loop = asyncio.get_event_loop()
+    coro = nc.publish(subject, request)
+    future = loop.run_in_executor(thread_pool, coro)
+    return future.result()
 
 
 def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
+    nc: nats.aio.client.Client,
+    thread_pool: ThreadPoolExecutor,
 ) -> Optional[subprocess.CompletedProcess]:
     try:
         if should_publish_event(event, payload):
             req = event_request(event, payload)
             if req is not None:
-                return try_publish_cmd(req)
+                return try_publish_nats(req, nc, thread_pool)
         return None
     except Exception as e:
         logger.error(

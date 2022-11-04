@@ -1,9 +1,7 @@
 from os import environ
-import concurrent.futures
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
-import asyncio
 import subprocess
 
 import printnanny_api_client

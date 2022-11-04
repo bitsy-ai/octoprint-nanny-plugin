@@ -1,6 +1,6 @@
 import json
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from printnanny_api_client.models import Pi
 
 from octoprint_nanny.utils.printnanny_os import PrintNannyConfig
@@ -8,13 +8,10 @@ from octoprint_nanny.events import should_publish_event, try_handle_event
 from octoprint_nanny.utils import printnanny_os
 
 
-@patch("octoprint_nanny.events.try_publish_cmd")
-def test_handle_untracked_event(mock_try_publish_cmd):
-    try_handle_event(
-        "someuntrackedevent",
-        dict(),
-    )
-    assert mock_try_publish_cmd.called is False
+@patch("octoprint_nanny.events.try_publish_nats")
+def test_handle_untracked_event(mock_try_publish_nats):
+    try_handle_event("someuntrackedevent", dict(), MagicMock(), MagicMock())
+    assert mock_try_publish_nats.called is False
 
 
 MOCK_PI_JSON = """{
@@ -73,14 +70,11 @@ MOCK_PI = printnanny_os.load_pi_model(json.loads(MOCK_PI_JSON))
 
 
 @patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
-@patch("octoprint_nanny.events.try_publish_cmd")
-def test_handle_events_enabled_true(mock_try_publish_cmd, mock_printnanny_config):
+@patch("octoprint_nanny.events.try_publish_nats")
+def test_handle_events_enabled_true(mock_try_publish_nats, mock_printnanny_config):
     printnanny_os.PRINTNANNY_PI = MOCK_PI
-    try_handle_event(
-        "Startup",
-        dict(),
-    )
-    assert mock_try_publish_cmd.called is True
+    try_handle_event("Startup", dict(), MagicMock(), MagicMock())
+    assert mock_try_publish_nats.called is True
 
 
 @patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
