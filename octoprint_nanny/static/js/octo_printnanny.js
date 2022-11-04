@@ -27,19 +27,6 @@
 // });
 
 $(function () {
-    function CameraWarningViewModel(parameters) {
-
-        $('#settings_webcam h3:first-of-type').after('<div class="alert alert-printnanny alert-block"><h4 class="alert-heading">Note from PrintNanny</h4><p>The setting below do not apply to PrintNanny\'s web camera!</p><p> Use PrintNanny\'s Camera settings tab instead. </p><p><a data-toggle="tab" href="#settings_plugin_octoprint_nanny" class="btn btn-primary">Open PrintNanny Settings</a></p></div>')
-    }
-
-    OCTOPRINT_VIEWMODELS.push({
-        construct: CameraWarningViewModel,
-        dependencies: ["loginStateViewModel", "settingsViewModel"],
-        elements: ["#settings_webcam"]
-    });
-});
-
-$(function () {
     function PrintNannyNavbarViewModel(parameters) {
         let self = this;
         self.loginState = parameters[0];
