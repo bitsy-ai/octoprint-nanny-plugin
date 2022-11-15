@@ -76,7 +76,7 @@ flask-assets==2.0
     # via octoprint
 flask-babel==2.0.0
     # via octoprint
-flask-limiter==2.8.0
+flask-limiter==2.8.1
     # via octoprint
 flask-login==0.5.0
     # via octoprint

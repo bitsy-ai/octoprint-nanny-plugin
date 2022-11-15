@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import nats
-import flask
+
 import functools
 import octoprint.plugin
 import octoprint.util
@@ -13,8 +13,10 @@ from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
 
+from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
+import printnanny_api_client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -24,10 +26,7 @@ PRINTNANNY_WEBAPP_BASE_URL = os.environ.get(
 )
 Events.PRINT_PROGRESS = "PrintProgress"
 
-DEFAULT_SETTINGS = dict(
-    chatEnabled=True,
-    posthogEnabled=False,
-)
+DEFAULT_SETTINGS = dict(chatEnabled=True, posthogEnabled=False, apiToken=None)
 
 
 class OctoPrintNannyPlugin(
@@ -66,8 +65,8 @@ class OctoPrintNannyPlugin(
                     printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 )
                 return
-            if printnanny_os.PRINTNANNY_PI is None:
-                logger.error("Failed to load PRINTNANNY_PI")
+            if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+                logger.error("Failed to load PRINTNANNY_CLOUD_PI")
                 return
             # get asyncio event loop
             loop = asyncio.new_event_loop()
@@ -75,7 +74,9 @@ class OctoPrintNannyPlugin(
             coro = functools.partial(
                 nats.connect,
                 data={
-                    "servers": [printnanny_os.PRINTNANNY_PI.nats_app.nats_server_uri],
+                    "servers": [
+                        printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri
+                    ],
                     "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 },
             )
@@ -85,28 +86,23 @@ class OctoPrintNannyPlugin(
     ##
     ## Octoprint api routes + handlers
     ##
-    @octoprint.plugin.BlueprintPlugin.route("/backup", methods=["POST"])
-    def create_backup(self):
-        helpers = self._plugin_manager.get_helpers("backup", "create_backup")
-
-        if helpers and "create_backup" in helpers:
-            backup_file = helpers["create_backup"](exclude=["timelapse"])
-            logger.info("Created backup file")
-            return flask.json.jsonify({"ok": 1})
-        else:
-            logger.error("Plugin manager failed to get backup helper")
-            raise Exception("Plugin manager failed to get backup helper")
+    @octoprint.plugin.BlueprintPlugin.route("/printnanny/test", methods=["POST"])
+    def test_printnanny_cloud_nats(self):
+        # reload config
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_SERVER_TEST)
+        return dict(ok=True)
 
     def register_custom_events(self) -> List[str]:
-        return []
+        return ["server_test"]
 
     def on_shutdown(self):
         # drain and shutdown thread pool
         self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
-        # configure nats connection
         printnanny_os.load_printnanny_config()
+
+        # configure nats connection
         try:
             self._init_nats_connection()
         except Exception as e:
@@ -173,7 +169,7 @@ class OctoPrintNannyPlugin(
             "is_printnanny_os": printnanny_os.is_printnanny_os(),
             "issue_txt": printnanny_os.issue_txt(),
             "etc_os_release": printnanny_os.etc_os_release(),
-            "PRINTNANNY_PI": printnanny_os.PRINTNANNY_PI,
+            "PRINTNANNY_CLOUD_PI": printnanny_os.PRINTNANNY_CLOUD_PI,
         }
         return custom
 

@@ -36,9 +36,6 @@ $(function () {
         self.showStart = ko.observable(true);
         self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
-        // self.onAfterBinding = function () {
-        //     initializeJanus(self)
-        // }
 
         self.error = function (msg) {
             console.error(msg);
@@ -76,9 +73,9 @@ $(function () {
         self.loginState = parameters[0];
         self.settings = parameters[1];
 
+
+        self.showTestButton = ko.observable(false); // show "Test PrintNanny Notification" button if Cloud account is connected
         self.showError = ko.observable(false);
-        self.showStart = ko.observable(true);
-        self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
 
         self.error = function (msg) {
@@ -86,6 +83,13 @@ $(function () {
             self.showError(true);
             self.errorMessages.push(msg);
         }
+
+        self.testCloudNATS = function () {
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'printnanny/test'
+            const res = OctoPrint.post(url);
+
+        }
+
     }
 
     OCTOPRINT_VIEWMODELS.push({
