@@ -16,8 +16,6 @@ argon2-cffi==21.3.0
     # via octoprint
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-asgiref==3.5.2
-    # via flask
 async-timeout==4.0.2
     # via aiohttp
 attrs==22.1.0
@@ -67,9 +65,8 @@ feedparser==6.0.10
     # via octoprint
 filetype==1.2.0
     # via octoprint
-flask[async]==2.1.3
+flask==2.1.3
     # via
-    #   OctoPrint-Nanny (setup.py)
     #   flask-assets
     #   flask-babel
     #   flask-limiter
