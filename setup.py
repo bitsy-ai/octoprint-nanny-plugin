@@ -52,6 +52,7 @@ plugin_requires = [
     "printnanny-api-client~=0.117.1",
     "backoff>=1.10.0",
     "nats-py[nkeys]~=2.2.0",
+    "flask[async]~=2.1.3",
 ]
 
 dev_requires = [
