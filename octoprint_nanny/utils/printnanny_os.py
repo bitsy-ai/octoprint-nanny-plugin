@@ -105,12 +105,10 @@ def load_printnanny_config() -> PrintNannyConfig:
         if pi is not None:
             load_pi_model(pi)
 
-        paths = config.get("paths", {}).get("lib_dir")
-        if paths is not None:
+        nats_creds = config.get("paths", {}).get("nats_creds")
+        if nats_creds is not None:
             global PRINTNANNY_CLOUD_NATS_CREDS
-            PRINTNANNY_CLOUD_NATS_CREDS = paths.get(
-                "nats_creds", PRINTNANNY_CLOUD_NATS_CREDS
-            )
+            PRINTNANNY_CLOUD_NATS_CREDS = nats_creds
 
     except json.JSONDecodeError as e:
         logger.warning(f"Failed to decode printnanny config: %", e)
