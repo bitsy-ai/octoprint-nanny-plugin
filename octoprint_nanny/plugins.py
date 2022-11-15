@@ -1,5 +1,4 @@
 import asyncio
-from asgiref.sync import AsyncToSync
 import logging
 import os
 import nats
