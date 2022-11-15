@@ -52,7 +52,7 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
     global PRINTNANNY_CLOUD_API
 
     PRINTNANNY_CLOUD_API = PrintNannyApiConfig(
-        base_path=api_config_dict.get("base_path"),
+        base_path=api_config_dict.get("base_path", "https://printnanny.ai/"),
         bearer_access_token=api_config_dict.get("bearer_access_token"),
     )
     return PRINTNANNY_CLOUD_API
