@@ -84,11 +84,9 @@ $(function () {
             self.errorMessages.push(msg);
         }
 
-        self.onAfterBinding = function () {
-            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'printnanny/status'
-            const res = OctoPrint.get(url);
-            console.log("Got response", res)
-
+        self.testCloudNATS = function () {
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'printnanny/test'
+            const res = OctoPrint.post(url);
 
         }
 

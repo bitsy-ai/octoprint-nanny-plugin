@@ -87,26 +87,14 @@ class OctoPrintNannyPlugin(
     ##
     ## Octoprint api routes + handlers
     ##
-    @octoprint.plugin.BlueprintPlugin.route("/printnanny/status", methods=["GET"])
-    def get_printnanny_cloud_connection_status(self):
+    @octoprint.plugin.BlueprintPlugin.route("/printnanny/test", methods=["POST"])
+    def test_printnanny_cloud_nats(self):
         # reload config
-        printnanny_os.load_printnanny_config()
-
-        result = dict(printnanny_user=None)
-
-        if printnanny_os.PRINTNANNY_CLOUD_API is not None:
-            api_client = PrintNannyCloudAPIClient(**printnanny_os.PRINTNANNY_CLOUD_API)
-            try:
-                task = asyncio.create_task(api_client.get_user())
-                res = task.result()
-                result["printnanny_user"] = res
-            except printnanny_api_client.exceptions.ApiException as e:
-                logger.error(e)
-
-        return result
+        self._event_bus.fire(Events.PLUGIN_OCTOPRINT_NANNY_SERVER_TEST)
+        return dict(ok=True)
 
     def register_custom_events(self) -> List[str]:
-        return []
+        return ["server_test"]
 
     def on_shutdown(self):
         # drain and shutdown thread pool

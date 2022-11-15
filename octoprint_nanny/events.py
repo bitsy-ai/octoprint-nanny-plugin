@@ -162,6 +162,15 @@ def event_request(
             subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
         )
 
+    elif event == "plugin_octoprint_nanny_test_server":
+        return PolymorphicOctoPrintEventRequest(
+            pi=printnanny_os.PRINTNANNY_CLOUD_PI.id,
+            octoprint_server=printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id,
+            event_type=OctoPrintServerStatusType.TEST,
+            payload=sanitized_payload,
+            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
+        )
+
     # OctoPrintPrintJob
     elif event == "PrintProgress":
         return PolymorphicOctoPrintEventRequest(
