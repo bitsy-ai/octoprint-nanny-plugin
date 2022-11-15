@@ -23,6 +23,9 @@ class PrintNannyApiConfig(TypedDict):
     bearer_access_token: Optional[str]
 
 
+PRINTNANNY_CLOUD_API: Optional[PrintNannyApiConfig] = None
+
+
 class PrintNannyConfig(TypedDict):
     cmd: List[str]
     stdout: str
@@ -43,6 +46,16 @@ def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
     global PRINTNANNY_CLOUD_PI
     PRINTNANNY_CLOUD_PI = result
     return PRINTNANNY_CLOUD_PI
+
+
+def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
+    global PRINTNANNY_CLOUD_API
+
+    PRINTNANNY_CLOUD_API = PrintNannyApiConfig(
+        base_path=api_config_dict.get("base_path"),
+        bearer_access_token="bearer_access_token",
+    )
+    return PRINTNANNY_CLOUD_API
 
 
 def load_printnanny_config() -> PrintNannyConfig:
@@ -82,6 +95,11 @@ def load_printnanny_config() -> PrintNannyConfig:
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
 
+        api_config = config.get("cloud", {}).get("api", {})
+
+        # try setting PRINTNANNY_CLOUD_API var
+        if api_config is not None:
+            load_api_config(api_config)
         # try setting global PRINTNANNY_CLOUD_PI var
         pi = config.get("cloud", {}).get("pi")
         if pi is not None:
