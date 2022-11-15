@@ -36,9 +36,6 @@ $(function () {
         self.showStart = ko.observable(true);
         self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
-        // self.onAfterBinding = function () {
-        //     initializeJanus(self)
-        // }
 
         self.error = function (msg) {
             console.error(msg);
@@ -77,8 +74,6 @@ $(function () {
         self.settings = parameters[1];
 
         self.showError = ko.observable(false);
-        self.showStart = ko.observable(true);
-        self.disableStart = ko.observable(false);
         self.errorMessages = ko.observableArray([])
 
         self.error = function (msg) {
@@ -86,6 +81,11 @@ $(function () {
             self.showError(true);
             self.errorMessages.push(msg);
         }
+
+        self.onAfterBinding = function () {
+
+        }
+
     }
 
     OCTOPRINT_VIEWMODELS.push({

@@ -13,8 +13,14 @@ PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
 PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
 PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
 
-PRINTNANNY_PI: Optional[Pi] = None
+
+PRINTNANNY_CLOUD_PI: Optional[Pi] = None
 PRINTNANNY_CLOUD_NATS_CREDS = "/var/lib/printnanny/creds/printnanny-cloud-nats.creds"
+
+
+class PrintNannyApiConfig(TypedDict):
+    base_path: str
+    bearer_access_token: Optional[str]
 
 
 class PrintNannyConfig(TypedDict):
@@ -34,9 +40,9 @@ def deserialize_pi(pi_dict) -> Pi:
 def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
     result = deserialize_pi(pi_dict)
 
-    global PRINTNANNY_PI
-    PRINTNANNY_PI = result
-    return PRINTNANNY_PI
+    global PRINTNANNY_CLOUD_PI
+    PRINTNANNY_CLOUD_PI = result
+    return PRINTNANNY_CLOUD_PI
 
 
 def load_printnanny_config() -> PrintNannyConfig:
@@ -76,7 +82,7 @@ def load_printnanny_config() -> PrintNannyConfig:
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
 
-        # try setting global PRINTNANNY_PI var
+        # try setting global PRINTNANNY_CLOUD_PI var
         pi = config.get("cloud", {}).get("pi")
         if pi is not None:
             load_pi_model(pi)

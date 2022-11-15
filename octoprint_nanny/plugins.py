@@ -24,10 +24,7 @@ PRINTNANNY_WEBAPP_BASE_URL = os.environ.get(
 )
 Events.PRINT_PROGRESS = "PrintProgress"
 
-DEFAULT_SETTINGS = dict(
-    chatEnabled=True,
-    posthogEnabled=False,
-)
+DEFAULT_SETTINGS = dict(chatEnabled=True, posthogEnabled=False, apiToken=None)
 
 
 class OctoPrintNannyPlugin(
@@ -66,8 +63,8 @@ class OctoPrintNannyPlugin(
                     printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 )
                 return
-            if printnanny_os.PRINTNANNY_PI is None:
-                logger.error("Failed to load PRINTNANNY_PI")
+            if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+                logger.error("Failed to load PRINTNANNY_CLOUD_PI")
                 return
             # get asyncio event loop
             loop = asyncio.new_event_loop()
@@ -75,7 +72,9 @@ class OctoPrintNannyPlugin(
             coro = functools.partial(
                 nats.connect,
                 data={
-                    "servers": [printnanny_os.PRINTNANNY_PI.nats_app.nats_server_uri],
+                    "servers": [
+                        printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri
+                    ],
                     "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 },
             )
@@ -105,8 +104,9 @@ class OctoPrintNannyPlugin(
         self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
+        config = printnanny_os.load_printnanny_config()
+
         # configure nats connection
-        printnanny_os.load_printnanny_config()
         try:
             self._init_nats_connection()
         except Exception as e:
@@ -173,7 +173,7 @@ class OctoPrintNannyPlugin(
             "is_printnanny_os": printnanny_os.is_printnanny_os(),
             "issue_txt": printnanny_os.issue_txt(),
             "etc_os_release": printnanny_os.etc_os_release(),
-            "PRINTNANNY_PI": printnanny_os.PRINTNANNY_PI,
+            "PRINTNANNY_CLOUD_PI": printnanny_os.PRINTNANNY_CLOUD_PI,
         }
         return custom
 

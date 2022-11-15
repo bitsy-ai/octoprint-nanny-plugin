@@ -72,7 +72,7 @@ MOCK_PI = printnanny_os.load_pi_model(json.loads(MOCK_PI_JSON))
 @patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
 @patch("octoprint_nanny.events.try_publish_nats")
 def test_handle_events_enabled_true(mock_try_publish_nats, mock_printnanny_config):
-    printnanny_os.PRINTNANNY_PI = MOCK_PI
+    printnanny_os.PRINTNANNY_CLOUD_PI = MOCK_PI
     try_handle_event("Startup", dict(), MagicMock(), MagicMock())
     assert mock_try_publish_nats.called is True
 
