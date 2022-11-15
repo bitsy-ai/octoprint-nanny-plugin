@@ -14,7 +14,7 @@ from printnanny_api_client.models import (
     PolymorphicOctoPrintEventRequest,
     OctoPrintServerStatusType,
     OctoPrintPrintJobStatusType,
-    OctoPrintGcodeEventType,
+    GcodeEventType,
     OctoPrintPrinterStatusType,
 )
 
@@ -79,7 +79,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.Alert_M300,
+            event_type=GcodeEventType.M300,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -87,7 +87,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.Cooling_M245,
+            event_type=GcodeEventType.M245,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -95,7 +95,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.Dwell_G4,
+            event_type=GcodeEventType.G4,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -103,7 +103,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.EStop_M112,
+            event_type=GcodeEventType.M112,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -115,7 +115,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.FilamentChange_M600,
+            event_type=GcodeEventType.M600,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -123,7 +123,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.Home,
+            event_type=GcodeEventType.G28,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -131,7 +131,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.PowerOn,
+            event_type=GcodeEventType.M80,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
@@ -139,7 +139,7 @@ def event_request(
         return PolymorphicOctoPrintEventRequest(
             pi=printnanny_os.PRINTNANNY_PI.id,
             octoprint_server=printnanny_os.PRINTNANNY_PI.octoprint_server.id,
-            event_type=OctoPrintGcodeEventType.PowerOff,
+            event_type=GcodeEventType.M81,
             payload=sanitized_payload,
             subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
         )
