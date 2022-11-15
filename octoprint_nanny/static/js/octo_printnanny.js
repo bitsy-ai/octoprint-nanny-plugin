@@ -73,6 +73,8 @@ $(function () {
         self.loginState = parameters[0];
         self.settings = parameters[1];
 
+
+        self.showTestButton = ko.observable(false); // show "Test PrintNanny Notification" button if Cloud account is connected
         self.showError = ko.observable(false);
         self.errorMessages = ko.observableArray([])
 
@@ -83,6 +85,10 @@ $(function () {
         }
 
         self.onAfterBinding = function () {
+            const url = OctoPrint.getBlueprintUrl('octoprint_nanny') + 'printnanny/status'
+            const res = OctoPrint.get(url);
+            console.log("Got response", res)
+
 
         }
 

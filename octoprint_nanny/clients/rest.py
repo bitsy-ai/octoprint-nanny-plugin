@@ -3,12 +3,12 @@ import logging
 import urllib.parse
 import backoff
 import os
+from typing import Optional
 
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
 
-from printnanny_api_client.api.users_api import UsersApi
-
+from printnanny_api_client.api.accounts_api import AccountsApi
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
@@ -46,22 +46,22 @@ def giveup_hdlr(details):
     )
 
 
-class RestAPIClient:
+class PrintNannyCloudAPIClient:
     """
     webapp rest API calls and retry behavior
     """
 
-    def __init__(self, auth_token: str, api_url: str):
-        self.api_url = api_url
-        self.auth_token = auth_token
+    def __init__(self, base_path: str, bearer_access_token: Optional[str] = None):
+        self.base_path = base_path
+        self.bearer_access_token = bearer_access_token
 
     @property
     def _api_config(self):
-        parsed_uri = urllib.parse.urlparse(self.api_url)
+        parsed_uri = urllib.parse.urlparse(self.base_path)
         host = f"{parsed_uri.scheme}://{parsed_uri.netloc}"
         config = printnanny_api_client.Configuration(host=host)
 
-        config.access_token = self.auth_token
+        config.access_token = self.bearer_access_token
         return config
 
     @backoff.on_exception(
@@ -76,8 +76,8 @@ class RestAPIClient:
     )
     async def get_user(self):
         async with AsyncApiClient(self._api_config) as api_client:
-            api_instance = UsersApi(api_client=api_client)
-            user = await api_instance.users_me_retrieve()
+            api_instance = AccountsApi(api_client=api_client)
+            user = await api_instance.accounts_user_retrieve()
             return user
 
     # @backoff.on_exception(

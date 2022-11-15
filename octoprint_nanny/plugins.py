@@ -1,8 +1,9 @@
 import asyncio
+from asgiref.sync import AsyncToSync
 import logging
 import os
 import nats
-import flask
+
 import functools
 import octoprint.plugin
 import octoprint.util
@@ -13,8 +14,10 @@ from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
 
+from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
+import printnanny_api_client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -84,17 +87,23 @@ class OctoPrintNannyPlugin(
     ##
     ## Octoprint api routes + handlers
     ##
-    @octoprint.plugin.BlueprintPlugin.route("/backup", methods=["POST"])
-    def create_backup(self):
-        helpers = self._plugin_manager.get_helpers("backup", "create_backup")
+    @octoprint.plugin.BlueprintPlugin.route("/printnanny/status", methods=["GET"])
+    def get_printnanny_cloud_connection_status(self):
+        # reload config
+        printnanny_os.load_printnanny_config()
 
-        if helpers and "create_backup" in helpers:
-            backup_file = helpers["create_backup"](exclude=["timelapse"])
-            logger.info("Created backup file")
-            return flask.json.jsonify({"ok": 1})
-        else:
-            logger.error("Plugin manager failed to get backup helper")
-            raise Exception("Plugin manager failed to get backup helper")
+        result = dict(printnanny_user=None)
+
+        if printnanny_os.PRINTNANNY_CLOUD_API is not None:
+            api_client = PrintNannyCloudAPIClient(**printnanny_os.PRINTNANNY_CLOUD_API)
+            try:
+                task = asyncio.create_task(api_client.get_user())
+                res = task.result()
+                result["printnanny_user"] = res
+            except printnanny_api_client.exceptions.ApiException as e:
+                logger.error(e)
+
+        return result
 
     def register_custom_events(self) -> List[str]:
         return []
@@ -104,7 +113,7 @@ class OctoPrintNannyPlugin(
         self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
-        config = printnanny_os.load_printnanny_config()
+        printnanny_os.load_printnanny_config()
 
         # configure nats connection
         try:
