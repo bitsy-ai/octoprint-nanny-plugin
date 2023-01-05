@@ -59,7 +59,7 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
 
 
 def load_printnanny_config() -> PrintNannyConfig:
-    cmd = [PRINTNANNY_BIN, "config", "show", "--format", "json"]
+    cmd = [PRINTNANNY_BIN, "settings", "show", "--format", "json"]
     returncode = None
     config = None
 
