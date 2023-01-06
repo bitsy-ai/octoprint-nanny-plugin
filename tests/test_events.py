@@ -54,7 +54,8 @@ MOCK_PI_JSON = """{
     "urls": {
         "swupdate": "http://printnanny.local/update/",
         "octoprint": "http://printnanny.local/octoprint/",
-        "syncthing": "http://printnanny.local/synchting/"
+        "syncthing": "http://printnanny.local/synchting/",
+        "mission_control":  "http://printnanny.local/"
     },
     "sbc": "rpi_4",
     "edition": "octoprint_lite",
