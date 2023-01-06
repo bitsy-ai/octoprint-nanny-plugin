@@ -15,7 +15,9 @@ PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
 
 
 PRINTNANNY_CLOUD_PI: Optional[Pi] = None
-PRINTNANNY_CLOUD_NATS_CREDS = "/var/lib/printnanny/creds/printnanny-cloud-nats.creds"
+PRINTNANNY_CLOUD_NATS_CREDS = (
+    "/home/printnanny/.local/share/printnanny/creds/printnanny-cloud-nats.creds"
+)
 
 
 class PrintNannyApiConfig(TypedDict):
@@ -52,14 +54,47 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
     global PRINTNANNY_CLOUD_API
 
     PRINTNANNY_CLOUD_API = PrintNannyApiConfig(
-        base_path=api_config_dict.get("base_path", "https://printnanny.ai/"),
-        bearer_access_token=api_config_dict.get("bearer_access_token"),
+        base_path=api_config_dict.get("api_base_path", "https://printnanny.ai/"),
+        bearer_access_token=api_config_dict.get("api_bearer_access_token"),
     )
     return PRINTNANNY_CLOUD_API
 
 
-def load_printnanny_config() -> PrintNannyConfig:
-    cmd = [PRINTNANNY_BIN, "config", "show", "--format", "json"]
+def load_printnanny_cloud_data():
+    cmd = [PRINTNANNY_BIN, "cloud", "show", "--format", "json"]
+    returncode = None
+    config = None
+
+    # run /usr/bin/printnanny cloud show --format json
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+        stdout = p.stdout.decode("utf-8")
+        stderr = p.stderr.decode("utf-8")
+        returncode = p.returncode
+        if p.returncode != 0:
+            logger.error(
+                f"Failed to get printnanny settings cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+            )
+            return PrintNannyConfig(
+                cmd=cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                config=config,
+            )
+
+        cloud_data = json.loads(stdout)
+        pi = cloud_data.get("pi")
+        if pi is None:
+            logger.error("Failed to parse pi from data=%s", cloud_data)
+        # try setting global PRINTNANNY_CLOUD_PI var
+        load_pi_model(pi)
+    except Exception as e:
+        logger.error("Error running cmd %s %s", cmd, e)
+
+
+def load_printnanny_settings() -> PrintNannyConfig:
+    cmd = [PRINTNANNY_BIN, "settings", "show", "--format", "json"]
     returncode = None
     config = None
 
@@ -71,7 +106,7 @@ def load_printnanny_config() -> PrintNannyConfig:
         returncode = p.returncode
         if p.returncode != 0:
             logger.error(
-                f"Failed to get printnanny config cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+                f"Failed to get printnanny settings cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
             )
             return PrintNannyConfig(
                 cmd=cmd,
@@ -95,15 +130,11 @@ def load_printnanny_config() -> PrintNannyConfig:
         config = json.loads(stdout)
         logger.debug("Parsed PrintNanny conf.d, loaded keys: %s", config.keys())
 
-        api_config = config.get("cloud", {}).get("api", {})
+        api_config = config.get("cloud")
 
         # try setting PRINTNANNY_CLOUD_API var
         if api_config is not None:
             load_api_config(api_config)
-        # try setting global PRINTNANNY_CLOUD_PI var
-        pi = config.get("cloud", {}).get("pi")
-        if pi is not None:
-            load_pi_model(pi)
 
         nats_creds = config.get("paths", {}).get("nats_creds")
         if nats_creds is not None:
@@ -137,7 +168,7 @@ def etc_os_release() -> Dict[str, str]:
     """
     Captures the contents of /etc/os-release as a dictionary
     """
-    config = load_printnanny_config()
+    config = load_printnanny_settings()
     os_release_path = "/etc/os-release"
     if config["config"] is not None:
         os_release_path = (

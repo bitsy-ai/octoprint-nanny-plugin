@@ -100,7 +100,8 @@ class OctoPrintNannyPlugin(
         self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
-        printnanny_os.load_printnanny_config()
+        printnanny_os.load_printnanny_settings()
+        printnanny_os.load_printnanny_cloud_data()
 
         # configure nats connection
         try:
@@ -159,7 +160,9 @@ class OctoPrintNannyPlugin(
     ##~~ Template plugin
 
     def get_template_vars(self):
-        printnanny_os.load_printnanny_config()
+        printnanny_os.load_printnanny_settings()
+        printnanny_os.load_printnanny_cloud_data()
+
         custom = {
             "urls": {
                 "getting_started_guide": "https://printnanny.ai/docs/category/quick-start/",
@@ -180,10 +183,8 @@ class OctoPrintNannyPlugin(
     def get_wizard_version(self):
         return 2
 
-    ## Show OctoPrint setup wizard if PrintNanny Cloud Nats creds aren't present
     def is_wizard_required(self):
-        printnanny_os.load_printnanny_config()
-        return os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False
+        return False
 
     ##~~ AssetPlugin mixin
     def get_assets(self):

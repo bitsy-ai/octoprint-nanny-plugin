@@ -49,7 +49,7 @@ plugin_requires = [
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "printnanny-api-client~=0.117.1",
+    "printnanny-api-client~=0.119.5",
     "backoff>=1.10.0",
     "nats-py[nkeys]~=2.2.0",
 ]

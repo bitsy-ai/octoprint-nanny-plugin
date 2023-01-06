@@ -54,7 +54,8 @@ MOCK_PI_JSON = """{
     "urls": {
         "swupdate": "http://printnanny.local/update/",
         "octoprint": "http://printnanny.local/octoprint/",
-        "syncthing": "http://printnanny.local/synchting/"
+        "syncthing": "http://printnanny.local/synchting/",
+        "mission_control":  "http://printnanny.local/"
     },
     "sbc": "rpi_4",
     "edition": "octoprint_lite",
@@ -69,7 +70,7 @@ MOCK_PI_JSON = """{
 MOCK_PI = printnanny_os.load_pi_model(json.loads(MOCK_PI_JSON))
 
 
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 @patch("octoprint_nanny.events.try_publish_nats")
 def test_handle_events_enabled_true(mock_try_publish_nats, mock_printnanny_config):
     printnanny_os.PRINTNANNY_CLOUD_PI = MOCK_PI
@@ -77,7 +78,7 @@ def test_handle_events_enabled_true(mock_try_publish_nats, mock_printnanny_confi
     assert mock_try_publish_nats.called is True
 
 
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 def test_should_publish_print_progress(mock_printnanny_config):
     mock_printnanny_config.return_value = PrintNannyConfig(
         cmd=["mock", "cmd"],

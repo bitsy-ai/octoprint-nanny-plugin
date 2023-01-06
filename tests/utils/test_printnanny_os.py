@@ -29,7 +29,7 @@ UBUNTU_CODENAME=jammy
 
 
 @patch("builtins.open", new_callable=mock_open, read_data=MOCK_PRINTNANNY_OS_RELEASE)
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 def test_known_etc_os_release(mock_printnanny_config, mock_file):
     result = printnanny_os.etc_os_release()
     assert result["ID"] == "printnanny"
@@ -38,7 +38,7 @@ def test_known_etc_os_release(mock_printnanny_config, mock_file):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="NONE=NONE")
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 def test_unknown_etc_os_release(mock_printnanny_config, mock_file):
     result = printnanny_os.etc_os_release()
     assert result["ID"] == "unknown"
@@ -47,7 +47,7 @@ def test_unknown_etc_os_release(mock_printnanny_config, mock_file):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data=MOCK_PRINTNANNY_OS_RELEASE)
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 def test_is_printnanny_os(mock_printnanny_config, mock_file):
     assert printnanny_os.is_printnanny_os() is True
     assert mock_file.called
@@ -55,7 +55,7 @@ def test_is_printnanny_os(mock_printnanny_config, mock_file):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data=MOCK_OTHER_OS_RELEASE)
-@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_config")
+@patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 def test_is_printnanny_os(mock_printnanny_config, mock_file):
     assert printnanny_os.is_printnanny_os() is False
     assert mock_file.called
