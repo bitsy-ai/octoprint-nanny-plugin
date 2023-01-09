@@ -57,6 +57,18 @@ MOCK_PI_JSON = """{
         "syncthing": "http://printnanny.local/synchting/",
         "mission_control":  "http://printnanny.local/"
     },
+    "mdns_urls": {
+        "swupdate": "http://printnanny.local/update/",
+        "octoprint": "http://printnanny.local/octoprint/",
+        "syncthing": "http://printnanny.local/synchting/",
+        "mission_control":  "http://printnanny.local/"
+    },
+    "shortname_urls": {
+        "swupdate": "http://printnanny/update/",
+        "octoprint": "http://printnanny/octoprint/",
+        "syncthing": "http://printnanny/synchting/",
+        "mission_control":  "http://printnanny/"
+    },
     "sbc": "rpi_4",
     "edition": "octoprint_lite",
     "created_dt": "2022-08-10T15:42:12.088147Z",
