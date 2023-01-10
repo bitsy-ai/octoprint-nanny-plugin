@@ -67,7 +67,6 @@ def load_printnanny_cloud_data():
         p = subprocess.run(cmd, capture_output=True)
         stdout = p.stdout.decode("utf-8")
         stderr = p.stderr.decode("utf-8")
-        returncode = p.returncode
         if p.returncode != 0:
             logger.error(
                 f"Failed to get printnanny settings cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
