@@ -13,10 +13,8 @@ from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
 
-from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
-import printnanny_api_client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
