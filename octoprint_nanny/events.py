@@ -55,7 +55,7 @@ async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
         return client.sanitize_for_serialization(data)
 
 
-def event_request(
+async def event_request(
     event: str, payload: Dict[Any, Any]
 ) -> Optional[PolymorphicOctoPrintEventRequest]:
 
@@ -69,10 +69,7 @@ def event_request(
         return None
 
     # sanitize OctoPrint payloads
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    coroutine = sanitize_payload(payload)
-    sanitized_payload = loop.run_until_complete(coroutine)
+    sanitized_payload = await sanitize_payload(payload)
 
     # OctoPrintGcodeEvent
     if event == "Alert":
@@ -321,36 +318,28 @@ def event_request(
     return None
 
 
-def try_publish_nats(
+async def try_publish_nats(
     request: PolymorphicOctoPrintEventRequest,
     nc: nats.aio.client.Client,
-    thread_pool: ThreadPoolExecutor,
 ):
 
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
-
-    # create an event loop with a dedicated thread pool for publishing NATS events
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
     payload = request.to_str().encode("utf-8")
-    coro = functools.partial(nc.publish, data={"subject": subject, payload: payload})
-    future = loop.run_in_executor(thread_pool, coro)
-    return future.result()
+    result = await nc.publish(subject=subject, payload=payload)
+    return result
 
 
-def try_handle_event(
+async def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
     nc: nats.aio.client.Client,
-    thread_pool: ThreadPoolExecutor,
 ) -> Optional[subprocess.CompletedProcess]:
     try:
         if should_publish_event(event, payload):
-            req = event_request(event, payload)
+            req = await event_request(event, payload)
             if req is not None:
-                return try_publish_nats(req, nc, thread_pool)
-        return None
+                return await try_publish_nats(req, nc)
+        return False
     except Exception as e:
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s",
@@ -358,4 +347,4 @@ def try_handle_event(
             payload,
             repr(e),
         )
-        return None
+        return False

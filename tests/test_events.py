@@ -9,8 +9,8 @@ from octoprint_nanny.utils import printnanny_os
 
 
 @patch("octoprint_nanny.events.try_publish_nats")
-def test_handle_untracked_event(mock_try_publish_nats):
-    try_handle_event("someuntrackedevent", dict(), MagicMock(), MagicMock())
+async def test_handle_untracked_event(mock_try_publish_nats):
+    await try_handle_event("someuntrackedevent", dict(), MagicMock())
     assert mock_try_publish_nats.called is False
 
 
@@ -84,9 +84,11 @@ MOCK_PI = printnanny_os.load_pi_model(json.loads(MOCK_PI_JSON))
 
 @patch("octoprint_nanny.utils.printnanny_os.load_printnanny_settings")
 @patch("octoprint_nanny.events.try_publish_nats")
-def test_handle_events_enabled_true(mock_try_publish_nats, mock_printnanny_config):
+async def test_handle_events_enabled_true(
+    mock_try_publish_nats, mock_printnanny_config
+):
     printnanny_os.PRINTNANNY_CLOUD_PI = MOCK_PI
-    try_handle_event("Startup", dict(), MagicMock(), MagicMock())
+    await try_handle_event("Startup", dict(), MagicMock())
     assert mock_try_publish_nats.called is True
 
 
