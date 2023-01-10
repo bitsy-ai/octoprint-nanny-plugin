@@ -62,9 +62,6 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
 
 def load_printnanny_cloud_data():
     cmd = [PRINTNANNY_BIN, "cloud", "show", "--format", "json"]
-    returncode = None
-    config = None
-
     # run /usr/bin/printnanny cloud show --format json
     try:
         p = subprocess.run(cmd, capture_output=True)
@@ -75,13 +72,7 @@ def load_printnanny_cloud_data():
             logger.error(
                 f"Failed to get printnanny settings cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
             )
-            return PrintNannyConfig(
-                cmd=cmd,
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
-                config=config,
-            )
+            return
 
         cloud_data = json.loads(stdout)
         pi = cloud_data.get("pi")
