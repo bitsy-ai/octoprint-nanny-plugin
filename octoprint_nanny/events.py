@@ -329,7 +329,9 @@ def try_publish_nats(
 
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
 
-    loop = asyncio.get_event_loop()
+    # create an event loop with a dedicated thread pool for publishing NATS events
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     payload = request.to_str().encode("utf-8")
     coro = functools.partial(nc.publish, data={"subject": subject, payload: payload})
