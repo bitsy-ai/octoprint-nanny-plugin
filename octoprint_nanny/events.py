@@ -316,7 +316,7 @@ async def event_request(
 async def try_publish_nats(
     request: PolymorphicOctoPrintEventRequest,
     nc: nats.aio.client.Client,
-):
+) -> Any:
 
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
     payload = request.to_str().encode("utf-8")
