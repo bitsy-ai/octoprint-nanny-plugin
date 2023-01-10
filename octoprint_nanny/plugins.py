@@ -13,10 +13,8 @@ from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
 
-from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
-import printnanny_api_client
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -50,9 +48,14 @@ class OctoPrintNannyPlugin(
     def __init__(self, *args, **kwargs):
         self._log_path = None
 
-        # create a thread bool for asyncio tasks
-        self._thread_pool = ThreadPoolExecutor(max_workers=8)
+        # create a thread pool for asyncio tasks
+        self._thread_pool = ThreadPoolExecutor(max_workers=4)
         self._nc = None
+
+        # get/set a new asyncio event loop context
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self._loop = loop
 
         super().__init__(*args, **kwargs)
 
@@ -68,8 +71,6 @@ class OctoPrintNannyPlugin(
             if printnanny_os.PRINTNANNY_CLOUD_PI is None:
                 logger.error("Failed to load PRINTNANNY_CLOUD_PI")
                 return
-            # get asyncio event loop
-            loop = asyncio.new_event_loop()
             # schedule task using ThreadPoolExecutor
             coro = functools.partial(
                 nats.connect,
@@ -80,7 +81,7 @@ class OctoPrintNannyPlugin(
                     "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 },
             )
-            future = loop.run_in_executor(self._thread_pool, coro)
+            future = self._loop.run_in_executor(self._thread_pool, coro)
             self._nc = future.result()
 
     ##
@@ -121,7 +122,12 @@ class OctoPrintNannyPlugin(
                     event,
                 )
                 return
-            try_handle_event(event, payload, self._nc, self._thread_pool)
+            coro = functools.partial(
+                try_handle_event, data=dict(event=event, payload=payload, nc=self._nc)
+            )
+            future = self.loop.run_in_executor(self._thread_pool, coro)
+            result = future.result()
+            logger.info("%s try_handle_event result ok: %s", event, result)
         else:
             logger.warning(
                 "PrintNanny OS not detected or device is not registered. Ignoring event %s",
