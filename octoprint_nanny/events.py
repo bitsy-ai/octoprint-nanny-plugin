@@ -1,11 +1,6 @@
 import logging
-import asyncio
 import nats
-import functools
-import subprocess
 from typing import Dict, Any, Optional
-from caseconverter import kebabcase
-from concurrent.futures import ThreadPoolExecutor
 
 from octoprint_nanny.utils import printnanny_os
 
@@ -333,13 +328,13 @@ async def try_handle_event(
     event: str,
     payload: Dict[Any, Any],
     nc: nats.aio.client.Client,
-) -> Optional[subprocess.CompletedProcess]:
+) -> Optional[Any]:
     try:
         if should_publish_event(event, payload):
             req = await event_request(event, payload)
             if req is not None:
                 return await try_publish_nats(req, nc)
-        return False
+        return None
     except Exception as e:
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s",
@@ -347,4 +342,4 @@ async def try_handle_event(
             payload,
             repr(e),
         )
-        return False
+        return None
