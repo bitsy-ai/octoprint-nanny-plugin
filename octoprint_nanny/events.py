@@ -321,6 +321,9 @@ async def try_publish_nats(
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
     payload = request.to_str().encode("utf-8")
     await nc.publish(subject=subject, payload=payload)
+    logger.info(
+        "Published to PrintNanny Cloud NATS subject=%s payload=%s", subject, request
+    )
 
 
 async def try_handle_event(
