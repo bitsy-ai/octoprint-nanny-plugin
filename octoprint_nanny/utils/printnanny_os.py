@@ -1,4 +1,4 @@
-from os import environ
+import os
 from typing import Optional, Any, Dict, List, TypedDict
 import logging
 import json
@@ -9,15 +9,13 @@ from printnanny_api_client.models import Pi
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.utils")
 
-PRINTNANNY_BIN = environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
-PRINTNANNY_DEBUG = environ.get("PRINTNANNY_DEBUG", False)
+PRINTNANNY_BIN = os.environ.get("PRINTNANNY_BIN", "/usr/bin/printnanny")
+PRINTNANNY_DEBUG = os.environ.get("PRINTNANNY_DEBUG", False)
 PRINTNANNY_DEBUG = PRINTNANNY_DEBUG in ["True", "true", "1", "yes"]
 
 
 PRINTNANNY_CLOUD_PI: Optional[Pi] = None
-PRINTNANNY_CLOUD_NATS_CREDS = (
-    "/home/printnanny/.local/share/printnanny/creds/printnanny-cloud-nats.creds"
-)
+PRINTNANNY_CLOUD_NATS_CREDS: Optional[str] = None
 
 
 class PrintNannyApiConfig(TypedDict):
@@ -37,14 +35,13 @@ class PrintNannyConfig(TypedDict):
     config: Optional[Dict[str, Any]]
 
 
-def deserialize_pi(pi_dict) -> Pi:
-    client = printnanny_api_client.api_client.ApiClient()
-    return client._ApiClient__deserialize(pi_dict, Pi)  # type: ignore
+async def deserialize_pi(pi_dict) -> Pi:
+    async with printnanny_api_client.api_client.ApiClient() as client:
+        return client._ApiClient__deserialize(pi_dict, Pi)  # type: ignore
 
 
-def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
-    result = deserialize_pi(pi_dict)
-
+async def load_pi_model(pi_dict: Dict[str, Any]) -> Pi:
+    result = await deserialize_pi(pi_dict)
     global PRINTNANNY_CLOUD_PI
     PRINTNANNY_CLOUD_PI = result
     return PRINTNANNY_CLOUD_PI
@@ -60,7 +57,7 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
     return PRINTNANNY_CLOUD_API
 
 
-def load_printnanny_cloud_data():
+async def load_printnanny_cloud_data():
     cmd = [PRINTNANNY_BIN, "cloud", "show", "--format", "json"]
     # run /usr/bin/printnanny cloud show --format json
     try:
@@ -78,7 +75,7 @@ def load_printnanny_cloud_data():
         if pi is None:
             logger.error("Failed to parse pi from data=%s", cloud_data)
         # try setting global PRINTNANNY_CLOUD_PI var
-        load_pi_model(pi)
+        await load_pi_model(pi)
     except Exception as e:
         logger.error("Error running cmd %s %s", cmd, e)
 
@@ -126,8 +123,12 @@ def load_printnanny_settings() -> PrintNannyConfig:
         if api_config is not None:
             load_api_config(api_config)
 
-        nats_creds = config.get("paths", {}).get("nats_creds")
+        nats_creds = config.get("paths", {}).get("state_dir")
         if nats_creds is not None:
+            nats_creds = os.path.join(
+                config.get("paths", {}).get("state_dir"),
+                "creds/printnanny-cloud-nats.creds",
+            )
             global PRINTNANNY_CLOUD_NATS_CREDS
             PRINTNANNY_CLOUD_NATS_CREDS = nats_creds
 

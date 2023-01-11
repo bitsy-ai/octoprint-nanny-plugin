@@ -7,8 +7,9 @@ from typing import Optional
 
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
-
 from printnanny_api_client.api.accounts_api import AccountsApi
+
+from octoprint_nanny.env import MAX_BACKOFF_TIME
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.clients.rest")
 
@@ -16,9 +17,6 @@ API_CLIENT_EXCEPTIONS = (
     printnanny_api_client.exceptions.ApiException,
     aiohttp.client_exceptions.ClientError,
 )
-MAX_BACKOFF_TIME = int(os.environ.get("OCTOPRINT_NANNY_MAX_BACKOFF_TIME", 120))
-
-logger.info(f"OCTOPRINT_NANNY_MAX_BACKOFF_TIME={MAX_BACKOFF_TIME}")
 
 
 def fatal_code(e) -> bool:
