@@ -10,6 +10,7 @@ OCTOPRINT_NANNY_WS_URL ?= "ws://aurora:8000/ws/"
 
 DEV_MACHINE ?= pn-debug
 
+PRINTNANNY_SETTINGS ?= "/home/leigh/projects/printnanny-cli/env/Local.toml"
 WORKSPACE ?=$(shell pwd)
 TMPDIR ?=$(WORKSPACE)/.tmp
 OCTOPRINT_CONFIG_DIR ?=$(WORKSPACE)/.octoprint
@@ -162,7 +163,7 @@ devconfig: $(TMPDIR)/printnanny-$(DEV_MACHINE).zip printnanny-cli-debug
 
 dev: .octoprint
 	PRINTNANNY_BIN="$(PRINTNANNY_BIN)" \
-	PRINTNANNY_CONFIG="$(PRINTNANNY_CONFIG)" \
+	PRINTNANNY_SETTINGS="$(PRINTNANNY_SETTINGS)" \
 	PRINTNANNY_DEBUG=True \
 	PYTHONASYNCIODEBUG=True \
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint

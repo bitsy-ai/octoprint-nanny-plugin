@@ -1,8 +1,9 @@
 import asyncio
 import logging
 import os
-import nats
 
+import nats
+import backoff
 import functools
 import octoprint.plugin
 import octoprint.util
@@ -12,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.events import try_handle_event
-
+from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
 
@@ -56,11 +57,25 @@ class OctoPrintNannyPlugin(
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self._loop = loop
+        self._loop.set_default_executor(self._thread_pool)
 
         super().__init__(*args, **kwargs)
 
+    @backoff.on_exception(
+        backoff.expo,
+        ValueError,
+        logger=logger,
+        max_time=MAX_BACKOFF_TIME,
+    )
     def _init_nats_connection(self):
         if self._nc is None:
+            if printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS is None:
+                logger.warning(
+                    "_init_nats_connection called before printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS was set"
+                )
+                raise ValueError(
+                    "printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS is None, expected path to PrintNanny Cloud NATS credentials"
+                )
             # test nats credential path:
             if os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False:
                 logger.error(
@@ -71,18 +86,14 @@ class OctoPrintNannyPlugin(
             if printnanny_os.PRINTNANNY_CLOUD_PI is None:
                 logger.error("Failed to load PRINTNANNY_CLOUD_PI")
                 return
-            # schedule task using ThreadPoolExecutor
-            coro = functools.partial(
-                nats.connect,
-                data={
-                    "servers": [
+            self._nc = self._loop.run_until_complete(
+                nats.connect(
+                    servers=[
                         printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri
                     ],
-                    "user_credentials": printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
-                },
+                    user_credentials=printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
+                )
             )
-            future = self._loop.run_in_executor(self._thread_pool, coro)
-            self._nc = future.result()
 
     ##
     ## Octoprint api routes + handlers
@@ -101,18 +112,28 @@ class OctoPrintNannyPlugin(
         self._thread_pool.shutdown()
 
     def on_startup(self, *args, **kwargs):
-        printnanny_os.load_printnanny_settings()
-        printnanny_os.load_printnanny_cloud_data()
+        pass
 
+    async def load_printnanny(self):
+        cloud_result = await printnanny_os.load_printnanny_cloud_data()
+        logger.info("load_printnanny_cloud_data result %s", cloud_result)
+        # run blocking i/o in a thread, pre-allocated using ThreadPoolExecutor
+        settings_result = await self._loop.run_in_executor(
+            self._thread_pool, printnanny_os.load_printnanny_settings
+        )
+        logger.info("load_printnanny_settings result %s", settings_result)
+
+    def on_after_startup(self, *args, **kwargs):
+        # configure logger first
+        configure_logger(logger, self._settings.get_plugin_logfile_path())
+
+        # then load PrintNanny Cloud data models
+        self._loop.run_until_complete(self.load_printnanny())
         # configure nats connection
         try:
             self._init_nats_connection()
         except Exception as e:
             logger.error("Error initializing PrintNanny Cloud NATS connection: %s", e)
-
-    def on_after_startup(self, *args, **kwargs):
-        # configure logger first
-        configure_logger(logger, self._settings.get_plugin_logfile_path())
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
@@ -125,7 +146,7 @@ class OctoPrintNannyPlugin(
             coro = functools.partial(
                 try_handle_event, data=dict(event=event, payload=payload, nc=self._nc)
             )
-            future = self.loop.run_in_executor(self._thread_pool, coro)
+            future = self._loop.run_in_executor(self._thread_pool, coro)
             result = future.result()
             logger.info("%s try_handle_event result ok: %s", event, result)
         else:
@@ -166,9 +187,6 @@ class OctoPrintNannyPlugin(
     ##~~ Template plugin
 
     def get_template_vars(self):
-        printnanny_os.load_printnanny_settings()
-        printnanny_os.load_printnanny_cloud_data()
-
         custom = {
             "urls": {
                 "getting_started_guide": "https://printnanny.ai/docs/category/quick-start/",
