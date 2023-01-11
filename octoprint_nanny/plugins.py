@@ -144,9 +144,9 @@ class OctoPrintNannyPlugin(
                 )
                 return
             coro = functools.partial(
-                try_handle_event, data=dict(event=event, payload=payload, nc=self._nc)
+                try_handle_event, event=event, payload=payload, nc=self._nc
             )
-            future = self._loop.run_in_executor(self._thread_pool, coro)
+            future = asyncio.run_coroutine_threadsafe(coro(), self._loop)
             result = future.result()
             logger.info("%s try_handle_event result ok: %s", event, result)
         else:
