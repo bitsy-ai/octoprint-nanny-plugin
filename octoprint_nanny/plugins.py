@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
+from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
@@ -48,6 +49,7 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
+        self._printnanny_api_client = None
 
         # create a thread pool for asyncio tasks
         self._thread_pool = ThreadPoolExecutor(max_workers=4)
@@ -67,11 +69,11 @@ class OctoPrintNannyPlugin(
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
-    def _init_nats_connection(self):
+    def _init_cloud_nats_connection(self):
         if self._nc is None:
             if printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS is None:
                 logger.warning(
-                    "_init_nats_connection called before printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS was set"
+                    "_init_cloud_nats_connection called before printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS was set"
                 )
                 raise ValueError(
                     "printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS is None, expected path to PrintNanny Cloud NATS credentials"
@@ -94,6 +96,35 @@ class OctoPrintNannyPlugin(
                     user_credentials=printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 )
             )
+
+    def _init_cloud_api_client(self):
+        if printnanny_os.PRINTNANNY_CLOUD_API is None:
+            logger.info("_init_cloud_api_client failed, printnanny_os.PRINTNANNY_CLOUD_API is None")
+            return
+        if self._printnanny_api_client is None:
+            self._printnanny_api_client = PrintNannyCloudAPIClient(
+                base_path=printnanny_os.PRINTNANNY_CLOUD_API.base_path,
+                bearer_access_token=printnanny_os.PRINTNANNY_CLOUD_PI.bearer_access_token
+            )
+            logger.info("Initialed PrintNannyCloudAPIClient: %s", printnanny_os.PRINTNANNY_CLOUD_API.base_path)
+
+    
+
+    def _save_octoprint_api_key(self):
+        if printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None:
+            logger.warn("Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None")
+            return
+        
+        api_key = self._settings().generateApiKey()
+        octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
+        coro = functools.partial(
+            self._printnanny_api_client.update_octoprint_server_api_key,
+            octoprint_server_id=octoprint_server_id,
+            api_key=api_key
+        )
+        future = asyncio.run_coroutine_threadsafe(coro(), self._loop)
+        result = future.result()
+        logger.info("Updated OctoPrint API key for server id=%s", result.id)
 
     ##
     ## Octoprint api routes + handlers
@@ -129,11 +160,22 @@ class OctoPrintNannyPlugin(
 
         # then load PrintNanny Cloud data models
         self._loop.run_until_complete(self.load_printnanny())
-        # configure nats connection
+        # configure PrintNanny Cloud NATS connection
         try:
-            self._init_nats_connection()
+            self._init_cloud_nats_connection()
         except Exception as e:
             logger.error("Error initializing PrintNanny Cloud NATS connection: %s", e)
+        # configure PrintNanny Cloud REST api credentials
+        try:
+            self._init_cloud_api_client()
+        except Exception as e:
+            logger.error("Error initializing PrintNanny Cloud API client: %s", e)
+        # configure octoprint REST api credentials
+        try:
+            self._save_octoprint_api_key()
+        except Exception as e:
+            logger.error("Error sending OctoPrint API key to PrintNanny Cloud: %s", e)
+
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
