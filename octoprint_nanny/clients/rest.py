@@ -94,12 +94,11 @@ class PrintNannyCloudAPIClient:
         async with AsyncApiClient(self._api_config) as api_client:
             api_instance = OctoprintApi(api_client=api_client)
             request = PatchedOctoPrintServerRequest(api_key=api_key)
-            result = api_instance.octoprint_partial_update(
+            result = await api_instance.octoprint_partial_update(
                 octoprint_server_id,
                 patched_octo_print_server_request=request,
-                async_req=True,
             )
-            return result.get()
+            return result
 
     # @backoff.on_exception(
     #     backoff.expo,

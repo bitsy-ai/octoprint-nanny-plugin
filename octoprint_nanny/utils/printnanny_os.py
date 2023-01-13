@@ -182,6 +182,7 @@ def is_printnanny_os() -> bool:
     osrelease = etc_os_release()
     return osrelease.get("ID") == "printnanny" or PRINTNANNY_DEBUG is True
 
+
 def set_octoprint_api_key(api_key: str):
     cmd = [PRINTNANNY_BIN, "cloud", "set", "pi.octoprint_server.api_key", api_key]
     # run /usr/bin/printnanny settings show -F json
@@ -194,8 +195,6 @@ def set_octoprint_api_key(api_key: str):
             logger.error(
                 f"Failed to run cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
             )
-            
+
     except Exception as e:
-        logger.error(
-            f"Failed to run cmd={cmd} with error={e}"
-        )
+        logger.error(f"Failed to run cmd={cmd} with error={e}")

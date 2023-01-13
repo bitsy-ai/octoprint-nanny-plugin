@@ -124,29 +124,16 @@ class OctoPrintNannyPlugin(
 
         api_key = self._settings.generateApiKey()
         octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
-        # coro = functools.partial(
-        #     self._printnanny_api_client.update_octoprint_server_api_key,
-        #     octoprint_server_id=octoprint_server_id,
-        #     api_key=api_key,
-        # )
         logger.info(
             "Setting OctoprintServer.api_key where id=%s",
             octoprint_server_id,
         )
-        future = self._loop.run_until_complete(
+        result = self._loop.run_until_complete(
             self._printnanny_api_client.update_octoprint_server_api_key(
                 octoprint_server_id=octoprint_server_id,
                 api_key=api_key,
             ),
         )
-        # future = asyncio.run_coroutine_threadsafe(
-        #     self._printnanny_api_client.update_octoprint_server_api_key(
-        #         octoprint_server_id=octoprint_server_id,
-        #         api_key=api_key,
-        #     ),
-        #     self._loop,
-        # )
-        result = future.result()
         logger.info("Updated OctoPrint API key for server id=%s", result.id)
 
     ##
@@ -197,7 +184,11 @@ class OctoPrintNannyPlugin(
         try:
             self._save_octoprint_api_key()
         except Exception as e:
-            logger.error("Error sending OctoPrint API key to PrintNanny Cloud: %s", e)
+            logger.error(
+                "Error sending OctoPrint API key to PrintNanny Cloud: %s",
+                e,
+                exc_info=True,
+            )
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
