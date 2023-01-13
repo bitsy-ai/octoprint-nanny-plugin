@@ -85,7 +85,7 @@ def load_printnanny_settings() -> PrintNannyConfig:
     returncode = None
     config = None
 
-    # run /usr/bin/printnanny config show -F json
+    # run /usr/bin/printnanny settings show -F json
     try:
         p = subprocess.run(cmd, capture_output=True)
         stdout = p.stdout.decode("utf-8")
@@ -181,3 +181,20 @@ def etc_os_release() -> Dict[str, str]:
 def is_printnanny_os() -> bool:
     osrelease = etc_os_release()
     return osrelease.get("ID") == "printnanny" or PRINTNANNY_DEBUG is True
+
+
+def set_octoprint_api_key(api_key: str):
+    cmd = [PRINTNANNY_BIN, "cloud", "set", "pi.octoprint_server.api_key", api_key]
+    # run /usr/bin/printnanny settings show -F json
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+        stdout = p.stdout.decode("utf-8")
+        stderr = p.stderr.decode("utf-8")
+        returncode = p.returncode
+        if p.returncode != 0:
+            logger.error(
+                f"Failed to run cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to run cmd={cmd} with error={e}")

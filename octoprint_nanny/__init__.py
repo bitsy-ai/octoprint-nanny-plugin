@@ -17,7 +17,5 @@ def __plugin_load__():
     global __plugin_hooks__
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-        # "octoprint.timelapse.capture.post": __plugin_implementation__.on_timelapse_capture,
         "octoprint.events.register_custom_events": __plugin_implementation__.register_custom_events,
-        # "octoprint.server.http.routes": __plugin_implementation__.register_custom_routes
     }

@@ -7,7 +7,9 @@ from typing import Optional
 
 import printnanny_api_client
 from printnanny_api_client import ApiClient as AsyncApiClient
+from printnanny_api_client.models import PatchedOctoPrintServerRequest
 from printnanny_api_client.api.accounts_api import AccountsApi
+from printnanny_api_client.api.octoprint_api import OctoprintApi
 
 from octoprint_nanny.env import MAX_BACKOFF_TIME
 
@@ -77,6 +79,26 @@ class PrintNannyCloudAPIClient:
             api_instance = AccountsApi(api_client=api_client)
             user = await api_instance.accounts_user_retrieve()
             return user
+
+    # @backoff.on_exception(
+    #     backoff.expo,
+    #     aiohttp.ClientConnectionError,
+    #     logger=logger,
+    #     max_time=MAX_BACKOFF_TIME,
+    #     jitter=backoff.random_jitter,
+    #     giveup=fatal_code,
+    #     on_backoff=backoff_hdlr,
+    #     on_giveup=giveup_hdlr,
+    # )
+    async def update_octoprint_server_api_key(self, octoprint_server_id, api_key):
+        async with AsyncApiClient(self._api_config) as api_client:
+            api_instance = OctoprintApi(api_client=api_client)
+            request = PatchedOctoPrintServerRequest(api_key=api_key)
+            result = await api_instance.octoprint_partial_update(
+                octoprint_server_id,
+                patched_octo_print_server_request=request,
+            )
+            return result
 
     # @backoff.on_exception(
     #     backoff.expo,
