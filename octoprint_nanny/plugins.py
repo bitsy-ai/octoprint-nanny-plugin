@@ -8,7 +8,7 @@ import functools
 import octoprint.plugin
 import octoprint.util
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
@@ -49,7 +49,7 @@ class OctoPrintNannyPlugin(
 
     def __init__(self, *args, **kwargs):
         self._log_path = None
-        self._printnanny_api_client = None
+        self._printnanny_api_client: Optional[PrintNannyCloudAPIClient] = None
 
         # create a thread pool for asyncio tasks
         self._thread_pool = ThreadPoolExecutor(max_workers=4)
@@ -105,7 +105,9 @@ class OctoPrintNannyPlugin(
             return
         if self._printnanny_api_client is None:
             self._printnanny_api_client = PrintNannyCloudAPIClient(
-                base_path=printnanny_os.PRINTNANNY_CLOUD_API.get("base_path"),
+                base_path=printnanny_os.PRINTNANNY_CLOUD_API.get(
+                    "base_path", "https://printnanny.ai"
+                ),
                 bearer_access_token=printnanny_os.PRINTNANNY_CLOUD_API.get(
                     "bearer_access_token"
                 ),
@@ -116,9 +118,20 @@ class OctoPrintNannyPlugin(
             )
 
     def _save_octoprint_api_key(self):
+        if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+            logger.warn(
+                "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PIis None"
+            )
+            return
         if printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None:
             logger.warn(
                 "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None"
+            )
+            return
+
+        if self._printnanny_api_client is None:
+            logger.warn(
+                "Failed to set Octoprint API key, PrintNannyCloudAPIClient is not initialized"
             )
             return
 
