@@ -43,15 +43,15 @@ class Python2NotSupported(Exception):
 
 
 plugin_requires = [
-    "case-converter~=1.1.0",
+    "case-converter==1.1.0",
     "octoprint>=1.8.6",
     "cryptography>=3.4.7",
     "typing_extensions ; python_version < '3.8'",
     "pytz",
     "aiohttp[speedups]>=3.7.4",
-    "printnanny-api-client>=0.124.7",
+    "printnanny-api-client>=0.124.8",
     "backoff>=1.10.0",
-    "nats-py[nkeys]~=2.2.0",
+    "nats-py[nkeys]==2.2.0",
 ]
 
 dev_requires = [
