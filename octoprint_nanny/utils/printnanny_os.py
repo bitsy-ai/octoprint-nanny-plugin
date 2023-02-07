@@ -58,7 +58,7 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
 
 
 async def load_printnanny_cloud_data():
-    cmd = [PRINTNANNY_BIN, "cloud", "show", "--format", "json"]
+    cmd = [PRINTNANNY_BIN, "cloud", "show"]
     # run /usr/bin/printnanny cloud show --format json
     try:
         p = subprocess.run(cmd, capture_output=True)
