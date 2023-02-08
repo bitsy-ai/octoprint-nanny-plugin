@@ -57,6 +57,22 @@ def load_api_config(api_config_dict: Dict[str, str]) -> PrintNannyApiConfig:
     return PRINTNANNY_CLOUD_API
 
 
+def sync_printnanny_cloud_data():
+    logger.info("Attempting to sync PrintNanny Cloud data...")
+    cmd = [PRINTNANNY_BIN, "cloud", "sync-models"]
+    try:
+        p = subprocess.run(cmd, capture_output=True)
+        stdout = p.stdout.decode("utf-8")
+        stderr = p.stderr.decode("utf-8")
+        if p.returncode != 0:
+            logger.error(
+                f"Failed to get printnanny settings cmd={cmd} returncode={p.returncode} stdout={stdout} stderr={stderr}"
+            )
+            return
+    except Exception as e:
+        logger.error("Error running cmd %s %s", cmd, e)
+
+
 async def load_printnanny_cloud_data():
     cmd = [PRINTNANNY_BIN, "cloud", "show"]
     # run /usr/bin/printnanny cloud show --format json

@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
+from octoprint_nanny.error import NatsCredentialError
 from octoprint_nanny.events import try_handle_event
 from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
@@ -65,7 +66,7 @@ class OctoPrintNannyPlugin(
 
     @backoff.on_exception(
         backoff.expo,
-        ValueError,
+        NatsCredentialError,
         logger=logger,
         max_time=MAX_BACKOFF_TIME,
     )
@@ -75,16 +76,21 @@ class OctoPrintNannyPlugin(
                 logger.warning(
                     "_init_cloud_nats_connection called before printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS was set"
                 )
-                raise ValueError(
+                raise NatsCredentialError(
                     "printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS is None, expected path to PrintNanny Cloud NATS credentials"
                 )
             # test nats credential path:
             if os.path.exists(printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS) == False:
-                logger.error(
-                    "Failed to load PrintNanny Cloud NATS credentials from %s",
+                logger.warning(
+                    "Failed to load PrintNanny Cloud NATS credentials from %s.",
                     printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 )
-                return
+                # attempt to sync cloud models
+                printnanny_os.sync_printnanny_cloud_data()
+                # throwing a NatsCredentialError will retry on an exponential backoff, if we haven't execeeded MAX_BACKOFF_TIME
+                raise NatsCredentialError(
+                    f"Failed to load PrintNanny Cloud NATS credentials from {printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS}"
+                )
             if printnanny_os.PRINTNANNY_CLOUD_PI is None:
                 logger.error("Failed to load PRINTNANNY_CLOUD_PI")
                 return
