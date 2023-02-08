@@ -87,11 +87,8 @@ async def load_printnanny_cloud_data():
             return
 
         cloud_data = json.loads(stdout)
-        pi = cloud_data.get("pi")
-        if pi is None:
-            logger.error("Failed to parse pi from data=%s", cloud_data)
         # try setting global PRINTNANNY_CLOUD_PI var
-        await load_pi_model(pi)
+        await load_pi_model(cloud_data)
     except Exception as e:
         logger.error("Error running cmd %s %s", cmd, e)
 
