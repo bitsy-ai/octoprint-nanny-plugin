@@ -1,0 +1,2 @@
+class NatsCredentialError(Exception):
+    pass
