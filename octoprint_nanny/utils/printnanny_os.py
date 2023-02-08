@@ -88,7 +88,9 @@ async def load_printnanny_cloud_data():
 
         cloud_data = json.loads(stdout)
         # try setting global PRINTNANNY_CLOUD_PI var
-        await load_pi_model(cloud_data)
+        result = await load_pi_model(cloud_data)
+        logger.info("Loaded PrintNanny Cloud pi data %s", result)
+        return result
     except Exception as e:
         logger.error("Error running cmd %s %s", cmd, e)
 
