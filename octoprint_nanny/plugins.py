@@ -102,6 +102,10 @@ class OctoPrintNannyPlugin(
                     user_credentials=printnanny_os.PRINTNANNY_CLOUD_NATS_CREDS,
                 )
             )
+            logger.info(
+                "Initialized NATS connection to %s",
+                printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri,
+            )
 
     def _init_cloud_api_client(self):
         if printnanny_os.PRINTNANNY_CLOUD_API is None:
