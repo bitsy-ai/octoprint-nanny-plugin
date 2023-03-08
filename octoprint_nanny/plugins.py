@@ -126,7 +126,9 @@ class OctoPrintNannyPlugin(
                 "Initialized PrintNannyCloudAPIClient: %s",
                 printnanny_os.PRINTNANNY_CLOUD_API.get("base_path"),
             )
-``  # TODO issue a scoped API key instead of global key
+
+    # TODO: issue a scoped API key instead of global key
+
     # def _save_octoprint_api_key(self):
     #     if printnanny_os.PRINTNANNY_CLOUD_PI is None:
     #         logger.warn(
@@ -203,7 +205,7 @@ class OctoPrintNannyPlugin(
             self._init_cloud_api_client()
         except Exception as e:
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
-            
+
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
             if self._nc is None:
