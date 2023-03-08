@@ -126,38 +126,38 @@ class OctoPrintNannyPlugin(
                 "Initialized PrintNannyCloudAPIClient: %s",
                 printnanny_os.PRINTNANNY_CLOUD_API.get("base_path"),
             )
+``  # TODO issue a scoped API key instead of global key
+    # def _save_octoprint_api_key(self):
+    #     if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+    #         logger.warn(
+    #             "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PIis None"
+    #         )
+    #         return
+    #     if printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None:
+    #         logger.warn(
+    #             "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None"
+    #         )
+    #         return
 
-    def _save_octoprint_api_key(self):
-        if printnanny_os.PRINTNANNY_CLOUD_PI is None:
-            logger.warn(
-                "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PIis None"
-            )
-            return
-        if printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None:
-            logger.warn(
-                "Failed to set Octoprint API key, printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server is None"
-            )
-            return
+    #     if self._printnanny_api_client is None:
+    #         logger.warn(
+    #             "Failed to set Octoprint API key, PrintNannyCloudAPIClient is not initialized"
+    #         )
+    #         return
 
-        if self._printnanny_api_client is None:
-            logger.warn(
-                "Failed to set Octoprint API key, PrintNannyCloudAPIClient is not initialized"
-            )
-            return
-
-        api_key = self._settings.generateApiKey()
-        octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
-        logger.info(
-            "Setting OctoprintServer.api_key where id=%s",
-            octoprint_server_id,
-        )
-        result = self._loop.run_until_complete(
-            self._printnanny_api_client.update_octoprint_server_api_key(
-                octoprint_server_id=octoprint_server_id,
-                api_key=api_key,
-            ),
-        )
-        logger.info("Updated OctoPrint API key for server id=%s", result.id)
+    #     api_key = self._settings.generateApiKey()
+    #     octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
+    #     logger.info(
+    #         "Setting OctoprintServer.api_key where id=%s",
+    #         octoprint_server_id,
+    #     )
+    #     result = self._loop.run_until_complete(
+    #         self._printnanny_api_client.update_octoprint_server_api_key(
+    #             octoprint_server_id=octoprint_server_id,
+    #             api_key=api_key,
+    #         ),
+    #     )
+    #     logger.info("Updated OctoPrint API key for server id=%s", result.id)
 
     ##
     ## Octoprint api routes + handlers
@@ -203,16 +203,7 @@ class OctoPrintNannyPlugin(
             self._init_cloud_api_client()
         except Exception as e:
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
-        # configure octoprint REST api credentials
-        try:
-            self._save_octoprint_api_key()
-        except Exception as e:
-            logger.error(
-                "Error sending OctoPrint API key to PrintNanny Cloud: %s",
-                e,
-                exc_info=True,
-            )
-
+            
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if printnanny_os.is_printnanny_os():
             if self._nc is None:
