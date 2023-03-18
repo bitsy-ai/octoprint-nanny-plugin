@@ -185,7 +185,7 @@ class OctoPrintNannyPlugin(
         settings_result = await self._loop.run_in_executor(
             self._thread_pool, printnanny_os.load_printnanny_settings
         )
-        logger.info("load_printnanny_settings result %s", settings_result)
+        logger.debug("load_printnanny_settings result %s", settings_result)
 
     def on_after_startup(self, *args, **kwargs):
         # configure logger first
@@ -255,7 +255,6 @@ class OctoPrintNannyPlugin(
         payload = dict(
             octoprint_job=octoprint_job, storage=storage, path=path, progress=progress
         )
-        logger.info("PrintProgress payload%s", payload)
         self.on_event(Events.PRINT_PROGRESS, payload)
 
     ##~~ SettingsPlugin mixin

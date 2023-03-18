@@ -320,6 +320,7 @@ async def try_publish_nats(
 
     subject = request.subject_pattern.replace("{pi_id}", request.pi)
     payload = request.to_str().encode("utf-8")
+    logger.info("Attempting to publish subject=%s request=%s", subject, request)
     await nc.publish(subject=subject, payload=payload)
     logger.info(
         "Published to PrintNanny Cloud NATS subject=%s payload=%s", subject, request
@@ -336,7 +337,9 @@ async def try_handle_event(
             req = await event_request(event, payload)
             if req is not None:
                 return await try_publish_nats(req, nc)
-        return None
+        else:
+            logger.debug("Ignoring event=%s", event)
+            return None
     except Exception as e:
         logger.error(
             "Error on publish for event=%s, payload=%s error=%s",
