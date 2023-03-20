@@ -65,6 +65,9 @@ class NatsWorker:
     def __init__(self):
         self._exit = threading.Event()
         self._queue: multiprocessing.Queue = multiprocessing.Queue()
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="NatsWorker"
+        )
         self._thread = threading.Thread(
             target=self.run,
             name=str(self.__class__),
@@ -77,16 +80,8 @@ class NatsWorker:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.set_debug(True)
-        self.loop.set_default_executor(concurrent.futures.ProcessPoolExecutor())
-
-        self.loop.call_soon_threadsafe(
-            functools.partial(_nats_worker_main, self._queue, self._exit)
-        )
-        try:
-            self.loop.run_forever()
-        finally:
-            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-            self.loop.close()
+        self.loop.set_default_executor(self._executor)
+        self.loop.run_until_complete(_nats_worker_main(self._queue, self._exit))
 
     def shutdown(self, **kwargs):
         logger.warning("NatsWorker shutdown initiated")
