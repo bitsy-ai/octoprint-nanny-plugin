@@ -19,30 +19,37 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.events")
 
 
 PUBLISH_EVENTS = {
-    "Startup",  # server
-    "Shutdown",  # server
-    "PrinterStateChanged",  # printer status
-    "PrintProgress",  # print job
-    "PrintStarted",  # print job
-    "PrintFailed",  # print job
-    "PrintDone",  # print job
-    "PrintCancelling",  # print job
-    "PrintCancelled",  # print job
-    "PrintPaused",  # print job
-    "PrintResumed",  # print job
-    "Alert",  # gcode processing
-    "Cooling",  # gcode processing
-    "Dwell",  # gcode processing
-    "Estop",  # gcode processing
-    "FilamentChange",  # gcode processing
-    "Home",  # gcode processing
-    "PowerOff",  # gcode processing
-    "PowerOn",  # gcode processing
+    "Startup": "octoprint.event.server.startup",  # server
+    "Shutdown": "octoprint.event.server.shutdown",  # server
+    "PrinterStateChanged": "octoprint.event.printer.status",  # printer status
+    "PrintProgress": "octoprint.event.printer.progress",  # print job
+    "PrintStarted": "octoprint.event.print_job.started",  # print job
+    "PrintFailed": "octoprint.event.print_job.failed",  # print job
+    "PrintDone": "octoprint.event.print_job.done",  # print job
+    "PrintCancelling": "octoprint.event.print_job.cancelling",  # print job
+    "PrintCancelled": "octoprint.event.print_job.cancelled",  # print job
+    "PrintPaused": "octoprint.event.print_job.paused",  # print job
+    "PrintResumed": "octoprint.event.print_job.resumed",  # print job
+    "Alert": "octoprint.event.gcode.alert",  # gcode processing
+    "Cooling": "octoprint.event.gcode.cooling",  # gcode processing
+    "Dwell": "octoprint.event.gcode.dwell",  # gcode processing
+    "Estop": "octoprint.event.gcode.estop",  # gcode processing
+    "FilamentChange": "octoprint.event.gcode.filament_change",  # gcode processing
+    "Home": "octoprint.event.gcode.home",  # gcode processing
+    "PowerOff": "octoprint.event.gcode.poweroff",  # gcode processing
+    "PowerOn": "octoprint.event.gcode.poweron",  # gcode processing
 }
 
 
 def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
-    return event in PUBLISH_EVENTS
+    return event in PUBLISH_EVENTS.keys()
+
+
+def octoprint_event_to_nats_subject(event: str) -> Optional[str]:
+    result = PUBLISH_EVENTS.get(event)
+    if result is None:
+        logger.warning("No NATS subject configured for OctoPrint event=%s", event)
+    return result
 
 
 async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
@@ -53,15 +60,18 @@ async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
 async def event_request(
     event: str, payload: Dict[Any, Any]
 ) -> Optional[PolymorphicOctoPrintEventRequest]:
-
     # bail if PRINTNANNY_CLOUD_PI is not set
     if printnanny_os.PRINTNANNY_CLOUD_PI is None:
         logger.warning(
-            "printnanny_os.PRINTNANNY_CLOUD_PI is not set, refusing to publish event=%s payload %s",
-            event,
-            payload,
+            "printnanny_os.PRINTNANNY_CLOUD_PI is not set, attempting to load",
         )
-        return None
+        await printnanny_os.load_printnanny_cloud_data()
+        if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+            logger.warning(
+                "printnanny_os.PRINTNANNY_CLOUD_PI is not set, ignoring %s",
+                event,
+            )
+            return None
 
     # sanitize OctoPrint payloads
     sanitized_payload = await sanitize_payload(payload)
@@ -311,40 +321,3 @@ async def event_request(
         payload,
     )
     return None
-
-
-async def try_publish_nats(
-    request: PolymorphicOctoPrintEventRequest,
-    nc: nats.aio.client.Client,
-):
-
-    subject = request.subject_pattern.replace("{pi_id}", request.pi)
-    payload = request.to_str().encode("utf-8")
-    logger.info("Attempting to publish subject=%s request=%s", subject, request)
-    await nc.publish(subject=subject, payload=payload)
-    logger.info(
-        "Published to PrintNanny Cloud NATS subject=%s payload=%s", subject, request
-    )
-
-
-async def try_handle_event(
-    event: str,
-    payload: Dict[Any, Any],
-    nc: nats.aio.client.Client,
-):
-    try:
-        if should_publish_event(event, payload):
-            req = await event_request(event, payload)
-            if req is not None:
-                return await try_publish_nats(req, nc)
-        else:
-            logger.debug("Ignoring event=%s", event)
-            return None
-    except Exception as e:
-        logger.error(
-            "Error on publish for event=%s, payload=%s error=%s",
-            event,
-            payload,
-            repr(e),
-        )
-        return None

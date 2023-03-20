@@ -169,7 +169,7 @@ dev: .octoprint
 	octoprint serve --host=0.0.0.0 --port=5001 --basedir $(shell pwd)/.octoprint
 
 test:
-	pytest --log-level=DEBUG
+	pytest --log-level=DEBUG -rsx
 
 ci-coverage:
 	pytest --cov=./ --cov-report=xml --log-level=INFO
