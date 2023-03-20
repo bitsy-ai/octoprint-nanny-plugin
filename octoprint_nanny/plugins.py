@@ -26,9 +26,6 @@ PRINTNANNY_API_BASE_URL = os.environ.get(
     "PRINTNANNY_API_BASE_URL", "https://printnanny.ai"
 )
 
-PRINTNANNY_OS_NATS_URL = os.environ.get(
-    "PRINTNANNY_OS_NATS_URL", f"nats://{os.hostname}:4223"
-)
 
 Events.PRINT_PROGRESS = "PrintProgress"
 
@@ -58,7 +55,7 @@ class OctoPrintNannyPlugin(
 
         # create a thread pool for asyncio tasks
         self._thread_pool = ThreadPoolExecutor(max_workers=4)
-        
+
         # create a nats worker instance
         self._nats_worker = NatsWorker()
 
@@ -69,26 +66,6 @@ class OctoPrintNannyPlugin(
         self._loop.set_default_executor(self._thread_pool)
 
         super().__init__(*args, **kwargs)
-
-    @backoff.on_exception(
-        backoff.expo,
-        NatsCredentialError,
-        logger=logger,
-        max_time=MAX_BACKOFF_TIME,
-    )
-    def _init_nats_connection(self):
-        if self._nc is None:
-            self._nc = self._loop.run_until_complete(
-                nats.connect(
-                    servers=[
-                        printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri
-                    ],
-                )
-            )
-            logger.info(
-                "Initialized NATS connection to %s",
-                printnanny_os.PRINTNANNY_CLOUD_PI.nats_app.nats_server_uri,
-            )
 
     def _init_cloud_api_client(self):
         if printnanny_os.PRINTNANNY_CLOUD_API is None:
@@ -144,43 +121,17 @@ class OctoPrintNannyPlugin(
 
         # then load PrintNanny Cloud data models
         self._loop.run_until_complete(self.load_printnanny())
-        # configure PrintNanny Cloud NATS connection
-        try:
-            self._init_cloud_nats_connection()
-        except Exception as e:
-            logger.error("Error initializing PrintNanny Cloud NATS connection: %s", e)
         # configure PrintNanny Cloud REST api credentials
         try:
             self._init_cloud_api_client()
         except Exception as e:
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
-    def _try_handle_event(self, event: str, payload: Dict[Any, Any]):
-        
-
     def on_event(self, event: str, payload: Dict[Any, Any]):
         if should_publish_event(event, payload):
-            self._try_handle_event(event, payload)
+            self._nats_worker.handle_event(event, payload)
         else:
             logger.debug("Ignoring event=%s", event)
-        # if printnanny_os.is_printnanny_os():
-        #     if self._nc is None:
-        #         logger.warning(
-        #             "PrintNanny Cloud NATS connection is not initialized, skipping event: %s",
-        #             event,
-        #         )
-        #         return
-        #     coro = functools.partial(
-        #         try_handle_event, event=event, payload=payload, nc=self._nc
-        #     )
-        #     future = asyncio.run_coroutine_threadsafe(coro(), self._loop)
-        #     result = future.result()
-        #     logger.info("%s try_handle_event result ok: %s", event, result)
-        # else:
-        #     logger.warning(
-        #         "PrintNanny OS not detected or device is not registered. Ignoring event %s",
-        #         event,
-        #     )
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(

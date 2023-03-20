@@ -63,11 +63,18 @@ async def event_request(
     # bail if PRINTNANNY_CLOUD_PI is not set
     if printnanny_os.PRINTNANNY_CLOUD_PI is None:
         logger.warning(
-            "printnanny_os.PRINTNANNY_CLOUD_PI is not set, refusing to publish event=%s payload %s",
+            "printnanny_os.PRINTNANNY_CLOUD_PI is not set, attempting to load",
             event,
             payload,
         )
-        return None
+        await printnanny_os.load_printnanny_cloud_data()
+        if printnanny_os.PRINTNANNY_CLOUD_PI is None:
+            logger.warning(
+                "printnanny_os.PRINTNANNY_CLOUD_PI is not set, ignoring %s",
+                event,
+                payload,
+            )
+            return None
 
     # sanitize OctoPrint payloads
     sanitized_payload = await sanitize_payload(payload)
@@ -330,25 +337,3 @@ async def try_publish_nats(
     logger.info(
         "Published to PrintNanny Cloud NATS subject=%s payload=%s", subject, request
     )
-
-
-async def try_handle_event(
-    event: str,
-    payload: Dict[Any, Any],
-):
-    try:
-        if should_publish_event(event, payload):
-            req = await event_request(event, payload)
-            if req is not None:
-                return await try_publish_nats(req, nc)
-        else:
-            logger.debug("Ignoring event=%s", event)
-            return None
-    except Exception as e:
-        logger.error(
-            "Error on publish for event=%s, payload=%s error=%s",
-            event,
-            payload,
-            repr(e),
-        )
-        return None
