@@ -52,7 +52,6 @@ plugin_requires = [
     "printnanny-api-client>=0.127.4",
     "backoff>=1.10.0",
     "nats-py[nkeys]==2.2.0",
-    "multiprocessing_logging",
 ]
 
 dev_requires = [

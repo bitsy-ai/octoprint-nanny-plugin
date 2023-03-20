@@ -1,6 +1,5 @@
 import logging
 from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
-from multiprocessing_logging import install_mp_handler
 
 
 def configure_logger(logger, logfile_path):
@@ -20,5 +19,4 @@ def configure_logger(logger, logfile_path):
     logger.addHandler(file_logging_handler)
 
     logger.info(f"Logger file handler added {file_logging_handler}")
-    install_mp_handler()
     logger.info("Installed multiprocessing_logging.install_mp_handler")
