@@ -4,7 +4,6 @@ import os
 
 import nats
 import backoff
-import functools
 import octoprint.plugin
 import octoprint.util
 
@@ -14,7 +13,7 @@ from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.error import NatsCredentialError
-from octoprint_nanny.events import try_handle_event, should_publish_event
+from octoprint_nanny.events import should_publish_event
 from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
