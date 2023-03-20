@@ -26,17 +26,24 @@ PRINTNANNY_OS_NATS_URL = os.environ.get(
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.nats")
 
+NATS_CONNECTION: Optional[nats.aio.client.Client] = None
 
-async def try_publish_nats(
-    nc: nats.aio.client.Client, event: str, payload: Dict[Any, Any]
-) -> bool:
+
+async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
+    global NATS_CONNECTION
+    if NATS_CONNECTION is None:
+        NATS_CONNECTION = await nats.connect(
+            servers=[PRINTNANNY_OS_NATS_URL],
+        )
+        logger.info("Connected to NATS server: %s", PRINTNANNY_OS_NATS_URL)
+
     subject = octoprint_event_to_nats_subject(event)
     if subject is None:
         return False
     try:
         request = await event_request(event, payload)
         request_json = json.dumps(request)
-        await nc.publish(subject, request_json.encode("utf-8"))
+        await NATS_CONNECTION.publish(subject, request_json.encode("utf-8"))
         logger.info("Published NATS message on subject=%s message=%s", subject, payload)
         return True
     except Exception as e:
@@ -47,15 +54,10 @@ async def try_publish_nats(
 
 
 async def _nats_worker_main(q: multiprocessing.Queue, exit: threading.Event):
-    nc = await nats.connect(
-        servers=[PRINTNANNY_OS_NATS_URL],
-    )
-
-    logger.info("Connected to NATS server: %s", PRINTNANNY_OS_NATS_URL)
     while not exit.is_set():
         try:
             event, payload = q.get(timeout=1)
-            await try_publish_nats(nc, event, payload)
+            await try_publish_nats(event, payload)
         except queue.Empty:
             return
     logger.warning("NatsWorker shutdown complete")
