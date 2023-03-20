@@ -108,7 +108,7 @@ class OctoPrintNannyPlugin(
 
     async def load_printnanny(self):
         cloud_result = await printnanny_os.load_printnanny_cloud_data()
-        logger.info("load_printnanny_cloud_data result %s", cloud_result)
+        logger.debug("load_printnanny_cloud_data result %s", cloud_result)
         # run blocking i/o in a thread, pre-allocated using ThreadPoolExecutor
         settings_result = await self._loop.run_in_executor(
             self._thread_pool, printnanny_os.load_printnanny_settings
