@@ -64,15 +64,12 @@ async def event_request(
     if printnanny_os.PRINTNANNY_CLOUD_PI is None:
         logger.warning(
             "printnanny_os.PRINTNANNY_CLOUD_PI is not set, attempting to load",
-            event,
-            payload,
         )
         await printnanny_os.load_printnanny_cloud_data()
         if printnanny_os.PRINTNANNY_CLOUD_PI is None:
             logger.warning(
                 "printnanny_os.PRINTNANNY_CLOUD_PI is not set, ignoring %s",
                 event,
-                payload,
             )
             return None
 
@@ -324,16 +321,3 @@ async def event_request(
         payload,
     )
     return None
-
-
-async def try_publish_nats(
-    request: PolymorphicOctoPrintEventRequest,
-    nc: nats.aio.client.Client,
-):
-    subject = request.subject_pattern.replace("{pi_id}", request.pi)
-    payload = request.to_str().encode("utf-8")
-    logger.info("Attempting to publish subject=%s request=%s", subject, request)
-    await nc.publish(subject=subject, payload=payload)
-    logger.info(
-        "Published to PrintNanny Cloud NATS subject=%s payload=%s", subject, request
-    )
