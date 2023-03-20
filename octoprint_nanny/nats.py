@@ -63,7 +63,7 @@ async def _nats_worker_main(q: multiprocessing.Queue, exit: threading.Event):
 class NatsWorker:
     def __init__(self):
         self._exit = threading.Event()
-        self._queue = multiprocessing.Queue()
+        self._queue: multiprocessing.Queue = multiprocessing.Queue()
         self._thread = threading.Thread(
             target=self.run,
             name=str(self.__class__),
