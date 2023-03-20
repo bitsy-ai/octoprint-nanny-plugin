@@ -54,15 +54,10 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
 
 
 async def _nats_worker_main(q: multiprocessing.Queue, exit: threading.Event):
-    nc = await nats.connect(
-        servers=[PRINTNANNY_OS_NATS_URL],
-    )
-
-    logger.info("Connected to NATS server: %s", PRINTNANNY_OS_NATS_URL)
     while not exit.is_set():
         try:
             event, payload = q.get(timeout=1)
-            await try_publish_nats(nc, event, payload)
+            await try_publish_nats(event, payload)
         except queue.Empty:
             return
     logger.warning("NatsWorker shutdown complete")
