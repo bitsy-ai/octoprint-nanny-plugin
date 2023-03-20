@@ -2,6 +2,7 @@ import multiprocessing
 import asyncio
 import json
 import os
+import functools
 import logging
 import concurrent
 import socket
@@ -76,10 +77,16 @@ class NatsWorker:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.set_debug(True)
-        self.loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
-        task = asyncio.ensure_future(_nats_worker_main(self._queue, self._exit))
-        self.loop.run_until_complete(task)
-        self.loop.close()
+        self.loop.set_default_executor(concurrent.futures.ProcessPoolExecutor())
+
+        self.loop.call_soon_threadsafe(
+            functools.partial(_nats_worker_main, self._queue, self._exit)
+        )
+        try:
+            self.loop.run_forever()
+        finally:
+            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+            self.loop.close()
 
     def shutdown(self, **kwargs):
         logger.warning("NatsWorker shutdown initiated")
