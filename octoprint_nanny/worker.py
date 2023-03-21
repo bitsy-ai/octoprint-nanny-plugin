@@ -31,5 +31,5 @@ class AsyncTaskWorker:
         self.loop.close()
         self._thread.join()
 
-    def run_async(self, coro):
+    def run_coroutine_threadsafe(self, coro):
         return asyncio.run_coroutine_threadsafe(coro, self.loop)

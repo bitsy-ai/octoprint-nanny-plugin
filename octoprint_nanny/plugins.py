@@ -98,7 +98,7 @@ class OctoPrintNannyPlugin(
         cloud_result = await printnanny_os.load_printnanny_cloud_data()
         logger.debug("load_printnanny_cloud_data result %s", cloud_result)
         # run blocking i/o in a thread, pre-allocated using ThreadPoolExecutor
-        settings_result = self.worker.run_coro_threadsafe(
+        settings_result = self.worker.run_coroutine_threadsafe(
             printnanny_os.load_printnanny_settings()
         )
         logger.debug("load_printnanny_settings result %s", settings_result)
@@ -108,7 +108,7 @@ class OctoPrintNannyPlugin(
         configure_logger(logger, self._settings.get_plugin_logfile_path())
 
         # then load PrintNanny Cloud data models
-        self.worker.run_coro_threadsafe(self.load_printnanny())
+        self.worker.run_coroutine_threadsafe(self.load_printnanny())
 
         # configure PrintNanny Cloud REST api credentials
         try:
@@ -117,7 +117,7 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        self.worker.run_coro_threadsafe(try_publish_nats(event, payload))
+        self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
