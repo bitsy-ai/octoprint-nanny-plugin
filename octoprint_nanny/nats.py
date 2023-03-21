@@ -42,7 +42,7 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
         return False
     try:
         request = await event_request(event, payload)
-        request_json = json.dumps(request)
+        request_json = json.dumps(request.to_dict())
         await NATS_CONNECTION.publish(subject, request_json.encode("utf-8"))
         logger.info("Published NATS message on subject=%s message=%s", subject, payload)
         return True
