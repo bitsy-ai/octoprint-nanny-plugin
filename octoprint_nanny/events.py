@@ -343,7 +343,7 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
                     "printnanny_os.PRINTNANNY_CLOUD_PI is not set, ignoring %s",
                     event,
                 )
-                return None
+                return False
         pi_id = printnanny_os.PRINTNANNY_CLOUD_PI.id
         octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
 
