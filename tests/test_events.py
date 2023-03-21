@@ -91,8 +91,5 @@ async def test_handle_tracked_event(mock_nats):
     result = await try_publish_nats("Startup", dict())
 
     assert result is True
-    import pdb
-
-    pdb.set_trace()
     assert mock_nats.called is True
     assert mock_nats.return_value.publish.called is True
