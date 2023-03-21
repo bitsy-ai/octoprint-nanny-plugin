@@ -50,7 +50,7 @@ class OctoPrintNannyPlugin(
         self._printnanny_api_client: Optional[PrintNannyCloudAPIClient] = None
 
         # create a thread pool for asyncio tasks
-        self._thread_pool = ThreadPoolExecutor()
+        self._thread_pool = ThreadPoolExecutor(thread_name_prefix="PrintNanny")
 
         # get/set a new asyncio event loop context
         loop = asyncio.new_event_loop()
