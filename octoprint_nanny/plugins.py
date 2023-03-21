@@ -2,8 +2,7 @@ import asyncio
 import logging
 import os
 
-import nats
-import backoff
+import functools
 import octoprint.plugin
 import octoprint.util
 
@@ -12,9 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
-from octoprint_nanny.error import NatsCredentialError
 from octoprint_nanny.events import try_publish_nats
-from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
 
@@ -53,7 +50,7 @@ class OctoPrintNannyPlugin(
         self._printnanny_api_client: Optional[PrintNannyCloudAPIClient] = None
 
         # create a thread pool for asyncio tasks
-        self._thread_pool = ThreadPoolExecutor(max_workers=4)
+        self._thread_pool = ThreadPoolExecutor()
 
         # get/set a new asyncio event loop context
         loop = asyncio.new_event_loop()
@@ -106,8 +103,8 @@ class OctoPrintNannyPlugin(
         cloud_result = await printnanny_os.load_printnanny_cloud_data()
         logger.debug("load_printnanny_cloud_data result %s", cloud_result)
         # run blocking i/o in a thread, pre-allocated using ThreadPoolExecutor
-        settings_result = await self._loop.run_in_executor(
-            self._thread_pool, printnanny_os.load_printnanny_settings
+        settings_result = await self._loop.run_until_complete(
+            printnanny_os.load_printnanny_settings()
         )
         logger.debug("load_printnanny_settings result %s", settings_result)
 
