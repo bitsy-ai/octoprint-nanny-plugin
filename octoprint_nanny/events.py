@@ -1,7 +1,9 @@
 import logging
 import nats
 from typing import Dict, Any, Optional
-
+import socket
+import os
+import json
 from octoprint_nanny.utils import printnanny_os
 
 import printnanny_api_client.models
@@ -15,7 +17,14 @@ from printnanny_api_client.models import (
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.events")
-# see available events: https://docs.octoprint.org/en/master/events/index.html#id5
+
+PRINTNANNY_OS_NATS_URL = os.environ.get(
+    "PRINTNANNY_OS_NATS_URL", f"nats://{socket.gethostname()}:4223"
+)
+
+logger = logging.getLogger("octoprint.plugins.octoprint_nanny.nats")
+
+NATS_CONNECTION: Optional[nats.aio.client.Client] = None
 
 
 PUBLISH_EVENTS = {
@@ -321,3 +330,34 @@ async def event_request(
         payload,
     )
     return None
+
+
+async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
+    if should_publish_event(event, payload):
+
+        global NATS_CONNECTION
+        if NATS_CONNECTION is None:
+            NATS_CONNECTION = await nats.connect(
+                servers=[PRINTNANNY_OS_NATS_URL],
+            )
+            logger.info("Connected to NATS server: %s", PRINTNANNY_OS_NATS_URL)
+
+        subject = octoprint_event_to_nats_subject(event)
+        if subject is None:
+            return False
+        try:
+            request = await event_request(event, payload)
+            if request:
+                request_json = json.dumps(request.to_dict())
+                await NATS_CONNECTION.publish(subject, request_json.encode("utf-8"))
+                logger.info(
+                    "Published NATS message on subject=%s message=%s", subject, payload
+                )
+                return True
+            return False
+        except Exception as e:
+            logger.error(
+                "Error publishing NATS message subject=%s error=%s", subject, str(e)
+            )
+            return False
+    return False

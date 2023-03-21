@@ -13,11 +13,10 @@ from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.error import NatsCredentialError
-from octoprint_nanny.events import should_publish_event
+from octoprint_nanny.events import try_publish_nats
 from octoprint_nanny.env import MAX_BACKOFF_TIME
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.utils.logger import configure_logger
-from octoprint_nanny.nats import NatsWorker, try_publish_nats
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
@@ -55,9 +54,6 @@ class OctoPrintNannyPlugin(
 
         # create a thread pool for asyncio tasks
         self._thread_pool = ThreadPoolExecutor(max_workers=4)
-
-        # create a nats worker instance
-        # self._nats_worker = NatsWorker()
 
         # get/set a new asyncio event loop context
         loop = asyncio.new_event_loop()
@@ -128,11 +124,7 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        if should_publish_event(event, payload):
-            self._loop.run_until_complete(try_publish_nats(event, payload))
-            # self._nats_worker.handle_event(event, payload)
-        else:
-            logger.debug("Ignoring event=%s", event)
+        self._loop.run_until_complete(try_publish_nats(event, payload))
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
