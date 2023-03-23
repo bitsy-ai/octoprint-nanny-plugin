@@ -3,6 +3,7 @@ import json
 from unittest.mock import patch, MagicMock, AsyncMock
 from octoprint_nanny.events import octoprint_event_to_nats_subject, try_publish_nats
 from octoprint_nanny.utils import printnanny_os
+import socket
 
 MOCK_PI_JSON = """{
     "id": 2,
@@ -94,5 +95,6 @@ async def test_handle_tracked_event(mock_nats):
     assert mock_nats.called is True
     assert mock_nats.return_value.publish.called is True
     call_args = mock_nats.return_value.publish.call_args[0]
-    assert call_args[0] == "pi.2.octoprint.event.server.startup"
+    hostname = socket.gethostname()
+    assert call_args[0] == f"pi.{hostname}.octoprint.event.server.startup"
     assert call_args[1] == b'{"status": "Startup"}'
