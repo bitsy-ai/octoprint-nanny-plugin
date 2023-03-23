@@ -198,7 +198,7 @@ def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
     return event in EVENT_MAPPINGS.keys()
 
 
-def octoprint_event_to_nats_subject(event: str, pi_id: int) -> Optional[str]:
+def octoprint_event_to_nats_subject(event: str, pi_id: str) -> Optional[str]:
     mapping: Optional[EventMapping] = EVENT_MAPPINGS.get(event)
     if mapping is None:
         raise ValueError("No NATS msg subject configured for OctoPrint event=%s", event)
