@@ -1,19 +1,14 @@
 import logging
 import nats
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TypedDict, Callable
 import socket
 import os
 import json
 from octoprint_nanny.utils import printnanny_os
 
 import printnanny_api_client.models
-from printnanny_api_client.models import (
-    PolymorphicOctoPrintEventRequest,
-    OctoPrintServerStatusType,
-    OctoPrintPrintJobStatusType,
-    GcodeEventType,
-    OctoPrintPrinterStatusType,
-)
+
+import printnanny_octoprint_models
 
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.events")
@@ -26,41 +21,189 @@ logger = logging.getLogger("octoprint.plugins.octoprint_nanny.nats")
 
 NATS_CONNECTION: Optional[nats.aio.client.Client] = None
 
+# begin NATS message builders
+def printnanny_nats_gcode_event_msg(
+    event: str, *args
+) -> printnanny_octoprint_models.OctoPrintGcode:
+    if event == "Alert":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.ALERT_M300
+        )
 
-PUBLISH_EVENTS = {
-    "Startup": "pi.{pi_id}.octoprint.event.server.startup",  # server
-    "Shutdown": "pi.{pi_id}.octoprint.event.server.shutdown",  # server
-    "PrinterStateChanged": "pi.{pi_id}.octoprint.event.printer.status",  # printer status
-    "PrintProgress": "pi.{pi_id}.octoprint.event.printer.progress",  # print job
-    "PrintStarted": "pi.{pi_id}.octoprint.event.print_job.started",  # print job
-    "PrintFailed": "pi.{pi_id}.octoprint.event.print_job.failed",  # print job
-    "PrintDone": "pi.{pi_id}.octoprint.event.print_job.done",  # print job
-    "PrintCancelling": "pi.{pi_id}.octoprint.event.print_job.cancelling",  # print job
-    "PrintCancelled": "pi.{pi_id}.octoprint.event.print_job.cancelled",  # print job
-    "PrintPaused": "pi.{pi_id}.octoprint.event.print_job.paused",  # print job
-    "PrintResumed": "pi.{pi_id}.octoprint.event.print_job.resumed",  # print job
-    "Alert": "pi.{pi_id}.octoprint.event.gcode.alert",  # gcode processing
-    "Cooling": "pi.{pi_id}.octoprint.event.gcode.cooling",  # gcode processing
-    "Dwell": "pi.{pi_id}.octoprint.event.gcode.dwell",  # gcode processing
-    "Estop": "pi.{pi_id}.octoprint.event.gcode.estop",  # gcode processing
-    "FilamentChange": "pi.{pi_id}.octoprint.event.gcode.filament_change",  # gcode processing
-    "Home": "pi.{pi_id}.octoprint.event.gcode.home",  # gcode processing
-    "PowerOff": "pi.{pi_id}.octoprint.event.gcode.poweroff",  # gcode processing
-    "PowerOn": "pi.{pi_id}.octoprint.event.gcode.poweron",  # gcode processing
+    elif event == "Cooling":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.COOLING_M245
+        )
+
+    elif event == "Dwell":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.DWELL_G4
+        )
+
+    elif event == "Estop":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.ESTOP_M112
+        )
+    # note: M600 is hard-coded here because OctoPrint doesn't pass along underlying gocde
+    # FilamentChange event can be triggered by M600, M701, M702 https://github.com/bitsy-ai/printnanny-os/issues/131#issuecomment-1314855952
+    # This will result in M701 and M702 events being ingested into PrintNanny's event system as M600 codes
+    elif event == "FilamentChange":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.FILAMENT_CHANGE_M600
+        )
+
+    elif event == "Home":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.HOME_G28
+        )
+
+    elif event == "PowerOn":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            gcode=printnanny_octoprint_models.GcodeEvent.POWER_ON_M80
+        )
+
+    elif event == "PowerOff":
+        return printnanny_octoprint_models.OctoPrintGcode(
+            printnanny_octoprint_models.GcodeEvent.POWER_ON_M81
+        )
+    raise ValueError(f"printnanny_nats_gcode_event_msg not support event={event}")
+
+
+def printnanny_nats_octoprint_server_status_msg(
+    event: str, *args
+) -> printnanny_octoprint_models.OctoPrintServerStatusChanged:
+    if event == "Startup":
+        return printnanny_octoprint_models.OctoPrintServerStatusChanged(
+            status=printnanny_octoprint_models.OctoPrintServerStatus.STARTUP
+        )
+    elif event == "Shutdown":
+        return printnanny_octoprint_models.OctoPrintServerStatusChanged(
+            status=printnanny_octoprint_models.OctoPrintServerStatus.SHUTDOWN
+        )
+    raise ValueError(f"build_gcode_event_msg does not support event={event}")
+
+
+def printnanny_nats_printer_status_msg(
+    event: str, payload: Dict[Any, Any]
+) -> printnanny_octoprint_models.PrinterStatusChanged:
+    pass
+
+
+def printnanny_nats_print_progress_msg(
+    event: str, payload: Dict[Any, Any]
+) -> printnanny_octoprint_models.JobProgress:
+    pass
+
+
+def printnanny_nats_print_job_status_msg(
+    event: str, payload: Dict[Any, Any]
+) -> printnanny_octoprint_models.JobStatus:
+    pass
+
+
+# end NATS message builders
+
+
+class EventMapping(TypedDict):
+    nats_subject: str
+    msg_builder: Callable
+
+
+# EVENT_MAPPING follows format:
+# "OctoPrintEventName" : { "nats_subject": "str", msg_builder: function }
+EVENT_MAPPINGS: Dict[str, EventMapping] = {
+    # begin octoprint server status
+    "Startup": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.server.startup",
+        "msg_builder": printnanny_nats_octoprint_server_status_msg,
+    },  # server
+    "Shutdown": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.server.shutdown",
+        "msg_builder": printnanny_nats_octoprint_server_status_msg,
+    },  # server
+    # begin printer status
+    "PrinterStateChanged": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.status",
+        "msg_builder": printnanny_nats_printer_status_msg,
+    },  # printer status
+    # begin print job
+    "PrintProgress": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_progress",
+        "msg_builder": printnanny_nats_print_progress_msg,
+    },  # print job
+    "PrintStarted": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintFailed": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintDone": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintCancelling": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintCancelled": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintPaused": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    "PrintResumed": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.printer.job_status",
+        "msg_builder": printnanny_nats_print_job_status_msg,
+    },  # print job
+    ### begin gcode processing
+    "Alert": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.alert",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "Cooling": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.cooling",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "Dwell": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.dwell",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "Estop": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.estop",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "FilamentChange": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.filament_change",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "Home": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.home",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "PowerOff": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.poweroff",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
+    "PowerOn": {
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.poweron",
+        "msg_builder": printnanny_nats_gcode_event_msg,
+    },  # gcode processing
 }
 
 
 def should_publish_event(event: str, payload: Dict[Any, Any]) -> bool:
-    return event in PUBLISH_EVENTS.keys()
+    return event in EVENT_MAPPINGS.keys()
 
 
 def octoprint_event_to_nats_subject(event: str, pi_id: int) -> Optional[str]:
-    result = PUBLISH_EVENTS.get(event)
-    if result is None:
-        logger.warning("No NATS subject configured for OctoPrint event=%s", event)
-        return None
-
-    return result.format(pi_id=pi_id)
+    mapping: Optional[EventMapping] = EVENT_MAPPINGS.get(event)
+    if mapping is None:
+        raise ValueError("No NATS msg subject configured for OctoPrint event=%s", event)
+    return mapping["nats_subject"].format(pi_id=pi_id)
 
 
 async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
@@ -68,258 +211,18 @@ async def sanitize_payload(data: Dict[Any, Any]) -> Dict[Any, Any]:
         return client.sanitize_for_serialization(data)
 
 
-async def event_request(
-    event: str, payload: Dict[Any, Any], pi_id: int, octoprint_server_id: int
-) -> Optional[PolymorphicOctoPrintEventRequest]:
+def build_nats_msg(event: str, payload: Dict[Any, Any]) -> str:
+    mapping: Optional[EventMapping] = EVENT_MAPPINGS.get(event)
+    if mapping is None:
+        raise ValueError("No NATS msg handler configured for OctoPrint event=%s", event)
+    builder_fn = mapping["msg_builder"]
+    if builder_fn is None:
+        raise ValueError(f"No msg_builder fn configured for event={event}")
 
-    # sanitize OctoPrint payloads
-    sanitized_payload = await sanitize_payload(payload)
-
-    # OctoPrintGcodeEvent
-    if event == "Alert":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M300,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "Cooling":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M245,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "Dwell":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.G4,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "Estop":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M112,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-
-    elif event == "FilamentChange":
-        # note: M600 is hard-coded here because OctoPrint doesn't pass along underlying gocde
-        # FilamentChange event can be triggered by M600, M701, M702 https://github.com/bitsy-ai/printnanny-os/issues/131#issuecomment-1314855952
-        # This will result in M701 and M702 events being ingested into PrintNanny's event system as M600 codes
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M600,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "Home":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.G28,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "PowerOn":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M80,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-    elif event == "PowerOff":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=GcodeEventType.M81,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintGcodeEventSubjectPatternEnum.PI_PI_ID_OCTOPRINT_GCODE,
-        )
-
-    # OctoPrintServerStatus
-    elif event == "Startup":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintServerStatusType.STARTUP,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
-        )
-    elif event == "Shutdown":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintServerStatusType.SHUTDOWN,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
-        )
-
-    elif event == "plugin_octoprint_nanny_test_server":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintServerStatusType.TEST,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintServerStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_SERVER,
-        )
-
-    # OctoPrintPrintJob
-    elif event == "PrintProgress":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTPROGRESS,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintStarted":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTSTARTED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintFailed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTFAILED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintDone":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTDONE,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintCancelling":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTCANCELLING,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-
-    elif event == "PrintCancelled":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTCANCELLED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintPaused":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTPAUSED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-    elif event == "PrintResumed":
-        return PolymorphicOctoPrintEventRequest(
-            pi=pi_id,
-            octoprint_server=octoprint_server_id,
-            event_type=OctoPrintPrintJobStatusType.PRINTRESUMED,
-            payload=sanitized_payload,
-            subject_pattern=printnanny_api_client.models.OctoPrintPrintJobStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINT_JOB,
-        )
-
-    # printer status events
-    elif event == "PrinterStateChanged":
-        state_id = payload.get("state_id", "OFFLINE")
-        if state_id == "OPEN_SERIAL":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTEROPENSERIAL,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "CONNECTING":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTERCONNECTING,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "OPERATIONAL":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTEROPERATIONAL,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "PRINTING":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTERINPROGRESS,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "PAUSED":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTERPAUSED,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "CLOSED":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTEROFFLINE,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "ERROR":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTERERROR,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "UNKNOWN":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTEROFFLINE,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-        elif state_id == "CLOSED_WITH_ERROR":
-            return PolymorphicOctoPrintEventRequest(
-                pi=pi_id,
-                octoprint_server=octoprint_server_id,
-                event_type=OctoPrintPrinterStatusType.PRINTERERROR,
-                payload=sanitized_payload,
-                subject_pattern=printnanny_api_client.models.OctoPrintPrinterStatusSubjectPatternEnum.PI_PI_ID_OCTOPRINT_PRINTER,
-            )
-    logger.warning(
-        "No PolymorphicOctoPrintEventRequest serializer configured for event=%s payload=%s",
-        event,
-        payload,
-    )
-    return None
+    msg = builder_fn(event, payload)
+    msg_json = msg.json()
+    logger.info("Built NATS msg %s", msg_json)
+    return msg_json
 
 
 async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
@@ -345,16 +248,14 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
                 )
                 return False
         pi_id = printnanny_os.PRINTNANNY_CLOUD_PI.id
-        octoprint_server_id = printnanny_os.PRINTNANNY_CLOUD_PI.octoprint_server.id
 
         subject = octoprint_event_to_nats_subject(event, pi_id)
         if subject is None:
             return False
+        msg = build_nats_msg(event, payload)
         try:
-            request = await event_request(event, payload, pi_id, octoprint_server_id)
-            if request:
-                request_json = json.dumps(request.to_dict())
-                await NATS_CONNECTION.publish(subject, request_json.encode("utf-8"))
+            if msg:
+                await NATS_CONNECTION.publish(subject, msg.encode("utf-8"))
                 logger.info(
                     "Published NATS message on subject=%s message=%s", subject, payload
                 )
