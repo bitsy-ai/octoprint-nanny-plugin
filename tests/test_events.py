@@ -95,7 +95,4 @@ async def test_handle_tracked_event(mock_nats):
     assert mock_nats.return_value.publish.called is True
     call_args = mock_nats.return_value.publish.call_args[0]
     assert call_args[0] == "pi.2.octoprint.event.server.startup"
-    assert (
-        call_args[1]
-        == b'{"subject_pattern": "pi.{pi_id}.octoprint.server", "payload": {}, "event_type": "Startup", "octoprint_server": 2, "pi": 2}'
-    )
+    assert call_args[1] == b'{"status": "Startup"}'
