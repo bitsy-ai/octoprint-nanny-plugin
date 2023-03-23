@@ -3,7 +3,6 @@ import nats
 from typing import Dict, Any, Optional, TypedDict, Callable
 import socket
 import os
-import json
 from octoprint_nanny.utils import printnanny_os
 
 import printnanny_api_client.models
@@ -235,21 +234,8 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
             )
             logger.info("Connected to NATS server: %s", PRINTNANNY_OS_NATS_URL)
 
-        # bail if PRINTNANNY_CLOUD_PI is not set
-        if printnanny_os.PRINTNANNY_CLOUD_PI is None:
-            logger.warning(
-                "printnanny_os.PRINTNANNY_CLOUD_PI is not set, attempting to load",
-            )
-            await printnanny_os.load_printnanny_cloud_data()
-            if printnanny_os.PRINTNANNY_CLOUD_PI is None:
-                logger.warning(
-                    "printnanny_os.PRINTNANNY_CLOUD_PI is not set, ignoring %s",
-                    event,
-                )
-                return False
-        pi_id = printnanny_os.PRINTNANNY_CLOUD_PI.id
-
-        subject = octoprint_event_to_nats_subject(event, pi_id)
+        hostname = socket.gethostname()
+        subject = octoprint_event_to_nats_subject(event, hostname)
         if subject is None:
             return False
         msg = build_nats_msg(event, payload)
