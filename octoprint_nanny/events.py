@@ -160,35 +160,35 @@ EVENT_MAPPINGS: Dict[str, EventMapping] = {
     },  # print job
     ### begin gcode processing
     "Alert": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.alert",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "Cooling": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.cooling",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "Dwell": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.dwell",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "Estop": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.estop",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "FilamentChange": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.filament_change",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "Home": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.home",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "PowerOff": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.poweroff",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
     "PowerOn": {
-        "nats_subject": "pi.{pi_id}.octoprint.event.gcode.poweron",
+        "nats_subject": "pi.{pi_id}.octoprint.event.gcode",
         "msg_builder": printnanny_nats_gcode_event_msg,
     },  # gcode processing
 }
