@@ -243,7 +243,7 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
             if msg:
                 await NATS_CONNECTION.publish(subject, msg.encode("utf-8"))
                 logger.info(
-                    "Published NATS message on subject=%s message=%s", subject, payload
+                    "Published NATS message: subject=%s message=%s", subject, msg
                 )
                 return True
             return False
