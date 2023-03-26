@@ -13,7 +13,6 @@ from octoprint.events import Events
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
 from octoprint_nanny.events import try_publish_nats
 from octoprint_nanny.utils import printnanny_os
-from octoprint_nanny.utils.logger import configure_logger
 from octoprint_nanny.worker import AsyncTaskWorker
 
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
@@ -104,10 +103,7 @@ class OctoPrintNannyPlugin(
         logger.debug("load_printnanny_settings result %s", settings_result)
 
     def on_after_startup(self, *args, **kwargs):
-        # configure logger first
-        configure_logger(logger, self._settings.get_plugin_logfile_path())
-
-        # then load PrintNanny Cloud data models
+        # load PrintNanny Cloud data models
         self.worker.run_coroutine_threadsafe(self.load_printnanny())
 
         # configure PrintNanny Cloud REST api credentials
@@ -117,7 +113,8 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
+        future = self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
+        future.result()
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(

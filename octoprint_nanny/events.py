@@ -220,7 +220,6 @@ def build_nats_msg(event: str, payload: Dict[Any, Any]) -> str:
 
     msg = builder_fn(event, payload)
     msg_json = msg.json()
-    logger.info("Built NATS msg %s", msg_json)
     return msg_json
 
 
@@ -243,7 +242,7 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
             if msg:
                 await NATS_CONNECTION.publish(subject, msg.encode("utf-8"))
                 logger.info(
-                    "Published NATS message on subject=%s message=%s", subject, payload
+                    "Published NATS message: subject=%s message=%s", subject, msg
                 )
                 return True
             return False
@@ -252,4 +251,10 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
                 "Error publishing NATS message subject=%s error=%s", subject, str(e)
             )
             return False
-    return False
+    else:
+        logger.info(
+            "NATS subject not configured for event=%s, refusing to publish payload=%s",
+            event,
+            payload,
+        )
+        return False
