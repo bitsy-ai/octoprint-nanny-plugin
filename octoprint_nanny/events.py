@@ -220,7 +220,6 @@ def build_nats_msg(event: str, payload: Dict[Any, Any]) -> str:
 
     msg = builder_fn(event, payload)
     msg_json = msg.json()
-    logger.info("Built NATS msg %s", msg_json)
     return msg_json
 
 
