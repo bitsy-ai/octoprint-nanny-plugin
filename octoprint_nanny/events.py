@@ -69,7 +69,7 @@ def printnanny_nats_gcode_event_msg(
 
 
 def printnanny_nats_octoprint_server_status_msg(
-    event: str, *args
+    event: str, _payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.OctoPrintServerStatusChanged:
     if event == "Startup":
         return printnanny_octoprint_models.OctoPrintServerStatusChanged(
@@ -85,19 +85,45 @@ def printnanny_nats_octoprint_server_status_msg(
 def printnanny_nats_printer_status_msg(
     event: str, payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.PrinterStatusChanged:
-    pass
+    status_str = payload.get("state_id")
+    if status_str is None:
+        raise ValueError(
+            "Failed to get state_id field from event=%s payload=%s", event, payload
+        )
+    status = getattr(printnanny_octoprint_models.PrinterStatus, status_str)
+    return printnanny_octoprint_models.PrinterStatusChanged(status=status)
 
 
 def printnanny_nats_print_progress_msg(
-    event: str, payload: Dict[Any, Any]
+    _event: str, payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.JobProgress:
-    pass
+    return printnanny_octoprint_models.JobProgress(**payload)
 
 
 def printnanny_nats_print_job_status_msg(
     event: str, payload: Dict[Any, Any]
-) -> printnanny_octoprint_models.JobStatus:
-    pass
+) -> printnanny_octoprint_models.JobStatusChanged:
+    if event == printnanny_octoprint_models.JobStatus.PRINT_STARTED.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_STARTED
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_FAILED.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_FAILED
+    elif status == printnanny_octoprint_models.JobStatus.PRINT_DONE.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_DONE
+    elif status == printnanny_octoprint_models.JobStatus.PRINT_CANCELLING.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_CANCELLING
+    elif status == printnanny_octoprint_models.JobStatus.PRINT_CANELLED.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_CANELLED
+    elif status == printnanny_octoprint_models.JobStatus.PRINT_PAUSED.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_PAUSED
+    elif status == printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value:
+        status = printnanny_octoprint_models.JobStatus.PRINT_RESUMED
+    else:
+        raise ValueError(
+            "printnanny_nats_print_job_status_msg not configured to handle event=%s",
+            event,
+        )
+
+    return printnanny_octoprint_models.JobStatus(status=status)
 
 
 # end NATS message builders
