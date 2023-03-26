@@ -251,4 +251,10 @@ async def try_publish_nats(event: str, payload: Dict[Any, Any]) -> bool:
                 "Error publishing NATS message subject=%s error=%s", subject, str(e)
             )
             return False
-    return False
+    else:
+        logger.info(
+            "NATS subject not configured for event=%s, refusing to publish payload=%s",
+            event,
+            payload,
+        )
+        return False

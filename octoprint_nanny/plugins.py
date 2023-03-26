@@ -113,7 +113,8 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
-        self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
+        future = self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
+        future.result()
 
     def on_environment_detected(self, environment, *args, **kwargs):
         logger.info(
