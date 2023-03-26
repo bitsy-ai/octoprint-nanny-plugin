@@ -50,7 +50,7 @@ plugin_requires = [
     "pytz",
     "aiohttp[speedups]>=3.7.4",
     "printnanny-api-client>=0.129.0",
-    "printnanny-octoprint-models>=0.1.3",
+    "printnanny-octoprint-models>=0.1.4",
     "backoff>=1.10.0",
     "nats-py[nkeys]==2.2.0",
 ]
