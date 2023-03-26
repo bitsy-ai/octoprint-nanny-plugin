@@ -107,15 +107,15 @@ def printnanny_nats_print_job_status_msg(
         status = printnanny_octoprint_models.JobStatus.PRINT_STARTED
     elif event == printnanny_octoprint_models.JobStatus.PRINT_FAILED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_FAILED
-    elif status == printnanny_octoprint_models.JobStatus.PRINT_DONE.value:
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_DONE.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_DONE
-    elif status == printnanny_octoprint_models.JobStatus.PRINT_CANCELLING.value:
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_CANCELLING.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_CANCELLING
-    elif status == printnanny_octoprint_models.JobStatus.PRINT_CANELLED.value:
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_CANELLED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_CANELLED
-    elif status == printnanny_octoprint_models.JobStatus.PRINT_PAUSED.value:
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_PAUSED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_PAUSED
-    elif status == printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value:
+    elif event == printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_RESUMED
     else:
         raise ValueError(
