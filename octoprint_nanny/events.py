@@ -219,6 +219,10 @@ def build_nats_msg(event: str, payload: Dict[Any, Any]) -> str:
         raise ValueError(f"No msg_builder fn configured for event={event}")
 
     msg = builder_fn(event, payload)
+    if msg is None:
+        raise ValueError(
+            "Failed to build NATS message event=%s payload=%s", event, payload
+        )
     msg_json = msg.json()
     return msg_json
 
