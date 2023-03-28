@@ -117,13 +117,14 @@ def printnanny_nats_print_job_status_msg(
         status = printnanny_octoprint_models.JobStatus.PRINT_PAUSED
     elif event == printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_RESUMED
+
     else:
         raise ValueError(
             "printnanny_nats_print_job_status_msg not configured to handle event=%s",
             event,
         )
 
-    return printnanny_octoprint_models.JobStatus(status=status)
+    return printnanny_octoprint_models.JobStatusChanged(status=status)
 
 
 # end NATS message builders
