@@ -135,9 +135,7 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, progress):
         octoprint_job = self._printer.get_current_job()
-        payload = dict(
-            octoprint_job=octoprint_job, storage=storage, path=path, progress=progress
-        )
+        payload = dict(job=octoprint_job, storage=storage, path=path, progress=progress)
         self.on_event(Events.PRINT_PROGRESS, payload)
 
     ##~~ SettingsPlugin mixin
