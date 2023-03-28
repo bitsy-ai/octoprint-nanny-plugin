@@ -135,7 +135,7 @@ class OctoPrintNannyPlugin(
 
     def on_print_progress(self, storage, path, _progress):
         current_state_data = self._printer.get_current_data()
-        logger.info("on_print_progress state data: %s".current_state_data)
+        logger.info("on_print_progress state data: %s", current_state_data)
         job = current_state_data.pop("job")
         progress = current_state_data.pop("progress")
 
