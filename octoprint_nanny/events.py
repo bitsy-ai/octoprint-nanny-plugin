@@ -97,7 +97,10 @@ def printnanny_nats_printer_status_msg(
 def printnanny_nats_print_progress_msg(
     _event: str, payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.JobProgress:
-    return printnanny_octoprint_models.JobProgress(**payload)
+    progress_kwargs = payload.pop("progress")
+    progress = printnanny_octoprint_models.JobProgress(**progress_kwargs)
+
+    return printnanny_octoprint_models.JobProgressChanged(progress=progress, **payload)
 
 
 def printnanny_nats_print_job_status_msg(
@@ -117,13 +120,14 @@ def printnanny_nats_print_job_status_msg(
         status = printnanny_octoprint_models.JobStatus.PRINT_PAUSED
     elif event == printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value:
         status = printnanny_octoprint_models.JobStatus.PRINT_RESUMED
+
     else:
         raise ValueError(
             "printnanny_nats_print_job_status_msg not configured to handle event=%s",
             event,
         )
 
-    return printnanny_octoprint_models.JobStatus(status=status)
+    return printnanny_octoprint_models.JobStatusChanged(status=status)
 
 
 # end NATS message builders
