@@ -188,10 +188,7 @@ def printnanny_nats_printer_status_msg(
 def printnanny_nats_print_progress_msg(
     _event: str, payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.JobProgress:
-    progress_kwargs = payload.pop("progress")
-    progress = printnanny_octoprint_models.JobProgress(**progress_kwargs)
-
-    return printnanny_octoprint_models.JobProgressChanged(progress=progress, **payload)
+    return printnanny_octoprint_models.JobProgressChanged(**payload)
 
 
 def printnanny_nats_print_job_status_msg(
