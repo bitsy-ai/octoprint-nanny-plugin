@@ -171,7 +171,10 @@ class OctoPrintNannyPlugin(
         current_state_data = self._printer.get_current_data()
         logger.info("on_print_progress state data: %s", current_state_data)
 
-        job = octoprint_state_data_to_job(current_state_data)
+        try:
+            job = octoprint_state_data_to_job(current_state_data)
+        except PrintJobDataMissing:
+            job = None
         progress = octoprint_state_data_to_progress(current_state_data)
 
         payload = dict(
