@@ -1,6 +1,6 @@
 import logging
 import nats
-from typing import Dict, Any, Optional, TypedDict, Callable
+from typing import Dict, Any, Optional, TypedDict, Callable, List
 import socket
 import os
 from octoprint_nanny.utils import printnanny_os
@@ -19,6 +19,90 @@ PRINTNANNY_OS_NATS_URL = os.environ.get(
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny.nats")
 
 NATS_CONNECTION: Optional[nats.aio.client.Client] = None
+
+
+def octoprint_state_data_to_gcode_file(
+    job_data: Dict[Any, Any]
+) -> printnanny_octoprint_models.GcodeFile:
+    file_data = job_data.get("file")
+    if file_data is None:
+        raise ValueError(
+            "octoprint_state_data_to_gcode_file missing job in state data: %s",
+            job_data,
+        )
+
+    file_name = file_data.get("name")
+    if file_name is None:
+        raise ValueError(
+            "octoprint_state_data_to_gcode_file missing gcode file name: %s", file_data
+        )
+        return None
+
+    file_path = file_data.get("file_path")
+    if file_path is None:
+        raise ValueError(
+            "octoprint_state_data_to_gcode_file missing gcode file path: %s", file_data
+        )
+        return None
+
+    return printnanny_octoprint_models.GcodeFile(
+        file_name=file_name,
+        file_path=file_path,
+        display=file_data.get("display"),
+        path=file_data.get("path"),
+        origin=file_data.get("origin"),
+        timestamp=file_data.get("timestamp"),
+        size=file_data.get("size"),
+    )
+
+
+def octoprint_state_data_to_filaments(
+    job_data: Dict[Any, Any]
+) -> List[printnanny_octoprint_models.Filament]:
+    filaments = job_data.get("filament")
+    if filaments is None or len(filaments) == 0:
+        return []
+    return [
+        printnanny_octoprint_models.Filament(
+            toolName=k, length=v["length"], volume=v["volume"]
+        )
+        for k, v in filaments.items()
+    ]
+
+
+def octoprint_state_data_to_job(
+    state_data: Dict[Any, Any]
+) -> printnanny_octoprint_models.Job:
+    job = state_data.get("job")
+    if job is None:
+        raise ValueError("octoprint_state_data_to_job missing job data: %s", state_data)
+    file = octoprint_state_data_to_gcode_file(job)
+    filaments = octoprint_state_data_to_filaments(job)
+    return printnanny_octoprint_models.Job(
+        file=file,
+        averagePrintTime=job["averagePrintTime"],
+        estimatedPrintTime=job["estimatedPrintTime"],
+        lastPrintTime=job["lastPrintTime"],
+        filaments=filaments,
+    )
+
+
+def octoprint_state_data_to_progress(
+    state_data: Dict[Any, Any]
+) -> printnanny_octoprint_models.JobProgress:
+    progress = state_data.get("progress")
+    if progress is None:
+        raise ValueError(
+            "octoprint_state_data_to_progress missing progress data: %s", state_data
+        )
+    return printnanny_octoprint_models.JobProgress(
+        completion=progress["completion"],
+        filepos=progress["filepos"],
+        printTime=progress["printTime"],
+        printTimeLeft=progress["printTimeLeft"],
+        printTimeLeftOrigin=progress["printTimeLeftOrigin"],
+    )
+
 
 # begin NATS message builders
 def printnanny_nats_gcode_event_msg(
