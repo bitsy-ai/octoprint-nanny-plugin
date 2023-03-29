@@ -170,12 +170,13 @@ def printnanny_nats_printer_status_msg(
     event: str, payload: Dict[Any, Any]
 ) -> printnanny_octoprint_models.PrinterStatusChanged:
     status_str = payload.get("state_id")
+    job = payload.get("job")
     if status_str is None:
         raise ValueError(
             "Failed to get state_id field from event=%s payload=%s", event, payload
         )
     status = getattr(printnanny_octoprint_models.PrinterStatus, status_str)
-    return printnanny_octoprint_models.PrinterStatusChanged(status=status)
+    return printnanny_octoprint_models.PrinterStatusChanged(status=status, job=job)
 
 
 def printnanny_nats_print_progress_msg(

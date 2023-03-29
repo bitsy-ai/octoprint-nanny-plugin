@@ -120,6 +120,27 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
+
+        # enrich with job data
+        if event == "PrinterStateChanged":
+            current_state_data = self._printer.get_current_data()
+            job = octoprint_state_data_to_job(current_state_data)
+            payload = dict(job=job, **payload)
+
+        # enrich with job data
+        if event in (
+            printnanny_octoprint_models.JobStatus.PRINT_STARTED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_FAILED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANCELLING.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANELLED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANCELLING,
+            printnanny_octoprint_models.JobStatus.PRINT_PAUSED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value,
+        ):
+            current_state_data = self._printer.get_current_data()
+            job = octoprint_state_data_to_job(current_state_data)
+            payload = dict(job=job, **payload)
+
         future = self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
         future.result()
 
