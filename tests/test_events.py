@@ -74,6 +74,53 @@ MOCK_PI_JSON = """{
 }
 """
 
+MOCK_STATE_DATA = {
+    "state": {
+        "text": "Starting",
+        "flags": {
+            "operational": True,
+            "printing": True,
+            "cancelling": False,
+            "pausing": False,
+            "resuming": False,
+            "finishing": False,
+            "closedOrError": False,
+            "error": False,
+            "paused": False,
+            "ready": False,
+            "sdReady": True,
+        },
+        "error": "",
+    },
+    "job": {
+        "file": {
+            "name": "nany 1 v5_0.05mm_PLA_MINI_31s.gcode",
+            "path": "nany 1 v5_0.05mm_PLA_MINI_31s.gcode",
+            "display": "nany 1 v5_0.05mm_PLA_MINI_31s.gcode",
+            "origin": "local",
+            "size": 37332,
+            "date": 1679069626,
+        },
+        "estimatedPrintTime": 30.729910721688928,
+        "averagePrintTime": 25.556955865001637,
+        "lastPrintTime": 26.595943458000022,
+        "filament": {
+            "tool0": {"length": 22.67491999999998, "volume": 0.05453957410225115}
+        },
+        "user": "admin",
+    },
+    "currentZ": None,
+    "progress": {
+        "completion": 0.0,
+        "filepos": 0,
+        "printTime": 0,
+        "printTimeLeft": None,
+        "printTimeLeftOrigin": None,
+    },
+    "offsets": {},
+    "resends": {"count": 0, "transmitted": 9, "ratio": 0},
+}
+
 
 @pytest.mark.asyncio
 @patch("nats.connect")

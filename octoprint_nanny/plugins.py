@@ -11,7 +11,11 @@ from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
-from octoprint_nanny.events import try_publish_nats
+from octoprint_nanny.events import (
+    try_publish_nats,
+    octoprint_state_data_to_job,
+    octoprint_state_data_to_progress,
+)
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.worker import AsyncTaskWorker
 
@@ -116,6 +120,27 @@ class OctoPrintNannyPlugin(
             logger.error("Error initializing PrintNanny Cloud API client: %s", e)
 
     def on_event(self, event: str, payload: Dict[Any, Any]):
+
+        # enrich with job data
+        if event == "PrinterStateChanged":
+            current_state_data = self._printer.get_current_data()
+            job = octoprint_state_data_to_job(current_state_data)
+            payload = dict(job=job, **payload)
+
+        # enrich with job data
+        if event in (
+            printnanny_octoprint_models.JobStatus.PRINT_STARTED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_FAILED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANCELLING.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANELLED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_CANCELLING,
+            printnanny_octoprint_models.JobStatus.PRINT_PAUSED.value,
+            printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value,
+        ):
+            current_state_data = self._printer.get_current_data()
+            job = octoprint_state_data_to_job(current_state_data)
+            payload = dict(job=job, **payload)
+
         future = self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
         future.result()
 
@@ -139,26 +164,9 @@ class OctoPrintNannyPlugin(
     def on_print_progress(self, storage, path, _progress):
         current_state_data = self._printer.get_current_data()
         logger.info("on_print_progress state data: %s", current_state_data)
-        file = printnanny_octoprint_models.GcodeFile(
-            name=current_state_data["file"]["name"],
-            path=current_state_data["file"]["path"],
-            origin=current_state_data["file"]["origin"],
-            display=current_state_data["file"]["date"],
-        )
-        job = printnanny_octoprint_models.Job(
-            file=file,
-            estimatedPrintTime=current_state_data["job_data"]["estimatedPrintTime"],
-            lastPrintTime=current_state_data["job_data"]["lastPrintTime"],
-            filamentLength=current_state_data["filament"]["length"],
-            filamentVolume=current_state_data["filament"]["volume"],
-        )
-        progress = printnanny_octoprint_models.JobProgress(
-            completion=current_state_data["progress"]["completion"],
-            filepos=current_state_data["progress"]["filepos"],
-            printTime=current_state_data["progress"]["printTime"],
-            printTimeLeft=current_state_data["progress"]["printTimeLeft"],
-            printTimeLeftOrigin=current_state_data["progress"]["printTimeLeftOrigin"],
-        )
+
+        job = octoprint_state_data_to_job(current_state_data)
+        progress = octoprint_state_data_to_progress(current_state_data)
 
         payload = dict(
             job=job,
