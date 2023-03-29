@@ -7,7 +7,6 @@ import octoprint.plugin
 import octoprint.util
 
 from typing import Any, Dict, List, Optional
-from concurrent.futures import ThreadPoolExecutor
 from octoprint.events import Events
 
 from octoprint_nanny.clients.rest import PrintNannyCloudAPIClient
@@ -15,6 +14,7 @@ from octoprint_nanny.events import (
     try_publish_nats,
     octoprint_state_data_to_job,
     octoprint_state_data_to_progress,
+    PrintJobDataMissing,
 )
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.worker import AsyncTaskWorker
@@ -124,8 +124,11 @@ class OctoPrintNannyPlugin(
         # enrich with job data
         if event == "PrinterStateChanged":
             current_state_data = self._printer.get_current_data()
-            job = octoprint_state_data_to_job(current_state_data)
-            payload = dict(job=job, **payload)
+            try:
+                job = octoprint_state_data_to_job(current_state_data)
+                payload = dict(job=job, **payload)
+            except PrintJobDataMissing:
+                payload = dict(job=None, **payload)
 
         # enrich with job data
         if event in (
@@ -138,8 +141,11 @@ class OctoPrintNannyPlugin(
             printnanny_octoprint_models.JobStatus.PRINT_RESUMED.value,
         ):
             current_state_data = self._printer.get_current_data()
-            job = octoprint_state_data_to_job(current_state_data)
-            payload = dict(job=job, **payload)
+            try:
+                job = octoprint_state_data_to_job(current_state_data)
+                payload = dict(job=job, **payload)
+            except PrintJobDataMissing:
+                payload = dict(job=None, **payload)
 
         future = self.worker.run_coroutine_threadsafe(try_publish_nats(event, payload))
         future.result()
