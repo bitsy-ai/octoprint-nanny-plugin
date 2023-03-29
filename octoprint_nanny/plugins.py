@@ -15,6 +15,9 @@ from octoprint_nanny.events import try_publish_nats
 from octoprint_nanny.utils import printnanny_os
 from octoprint_nanny.worker import AsyncTaskWorker
 
+import printnanny_octoprint_models
+
+
 logger = logging.getLogger("octoprint.plugins.octoprint_nanny")
 
 
@@ -136,10 +139,33 @@ class OctoPrintNannyPlugin(
     def on_print_progress(self, storage, path, _progress):
         current_state_data = self._printer.get_current_data()
         logger.info("on_print_progress state data: %s", current_state_data)
-        job = current_state_data.pop("job")
-        progress = current_state_data.pop("progress")
+        file = printnanny_octoprint_models.GcodeFile(
+            name=current_state_data["file"]["name"],
+            path=current_state_data["file"]["path"],
+            origin=current_state_data["file"]["origin"],
+            display=current_state_data["file"]["date"],
+        )
+        job = printnanny_octoprint_models.Job(
+            file=file,
+            estimatedPrintTime=current_state_data["job_data"]["estimatedPrintTime"],
+            lastPrintTime=current_state_data["job_data"]["lastPrintTime"],
+            filamentLength=current_state_data["filament"]["length"],
+            filamentVolume=current_state_data["filament"]["volume"],
+        )
+        progress = printnanny_octoprint_models.JobProgress(
+            completion=current_state_data["progress"]["completion"],
+            filepos=current_state_data["progress"]["filepos"],
+            printTime=current_state_data["progress"]["printTime"],
+            printTimeLeft=current_state_data["progress"]["printTimeLeft"],
+            printTimeLeftOrigin=current_state_data["progress"]["printTimeLeftOrigin"],
+        )
 
-        payload = dict(job=job, storage=storage, path=path, progress=progress)
+        payload = dict(
+            job=job,
+            storage=storage,
+            path=path,
+            progress=progress,
+        )
         self.on_event(Events.PRINT_PROGRESS, payload)
 
     ##~~ SettingsPlugin mixin
